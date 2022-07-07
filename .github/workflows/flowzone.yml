@@ -12,7 +12,7 @@ jobs:
         with:
           # Checkout as many commits as needed for the check
           fetch-depth: 1
-      - shell: pwsh
+      - shell: bash
         id: check_type
         run: |
           if test -f "package.json"; then
