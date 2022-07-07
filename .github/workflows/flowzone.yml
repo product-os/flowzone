@@ -27,15 +27,6 @@ jobs:
     if: needs.check_type.outputs.docs_changed == 'nodejs'
 
     steps:
-      - name: Check Node
-        id: check_node
-        uses: andstor/file-existence-action@v1
-        with:
-          files: 'package.json'
-
-      - name: Is Node
-        if: steps.check_node.outputs.files_exists == 'true'
-
       - uses: actions/checkout@v3
       - name: Use Node.js
         uses: actions/setup-node@v3
