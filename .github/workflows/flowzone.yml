@@ -3,6 +3,7 @@ on:
 
 jobs:
   check_type:
+    name: Check Project Type
     runs-on: 'ubuntu-latest'
     # Declare outputs for next jobs
     outputs:
