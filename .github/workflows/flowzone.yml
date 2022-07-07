@@ -24,7 +24,7 @@ jobs:
     name: Test NodeJS 16.x
     runs-on: ubuntu-latest
     needs: [check_type]
-    if: needs.check_type.outputs.docs_changed == 'nodejs'
+    if: needs.check_type.outputs.type == 'nodejs'
 
     steps:
       - uses: actions/checkout@v3
