@@ -8,6 +8,7 @@ jobs:
     # Declare outputs for next jobs
     outputs:
       type: ${{ steps.check_type.outputs.type }}
+      sut: ${{ steps.check_type.outputs.sut }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -19,6 +20,13 @@ jobs:
           if test -f "package.json"; then
               echo "found package.json"
               echo ::set-output name=type::"nodejs"
+          fi
+
+          if [ -f docker-compose.test.yml ] && [ -f docker-compose.yml ]; then
+            echo "found docker-compose.test.yml"
+            echo ::set-output name=sut::"True"
+          else
+            echo ::set-output name=sut::"False"
           fi
 
   build_node:
@@ -42,3 +50,20 @@ jobs:
           fi
       - run: npm run build --if-present
       - run: npm test
+
+  sut_test:
+    name: Test with docker compose
+    runs-on: ubuntu-latest
+    needs: [check_type]
+    if: needs.check_type.outputs.sut == 'True'
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run SUT container
+        shell: bash
+        run: |
+          docker-compose \
+          -f docker-compose.yml \
+          -f docker-compose.test.yml \
+          up \
+          --exit-code-from "sut"
