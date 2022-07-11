@@ -62,6 +62,12 @@ jobs:
       - name: Run SUT container
         shell: bash
         run: |
+          while read -rd $'' line
+          do
+              export "$line"
+          done < <(jq -r <<<"$COMPOSE_VARS" \
+                  'to_entries|map("\(.key)=\(.value)\u0000")[]')
+
           docker-compose \
           -f docker-compose.yml \
           -f docker-compose.test.yml \
