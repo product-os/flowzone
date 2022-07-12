@@ -68,6 +68,9 @@ jobs:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         run: |
           if [[ -z "${COMPOSE_VARS}" ]]; then
+            echo "No COMPOSE_VARS found"
+          else
+            echo "Setting COMPOSE_VARS"
             while read -rd $'' line
             do
                 export "$line"
