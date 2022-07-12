@@ -58,7 +58,6 @@ jobs:
     name: Test with docker compose
     runs-on: ubuntu-latest
     needs: [check_type]
-    secrets: inherit
     if: needs.check_type.outputs.sut == 'True'
 
     steps:
