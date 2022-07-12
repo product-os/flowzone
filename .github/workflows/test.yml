@@ -1,0 +1,20 @@
+name: Test
+
+on: pull_request
+
+jobs:
+  # Test npm projects using the sample code in ./npm
+  npm_test:
+    name: NPM test
+    uses: ./.github/workflows/flowzone.yml
+    secrets: inherit
+    with:
+      working_directory: ./npm
+
+  # Test npm projects using the sample code in ./npm
+  docker_compose_test:
+    name: Docker compose test
+    uses: ./.github/workflows/flowzone.yml
+    secrets: inherit
+    with:
+      working_directory: ./docker-compose

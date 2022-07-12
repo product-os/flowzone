@@ -3,11 +3,20 @@ on:
     secrets:
       COMPOSE_VARS:
         required: false
+    inputs:
+      working_directory:
+        type: string
+        required: false
 
 jobs:
   check_type:
     name: Check Project Type
     runs-on: 'ubuntu-latest'
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory || '.' }}
+
     # Declare outputs for next jobs
     outputs:
       type: ${{ steps.check_type.outputs.type }}
@@ -38,6 +47,10 @@ jobs:
     needs: [check_type]
     if: needs.check_type.outputs.type == 'nodejs'
 
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory || '.' }}
+
     steps:
       - uses: actions/checkout@v3
       - name: Use Node.js
@@ -60,11 +73,21 @@ jobs:
     needs: [check_type]
     if: needs.check_type.outputs.sut == 'True'
 
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory || '.' }}
+
+    env:
+      COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
+
     steps:
       - uses: actions/checkout@v3
       - name: Run SUT container
         shell: bash
         run: |
+          if [[ ! -z "${COMPOSE_VARS}" ]]; then
+            echo $COMPOSE_VARS | base64 --decode > .env
+          fi
           docker-compose \
           -f docker-compose.yml \
           -f docker-compose.test.yml \
