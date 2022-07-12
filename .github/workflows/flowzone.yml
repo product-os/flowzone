@@ -58,13 +58,13 @@ jobs:
     name: Test with docker compose
     runs-on: ubuntu-latest
     needs: [check_type]
+    secrets: inherit
     if: needs.check_type.outputs.sut == 'True'
 
     steps:
       - uses: actions/checkout@v3
       - name: Run SUT container
         shell: bash
-        secrets: ${{fromJSON(secrets.COMPOSE_VARS)}}
         run: |
           docker-compose \
           -f docker-compose.yml \
