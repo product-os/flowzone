@@ -1,0 +1,15 @@
+version: '2.1'
+
+services:
+  sut:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+    environment:
+      # This value should be set as a base64 encoded value in the COMPOSE_VARS secret in the GitHub repo 
+      # and passed down by the GitHub action
+      - REPO_SECRET
+    networks:
+      - internal
