@@ -1,0 +1,137 @@
+name: 'VersionBot'
+description: 'Applies opinionated versioning to a branch'
+inputs:
+  working_directory:
+    description: 'Github actions working directory'
+    # type: string
+    required: false
+    default: '.'
+  repo_type:
+    description: 'Repo type from https://github.com/product-os/balena-versionist/tree/master/lib/repo-type-mappings'
+    # type: string
+    required: false
+    default: 'generic'
+  author_email:
+    description: 'Author email for the versioned git commit'
+    # type: string
+    required: false
+    default: 'versionbot@users.noreply.github.com'
+  author_name:
+    description: 'Author name for the versioned git commit'
+    # type: string
+    required: false
+    default: 'VersionBot'
+  versioned_branch:
+    description: 'Name of the versioned branch to create'
+    # type: string
+    required: false
+    default: versionbot/pr/${{ github.event.pull_request.number }}
+outputs:
+  new_version:
+    description: "New version string"
+    value: ${{ jobs.versionbot.outputs.new_version }}
+  commit_sha:
+    description: "Versioned commit sha"
+    value: ${{ jobs.versionbot.outputs.commit_sha }}
+  commit_long_sha:
+    description: "Versioned commit long sha"
+    value: ${{ jobs.versionbot.outputs.commit_long_sha }}
+  versioned_branch:
+    description: "Versioned branch (only applies to pull requests)"
+    value: ${{ jobs.versionbot.outputs.versioned_branch }}
+
+runs:
+  using: "composite"
+
+  # defaults:
+  #   run:
+  #     working-directory: ${{ inputs.working_directory }}
+
+  # outputs:
+  #   new_version: ${{ steps.versionist.outputs.new_version }}
+  #   commit_sha: ${{ steps.commit.outputs.commit_sha }}
+  #   commit_long_sha: ${{ steps.commit.outputs.commit_long_sha }}
+  #   versioned_branch: ${{ inputs.versioned_branch }}
+
+  # env:
+  #   NODE_ENV: production
+
+  steps:
+
+    - name: Checkout source
+      if: ${{ github.event_name != 'pull_request' }}
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        # persist-credentials: false
+
+    - name: Checkout PR source
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        # persist-credentials: false
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        ref: ${{ github.event.pull_request.head.ref }}
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16.x
+
+    - name: Install balena-versionist
+      run: npm install --location=global versionist@v6.7.1 balena-versionist@v0.14.5
+      shell: bash
+
+    # TODO: package this ^^ and this >> as an action
+    - name: Run balena-versionist
+      id: versionist
+      run: |
+        test -f repo.yml || echo "type: ${{ inputs.repo_type }}" > repo.yml
+        test -f package.json && old_version=v$(jq -r .version package.json)
+        test -f VERSION && old_version=v$(cat VERSION)
+        balena-versionist
+        git --no-pager diff
+        test -f package.json && new_version=v$(jq -r .version package.json)
+        test -f VERSION && new_version=v$(cat VERSION)
+        echo "::set-output name=old_version::$old_version"
+        echo "::set-output name=new_version::$new_version"
+        echo "::set-output name=updated::$(test $new_version != $old_version && echo true)"
+      shell: bash
+
+    # - name: Commit versioned-source
+    #   id: commit
+    #   run: |
+    #     git config --global --add safe.directory .
+    #     git config --local user.email "${{ inputs.commit_email }}"
+    #     git config --local user.name "${{ inputs.commit_user }}"
+    #     git add .
+    #     git commit -m "${{ steps.versionist.outputs.new_version }}"
+
+    # - name: Commit versioned-source
+    #   uses: gha-utilities/workspace-commit@v0.0.4
+    #   with: 
+    #     author: ${{ inputs.author }}
+    #     email: ${{ inputs.email }}
+    #     message: ${{ steps.versionist.outputs.new_version }}
+    #     all: true
+
+    - name: Commit versioned-source
+      if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
+      id: commit
+      uses: EndBug/add-and-commit@v9
+      with:
+        add: '.'
+        author_name: ${{ inputs.author_name }}
+        author_email: ${{ inputs.author_email }}
+        message: ${{ steps.versionist.outputs.new_version }}
+        commit: --signoff
+        branch_mode: create
+        branch: ${{ inputs.versioned_branch }}
+        push: true
+
+    - name: Upload versioned-source artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: versioned-source
+        path: ./

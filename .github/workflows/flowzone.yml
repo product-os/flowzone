@@ -51,11 +51,20 @@ jobs:
   versionbot:
     name: VersionBot
     needs: [check_type]
-    uses: ./.github/workflows/versionbot.yml
-    secrets: inherit
-    with:
-      working_directory: .
-      repo_type: ${{ needs.check_type.outputs.type }}
+    runs-on: ubuntu-latest
+
+    outputs:
+      new_version: ${{ steps.versionbot.outputs.new_version }}
+      commit_sha: ${{ steps.versionbot.outputs.commit_sha }}
+      commit_long_sha: ${{ steps.versionbot.outputs.commit_long_sha }}
+      versioned_branch: ${{ steps.versionbot.outputs.versioned_branch }}
+
+    steps:
+      - id: versionbot
+        uses: ./.github/actions/versionbot
+        with:
+          working_directory: .
+          repo_type: ${{ needs.check_type.outputs.type }}
 
   npm_test:
     name: Test NodeJS 16.x
