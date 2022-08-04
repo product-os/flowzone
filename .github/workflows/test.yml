@@ -1,6 +1,11 @@
 name: Test
 
-on: pull_request
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches:
+      - "main"
+      - "master"
 
 jobs:
   # Test npm projects using the sample code in ./npm

@@ -5,8 +5,10 @@ on:
         required: false
     inputs:
       working_directory:
+        description: 'Github actions working directory'
         type: string
         required: false
+        default: '.'
 
 jobs:
   check_type:
@@ -15,7 +17,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ inputs.working_directory || '.' }}
+        working-directory: ${{ inputs.working_directory }}
 
     # Declare outputs for next jobs
     outputs:
@@ -30,8 +32,13 @@ jobs:
         id: check_type
         run: |
           if test -f "package.json"; then
-              echo "found package.json"
-              echo ::set-output name=type::"nodejs"
+            echo "found package.json"
+            echo ::set-output name=type::"nodejs"
+          elif test -f Dockerfile || test -f Dockerfile.template || test -f docker-compose.yml ] ; then
+            echo "found Docker and/or compose file(s)"
+            echo ::set-output name=type::"docker"
+          else
+            echo ::set-output name=type::"generic"
           fi
 
           if [ -f docker-compose.test.yml ] && [ -f docker-compose.yml ]; then
@@ -41,18 +48,30 @@ jobs:
             echo ::set-output name=sut::"False"
           fi
 
-  build_node:
+  versionbot:
+    name: VersionBot
+    needs: [check_type]
+    uses: ./.github/workflows/versionbot.yml
+    secrets: inherit
+    with:
+      working_directory: .
+      repo_type: ${{ needs.check_type.outputs.type }}
+
+  npm_test:
     name: Test NodeJS 16.x
     runs-on: ubuntu-latest
-    needs: [check_type]
+    needs: [check_type, versionbot]
     if: needs.check_type.outputs.type == 'nodejs'
 
     defaults:
       run:
-        working-directory: ${{ inputs.working_directory || '.' }}
+        working-directory: ${{ inputs.working_directory }}
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.versionbot.outputs.commit_sha }}
+
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
@@ -70,18 +89,21 @@ jobs:
   sut_test:
     name: Test with docker compose
     runs-on: ubuntu-latest
-    needs: [check_type]
+    needs: [check_type, versionbot]
     if: needs.check_type.outputs.sut == 'True'
 
     defaults:
       run:
-        working-directory: ${{ inputs.working_directory || '.' }}
+        working-directory: ${{ inputs.working_directory }}
 
     env:
       COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.versionbot.outputs.commit_sha }}
+
       - name: Run SUT container
         shell: bash
         run: |

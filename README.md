@@ -9,7 +9,12 @@ Simply add the following to `./github/workflows/flowzone.yml`:
 ```yml
 name: Flowzone
 
-on: pull_request
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches:
+      - "main"
+      - "master"
 
 jobs:
   flowzone:
