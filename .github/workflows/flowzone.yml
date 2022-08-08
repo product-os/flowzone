@@ -24,6 +24,13 @@ jobs:
 
     steps:
 
+      # checkout must happen in flowzone in order for local composite action path to exist
+      - name: Checkout source
+        uses: actions/checkout@v3
+        with:
+          # check out full depth for changelog generation
+          fetch-depth: 0
+
       - name: Run VersionBot
         id: versionbot
         uses: ./.github/actions/versionbot
