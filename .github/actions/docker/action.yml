@@ -1,0 +1,27 @@
+name: 'Docker test'
+description: 'Build, test, and deploy draft Docker artifacts'
+inputs:
+  working_directory:
+    description: 'Github actions working directory'
+    required: false
+    default: '.'
+
+# TODO: add steps to deploy draft packages if tests pass
+
+runs:
+  using: "composite"
+
+  steps:
+
+    - name: Run SUT container
+      working-directory: ${{ inputs.working_directory }}
+      shell: bash
+      run: |
+        if [[ ! -z "${COMPOSE_VARS}" ]]; then
+          echo $COMPOSE_VARS | base64 --decode > .env
+        fi
+        docker-compose \
+          -f docker-compose.yml \
+          -f docker-compose.test.yml \
+        up \
+          --exit-code-from "sut"

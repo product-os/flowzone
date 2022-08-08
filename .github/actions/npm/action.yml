@@ -1,0 +1,41 @@
+name: 'NPM test'
+description: 'Build, test, and deploy draft NPM artifacts'
+inputs:
+  working_directory:
+    description: 'Github actions working directory'
+    required: false
+    default: '.'
+  node_version:
+    description: 'Node.js version to install'
+    required: false
+    default: '16.x'
+
+# TODO: add steps to deploy draft packages if tests pass
+
+runs:
+  using: "composite"
+
+  steps:
+
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '${{ inputs.node_version }}'
+
+    - name: Install dependencies
+      working-directory: ${{ inputs.working_directory }}
+      shell: bash
+      run: |
+        if [ -e package-lock.json ]; then
+          npm ci
+        else
+          npm i
+        fi
+
+    - run: npm run build --if-present
+      working-directory: ${{ inputs.working_directory }}
+      shell: bash
+
+    - run: npm test
+      working-directory: ${{ inputs.working_directory }}
+      shell: bash

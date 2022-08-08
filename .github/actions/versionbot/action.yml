@@ -1,0 +1,51 @@
+name: 'VersionBot'
+description: 'Apply opinionated versioning to a branch'
+inputs:
+  default_repo_type:
+    description: 'Default repo type if repo.yml is not found'
+    required: false
+    default: 'generic'
+  author_email:
+    description: 'Author email for the versioned git commit'
+    required: false
+    default: 'versionbot@users.noreply.github.com'
+  author_name:
+    description: 'Author name for the versioned git commit'
+    required: false
+    default: 'VersionBot'
+  github_token:
+    description: 'A Personal Access Token for the GitHub service account.'
+    required: true
+  branch:
+    description: 'Name of the branch where versioning should be applied'
+    required: false
+    default: 'master'
+outputs:
+  version:
+    description: "The project's version after running versionist"
+    value: ${{ steps.versionist.outputs.version }}
+  updated:
+    description: "Returns true if the version was bumped"
+    value: ${{ steps.versionist.outputs.updated }}
+
+runs:
+  using: "composite"
+
+  steps:
+
+    # repo.yml is required for balena-versionist so create one if needed
+    - name: Check repo type
+      shell: bash
+      run: |
+        jq '.type' repo.yml || echo "type: ${{ inputs.default_repo_type }}" > repo.yml
+
+    # run an up-to-date fork of the balena-versionist action
+    # TODO: rewrite this action to be a nodejs project
+    - name: Run versionist
+      id: versionist
+      uses: klutchell/versionist@v0.5.0
+      with:
+        github_email: '${{ inputs.author_email }}'
+        github_username: '${{ inputs.author_name }}'
+        github_token: '${{ inputs.github_token }}'
+        branch: '${{ inputs.branch }}'
