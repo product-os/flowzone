@@ -35,19 +35,33 @@ runs:
 
     # TODO: finalize existing draft npm and docker releases
 
-    # repo.yml is required for balena-versionist so create one if needed
-    - name: Check repo type
-      shell: bash
-      run: |
-        jq '.type' repo.yml 2>/dev/null || echo "type: ${{ inputs.default_repo_type }}" > repo.yml
-
     # run an up-to-date fork of the balena-versionist action
     # TODO: rewrite this action to be a nodejs project
-    - name: Run versionist
-      id: versionist
-      uses: klutchell/versionist@v0.5.0
+    # - name: Run versionist
+    #   id: versionist
+    #   uses: klutchell/versionist@v0.5.0
+    #   with:
+    #     github_email: '${{ inputs.author_email }}'
+    #     github_username: '${{ inputs.author_name }}'
+    #     github_token: '${{ inputs.github_token }}'
+    #     branch: '${{ inputs.branch }}'
+
+    - uses: actions/setup-node@v3
       with:
-        github_email: '${{ inputs.author_email }}'
-        github_username: '${{ inputs.author_name }}'
-        github_token: '${{ inputs.github_token }}'
-        branch: '${{ inputs.branch }}'
+        node-version: '16.x'
+
+    - id: versionist
+      shell: bash
+      run: |
+        npm install --location=global versionist@v6.7.1 balena-versionist@v0.14.5
+        git config --global user.email "${{ inputs.author_email }}"
+        git config --global user.name "${{ inputs.author_name }}"
+        jq '.type' repo.yml 2>/dev/null || echo "type: ${{ inputs.default_repo_type }}" > repo.yml
+        balena-versionist --silent=false
+        VERSION="v$(head -n1 VERSION || jq -r '.version' package.json)"
+        echo "::set-output name=version::${VERSION}"
+        git add -A
+        git commit -m "${VERSION}"
+        git tag -a "${VERSION}" -m "${VERSION}"
+        git push origin HEAD:${{ github.head_ref || github.ref }} --follow-tags
+      # git push https://${{ github.actor }}:${{ inputs.github_token }}@github.com/${{ github.repository }}.git HEAD:${{ github.base_ref }} --follow-tags
