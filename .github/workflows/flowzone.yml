@@ -26,6 +26,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v3
         with:
+          ref: github.base_ref
           # check out full depth for changelog generation
           fetch-depth: 0
 
