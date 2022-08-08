@@ -33,12 +33,6 @@ runs:
 
   steps:
 
-    - name: Checkout source
-      uses: actions/checkout@v3
-      with:
-        # check out full depth for changelog generation
-        fetch-depth: 0
-
     # TODO: finalize existing draft npm and docker releases
 
     # repo.yml is required for balena-versionist so create one if needed
