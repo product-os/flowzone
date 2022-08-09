@@ -60,21 +60,25 @@ $ cat < .resinci.yml
 disabled: true
 ```
 
-* remove all resinCI required checks from your repository (e.g.)
+* replace required checks (e.g.)
 
 ```
 org=balenablocks
 repo=awesome-block
 branch=master
+url="https://api.github.com/repos/${org}/${repo}/branches/${branch}/protection"
 
-curl https://api.github.com/repos/${org}/${repo}/branches/${branch}/protection \
-  -H "Accept: application/vnd.github+json" \
+
+curl --silent -X PUT "${url}" \
+  -H 'Accept: application/vnd.github+json' \
   -H "Authorization: Bearer ${GITHUB_ACCESS_TOKEN}" \
-  -X PUT \
   -d '{
   "required_status_checks": {
     "strict": true,
     "contexts": [
+      "Flowzone / Check Project Type",
+      "Flowzone / Test NodeJS 16.x",
+      "Flowzone / Test with docker compose",
       "VersionBot/generate-version"
     ]
   },

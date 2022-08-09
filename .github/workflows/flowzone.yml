@@ -26,6 +26,59 @@ on:
 
 jobs:
 
+  protect-branch:
+    name: Set branch protection rules
+    runs-on: ubuntu-latest
+    # only run on PR merges to the default branch and skip events triggered by versionbot
+    if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && !contains(github.event.head_commit.author.name, 'VersionBot') }}
+
+    outputs:
+      result: ${{ steps.protect_branch.outputs.result }}
+
+    steps:
+
+      - shell: bash
+        id: protect_branch
+        run: |
+          url='${{ github.api_url }}/repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection'
+
+          result="$(curl --silent -X PUT "${url}" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'Authorization: Bearer ${{ secrets.FLOWZONE_TOKEN }}' \
+            -d '{
+            "required_status_checks": {
+              "strict": true,
+              "contexts": [
+                "Flowzone / Check Project Type",
+                "Flowzone / Test NodeJS 16.x",
+                "Flowzone / Test with docker compose",
+                "VersionBot/generate-version"
+              ]
+            },
+            "enforce_admins": false,
+            "required_pull_request_reviews": {
+              "dismissal_restrictions": {
+                "users": [],
+                "teams": []
+              },
+              "dismiss_stale_reviews": false,
+              "require_code_owner_reviews": false,
+              "required_approving_review_count": 1,
+              "bypass_pull_request_allowances": {
+                "users": [],
+                "teams": []
+              }
+            },
+            "restrictions": null,
+            "required_linear_history": false,
+            "allow_force_pushes": false,
+            "allow_deletions": false,
+            "block_creations": false,
+            "required_conversation_resolution": false
+          }')"
+
+          echo ::set-output name=result::"${result}"
+
   versionbot:
     name: VersionBot
     runs-on: ubuntu-latest
