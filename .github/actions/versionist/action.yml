@@ -1,20 +1,26 @@
-name: 'Versionist'
-description: 'Apply opinionated versioning to a branch'
+name: Versionist
+description: apply opinionated versioning to a branch
 inputs:
   default_repo_type:
-    description: 'Default repo type if repo.yml is not found'
+    description: default repo type if repo.yml is not found
     required: false
-    default: 'generic'
+    default: generic
   github_token:
-    description: 'A Personal Access Token for the GitHub service account.'
+    description: personal access Token for the GitHub service account with admin/owner permissions
+    required: true
+  gpg_private_key: GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits
+    description:
+    required: true
+  passphrase: Passprase to decrypt GPG private key
+    description:
     required: true
 outputs:
   version:
-    description: "The project's version after running versionist"
+    description: the project's version after running versionist
     value: ${{ steps.versionist.outputs.version }}
 
 runs:
-  using: "composite"
+  using: composite
 
   steps:
 
