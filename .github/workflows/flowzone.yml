@@ -107,14 +107,14 @@ jobs:
 
           echo ::set-output name=result::"${result}"
 
-  versionbot:
-    name: VersionBot
+  versionist:
+    name: Versionist
     runs-on: ubuntu-latest
-    # only run on PR merges to the default branch and skip events triggered by versionbot
-    if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && !contains(github.event.head_commit.author.name, 'VersionBot') }}
+    # only run on PR merges to the default branch and skip events triggered by flowzone
+    if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && !contains(github.event.head_commit.author.name, 'Flowzone') }}
 
     outputs:
-      version: ${{ steps.versionbot.outputs.version }}
+      version: ${{ steps.versionist.outputs.version }}
 
     steps:
 
@@ -126,9 +126,9 @@ jobs:
           fetch-depth: 0
           token: '${{ secrets.FLOWZONE_TOKEN }}'
 
-      - name: Run VersionBot
-        id: versionbot
-        uses: ./.github/actions/versionbot
+      - name: Run Versionist
+        id: versionist
+        uses: ./.github/actions/versionist
         with:
           github_token: '${{ secrets.FLOWZONE_TOKEN }}'
 
