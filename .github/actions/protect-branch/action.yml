@@ -1,16 +1,16 @@
-name: Protect branch
-description: Apply branch protection rules
+name: protect branch
+description: apply branch protection rules
 inputs:
   github_token:
-    description: A personal access token for the GitHub service account wirh admin/owner permissions.
+    description: a personal access token for the GitHub service account wirh admin/owner permissions
     required: true
   required_approving_review_count:
-    description: Setting this value to zero effectively means merge==deploy without approval(s).
+    description: setting this value to zero effectively means merge==deploy without approval(s)
     required: true
 
 outputs:
   result:
-    description: Result of GitHub API operation
+    description: result of GitHub API operation
     value: ${{ steps.apply_branch_protection_rules.outputs.result }}
 
 runs:
@@ -43,7 +43,7 @@ runs:
             },
             "dismiss_stale_reviews": false,
             "require_code_owner_reviews": false,
-            "required_approving_review_count": ${{ required_approving_review_count }},
+            "required_approving_review_count": ${{ inputs.required_approving_review_count }},
             "bypass_pull_request_allowances": {
               "users": [],
               "teams": []

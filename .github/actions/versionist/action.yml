@@ -8,11 +8,11 @@ inputs:
   github_token:
     description: personal access Token for the GitHub service account with admin/owner permissions
     required: true
-  gpg_private_key: GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits
-    description:
+  gpg_private_key:
+    description: GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits
     required: true
-  passphrase: Passprase to decrypt GPG private key
-    description:
+  passphrase:
+    description: Passprase to decrypt GPG private key
     required: true
 outputs:
   version:

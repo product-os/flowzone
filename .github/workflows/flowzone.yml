@@ -64,7 +64,7 @@ env:
 jobs:
 
   protect-branch:
-    name: Protect branch
+    name: protect branch
     runs-on: ubuntu-latest
     # only run on PR merges to the default branch and skip events triggered by flowzone
     if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && !contains(github.event.head_commit.author.name, 'Flowzone') }}
