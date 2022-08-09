@@ -57,6 +57,10 @@ on:
         description: sets the target stage to build
         type: string
         required: false
+      balena_deploy_slugs:
+        description: 'Newline separated list of balenaCloud apps, fleets, or blocks to deploy'
+        type: string
+        required: false
 
 env:
   FLOWZONE_USER: balena-ci # https://github.com/balena-ci
@@ -128,6 +132,8 @@ jobs:
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
       docker: ${{ steps.docker.outputs.enabled }}
+      balena: ${{ steps.balena.outputs.enabled }}
+      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
 
     steps:
 
@@ -154,6 +160,22 @@ jobs:
           else
             echo ::set-output name=enabled::"False"
           fi
+
+      - id: balena
+        run: |
+          if test -f balena.yml
+          then
+            echo "found balena.yml"
+            echo ::set-output name=enabled::"True"
+          else
+            echo ::set-output name=enabled::"False"
+          fi
+
+      - id: balena_slugs
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.balena_deploy_slugs || github.repository }}
+          separator: "newline"
 
   npm_flow:
     name: NPM
@@ -253,3 +275,33 @@ jobs:
           context: ${{ inputs.docker_context }}
           dockerfile: ${{ inputs.docker_file }}
           target: ${{ inputs.docker_target }}
+
+  balena_flow:
+    name: balena
+    runs-on: ubuntu-latest
+    needs: [checks]
+    if: needs.checks.outputs.balena == 'True'
+
+    strategy:
+      fail-fast: true
+      matrix:
+        slug: ${{ needs.checks.outputs.balena_slugs }}
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash
+
+    steps:
+
+      - name: Checkout original source
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+          token: '${{ secrets.FLOWZONE_TOKEN }}'
+        
+      - uses: balena-io/deploy-to-balena-action@v0.11.0
+        with:
+          balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
+          fleet: ${{ matrix.slug }}
+          versionbot: true
