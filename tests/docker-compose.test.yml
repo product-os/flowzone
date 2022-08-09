@@ -2,6 +2,7 @@ version: '2.1'
 
 services:
   sut:
+    image: sut
     build:
       context: .
       dockerfile: Dockerfile
