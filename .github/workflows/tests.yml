@@ -17,6 +17,7 @@ jobs:
     secrets: inherit
     with:
       working_directory: ./tests
+      required_approving_review_count: 0
       docker_platforms: |
         linux/amd64
         linux/aarch64
