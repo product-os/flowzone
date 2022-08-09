@@ -1,4 +1,4 @@
-name: 'NPM test'
+name: 'NPM'
 description: 'Build, test, and deploy draft NPM artifacts'
 inputs:
   working_directory:
@@ -17,13 +17,11 @@ runs:
 
   steps:
 
-    - name: Use Node.js
-      uses: actions/setup-node@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '${{ inputs.node_version }}'
 
-    - name: Install dependencies
-      working-directory: ${{ inputs.working_directory }}
+    - working-directory: ${{ inputs.working_directory }}
       shell: bash
       run: |
         if [ -e package-lock.json ]; then
