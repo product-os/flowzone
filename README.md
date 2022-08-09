@@ -76,9 +76,9 @@ curl --silent -X PUT "${url}" \
   "required_status_checks": {
     "strict": true,
     "contexts": [
-      "Flowzone / Check Project Type",
-      "Flowzone / Test NodeJS 16.x",
-      "Flowzone / Test with docker compose",
+      "Flowzone / Checks",
+      "Flowzone / NPM",
+      "Flowzone / Docker",
       "VersionBot/generate-version"
     ]
   },
