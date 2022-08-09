@@ -16,10 +16,6 @@ inputs:
   github_token:
     description: 'A Personal Access Token for the GitHub service account.'
     required: true
-  branch:
-    description: 'Name of the branch where versioning should be applied'
-    required: false
-    default: 'master'
 outputs:
   version:
     description: "The project's version after running versionist"
@@ -36,7 +32,6 @@ runs:
     # TODO: finalize existing draft npm and docker releases
 
     # run an up-to-date fork of the balena-versionist action
-    # TODO: rewrite this action to be a nodejs project
     # - name: Run versionist
     #   id: versionist
     #   uses: klutchell/versionist@v0.5.0
@@ -50,6 +45,7 @@ runs:
       with:
         node-version: '16.x'
 
+    # TODO: rewrite this action to be a nodejs project
     - id: versionist
       shell: bash
       run: |
