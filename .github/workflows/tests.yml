@@ -11,8 +11,8 @@ on:
       - "master"
 
 jobs:
-  tests:
-    name: Tests
+  flowzone:
+    name: Flowzone
     uses: ./.github/workflows/flowzone.yml
     secrets: inherit
     with:

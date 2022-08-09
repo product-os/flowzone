@@ -17,14 +17,19 @@ name: Flowzone
 
 on:
   pull_request:
-    types: [opened, synchronize, closed]
+    branches:
+      - "main"
+      - "master"
+  push:
     branches:
       - "main"
       - "master"
 
 jobs:
   flowzone:
+    name: Flowzone
     uses: product-os/flowzone/.github/workflows/flowzone.yml@master
+    secrets: inherit
 ```
 
 Flowzone will automatically select an appropriate runner based on your project's code.
