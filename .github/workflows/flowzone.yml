@@ -1,6 +1,20 @@
+name: Flowzone
+
 on:
   workflow_call:
     secrets:
+      FLOWZONE_TOKEN:
+        required: true
+      NPM_TOKEN:
+        required: true
+      DOCKER_REGISTRY_USER:
+        required: true
+      DOCKER_REGISTRY_PASS:
+        required: true
+      BALENA_API_KEY_PUSH:
+        required: true
+      BALENA_API_KEY_TEST:
+        required: false
       COMPOSE_VARS:
         required: false
     inputs:
@@ -15,8 +29,8 @@ jobs:
   versionbot:
     name: VersionBot
     runs-on: ubuntu-latest
-    # only run on PR merges to the default branch
-    if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch }}
+    # only run on PR merges to the default branch and skip events triggered by versionbot
+    if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && !contains(github.event.head_commit.author.name, 'VersionBot') }}
 
     outputs:
       version: ${{ steps.versionbot.outputs.version }}
@@ -30,15 +44,13 @@ jobs:
         with:
           # check out full depth for changelog generation
           fetch-depth: 0
+          token: '${{ secrets.FLOWZONE_TOKEN }}'
 
       - name: Run VersionBot
         id: versionbot
         uses: ./.github/actions/versionbot
         with:
-          # use the default GITHUB_TOKEN for now to avoid triggering subsequent actions
-          # TODO: replace this with a service account token and add exceptions to the actions to avoid running again
-          github_token: '${{ secrets.GITHUB_TOKEN }}'
-          branch: '${{ github.event.repository.default_branch }}'
+          github_token: '${{ secrets.FLOWZONE_TOKEN }}'
 
   check_type:
     name: Check Project Type
@@ -53,11 +65,15 @@ jobs:
     outputs:
       npm: ${{ steps.check_type.outputs.npm }}
       sut: ${{ steps.check_type.outputs.sut }}
+
     steps:
+
       - uses: actions/checkout@v2
         with:
           # Checkout as many commits as needed for the check
           fetch-depth: 1
+          token: '${{ secrets.FLOWZONE_TOKEN }}'
+
       - shell: bash
         id: check_type
         run: |
@@ -93,11 +109,13 @@ jobs:
         with:
           ref: 'versionbot/pr/${{ github.event.pull_request.number }}'
           fetch-depth: 1
+          token: '${{ secrets.FLOWZONE_TOKEN }}'
 
       - if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
         uses: actions/checkout@v3
         with:
           fetch-depth: 1
+          token: '${{ secrets.FLOWZONE_TOKEN }}'
 
       - name: Run NPM test
         id: docker
@@ -127,11 +145,13 @@ jobs:
         with:
           ref: 'versionbot/pr/${{ github.event.pull_request.number }}'
           fetch-depth: 1
+          token: '${{ secrets.FLOWZONE_TOKEN }}'
 
       - if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
         uses: actions/checkout@v3
         with:
           fetch-depth: 1
+          token: '${{ secrets.FLOWZONE_TOKEN }}'
 
       - name: Run Docker test
         id: docker
