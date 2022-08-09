@@ -7,6 +7,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 * [Usage](#usage)
 * [Supported project types](#supported-project-types)
 * [Migration from resinCI](#migration-from-resinci)
+* [Maintenance](#maintenance)
 
 ## Usage
 
@@ -135,3 +136,29 @@ jobs:
 * approve/certify
 
 * the PR will automatically merge if and when the workflow completes
+
+## Maintenance
+
+### Generate GPG keys
+> [Managing commit signature verification
+](https://docs.github.com/en/authentication/managing-commit-signature-verification)
+
+* generate new GPG key signing ensuring the name matches an existing GitHub user/identity
+
+```
+gpg --full-generate-key
+```
+
+* get the key id
+
+```
+gpg --list-secret-keys --keyid-format=long
+```
+
+* export the key to be stored in `GPG_PRIVATE_KEY` GitHub organisation secret
+
+```
+gpg --armor --export-secret-keys {{secret_key_id}}
+```
+
+* set `GPG_PASSPHRASE` and `GPG_PRIVATE_KEY` GitHub organisation secrets
