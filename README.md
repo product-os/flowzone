@@ -18,10 +18,7 @@ name: Flowzone
 
 on:
   pull_request:
-    branches:
-      - "main"
-      - "master"
-  push:
+    types: [opened, synchronize, closed]
     branches:
       - "main"
       - "master"
@@ -53,34 +50,12 @@ If you need to provide environment variables to the compose environment you can 
 
 Open a PR with the following changes to migrate an existing resinCI enabled repository to Flowzone:
 
-1. Disable resinCI in `.resinci.yml` by adding `disabled: true` key
+1. Create `.github/workflows/flowzone.yml` (see [Usage](#usage))
+2. Disable resinCI in `.resinci.yml` by adding `disabled: true` key
 
     ```yaml
     # .resinci.yml
     disabled: true
-    ```
-
-2. Create `.github/workflows/flowzone.yml`
-
-    ```yml
-    # .github/workflows/flowzone.yml
-    name: Flowzone
-
-    on:
-      pull_request:
-        branches:
-          - "main"
-          - "master"
-      push:
-        branches:
-          - "main"
-          - "master"
-
-    jobs:
-      flowzone:
-        name: Flowzone
-        uses: product-os/flowzone/.github/workflows/flowzone.yml@master
-        secrets: inherit
     ```
 
 3. Ensure your `package.json`, `docker-compose.yml`, `balena.yml`, `Dockerfile`, etc. contain correct information to enable Flowzone to perform the required actions
