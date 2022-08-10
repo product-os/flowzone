@@ -139,7 +139,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ inputs.working_directory }}
+        working-directory: .
         shell: bash
 
     outputs:
@@ -162,12 +162,16 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
+      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
+      - name: Compress source
+        run: tar -cvf /tmp/versioned-source.tar .
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         if: github.event.action != 'closed'
         with:
           name: versioned-source
-          path: ./
+          path: /tmp/versioned-source.tar
 
       - name: Download artifact
         if: github.event.action == 'closed' && github.event.pull_request.merged == true
@@ -229,6 +233,10 @@ jobs:
         with:
           name: versioned-source
 
+      - name: Extract source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
+
       - id: npm
         run: |
           if test -f "package.json"; then
@@ -279,6 +287,10 @@ jobs:
         with:
           name: versioned-source
 
+      - name: Extract source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -324,6 +336,10 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: versioned-source
+
+      - name: Extract source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -433,6 +449,10 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: versioned-source
+
+      - name: Extract source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
 
       - uses: balena-io/deploy-to-balena-action@v0.11.0
         with:
