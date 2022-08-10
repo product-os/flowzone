@@ -4,7 +4,7 @@ on:
   workflow_call:
     secrets:
       FLOWZONE_TOKEN:
-        description: Personal access Token for the GitHub service account with admin/owner permissions
+        description: Personal access token (PAT) for the GitHub service account with admin/owner permissions
         required: true
       NPM_TOKEN:
         required: true
@@ -31,7 +31,7 @@ on:
         required: false
         default: '.'
       required_approving_review_count:
-        description: setting this value to zero effectively means merge==deploy without approval(s)
+        description: Setting this value to zero effectively means merge==deploy without approval(s)
         type: string
         required: false
         default: 1
@@ -79,21 +79,56 @@ jobs:
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
 
-    steps:
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
 
-      # checkout must happen in flowzone in order for local composite action path to exist
-      - name: Checkout source
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+    steps:
 
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
-        uses: ./.github/actions/protect-branch
-        with:
-          github_token: ${{ secrets.FLOWZONE_TOKEN }}
-          required_approving_review_count: ${{ inputs.required_approving_review_count }}
+        run: |
+          url='${{ github.api_url }}/repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection'
+
+          result="$(curl --silent -X PUT "${url}" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'Authorization: Bearer ${{ secrets.FLOWZONE_TOKEN }}' \
+            -d '{
+            "required_status_checks": {
+              "strict": true,
+              "contexts": [
+                "Flowzone / Protect branch",
+                "Flowzone / Checks",
+                "Flowzone / NPM",
+                "Flowzone / Docker",
+                "Flowzone / balena",
+                "VersionBot/generate-version"
+              ]
+            },
+            "enforce_admins": false,
+            "required_pull_request_reviews": {
+              "dismissal_restrictions": {
+                "users": [],
+                "teams": []
+              },
+              "dismiss_stale_reviews": false,
+              "require_code_owner_reviews": false,
+              "required_approving_review_count": ${{ inputs.required_approving_review_count }},
+              "bypass_pull_request_allowances": {
+                "users": [],
+                "teams": []
+              }
+            },
+            "restrictions": null,
+            "required_linear_history": false,
+            "allow_force_pushes": false,
+            "allow_deletions": false,
+            "block_creations": false,
+            "required_conversation_resolution": false
+          }')"
+
+          echo ::set-output name=result::"${result}"
 
   versionist:
     name: Versionist
@@ -106,7 +141,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ inputs.working_directory }}
+        working-directory: .
         shell: bash
 
     steps:
