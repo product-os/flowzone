@@ -4,7 +4,7 @@ on:
   workflow_call:
     secrets:
       FLOWZONE_TOKEN:
-        description: Personal access token (PAT) for the GitHub service account with admin/owner permissions
+        description: "Personal access token (PAT) for the GitHub service account with admin/owner permissions"
         required: true
       NPM_TOKEN:
         required: true
@@ -19,62 +19,58 @@ on:
       COMPOSE_VARS:
         required: false
       GPG_PRIVATE_KEY:
-        description: GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits
+        description: "GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits"
         required: true
       GPG_PASSPHRASE:
-        description: Passphrase to decrypt GPG private key
+        description: "Passphrase to decrypt GPG private key"
         required: true
     inputs:
       working_directory:
-        description: 'GitHub actions working directory'
+        description: "GitHub actions working directory"
         type: string
         required: false
-        default: '.'
+        default: "."
       required_approving_review_count:
-        description: 'Setting this value to zero effectively means merge==deploy without approval(s)'
+        description: "Setting this value to zero effectively means merge==deploy without approval(s)"
         type: string
         required: false
-        default: 1
+        default: "1"
       docker_images:
-        description: 'Newline separated list of images (without tags) to push, default is no push'
+        description: "Newline separated list of images (without tags) to push, default is no push"
         type: string
         required: false
       docker_cache_from:
-        description: 'Newline separated list of additional external cache sources'
+        description: "Newline separated list of additional external cache sources"
         type: string
         required: false
       docker_platforms:
-        description: 'Newline separated list of target platforms, default is linux/amd64'
+        description: "Newline separated list of target platforms, default is linux/amd64"
         type: string
         required: false
         default: linux/amd64
       docker_context:
-        description: 'Docker build context directory, default is ./'
+        description: "Docker build context directory, default is ./"
         type: string
         required: false
       docker_file:
-        description: 'Path to the Dockerfile relative to the context, default is ./Dockerfile'
+        description: "Path to the Dockerfile relative to the context, default is ./Dockerfile"
         type: string
         required: false
       docker_target:
-        description: 'Sets the target stage to build'
+        description: "Sets the target stage to build"
         type: string
         required: false
       balena_deploy_slugs:
-        description: 'Newline separated list of balenaCloud apps, fleets, or blocks to deploy'
+        description: "Newline separated list of balenaCloud apps, fleets, or blocks to deploy"
         type: string
         required: false
       node_version:
-        description: 'Node.js version to use for NPM projects'
+        description: "Node.js version to use for NPM projects"
         type: string
         required: false
-        default: '16.x'
-
-env:
-  FLOWZONE_USER: balena-ci # https://github.com/balena-ci
+        default: "16.x"
 
 jobs:
-
   protect-branch:
     name: Protect branch
     runs-on: ubuntu-latest
@@ -90,7 +86,6 @@ jobs:
         shell: bash
 
     steps:
-
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
         run: |
@@ -150,17 +145,16 @@ jobs:
         shell: bash
 
     steps:
-
       - name: Checkout source
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # full depth required to generate changelogs
+          fetch-depth: 0 # full depth required to generate changelogs
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: "16.x"
 
       - name: Import GPG key for signing commits
         id: import-gpg
@@ -213,7 +207,6 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
 
     steps:
-
       - uses: actions/checkout@v2
         with:
           # Checkout as many commits as needed for the check
@@ -266,7 +259,6 @@ jobs:
         shell: bash
 
     steps:
-
       - name: Checkout versioned source
         id: versionbot_checkout
         uses: actions/checkout@v3
@@ -286,7 +278,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '${{ inputs.node_version }}'
+          node-version: "${{ inputs.node_version }}"
 
       - name: Install dependencies
         run: |
@@ -316,6 +308,7 @@ jobs:
     env:
       COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
       LOCAL_IMAGE: localhost:5000/sut
+      FLOWZONE_USER: balena-ci # https://github.com/balena-ci
 
     services:
       registry:
@@ -324,7 +317,6 @@ jobs:
           - 5000:5000
 
     steps:
-
       - name: Checkout versioned source
         id: versionbot_checkout
         uses: actions/checkout@v3
@@ -446,13 +438,12 @@ jobs:
         shell: bash
 
     steps:
-
       - name: Checkout original source
         uses: actions/checkout@v3
         with:
           fetch-depth: 1
-          token: '${{ secrets.FLOWZONE_TOKEN }}'
-        
+          token: "${{ secrets.FLOWZONE_TOKEN }}"
+
       - uses: balena-io/deploy-to-balena-action@v0.11.0
         with:
           balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
