@@ -99,6 +99,7 @@ jobs:
               "strict": true,
               "contexts": [
                 "Flowzone / Protect branch",
+                "Flowzone / Versioned source",
                 "Flowzone / Checks",
                 "Flowzone / NPM",
                 "Flowzone / Docker",
@@ -130,33 +131,60 @@ jobs:
 
           echo ::set-output name=result::"${result}"
 
-  versionist:
-    name: Versionist
+  versioned_source:
+    name: Versioned source
     runs-on: ubuntu-latest
-    # only run on push to the default branch and skip events triggered by balena-ci
-    if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && !contains(github.event.head_commit.author.name, 'balena-ci') }}
-
-    outputs:
-      version: ${{ steps.versionist.outputs.version }}
+    # only run on PR events
+    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch
 
     defaults:
       run:
         working-directory: .
         shell: bash
 
+    outputs:
+      outcome: ${{ steps.versionbot_checkout.outcome }}
+
     steps:
-      - name: Checkout source
+      - name: Checkout versioned source
+        id: versionbot_checkout
+        if: github.event.action != 'closed'
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # full depth required to generate changelogs
+          ref: versionbot/pr/${{ github.event.pull_request.number }}
+          fetch-depth: 2
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Checkout original source
+        if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
+        uses: actions/checkout@v3
         with:
-          node-version: "16.x"
+          fetch-depth: 1
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+
+      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
+      - name: Compress source
+        run: tar -cvf /tmp/versioned-source.tar .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        if: github.event.action != 'closed'
+        with:
+          name: versioned-source
+          path: /tmp/versioned-source.tar
+
+      - name: Download artifact
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        id: download
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          workflow_conclusion: success
+          pr: ${{ github.event.pull_request.number }}
+          name: versioned-source
 
       - name: Import GPG key for signing commits
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@v4
         with:
@@ -166,30 +194,24 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
-      - name: Run versionist
-        id: versionist
-        run: |
-          npm install --location=global versionist@v6.7.1 balena-versionist@v0.14.5
-          jq '.type' repo.yml 2>/dev/null || echo "type: generic" > repo.yml
-          balena-versionist --silent=false
-          VERSION="v$(head -n1 VERSION || jq -r '.version' package.json)"
-          echo "::set-output name=version::${VERSION}"
-
-      - name: Commit and push changes
+      - name: Push versioned commit
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
         env:
-          VERSION: ${{ steps.versionist.outputs.version }}
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
         run: |
-          git add -A
-          git commit -m "${VERSION}"
+          set -x
+          git status
+          git --no-pager log --decorate=short --pretty=oneline -n1
+          VERSION="v$(head -n1 VERSION || jq -r '.version' package.json)"
           git tag -a "${VERSION}" -m "${VERSION}"
-          git push origin HEAD:${{ github.head_ref || github.ref }} --follow-tags
+          git push origin HEAD:${{ github.base_ref }} --follow-tags
 
   checks:
     name: Checks
+    needs: [versioned_source]
     runs-on: ubuntu-latest
     # only run on PR open and synchronize events
     if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.base_ref == github.event.repository.default_branch }}
@@ -207,11 +229,13 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v3
         with:
-          # Checkout as many commits as needed for the check
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          name: versioned-source
+
+      - name: Extract source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
 
       - id: npm
         run: |
@@ -250,7 +274,7 @@ jobs:
   npm_flow:
     name: NPM
     runs-on: ubuntu-latest
-    needs: [checks]
+    needs: [versioned_source, checks]
     if: needs.checks.outputs.npm == 'True'
 
     defaults:
@@ -259,21 +283,13 @@ jobs:
         shell: bash
 
     steps:
-      - name: Checkout versioned source
-        id: versionbot_checkout
-        uses: actions/checkout@v3
-        continue-on-error: true
+      - uses: actions/download-artifact@v3
         with:
-          ref: versionbot/pr/${{ github.event.pull_request.number }}
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          name: versioned-source
 
-      - name: Checkout original source
-        if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+      - name: Extract source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -297,7 +313,7 @@ jobs:
   docker_flow:
     name: Docker
     runs-on: ubuntu-latest
-    needs: [checks]
+    needs: [versioned_source, checks]
     if: needs.checks.outputs.docker == 'True'
 
     defaults:
@@ -317,21 +333,13 @@ jobs:
           - 5000:5000
 
     steps:
-      - name: Checkout versioned source
-        id: versionbot_checkout
-        uses: actions/checkout@v3
-        continue-on-error: true
+      - uses: actions/download-artifact@v3
         with:
-          ref: versionbot/pr/${{ github.event.pull_request.number }}
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          name: versioned-source
 
-      - name: Checkout original source
-        if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+      - name: Extract source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -424,7 +432,7 @@ jobs:
   balena_flow:
     name: balena
     runs-on: ubuntu-latest
-    needs: [checks]
+    needs: [versioned_source, checks]
     if: needs.checks.outputs.balena == 'True'
 
     strategy:
@@ -438,14 +446,16 @@ jobs:
         shell: bash
 
     steps:
-      - name: Checkout original source
-        uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
         with:
-          fetch-depth: 1
-          token: "${{ secrets.FLOWZONE_TOKEN }}"
+          name: versioned-source
+
+      - name: Extract source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
 
       - uses: balena-io/deploy-to-balena-action@v0.11.0
         with:
           balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
           fleet: ${{ matrix.slug }}
-          versionbot: true
+          versionbot: false
