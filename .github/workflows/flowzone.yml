@@ -294,10 +294,48 @@ jobs:
       - name: Run tests
         run: npm test
 
+  docker_meta:
+    name: Docker meta
+    runs-on: ubuntu-latest
+    needs: [checks]
+    if: needs.checks.outputs.docker == 'True'
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash
+
+    env:
+      LOCAL_IMAGE: localhost:5000/sut
+
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+      labels: ${{ steps.meta.outputs.labels }}
+
+    steps:
+
+      - name: Checkout source
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+
+      - name: Generate image labels and tags
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ inputs.docker_images || env.LOCAL_IMAGE }}
+          tags: |
+            type=ref,event=tag
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+            type=semver,pattern={{version}}
+
   docker_flow:
     name: Docker
     runs-on: ubuntu-latest
-    needs: [checks]
+    needs: [checks, docker_meta]
     if: needs.checks.outputs.docker == 'True'
 
     defaults:
@@ -323,7 +361,7 @@ jobs:
         continue-on-error: true
         with:
           ref: versionbot/pr/${{ github.event.pull_request.number }}
-          fetch-depth: 1
+          fetch-depth: 2
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Checkout original source
@@ -342,28 +380,16 @@ jobs:
           driver-opts: network=host
           install: true
 
-      - name: Generate image labels and tags
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ inputs.docker_images || env.LOCAL_IMAGE }}
-          tags: |
-            type=ref,event=tag
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha
-            type=semver,pattern={{version}}
-
       - name: Build and push to local registry
         id: build
         uses: docker/build-push-action@v3
         with:
           platforms: ${{ inputs.docker_platforms }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: ${{ needs.docker_meta.outputs.labels }}
           cache-to: type=gha,mode=max
           cache-from: |
             type=gha
-            ${{ steps.meta.outputs.tags }}
+            ${{ needs.docker_meta.outputs.tags }}
             ${{ inputs.docker_cache_from }}
           context: ${{ inputs.docker_context || inputs.working_directory }}
           file: ${{ inputs.docker_file }}
@@ -382,7 +408,7 @@ jobs:
       - name: Run docker-compose tests
         env:
           PLATFORMS: ${{ inputs.docker_platforms }}
-          TAGS: ${{ steps.meta.outputs.tags }}
+          TAGS: ${{ needs.docker_meta.outputs.tags }}
         run: |
           if [[ ! -z "${COMPOSE_VARS}" ]]; then
             echo $COMPOSE_VARS | base64 --decode > .env
@@ -419,7 +445,7 @@ jobs:
         with:
           src: ${{ env.LOCAL_IMAGE }}:latest
           dst: |
-            ${{ steps.meta.outputs.tags }}
+            ${{ needs.docker_meta.outputs.tags }}
 
   balena_flow:
     name: balena
