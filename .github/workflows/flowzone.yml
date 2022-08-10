@@ -99,6 +99,7 @@ jobs:
               "strict": true,
               "contexts": [
                 "Flowzone / Protect branch",
+                "Flowzone / Versioned source",
                 "Flowzone / Checks",
                 "Flowzone / NPM",
                 "Flowzone / Docker",
@@ -146,12 +147,19 @@ jobs:
 
     steps:
       - name: Checkout versioned source
-        id: checkout
+        id: versionbot_checkout
         if: github.event.action != 'closed'
         uses: actions/checkout@v3
         with:
           ref: versionbot/pr/${{ github.event.pull_request.number }}
           fetch-depth: 2
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+
+      - name: Checkout original source
+        if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Upload artifact
@@ -199,6 +207,7 @@ jobs:
 
   checks:
     name: Checks
+    needs: [versioned_source]
     runs-on: ubuntu-latest
     # only run on PR open and synchronize events
     if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.base_ref == github.event.repository.default_branch }}
@@ -216,11 +225,9 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v3
         with:
-          # Checkout as many commits as needed for the check
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          name: versioned-source
 
       - id: npm
         run: |
@@ -259,7 +266,7 @@ jobs:
   npm_flow:
     name: NPM
     runs-on: ubuntu-latest
-    needs: [checks]
+    needs: [versioned_source, checks]
     if: needs.checks.outputs.npm == 'True'
 
     defaults:
@@ -268,21 +275,9 @@ jobs:
         shell: bash
 
     steps:
-      - name: Checkout versioned source
-        id: versionbot_checkout
-        uses: actions/checkout@v3
-        continue-on-error: true
+      - uses: actions/download-artifact@v3
         with:
-          ref: versionbot/pr/${{ github.event.pull_request.number }}
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-
-      - name: Checkout original source
-        if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          name: versioned-source
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -306,7 +301,7 @@ jobs:
   docker_flow:
     name: Docker
     runs-on: ubuntu-latest
-    needs: [checks]
+    needs: [versioned_source, checks]
     if: needs.checks.outputs.docker == 'True'
 
     defaults:
@@ -326,21 +321,9 @@ jobs:
           - 5000:5000
 
     steps:
-      - name: Checkout versioned source
-        id: versionbot_checkout
-        uses: actions/checkout@v3
-        continue-on-error: true
+      - uses: actions/download-artifact@v3
         with:
-          ref: versionbot/pr/${{ github.event.pull_request.number }}
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-
-      - name: Checkout original source
-        if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          name: versioned-source
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -433,7 +416,7 @@ jobs:
   balena_flow:
     name: balena
     runs-on: ubuntu-latest
-    needs: [checks]
+    needs: [versioned_source, checks]
     if: needs.checks.outputs.balena == 'True'
 
     strategy:
@@ -447,14 +430,12 @@ jobs:
         shell: bash
 
     steps:
-      - name: Checkout original source
-        uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
         with:
-          fetch-depth: 1
-          token: "${{ secrets.FLOWZONE_TOKEN }}"
+          name: versioned-source
 
       - uses: balena-io/deploy-to-balena-action@v0.11.0
         with:
           balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
           fleet: ${{ matrix.slug }}
-          versionbot: true
+          versionbot: false
