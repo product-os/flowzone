@@ -64,6 +64,11 @@ on:
         description: 'Newline separated list of balenaCloud apps, fleets, or blocks to deploy'
         type: string
         required: false
+      node_version:
+        description: 'Node.js version to use for NPM projects'
+        type: string
+        required: false
+        default: '16.x'
 
 env:
   FLOWZONE_USER: balena-ci # https://github.com/balena-ci
@@ -278,11 +283,24 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
-      - name: Run NPM flow
-        uses: ./.github/actions/npm
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          working_directory: ${{ inputs.working_directory }}
-          node_version: '16.x'
+          node-version: '${{ inputs.node_version }}'
+
+      - name: Install dependencies
+        run: |
+          if [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+
+      - name: Run build
+        run: npm run build --if-present
+
+      - name: Run tests
+        run: npm test
 
   docker_flow:
     name: Docker
