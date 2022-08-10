@@ -64,10 +64,10 @@ env:
 jobs:
 
   protect-branch:
-    name: protect branch
+    name: Protect branch
     runs-on: ubuntu-latest
-    # only run on PR merges to the default branch and skip events triggered by flowzone
-    if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && !contains(github.event.head_commit.author.name, 'Flowzone') }}
+    # only run on PR open and synchronize events
+    if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.base_ref == github.event.repository.default_branch }}
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
@@ -78,8 +78,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v3
         with:
-          # check out full depth for changelog generation
-          fetch-depth: 0
+          fetch-depth: 1
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Apply branch protection rules
@@ -92,8 +91,8 @@ jobs:
   versionist:
     name: Versionist
     runs-on: ubuntu-latest
-    # only run on PR merges to the default branch and skip events triggered by flowzone
-    if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && !contains(github.event.head_commit.author.name, 'Flowzone') }}
+    # only run on push to the default branch and skip events triggered by balena-ci
+    if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && !contains(github.event.head_commit.author.name, 'balena-ci') }}
 
     outputs:
       version: ${{ steps.versionist.outputs.version }}
@@ -117,6 +116,7 @@ jobs:
   checks:
     name: Checks
     runs-on: ubuntu-latest
+    # only run on PR open and synchronize events
     if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.base_ref == github.event.repository.default_branch }}
 
     defaults:

@@ -2,10 +2,10 @@ name: protect branch
 description: apply branch protection rules
 inputs:
   github_token:
-    description: a personal access token for the GitHub service account wirh admin/owner permissions
+    description: Personal access token (PAT) for the GitHub service account with admin/owner permissions
     required: true
   required_approving_review_count:
-    description: setting this value to zero effectively means merge==deploy without approval(s)
+    description: Setting this value to zero effectively means merge==deploy without approval(s)
     required: true
 
 outputs:
@@ -29,6 +29,7 @@ runs:
           "required_status_checks": {
             "strict": true,
             "contexts": [
+              "Flowzone / Protect branch"
               "Flowzone / Checks",
               "Flowzone / NPM",
               "Flowzone / Docker",
