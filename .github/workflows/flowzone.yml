@@ -4,6 +4,7 @@ on:
   workflow_call:
     secrets:
       FLOWZONE_TOKEN:
+        description: Personal access Token for the GitHub service account with admin/owner permissions
         required: true
       NPM_TOKEN:
         required: true
@@ -18,8 +19,10 @@ on:
       COMPOSE_VARS:
         required: false
       GPG_PRIVATE_KEY:
+        description: GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits
         required: true
       GPG_PASSPHRASE:
+        description: Passphrase to decrypt GPG private key
         required: true
     inputs:
       working_directory:
@@ -101,21 +104,55 @@ jobs:
     outputs:
       version: ${{ steps.versionist.outputs.version }}
 
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash
+
     steps:
 
       - name: Checkout source
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # full depth required to generate changelogs
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
-      - name: Run Versionist
-        id: versionist
-        uses: ./.github/actions/versionist
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          node-version: '16.x'
+
+      - name: Import GPG key for signing commits
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_config_global: true
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Run versionist
+        id: versionist
+        run: |
+          npm install --location=global versionist@v6.7.1 balena-versionist@v0.14.5
+          jq '.type' repo.yml 2>/dev/null || echo "type: generic" > repo.yml
+          balena-versionist --silent=false
+          VERSION="v$(head -n1 VERSION || jq -r '.version' package.json)"
+          echo "::set-output name=version::${VERSION}"
+
+      - name: Commit and push changes
+        env:
+          VERSION: ${{ steps.versionist.outputs.version }}
+          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
+          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
+          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
+        run: |
+          git add -A
+          git commit -m "${VERSION}"
+          git tag -a "${VERSION}" -m "${VERSION}"
+          git push origin HEAD:${{ github.head_ref || github.ref }} --follow-tags
 
   checks:
     name: Checks
