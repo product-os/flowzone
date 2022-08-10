@@ -183,6 +183,10 @@ jobs:
           pr: ${{ github.event.pull_request.number }}
           name: versioned-source
 
+      - name: Extract source
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        run: tar -xvf versioned-source.tar
+
       - name: Import GPG key for signing commits
         if: github.event.action == 'closed' && github.event.pull_request.merged == true
         id: import-gpg
