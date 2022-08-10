@@ -2,13 +2,14 @@ name: Tests
 
 on:
   pull_request:
+    types: [opened, synchronize, closed]
     branches:
       - "main"
       - "master"
-  push:
-    branches:
-      - "main"
-      - "master"
+  # push:
+  #   branches:
+  #     - "main"
+  #     - "master"
 
 jobs:
   flowzone:

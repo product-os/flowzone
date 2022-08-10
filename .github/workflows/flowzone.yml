@@ -188,6 +188,73 @@ jobs:
           git tag -a "${VERSION}" -m "${VERSION}"
           git push origin HEAD:${{ github.head_ref || github.ref }} --follow-tags
 
+  versioned_source:
+    name: Versioned source
+    runs-on: ubuntu-latest
+    # only run on PR events
+    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash
+
+    outputs:
+      outcome: ${{ steps.versionbot_checkout.outcome }}
+
+    steps:
+      - name: Checkout versioned source
+        id: checkout
+        if: github.event.action != 'closed'
+        uses: actions/checkout@v3
+        with:
+          ref: versionbot/pr/${{ github.event.pull_request.number }}
+          fetch-depth: 2
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        if: github.event.action != 'closed'
+        with:
+          name: versioned-source
+          path: ./
+
+      - name: Download artifact
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        id: download
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          workflow_conclusion: success
+          pr: ${{ github.event.pull_request.number }}
+          name: versioned-source
+
+      - name: Import GPG key for signing commits
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_config_global: true
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Push versioned commit
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        env:
+          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
+          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
+          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
+        run: |
+          set -x
+          git status
+          git --no-pager log --decorate=short --pretty=oneline -n1
+          VERSION="v$(head -n1 VERSION || jq -r '.version' package.json)"
+          git tag -a "${VERSION}" -m "${VERSION}"
+          git push origin HEAD:${{ github.base_ref }} --follow-tags
+
   checks:
     name: Checks
     runs-on: ubuntu-latest
