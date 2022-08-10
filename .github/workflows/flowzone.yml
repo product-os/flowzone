@@ -39,36 +39,46 @@ on:
         description: "Newline separated list of images (without tags) to push, default is no push"
         type: string
         required: false
+        default: |
+          ${{ github.repository }}
       docker_cache_from:
         description: "Newline separated list of additional external cache sources"
         type: string
         required: false
       docker_platforms:
-        description: "Newline separated list of target platforms, default is linux/amd64"
+        description: "Newline separated list of Docker target platforms"
         type: string
         required: false
-        default: linux/amd64
+        default: |
+          linux/amd64
+          linux/arm64
+          linux/arm/v7
       docker_context:
-        description: "Docker build context directory, default is ./"
+        description: "Docker build context directory"
         type: string
         required: false
       docker_file:
-        description: "Path to the Dockerfile relative to the context, default is ./Dockerfile"
+        description: "Path to the Dockerfile relative to the context"
         type: string
         required: false
       docker_target:
         description: "Sets the target stage to build"
         type: string
         required: false
-      balena_deploy_slugs:
+      balena_slugs:
         description: "Newline separated list of balenaCloud apps, fleets, or blocks to deploy"
         type: string
         required: false
-      node_version:
-        description: "Node.js version to use for NPM projects"
+        default: |
+          ${{ github.repository }}
+      node_versions:
+        description: "Newline separated list of Node.js versions to test"
         type: string
         required: false
-        default: "16.x"
+        default: |
+          14.x
+          16.x
+          18.x
 
 jobs:
   protect-branch:
@@ -100,10 +110,10 @@ jobs:
               "contexts": [
                 "Flowzone / Protect branch",
                 "Flowzone / Versioned source",
-                "Flowzone / Checks",
-                "Flowzone / NPM",
-                "Flowzone / Docker",
-                "Flowzone / balena",
+                "Flowzone / Sanitize inputs",
+                "Flowzone / NPM (all)",
+                "Flowzone / Docker (all)",
+                "Flowzone / balena (all)",
                 "VersionBot/generate-version"
               ]
             },
@@ -143,18 +153,24 @@ jobs:
         shell: bash
 
     outputs:
-      outcome: ${{ steps.versionbot_checkout.outcome }}
+      npm: ${{ steps.npm.outputs.enabled }}
+      docker: ${{ steps.docker.outputs.enabled }}
+      balena: ${{ steps.balena.outputs.enabled }}
+      versionbot: ${{ steps.versionbot_checkout.outcome }}
 
     steps:
+      # TODO: is there a chance that this branch could be out of date?
       - name: Checkout versioned source
         id: versionbot_checkout
         if: github.event.action != 'closed'
+        continue-on-error: true
         uses: actions/checkout@v3
         with:
           ref: versionbot/pr/${{ github.event.pull_request.number }}
           fetch-depth: 2
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
+      # Fallback to unversioned source if versionbot branch does not exist
       - name: Checkout original source
         if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
         uses: actions/checkout@v3
@@ -164,6 +180,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress source
+        if: github.event.action != 'closed'
         run: tar -cvf /tmp/versioned-source.tar .
 
       - name: Upload artifact
@@ -172,6 +189,43 @@ jobs:
         with:
           name: versioned-source
           path: /tmp/versioned-source.tar
+
+      - name: Check for package.json
+        id: npm
+        if: github.event.action != 'closed'
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          if test -f "package.json"; then
+            echo "found package.json"
+            echo ::set-output name=enabled::"true"
+          else
+            echo ::set-output name=enabled::"false"
+          fi
+
+      - name: Check for docker-compose.test.yml
+        id: docker
+        if: github.event.action != 'closed'
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          if [ -f docker-compose.test.yml ] && [ -f docker-compose.yml ]; then
+            echo "found docker-compose.test.yml"
+            echo ::set-output name=enabled::"true"
+          else
+            echo ::set-output name=enabled::"false"
+          fi
+
+      - name: Check for balena.yml
+        id: balena
+        if: github.event.action != 'closed'
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          if test -f balena.yml
+          then
+            echo "found balena.yml"
+            echo ::set-output name=enabled::"true"
+          else
+            echo ::set-output name=enabled::"false"
+          fi
 
       - name: Download artifact
         if: github.event.action == 'closed' && github.event.pull_request.merged == true
@@ -198,6 +252,7 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
+      # TODO: how can we check that master hasn't changed since this PR was merged?
       - name: Push versioned commit
         if: github.event.action == 'closed' && github.event.pull_request.merged == true
         env:
@@ -215,92 +270,74 @@ jobs:
           git tag -a "${VERSION}" -m "${VERSION}"
           git push origin HEAD:${BRANCH} --follow-tags
 
-  checks:
-    name: Checks
-    needs: [versioned_source]
+  sanitize_inputs:
+    name: Sanitize inputs
     runs-on: ubuntu-latest
-    # only run on PR open and synchronize events
-    if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.base_ref == github.event.repository.default_branch }}
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash
+    # only run on PR events
+    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch
 
     # Declare outputs for next jobs
     outputs:
-      npm: ${{ steps.npm.outputs.enabled }}
-      docker: ${{ steps.docker.outputs.enabled }}
-      balena: ${{ steps.balena.outputs.enabled }}
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
+      docker_platforms: ${{ steps.docker_platforms.outputs.build }}
+      docker_images: ${{ steps.docker_images.outputs.build }}
+      node_versions: ${{ steps.node_versions.outputs.build }}
 
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: versioned-source
-
-      - name: Extract source
-        working-directory: .
-        run: tar -xvf versioned-source.tar
-
-      - id: npm
-        run: |
-          if test -f "package.json"; then
-            echo "found package.json"
-            echo ::set-output name=enabled::"True"
-          else
-            echo ::set-output name=enabled::"False"
-          fi
-
-      - id: docker
-        run: |
-          if [ -f docker-compose.test.yml ] && [ -f docker-compose.yml ]; then
-            echo "found docker-compose.test.yml"
-            echo ::set-output name=enabled::"True"
-          else
-            echo ::set-output name=enabled::"False"
-          fi
-
-      - id: balena
-        run: |
-          if test -f balena.yml
-          then
-            echo "found balena.yml"
-            echo ::set-output name=enabled::"True"
-          else
-            echo ::set-output name=enabled::"False"
-          fi
-
       - id: balena_slugs
         uses: kanga333/json-array-builder@v0.1.0
         with:
-          str: ${{ inputs.balena_deploy_slugs || github.repository }}
+          str: ${{ inputs.balena_slugs }}
           separator: "newline"
 
-  npm_flow:
+      - id: docker_platforms
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.docker_platforms }}
+          separator: "newline"
+
+      - id: docker_images
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.docker_images }}
+          separator: "newline"
+
+      - id: node_versions
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.node_versions }}
+          separator: "newline"
+
+  npm_matrix:
     name: NPM
     runs-on: ubuntu-latest
-    needs: [versioned_source, checks]
-    if: needs.checks.outputs.npm == 'True'
+    needs: [versioned_source, sanitize_inputs]
+    if: needs.versioned_source.outputs.npm == 'true'
 
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash
 
+    strategy:
+      fail-fast: false
+      matrix:
+        node_version: ${{ fromJSON(needs.sanitize_inputs.outputs.node_versions) }}
+
     steps:
-      - uses: actions/download-artifact@v3
+      - name: Download versioned source
+        uses: actions/download-artifact@v3
         with:
           name: versioned-source
 
-      - name: Extract source
+      - name: Extract versioned source
         working-directory: .
         run: tar -xvf versioned-source.tar
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "${{ inputs.node_version }}"
+          node-version: "${{ matrix.node_version }}"
 
       - name: Install dependencies
         run: |
@@ -316,11 +353,22 @@ jobs:
       - name: Run tests
         run: npm test
 
-  docker_flow:
+  npm_all:
+    name: NPM (all)
+    runs-on: ubuntu-latest
+    needs: [npm_matrix]
+
+    steps:
+      - shell: bash
+        run: echo "NPM jobs completed!"
+
+    # TODO: push to npmjs
+
+  docker_matrix:
     name: Docker
     runs-on: ubuntu-latest
-    needs: [versioned_source, checks]
-    if: needs.checks.outputs.docker == 'True'
+    needs: [versioned_source, sanitize_inputs]
+    if: needs.versioned_source.outputs.docker == 'true'
 
     defaults:
       run:
@@ -338,12 +386,32 @@ jobs:
         ports:
           - 5000:5000
 
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ${{ fromJSON(needs.sanitize_inputs.outputs.docker_platforms) }}
+
     steps:
-      - uses: actions/download-artifact@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ env.FLOWZONE_USER }}
+          password: ${{ secrets.FLOWZONE_TOKEN }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
+
+      - name: Download versioned source
+        uses: actions/download-artifact@v3
         with:
           name: versioned-source
 
-      - name: Extract source
+      - name: Extract versioned source
         working-directory: .
         run: tar -xvf versioned-source.tar
 
@@ -360,19 +428,23 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ inputs.docker_images || env.LOCAL_IMAGE }}
+          images: ${{ inputs.docker_images }}
           tags: |
             type=ref,event=tag
             type=ref,event=branch
             type=ref,event=pr
             type=sha
             type=semver,pattern={{version}}
+          flavor: |
+            latest=auto
+            prefix=
+            suffix=-${{ matrix.platform }}
 
-      - name: Build and push to local registry
+      - name: Build and load
         id: build
         uses: docker/build-push-action@v3
         with:
-          platforms: ${{ inputs.docker_platforms }}
+          platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-to: type=gha,mode=max
           cache-from: |
@@ -382,69 +454,55 @@ jobs:
           context: ${{ inputs.docker_context || inputs.working_directory }}
           file: ${{ inputs.docker_file }}
           target: ${{ inputs.docker_target }}
-          tags: ${{ env.LOCAL_IMAGE }}:latest
-          load: false
-          push: true
+          # extra tags for convenience, can be used in docker-compose.test.yml
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ github.repository }}:latest
+            sut:latest
+            ${{ env.LOCAL_IMAGE }}
+          load: true
+          push: false
 
-      # give the local image a bunch of tags that can be referenced in docker-compose.test.yml
-      # for example:
-      #     "sut:latest",
-      #     "product-os/flowzone:latest",
-      #     "localhost:5000/sut:latest",
-      #     "localhost:5000/sut:pr-5",
-      #     "localhost:5000/sut:sha-3cf8975"
       - name: Run docker-compose tests
-        env:
-          PLATFORMS: ${{ inputs.docker_platforms }}
-          TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           if [[ ! -z "${COMPOSE_VARS}" ]]; then
-            echo $COMPOSE_VARS | base64 --decode > .env
+            echo ${COMPOSE_VARS} | base64 --decode > .env
           fi
-          for platform in $PLATFORMS
-          do
-            docker pull --platform=$platform ${{ env.LOCAL_IMAGE }}:latest
-            docker tag ${{ env.LOCAL_IMAGE }}:latest sut:latest
-            docker tag ${{ env.LOCAL_IMAGE }}:latest ${{ github.repository }}:latest
-            for tag in $TAGS
-            do
-              docker tag ${{ env.LOCAL_IMAGE }}:latest ${tag}
-            done
-            docker inspect ${{ env.LOCAL_IMAGE }}:latest
-            docker compose -f docker-compose.yml -f docker-compose.test.yml up --no-build --exit-code-from sut
-          done
+          docker compose -f docker-compose.yml -f docker-compose.test.yml up --no-build --exit-code-from sut
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ env.FLOWZONE_USER }}
-          password: ${{ secrets.FLOWZONE_TOKEN }}
+      - name: Push image to local registry
+        run: |
+          docker push ${{ env.LOCAL_IMAGE }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
-
-      - name: Push draft images to external registries
+      - name: Copy image to public registries
+        continue-on-error: true
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ env.LOCAL_IMAGE }}:latest
+          src: ${{ env.LOCAL_IMAGE }}
           dst: |
             ${{ steps.meta.outputs.tags }}
 
-  balena_flow:
+  docker_all:
+    name: Docker (all)
+    runs-on: ubuntu-latest
+    needs: [docker_matrix]
+
+    steps:
+      - shell: bash
+        run: echo "Docker jobs completed!"
+
+    # TODO: create multi-arch manifest
+
+  balena_matrix:
     name: balena
     runs-on: ubuntu-latest
-    needs: [versioned_source, checks]
-    if: needs.checks.outputs.balena == 'True'
+    needs: [versioned_source, sanitize_inputs]
+    if: needs.versioned_source.outputs.balena == 'true'
 
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
-        slug: ${{ needs.checks.outputs.balena_slugs }}
+        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
 
     defaults:
       run:
@@ -452,11 +510,12 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/download-artifact@v3
+      - name: Download versioned source
+        uses: actions/download-artifact@v3
         with:
           name: versioned-source
 
-      - name: Extract source
+      - name: Extract versioned source
         working-directory: .
         run: tar -xvf versioned-source.tar
 
@@ -465,3 +524,12 @@ jobs:
           balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
           fleet: ${{ matrix.slug }}
           versionbot: false
+
+  balena_all:
+    name: balena (all)
+    runs-on: ubuntu-latest
+    needs: [balena_matrix]
+
+    steps:
+      - shell: bash
+        run: echo "balena jobs completed!"
