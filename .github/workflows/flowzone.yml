@@ -26,38 +26,38 @@ on:
         required: true
     inputs:
       working_directory:
-        description: GitHub actions working directory
+        description: 'GitHub actions working directory'
         type: string
         required: false
         default: '.'
       required_approving_review_count:
-        description: Setting this value to zero effectively means merge==deploy without approval(s)
+        description: 'Setting this value to zero effectively means merge==deploy without approval(s)'
         type: string
         required: false
         default: 1
       docker_images:
-        description: newline separated list of images (without tags) to push, default is no push
+        description: 'Newline separated list of images (without tags) to push, default is no push'
         type: string
         required: false
       docker_cache_from:
-        description: newline separated list of additional external cache sources
+        description: 'Newline separated list of additional external cache sources'
         type: string
         required: false
       docker_platforms:
-        description: newline separated list of target platforms, default is linux/amd64
+        description: 'Newline separated list of target platforms, default is linux/amd64'
         type: string
         required: false
         default: linux/amd64
       docker_context:
-        description: Docker build context directory, default is ./
+        description: 'Docker build context directory, default is ./'
         type: string
         required: false
       docker_file:
-        description: path to the Dockerfile relative to the context, default is ./Dockerfile
+        description: 'Path to the Dockerfile relative to the context, default is ./Dockerfile'
         type: string
         required: false
       docker_target:
-        description: sets the target stage to build
+        description: 'Sets the target stage to build'
         type: string
         required: false
       balena_deploy_slugs:
@@ -319,7 +319,7 @@ jobs:
 
     services:
       registry:
-        image: registry:2.7.1
+        image: registry:2.8.1
         ports:
           - 5000:5000
 
@@ -341,6 +341,73 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver-opts: network=host
+          install: true
+
+      - name: Generate image labels and tags
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ inputs.docker_images || env.LOCAL_IMAGE }}
+          tags: |
+            type=ref,event=tag
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+            type=semver,pattern={{version}}
+
+      - name: Build and push to local registry
+        id: build
+        uses: docker/build-push-action@v3
+        with:
+          platforms: ${{ inputs.docker_platforms }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha
+            ${{ steps.meta.outputs.tags }}
+            ${{ inputs.docker_cache_from }}
+          context: ${{ inputs.docker_context }}
+          file: ${{ inputs.docker_file }}
+          target: ${{ inputs.docker_target }}
+          tags: ${{ env.LOCAL_IMAGE }}:latest
+          load: false
+          push: true
+
+      # give the local image a bunch of tags that can be referenced in docker-compose.test.yml
+      # for example:
+      #     "sut:latest",
+      #     "product-os/flowzone:latest",
+      #     "localhost:5000/sut:latest",
+      #     "localhost:5000/sut:pr-5",
+      #     "localhost:5000/sut:sha-3cf8975"
+      - name: Run docker-compose tests
+        env:
+          PLATFORMS: ${{ inputs.docker_platforms }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          if [[ ! -z "${COMPOSE_VARS}" ]]; then
+            echo $COMPOSE_VARS | base64 --decode > .env
+          fi
+          for platform in $PLATFORMS
+          do
+            docker pull --platform=$platform ${{ env.LOCAL_IMAGE }}:latest
+            docker tag ${{ env.LOCAL_IMAGE }}:latest sut:latest
+            docker tag ${{ env.LOCAL_IMAGE }}:latest ${{ github.repository }}:latest
+            for tag in $TAGS
+            do
+              docker tag ${{ env.LOCAL_IMAGE }}:latest ${tag}
+            done
+            docker inspect ${{ env.LOCAL_IMAGE }}:latest
+            docker compose -f docker-compose.yml -f docker-compose.test.yml up --no-build --exit-code-from sut
+          done
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -355,16 +422,12 @@ jobs:
           username: ${{ secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
 
-      - name: Run Docker flow
-        uses: ./.github/actions/docker
+      - name: Push draft images to external registries
+        uses: akhilerm/tag-push-action@v2.0.0
         with:
-          working_directory: ${{ inputs.working_directory }}
-          images: ${{ inputs.docker_images }}
-          cache_from: ${{ inputs.docker_cache_from }}
-          platforms: ${{ inputs.docker_platforms }}
-          context: ${{ inputs.docker_context }}
-          dockerfile: ${{ inputs.docker_file }}
-          target: ${{ inputs.docker_target }}
+          src: ${{ env.LOCAL_IMAGE }}:latest
+          dst: |
+            ${{ steps.meta.outputs.tags }}
 
   balena_flow:
     name: balena
