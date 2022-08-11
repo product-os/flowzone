@@ -70,7 +70,9 @@ on:
         type: string
         required: false
         default: |
-          ${{ github.repository }}
+          ${{ github.repository }}-amd64
+          ${{ github.repository }}-aarch64
+          ${{ github.repository }}-armv7hf
       node_versions:
         description: "Newline separated list of Node.js versions to test"
         type: string
@@ -574,17 +576,7 @@ jobs:
       matrix:
         tag: ${{ fromJSON(needs.sanitize_inputs.outputs.docker_tags) }}
 
-    # env:
-    #   PLATFORMS: ${{ inputs.docker_platforms }}
-
     steps:
-      # - name: Format platforms
-      #   id: platforms
-      #   # convert newline-separated to comma-separated
-      #   run: |
-      #     echo "::set-output name=string::$(echo $PLATFORMS | sed -r ':a;N;$!ba;s/\b(\s|\n)+/,/g')"
-      #     echo "$(echo $PLATFORMS | sed -r ':a;N;$!ba;s/\b(\s|\n)+/,/g')"
-
       - name: Push manifest to ghcr.io
         if: startsWith(matrix.tag, 'ghcr.io') == true
         uses: pixelfederation/gh-action-manifest-tool@v0.1.0
@@ -642,11 +634,12 @@ jobs:
         working-directory: .
         run: tar -xvf versioned-source.tar
 
-      - uses: balena-io/deploy-to-balena-action@v0.11.0
+      - uses: balena-io/deploy-to-balena-action@v0.12.1
         with:
           balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
           fleet: ${{ matrix.slug }}
           versionbot: false
+          source: ${{ inputs.working_directory }}
 
   balena_all:
     name: balena (all)
