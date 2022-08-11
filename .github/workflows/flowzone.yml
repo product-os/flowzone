@@ -40,7 +40,7 @@ on:
         type: string
         required: false
         default: |
-          ${{ github.repository }}
+          ghcr.io/${{ github.repository }}
       docker_cache_from:
         description: "Newline separated list of additional external cache sources"
         type: string
@@ -316,43 +316,69 @@ jobs:
             echo ::set-output name=enabled::"false"
           fi
 
-
   sanitize_inputs:
     name: Sanitize inputs
     runs-on: ubuntu-latest
     # only run on PR events
     if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch
 
-    # Declare outputs for next jobs
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       docker_platforms: ${{ steps.docker_platforms.outputs.build }}
       docker_images: ${{ steps.docker_images.outputs.build }}
       node_versions: ${{ steps.node_versions.outputs.build }}
+      docker_tags: ${{ steps.docker_tags.outputs.build }}
 
     steps:
-      - id: balena_slugs
+      - name: Generate Docker labels and tags
+        id: docker_meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ inputs.docker_images }}
+          tags: |
+            type=ref,event=tag
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+            type=semver,pattern={{version}}
+          flavor: |
+            latest=auto
+            prefix=
+            suffix=
+
+      - name: Convert to a JSON array
+        id: balena_slugs
         uses: kanga333/json-array-builder@v0.1.0
         with:
           str: ${{ inputs.balena_slugs }}
           separator: "newline"
 
-      - id: docker_platforms
+      - name: Convert to a JSON array
+        id: docker_platforms
         uses: kanga333/json-array-builder@v0.1.0
         with:
           str: ${{ inputs.docker_platforms }}
           separator: "newline"
 
-      - id: docker_images
+      - name: Convert to a JSON array
+        id: docker_images
         uses: kanga333/json-array-builder@v0.1.0
         with:
           str: ${{ inputs.docker_images }}
           separator: "newline"
 
-      - id: node_versions
+      - name: Convert to a JSON array
+        id: node_versions
         uses: kanga333/json-array-builder@v0.1.0
         with:
           str: ${{ inputs.node_versions }}
+          separator: "newline"
+
+      - name: Convert to a JSON array
+        id: docker_tags
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ steps.docker_meta.outputs.tags }}
           separator: "newline"
 
   npm_matrix:
@@ -424,7 +450,7 @@ jobs:
 
     env:
       COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
-      LOCAL_IMAGE: localhost:5000/sut
+      LOCAL_IMAGE: localhost:5000/sut:latest
       FLOWZONE_USER: balena-ci # https://github.com/balena-ci
 
     services:
@@ -471,6 +497,11 @@ jobs:
           driver-opts: network=host
           install: true
 
+      - name: Format suffix
+        id: suffix
+        run: |
+          echo "::set-output name=string::$(echo ${{ matrix.platform }} | sed -e 's|linux/||' -e 's|/||')"
+
       - name: Generate image labels and tags
         id: meta
         uses: docker/metadata-action@v4
@@ -485,7 +516,7 @@ jobs:
           flavor: |
             latest=auto
             prefix=
-            suffix=-${{ matrix.platform }}
+            suffix=-${{ steps.suffix.outputs.string }}
 
       - name: Build and load
         id: build
@@ -522,23 +553,68 @@ jobs:
           docker push ${{ env.LOCAL_IMAGE }}
 
       - name: Copy image to public registries
-        continue-on-error: true
         uses: akhilerm/tag-push-action@v2.0.0
         with:
           src: ${{ env.LOCAL_IMAGE }}
           dst: |
             ${{ steps.meta.outputs.tags }}
 
+  docker_manifest:
+    name: Docker
+    runs-on: ubuntu-latest
+    needs: [docker_matrix, sanitize_inputs]
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ${{ fromJSON(needs.sanitize_inputs.outputs.docker_tags) }}
+
+    # env:
+    #   PLATFORMS: ${{ inputs.docker_platforms }}
+
+    steps:
+      # - name: Format platforms
+      #   id: platforms
+      #   # convert newline-separated to comma-separated
+      #   run: |
+      #     echo "::set-output name=string::$(echo $PLATFORMS | sed -r ':a;N;$!ba;s/\b(\s|\n)+/,/g')"
+      #     echo "$(echo $PLATFORMS | sed -r ':a;N;$!ba;s/\b(\s|\n)+/,/g')"
+
+      - name: Push manifest to ghcr.io
+        if: startsWith(matrix.tag, 'ghcr.io') == true
+        uses: pixelfederation/gh-action-manifest-tool@v0.1.0
+        with:
+          username: ${{ env.FLOWZONE_USER }}
+          password: ${{ secrets.FLOWZONE_TOKEN }}
+          platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
+          template: ${{ matrix.tag }}-ARCHVARIANT
+          target: ${{ matrix.tag }}
+          # see https://github.com/estesp/manifest-tool to understand template
+
+      - name: Push manifest to docker.io
+        if: startsWith(matrix.tag, 'ghcr.io') != true
+        uses: pixelfederation/gh-action-manifest-tool@v0.1.0
+        with:
+          username: ${{ secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
+          platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
+          template: ${{ matrix.tag }}-ARCHVARIANT
+          target: ${{ matrix.tag }}
+          # see https://github.com/estesp/manifest-tool to understand template
+
   docker_all:
     name: Docker (all)
     runs-on: ubuntu-latest
-    needs: [docker_matrix]
+    needs: [docker_matrix, docker_manifest, sanitize_inputs]
 
     steps:
       - shell: bash
         run: echo "Docker jobs completed!"
-
-    # TODO: create multi-arch manifest
 
   balena_matrix:
     name: balena
