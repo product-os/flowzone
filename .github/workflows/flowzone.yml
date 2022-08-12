@@ -91,7 +91,148 @@ on:
           16.x
           18.x
 
+env:
+  GHCR_USER: balena-ci # https://github.com/balena-ci
+
 jobs:
+
+###################################################
+## COMMON EVENTS
+###################################################
+
+  eval_source:
+    name: Evaluate source
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash
+
+    outputs:
+      npm: ${{ steps.npm.outputs.enabled }}
+      docker: ${{ steps.docker.outputs.enabled }}
+      balena: ${{ steps.balena.outputs.enabled }}
+      resin_ci: ${{ steps.resin_ci.outputs.enabled }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+
+      - name: Check for package.json
+        id: npm
+        run: |
+          if test -f "package.json"; then
+            echo "found package.json"
+            echo ::set-output name=enabled::"true"
+          else
+            echo ::set-output name=enabled::"false"
+          fi
+
+      - name: Check for docker-compose.test.yml
+        id: docker
+        run: |
+          if [ -f docker-compose.test.yml ] && [ -f docker-compose.yml ]; then
+            echo "found docker-compose.test.yml"
+            echo ::set-output name=enabled::"true"
+          else
+            echo ::set-output name=enabled::"false"
+          fi
+
+      - name: Check for balena.yml
+        id: balena
+        run: |
+          if test -f balena.yml
+          then
+            echo "found balena.yml"
+            echo ::set-output name=enabled::"true"
+          else
+            echo ::set-output name=enabled::"false"
+          fi
+
+      # here we assume that if .resinci.yml is not found it must be disabled, which is not strictly true
+      # but it works for our purposes of making sure that some repos have to be intentional about disabling it
+      - name: Check for .resinci.yml
+        id: resin_ci
+        run: |
+          if test -f .resinci.yml
+          then
+            disabled="$(cat < "${SRC_PATH}/.resinci.yml" | yq e - -j | jq -r .disabled)"
+            echo "found .resinci.yml with disabled=${disabled}"
+            if [ -n $disabled ] && [[ $disabled =~ true|True|1|Yes|yes|On|on ]]
+            then
+              echo ::set-output name=enabled::"false"
+            else
+              echo ::set-output name=enabled::"true"
+            fi
+          else
+            echo ::set-output name=enabled::"false"
+          fi
+
+  sanitize_inputs:
+    name: Sanitize inputs
+    runs-on: ubuntu-latest
+
+    outputs:
+      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
+      docker_platforms: ${{ steps.docker_platforms.outputs.build }}
+      docker_images: ${{ steps.docker_images.outputs.build }}
+      node_versions: ${{ steps.node_versions.outputs.build }}
+      docker_tags: ${{ steps.docker_tags.outputs.build }}
+
+    steps:
+      - name: Generate Docker labels and tags
+        id: docker_meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ inputs.docker_images }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=${{ github.event.pull_request.head.ref }}
+            type=ref,event=pr
+            type=raw,value=${{ github.event.pull_request.head.sha }}
+            type=semver,pattern={{version}}
+          flavor: |
+            latest=auto
+            prefix=
+            suffix=
+
+      - name: Convert to a JSON array
+        id: balena_slugs
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.balena_slugs }}
+          separator: "newline"
+
+      - name: Convert to a JSON array
+        id: docker_platforms
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.docker_platforms }}
+          separator: "newline"
+
+      - name: Convert to a JSON array
+        id: docker_images
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.docker_images }}
+          separator: "newline"
+
+      - name: Convert to a JSON array
+        id: node_versions
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.node_versions }}
+          separator: "newline"
+
+      - name: Convert to a JSON array
+        id: docker_tags
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ steps.docker_meta.outputs.tags }}
+          separator: "newline"
 
 ###################################################
 ## PULL REQUEST EVENTS
@@ -208,144 +349,6 @@ jobs:
           name: versioned-source-${{ github.event.pull_request.head.sha }}
           path: /tmp/versioned-source.tar
 
-  eval_source:
-    name: Evaluate source
-    # only run on PR events
-    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash
-
-    outputs:
-      npm: ${{ steps.npm.outputs.enabled }}
-      docker: ${{ steps.docker.outputs.enabled }}
-      balena: ${{ steps.balena.outputs.enabled }}
-      resin_ci: ${{ steps.resin_ci.outputs.enabled }}
-
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-
-      - name: Check for package.json
-        id: npm
-        run: |
-          if test -f "package.json"; then
-            echo "found package.json"
-            echo ::set-output name=enabled::"true"
-          else
-            echo ::set-output name=enabled::"false"
-          fi
-
-      - name: Check for docker-compose.test.yml
-        id: docker
-        run: |
-          if [ -f docker-compose.test.yml ] && [ -f docker-compose.yml ]; then
-            echo "found docker-compose.test.yml"
-            echo ::set-output name=enabled::"true"
-          else
-            echo ::set-output name=enabled::"false"
-          fi
-
-      - name: Check for balena.yml
-        id: balena
-        run: |
-          if test -f balena.yml
-          then
-            echo "found balena.yml"
-            echo ::set-output name=enabled::"true"
-          else
-            echo ::set-output name=enabled::"false"
-          fi
-
-      # here we assume that if .resinci.yml is not found it must be disabled, which is not strictly true
-      # but it works for our purposes of making sure that some repos have to be intentional about disabling it
-      - name: Check for .resinci.yml
-        id: resin_ci
-        run: |
-          if test -f .resinci.yml
-          then
-            disabled="$(cat < "${SRC_PATH}/.resinci.yml" | yq e - -j | jq -r .disabled)"
-            echo "found .resinci.yml with disabled=${disabled}"
-            if [ -n $disabled ] && [[ $disabled =~ true|True|1|Yes|yes|On|on ]]
-            then
-              echo ::set-output name=enabled::"false"
-            else
-              echo ::set-output name=enabled::"true"
-            fi
-          else
-            echo ::set-output name=enabled::"false"
-          fi
-
-  sanitize_inputs:
-    name: Sanitize inputs
-    runs-on: ubuntu-latest
-    # only run on PR events
-    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch
-
-    outputs:
-      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
-      docker_platforms: ${{ steps.docker_platforms.outputs.build }}
-      docker_images: ${{ steps.docker_images.outputs.build }}
-      node_versions: ${{ steps.node_versions.outputs.build }}
-      docker_tags: ${{ steps.docker_tags.outputs.build }}
-
-    steps:
-      - name: Generate Docker labels and tags
-        id: docker_meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ inputs.docker_images }}
-          tags: |
-            type=ref,event=tag
-            type=raw,value=${{ github.event.pull_request.head.ref }}
-            type=ref,event=pr
-            type=raw,value=${{ github.event.pull_request.head.sha }}
-            type=semver,pattern={{version}}
-          flavor: |
-            latest=auto
-            prefix=
-            suffix=
-
-      - name: Convert to a JSON array
-        id: balena_slugs
-        uses: kanga333/json-array-builder@v0.1.0
-        with:
-          str: ${{ inputs.balena_slugs }}
-          separator: "newline"
-
-      - name: Convert to a JSON array
-        id: docker_platforms
-        uses: kanga333/json-array-builder@v0.1.0
-        with:
-          str: ${{ inputs.docker_platforms }}
-          separator: "newline"
-
-      - name: Convert to a JSON array
-        id: docker_images
-        uses: kanga333/json-array-builder@v0.1.0
-        with:
-          str: ${{ inputs.docker_images }}
-          separator: "newline"
-
-      - name: Convert to a JSON array
-        id: node_versions
-        uses: kanga333/json-array-builder@v0.1.0
-        with:
-          str: ${{ inputs.node_versions }}
-          separator: "newline"
-
-      - name: Convert to a JSON array
-        id: docker_tags
-        uses: kanga333/json-array-builder@v0.1.0
-        with:
-          str: ${{ steps.docker_meta.outputs.tags }}
-          separator: "newline"
-
   npm_matrix:
     name: NPM
     runs-on: ubuntu-latest
@@ -416,7 +419,6 @@ jobs:
     env:
       COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
       LOCAL_IMAGE: localhost:5000/sut:latest
-      FLOWZONE_USER: balena-ci # https://github.com/balena-ci
 
     services:
       registry:
@@ -434,7 +436,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ env.FLOWZONE_USER }}
+          username: ${{ env.GHCR_USER }}
           password: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Login to Docker Hub
@@ -545,7 +547,7 @@ jobs:
         if: startsWith(matrix.tag, 'ghcr.io') == true
         uses: pixelfederation/gh-action-manifest-tool@v0.1.0
         with:
-          username: ${{ env.FLOWZONE_USER }}
+          username: ${{ env.GHCR_USER }}
           password: ${{ secrets.FLOWZONE_TOKEN }}
           platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
           template: ${{ matrix.tag }}-ARCHVARIANT
@@ -721,7 +723,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ env.FLOWZONE_USER }}
+          username: ${{ env.GHCR_USER }}
           password: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Login to Docker Hub
