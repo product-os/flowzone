@@ -704,16 +704,6 @@ jobs:
           git tag -a "${VERSION}" -m "${VERSION}"
           git push origin HEAD:${BRANCH} --follow-tags
 
-      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
-      - name: Compress source
-        run: tar -cvf /tmp/tagged-source.tar .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: tagged-source-${{ steps.versioned.outputs.tag }}
-          path: /tmp/tagged-source.tar
-
 ###################################################
 ## DOCKER FINALIZE JOBS
 ###################################################
