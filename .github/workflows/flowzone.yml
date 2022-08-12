@@ -600,7 +600,7 @@ jobs:
         run: echo "balena jobs completed!"
 
 ###################################################
-## PR MERGE
+## PR MERGED
 ###################################################
 
   versioned_merge:
@@ -615,6 +615,11 @@ jobs:
         shell: bash
 
     steps:
+
+      - name: Dump GitHub context
+        id: github_context_step
+        run: echo '${{ toJSON(github) }}'
+
       - name: Download artifact
         id: download
         uses: dawidd6/action-download-artifact@v2
@@ -622,7 +627,7 @@ jobs:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           workflow_conclusion: success
           pr: ${{ github.event.pull_request.number }}
-          name: versioned-source-${{ github.sha }}
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
 
       - name: Extract source
         run: tar -xvf versioned-source.tar
@@ -659,3 +664,10 @@ jobs:
           git cherry-pick ${REV}
           git tag -a "${VERSION}" -m "${VERSION}"
           git push origin HEAD:${BRANCH} --follow-tags
+
+      # re-upload the versioned source under a different name so we can find it by version
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: tagged-source-${{ steps.version.outputs.value }}
+          path: versioned-source.tar
