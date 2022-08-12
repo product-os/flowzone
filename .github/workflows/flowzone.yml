@@ -174,7 +174,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: versionbot/pr/${{ github.event.pull_request.number }}
-          fetch-depth: 1
+          fetch-depth: 2
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       # Fallback to unversioned source if versionbot branch does not exist
@@ -634,10 +634,13 @@ jobs:
           search_artifacts: true
 
       - name: Extract source
-        run: tar -xvf versioned-source.tar
+        run: |
+          mkdir -p /tmp/versioned-source
+          tar -xvf versioned-source.tar -C /tmp/versioned-source
 
       - name: Parse version
         id: version
+        working-directory: /tmp/versioned-source
         run: |
           echo "::set-output name=sha::$(git rev-parse HEAD)"
           echo "::set-output name=value::v$(head -n1 VERSION || jq -r '.version' package.json)"
@@ -652,7 +655,13 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
-      # TODO: how can we check that master hasn't changed since this PR was merged?
+      - name: Checkout base
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+          ref: ${{ github.event.pull_request.base.sha }}
+
       - name: Push versioned commit
         env:
           BRANCH: ${{ github.base_ref }}
@@ -663,15 +672,16 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
           REV: ${{ steps.version.outputs.sha }}
         run: |
-          git fetch origin ${BRANCH}:${BRANCH}
-          git checkout ${BRANCH}
           git cherry-pick ${REV}
           git tag -a "${VERSION}" -m "${VERSION}"
           git push origin HEAD:${BRANCH} --follow-tags
 
-      # re-upload the versioned source under a different name so we can find it by version
+      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
+      - name: Compress source
+        run: tar -cvf /tmp/tagged-source.tar .
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: tagged-source-${{ steps.version.outputs.value }}
-          path: versioned-source.tar
+          path: /tmp/tagged-source.tar
