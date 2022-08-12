@@ -234,13 +234,9 @@ jobs:
           str: ${{ steps.docker_meta.outputs.tags }}
           separator: "newline"
 
-###################################################
-## PULL REQUEST EVENTS
-###################################################
-
   protect-branch:
     name: Protect branch
-    needs: [docker_all, npm_all, balena_all]
+    needs: [draft_docker, draft_npm, draft_balena]
     runs-on: ubuntu-latest
     # only run on PR open and synchronize events and when resinci is disabled or not found
     if: |
@@ -270,11 +266,11 @@ jobs:
               "strict": true,
               "contexts": [
                 "Flowzone / Protect branch",
-                "Flowzone / Versioned source",
+                "Flowzone / Draft version",
                 "Flowzone / Sanitize inputs",
-                "Flowzone / NPM (all)",
-                "Flowzone / Docker (all)",
-                "Flowzone / balena (all)",
+                "Flowzone / Draft NPM",
+                "Flowzone / Draft Docker",
+                "Flowzone / Draft balena",
                 "VersionBot/generate-version"
               ]
             },
@@ -302,8 +298,12 @@ jobs:
 
           echo ::set-output name=result::"${result}"
 
-  versioned_source:
-    name: Versioned source
+###################################################
+## VERSION DRAFT JOBS
+###################################################
+
+  draft_version:
+    name: Draft version
     runs-on: ubuntu-latest
     # only run on PR open or synchronize events
     if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action != 'closed'
@@ -349,10 +349,14 @@ jobs:
           name: versioned-source-${{ github.event.pull_request.head.sha }}
           path: /tmp/versioned-source.tar
 
+###################################################
+## NPM DRAFT JOBS
+###################################################
+
   npm_matrix:
     name: NPM
     runs-on: ubuntu-latest
-    needs: [versioned_source, eval_source, sanitize_inputs]
+    needs: [draft_version, eval_source, sanitize_inputs]
     if: needs.eval_source.outputs.npm == 'true'
 
     defaults:
@@ -394,8 +398,8 @@ jobs:
       - name: Run tests
         run: npm test
 
-  npm_all:
-    name: NPM (all)
+  draft_npm:
+    name: Draft NPM
     runs-on: ubuntu-latest
     needs: [npm_matrix]
 
@@ -405,10 +409,14 @@ jobs:
 
     # TODO: push to npmjs
 
+###################################################
+## DOCKER DRAFT JOBS
+###################################################
+
   docker_matrix:
     name: Docker
     runs-on: ubuntu-latest
-    needs: [versioned_source, eval_source, sanitize_inputs]
+    needs: [draft_version, eval_source, sanitize_inputs]
     if: needs.eval_source.outputs.docker == 'true'
 
     defaults:
@@ -565,8 +573,8 @@ jobs:
           target: ${{ matrix.tag }}
           # see https://github.com/estesp/manifest-tool to understand template
 
-  docker_all:
-    name: Docker (all)
+  draft_docker:
+    name: Draft Docker
     runs-on: ubuntu-latest
     needs: [docker_manifest]
 
@@ -574,10 +582,14 @@ jobs:
       - shell: bash
         run: echo "Docker jobs completed!"
 
+###################################################
+## BALENA DRAFT JOBS
+###################################################
+
   balena_matrix:
     name: balena
     runs-on: ubuntu-latest
-    needs: [versioned_source, eval_source, sanitize_inputs]
+    needs: [draft_version, eval_source, sanitize_inputs]
     if: needs.eval_source.outputs.balena == 'true'
 
     strategy:
@@ -607,8 +619,8 @@ jobs:
           versionbot: false
           source: ${{ inputs.working_directory }}
 
-  balena_all:
-    name: balena (all)
+  draft_balena:
+    name: Draft balena
     runs-on: ubuntu-latest
     needs: [balena_matrix]
 
@@ -617,11 +629,11 @@ jobs:
         run: echo "balena jobs completed!"
 
 ###################################################
-## MERGE EVENTS
+## VERSION FINALIZE JOBS
 ###################################################
 
-  versioned_merge:
-    name: Versioned merge
+  finalize_version:
+    name: Finalize version
     needs: [sanitize_inputs]
     runs-on: ubuntu-latest
     # only run on PR merge events
@@ -702,9 +714,13 @@ jobs:
           name: tagged-source-${{ steps.versioned.outputs.tag }}
           path: /tmp/tagged-source.tar
 
-  docker_merge:
-    name: Docker finalize
-    needs: [sanitize_inputs, eval_source, versioned_merge]
+###################################################
+## DOCKER FINALIZE JOBS
+###################################################
+
+  finalize_docker:
+    name: Finalize Docker
+    needs: [sanitize_inputs, eval_source, finalize_version]
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true && needs.eval_source.outputs.docker == 'true'
 
@@ -738,12 +754,16 @@ jobs:
         with:
           src: ${{ matrix.image }}:${{ github.event.pull_request.head.sha }}
           dst: |
-            ${{ matrix.image }}:${{ needs.versioned_merge.outputs.tag }}
+            ${{ matrix.image }}:${{ needs.finalize_version.outputs.tag }}
             ${{ matrix.image }}:latest
 
-  balena_merge:
-    name: balena finalize
-    needs: [sanitize_inputs, eval_source, versioned_merge]
+###################################################
+## BALENA FINALIZE JOBS
+###################################################
+
+  finalize_balena:
+    name: Finalize balena
+    needs: [sanitize_inputs, eval_source, finalize_version]
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true && needs.eval_source.outputs.balena == 'true'
 
@@ -768,3 +788,5 @@ jobs:
 ###################################################
 ## TAG EVENTS
 ###################################################
+
+# TBD
