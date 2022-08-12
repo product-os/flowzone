@@ -656,12 +656,12 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
-      - name: Checkout base
+      - name: Checkout source
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          # fetch-depth: 0
           token: ${{ secrets.FLOWZONE_TOKEN }}
-          ref: ${{ github.event.pull_request.base.sha }}
+          # ref: ${{ github.event.pull_request.base.ref }}
 
       - name: Push versioned commit
         env:
@@ -673,7 +673,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
           REV: ${{ steps.version.outputs.sha }}
         run: |
-          git cherry-pick ${REV}
+          git --git-dir=/tmp/versioned-source/.git format-patch -k -1 --stdout ${REV} | git am -3 -k
           git tag -a "${VERSION}" -m "${VERSION}"
           git push origin HEAD:${BRANCH} --follow-tags
 
