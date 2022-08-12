@@ -99,14 +99,13 @@ jobs:
 
   protect-branch:
     name: Protect branch
-    needs: [eval_source, docker_all, npm_all, balena_all]
+    needs: [docker_all, npm_all, balena_all]
     runs-on: ubuntu-latest
     # only run on PR open and synchronize events and when resinci is disabled or not found
     if: |
       !failure() && !cancelled() &&
       github.event_name == 'pull_request' && github.event.action != 'closed' &&
-      github.base_ref == github.event.repository.default_branch &&
-      needs.eval_source.outputs.resin_ci == 'false'
+      github.base_ref == github.event.repository.default_branch
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
