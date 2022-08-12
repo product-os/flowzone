@@ -35,6 +35,15 @@ on:
         type: string
         required: false
         default: "1"
+      # dockerhub_repo:
+      #   description: "Docker Hub repository for Docker projects, skipped if empty"
+      #   type: string
+      #   required: false
+      # ghcr_repo:
+      #   description: "GitHub Container Registry for Docker projects, skipped if empty"
+      #   type: string
+      #   required: false
+      #   default: ghcr.io/${{ github.repository }}
       docker_images:
         description: "Newline separated list of images (without tags) to push, default is no push"
         type: string
@@ -83,16 +92,20 @@ on:
           18.x
 
 jobs:
+
+###################################################
+## PULL REQUEST EVENTS
+###################################################
+
   protect-branch:
     name: Protect branch
-    needs: [eval_source, docker_all, npm_all, balena_all]
+    needs: [docker_all, npm_all, balena_all]
     runs-on: ubuntu-latest
     # only run on PR open and synchronize events and when resinci is disabled or not found
     if: |
       !failure() && !cancelled() &&
       github.event_name == 'pull_request' && github.event.action != 'closed' &&
-      github.base_ref == github.event.repository.default_branch &&
-      needs.eval_source.outputs.resin_ci == 'false'
+      github.base_ref == github.event.repository.default_branch
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
@@ -197,7 +210,8 @@ jobs:
 
   eval_source:
     name: Evaluate source
-    needs: [versioned_source]
+    # only run on PR events
+    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch
     runs-on: ubuntu-latest
 
     defaults:
@@ -212,14 +226,10 @@ jobs:
       resin_ci: ${{ steps.resin_ci.outputs.enabled }}
 
     steps:
-      - name: Download versioned source
-        uses: actions/download-artifact@v3
+      - name: Checkout source
+        uses: actions/checkout@v3
         with:
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
-
-      - name: Extract versioned source
-        working-directory: .
-        run: tar -xvf versioned-source.tar
+          token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Check for package.json
         id: npm
@@ -556,7 +566,7 @@ jobs:
   docker_all:
     name: Docker (all)
     runs-on: ubuntu-latest
-    needs: [docker_matrix, docker_manifest, sanitize_inputs]
+    needs: [docker_manifest]
 
     steps:
       - shell: bash
@@ -605,11 +615,12 @@ jobs:
         run: echo "balena jobs completed!"
 
 ###################################################
-## PR MERGED
+## MERGE EVENTS
 ###################################################
 
   versioned_merge:
     name: Versioned merge
+    needs: [sanitize_inputs]
     runs-on: ubuntu-latest
     # only run on PR merge events
     if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true
@@ -618,6 +629,10 @@ jobs:
       run:
         working-directory: .
         shell: bash
+
+    outputs:
+      sha: ${{ steps.versioned.outputs.sha }}
+      tag: ${{ steps.versioned.outputs.tag }}
 
     steps:
       - name: Dump GitHub context
@@ -640,11 +655,11 @@ jobs:
           tar -xvf versioned-source.tar -C /tmp/versioned-source
 
       - name: Parse version
-        id: version
+        id: versioned
         working-directory: /tmp/versioned-source
         run: |
           echo "::set-output name=sha::$(git rev-parse HEAD)"
-          echo "::set-output name=value::v$(head -n1 VERSION || jq -r '.version' package.json)"
+          echo "::set-output name=tag::v$(head -n1 VERSION || jq -r '.version' package.json)"
 
       - name: Import GPG key for signing commits
         id: import-gpg
@@ -659,9 +674,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v3
         with:
-          # fetch-depth: 0
           token: ${{ secrets.FLOWZONE_TOKEN }}
-          # ref: ${{ github.event.pull_request.base.ref }}
 
       - name: Push versioned commit
         env:
@@ -670,8 +683,8 @@ jobs:
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          VERSION: ${{ steps.version.outputs.value }}
-          REV: ${{ steps.version.outputs.sha }}
+          VERSION: ${{ steps.versioned.outputs.tag }}
+          REV: ${{ steps.versioned.outputs.sha }}
         run: |
           git --git-dir=/tmp/versioned-source/.git format-patch -k -1 --stdout ${REV} | git am -3 -k
           git tag -a "${VERSION}" -m "${VERSION}"
@@ -684,5 +697,34 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: tagged-source-${{ steps.version.outputs.value }}
+          name: tagged-source-${{ steps.versioned.outputs.tag }}
           path: /tmp/tagged-source.tar
+
+  docker_merge:
+    name: Docker finalize
+    needs: [sanitize_inputs, eval_source, versioned_merge]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true && needs.eval_source.outputs.docker == 'true'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.sanitize_inputs.outputs.docker_images) }}
+
+    steps:
+      - name: Push versioned tags
+        uses: akhilerm/tag-push-action@v2.0.0
+        with:
+          src: ${{ matrix.image }}:${{ github.event.pull_request.head.sha }}
+          dst: |
+            ${{ matrix.image }}:${{ needs.versioned_merge.outputs.tag }}
+            ${{ matrix.image }}:latest
+
+###################################################
+## TAG EVENTS
+###################################################
