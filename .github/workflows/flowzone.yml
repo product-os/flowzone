@@ -741,6 +741,30 @@ jobs:
             ${{ matrix.image }}:${{ needs.versioned_merge.outputs.tag }}
             ${{ matrix.image }}:latest
 
+  balena_merge:
+    name: balena finalize
+    needs: [sanitize_inputs, eval_source, versioned_merge]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true && needs.eval_source.outputs.balena == 'true'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
+
+    steps:
+      - uses: balena-io/deploy-to-balena-action@v0.12.1
+        with:
+          balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
+          fleet: ${{ matrix.slug }}
+          versionbot: false
+          source: ${{ inputs.working_directory }}
+
 ###################################################
 ## TAG EVENTS
 ###################################################
