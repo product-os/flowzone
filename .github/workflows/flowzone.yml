@@ -163,6 +163,10 @@ jobs:
       versionbot: ${{ steps.versionbot_checkout.outcome }}
 
     steps:
+      - name: Dump GitHub context
+        id: github_context_step
+        run: echo '${{ toJSON(github) }}'
+        
       # TODO: is there a chance that this branch could be out of date?
       - name: Checkout versioned source
         id: versionbot_checkout
@@ -188,7 +192,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: versioned-source-${{ github.sha }}
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
           path: /tmp/versioned-source.tar
 
   eval_source:
@@ -211,7 +215,7 @@ jobs:
       - name: Download versioned source
         uses: actions/download-artifact@v3
         with:
-          name: versioned-source-${{ github.sha }}
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
 
       - name: Extract versioned source
         working-directory: .
@@ -352,7 +356,7 @@ jobs:
       - name: Download versioned source
         uses: actions/download-artifact@v3
         with:
-          name: versioned-source-${{ github.sha }}
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
 
       - name: Extract versioned source
         working-directory: .
@@ -433,7 +437,7 @@ jobs:
       - name: Download versioned source
         uses: actions/download-artifact@v3
         with:
-          name: versioned-source-${{ github.sha }}
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
 
       - name: Extract versioned source
         working-directory: .
@@ -577,7 +581,7 @@ jobs:
       - name: Download versioned source
         uses: actions/download-artifact@v3
         with:
-          name: versioned-source-${{ github.sha }}
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
 
       - name: Extract versioned source
         working-directory: .
@@ -615,7 +619,6 @@ jobs:
         shell: bash
 
     steps:
-
       - name: Dump GitHub context
         id: github_context_step
         run: echo '${{ toJSON(github) }}'
@@ -628,6 +631,7 @@ jobs:
           workflow_conclusion: success
           pr: ${{ github.event.pull_request.number }}
           name: versioned-source-${{ github.event.pull_request.head.sha }}
+          search_artifacts: true
 
       - name: Extract source
         run: tar -xvf versioned-source.tar
