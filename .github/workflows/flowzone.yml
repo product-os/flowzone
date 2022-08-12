@@ -627,6 +627,12 @@ jobs:
       - name: Extract source
         run: tar -xvf versioned-source.tar
 
+      - name: Parse version
+        id: version
+        run: |
+          echo "::set-output name=sha::$(git rev-parse HEAD)"
+          echo "::set-output name=value::v$(head -n1 VERSION || jq -r '.version' package.json)"
+
       - name: Import GPG key for signing commits
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@v4
@@ -645,9 +651,9 @@ jobs:
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          VERSION: ${{ steps.version.outputs.value }}
+          REV: ${{ steps.version.outputs.sha }}
         run: |
-          REV="$(git rev-parse HEAD)"
-          VERSION="v$(head -n1 VERSION || jq -r '.version' package.json)"
           git fetch origin ${BRANCH}:${BRANCH}
           git checkout ${BRANCH}
           git cherry-pick ${REV}
