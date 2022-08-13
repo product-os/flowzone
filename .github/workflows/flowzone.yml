@@ -243,9 +243,10 @@ jobs:
             "required_status_checks": {
               "strict": true,
               "contexts": [
+                "Flowzone / Sanitize inputs",
+                "Flowzone / Inspect source",
                 "Flowzone / Protect branch",
                 "Flowzone / Draft version",
-                "Flowzone / Sanitize inputs",
                 "Flowzone / Draft NPM",
                 "Flowzone / Draft Docker",
                 "Flowzone / Draft balena",
