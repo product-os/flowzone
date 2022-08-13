@@ -109,7 +109,6 @@ jobs:
       npm: ${{ steps.npm.outputs.enabled }}
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
-      resin_ci: ${{ steps.resin_ci.outputs.enabled }}
 
     steps:
       - name: Checkout source
@@ -147,25 +146,6 @@ jobs:
           then
             echo "found balena.yml"
             echo ::set-output name=enabled::"true"
-          else
-            echo ::set-output name=enabled::"false"
-          fi
-
-      # here we assume that if .resinci.yml is not found it must be disabled, which is not strictly true
-      # but it works for our purposes of making sure that some repos have to be intentional about disabling it
-      - name: Check for .resinci.yml
-        id: resin_ci
-        run: |
-          if test -f .resinci.yml
-          then
-            disabled="$(cat < "${SRC_PATH}/.resinci.yml" | yq e - -j | jq -r .disabled)"
-            echo "found .resinci.yml with disabled=${disabled}"
-            if [ -n $disabled ] && [[ $disabled =~ true|True|1|Yes|yes|On|on ]]
-            then
-              echo ::set-output name=enabled::"false"
-            else
-              echo ::set-output name=enabled::"true"
-            fi
           else
             echo ::set-output name=enabled::"false"
           fi
