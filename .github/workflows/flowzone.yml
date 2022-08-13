@@ -89,13 +89,12 @@ env:
   GHCR_USER: balena-ci # https://github.com/balena-ci
 
 jobs:
+  ###################################################
+  ## COMMON EVENTS
+  ###################################################
 
-###################################################
-## COMMON EVENTS
-###################################################
-
-  eval_source:
-    name: Evaluate source
+  inspect_source:
+    name: Inspect source
     runs-on: ubuntu-latest
 
     defaults:
@@ -200,7 +199,7 @@ jobs:
         with:
           str: ${{ inputs.node_versions }}
           separator: "newline"
-      
+
       - name: Add ghcr.io prefix
         if: inputs.ghcr_repo != ''
         id: ghcr_repo
@@ -277,16 +276,16 @@ jobs:
 
           echo ::set-output name=result::"${result}"
 
-###################################################
-## VERSION DRAFT JOBS
-###################################################
+  ###################################################
+  ## VERSION DRAFT JOBS
+  ###################################################
 
   draft_version:
     name: Draft version
     runs-on: ubuntu-latest
     # only run on PR open or synchronize events
     if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action != 'closed'
-    needs: [eval_source]
+    needs: [inspect_source]
 
     defaults:
       run:
@@ -300,7 +299,7 @@ jobs:
       - name: Dump GitHub context
         id: github_context_step
         run: echo '${{ toJSON(github) }}'
-        
+
       # TODO: is there a chance that this branch could be out of date?
       - name: Checkout versioned source
         id: versionbot_checkout
@@ -329,15 +328,15 @@ jobs:
           name: versioned-source-${{ github.event.pull_request.head.sha }}
           path: /tmp/versioned-source.tar
 
-###################################################
-## NPM DRAFT JOBS
-###################################################
+  ###################################################
+  ## NPM DRAFT JOBS
+  ###################################################
 
   npm_matrix:
     name: NPM
     runs-on: ubuntu-latest
-    needs: [draft_version, eval_source, sanitize_inputs]
-    if: needs.eval_source.outputs.npm == 'true'
+    needs: [draft_version, inspect_source, sanitize_inputs]
+    if: needs.inspect_source.outputs.npm == 'true'
 
     defaults:
       run:
@@ -389,15 +388,15 @@ jobs:
 
     # TODO: push to npmjs
 
-###################################################
-## DOCKER DRAFT JOBS
-###################################################
+  ###################################################
+  ## DOCKER DRAFT JOBS
+  ###################################################
 
   docker_matrix:
     name: Docker
     runs-on: ubuntu-latest
-    needs: [draft_version, eval_source, sanitize_inputs]
-    if: needs.eval_source.outputs.docker == 'true'
+    needs: [draft_version, inspect_source, sanitize_inputs]
+    if: needs.inspect_source.outputs.docker == 'true'
 
     defaults:
       run:
@@ -613,15 +612,15 @@ jobs:
           dst: |
             ${{ steps.dockerhub_meta.outputs.tags }}
 
-###################################################
-## BALENA DRAFT JOBS
-###################################################
+  ###################################################
+  ## BALENA DRAFT JOBS
+  ###################################################
 
   balena_matrix:
     name: balena
     runs-on: ubuntu-latest
-    needs: [draft_version, eval_source, sanitize_inputs]
-    if: needs.eval_source.outputs.balena == 'true'
+    needs: [draft_version, inspect_source, sanitize_inputs]
+    if: needs.inspect_source.outputs.balena == 'true'
 
     strategy:
       fail-fast: false
@@ -659,13 +658,13 @@ jobs:
       - shell: bash
         run: echo "balena jobs completed!"
 
-###################################################
-## Finalize version
-###################################################
+  ###################################################
+  ## Finalize version
+  ###################################################
 
   finalize_version:
     name: Finalize version
-    needs: [sanitize_inputs, eval_source]
+    needs: [sanitize_inputs, inspect_source]
     runs-on: ubuntu-latest
     # only run on PR merge events
     if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true
@@ -735,17 +734,17 @@ jobs:
           git tag -a "${VERSION}" -m "${VERSION}"
           git push origin HEAD:${BRANCH} --follow-tags
 
-###################################################
-## DOCKER FINALIZE JOBS
-###################################################
+  ###################################################
+  ## DOCKER FINALIZE JOBS
+  ###################################################
 
   finalize_docker:
     name: Finalize Docker
-    needs: [sanitize_inputs, eval_source, finalize_version]
+    needs: [sanitize_inputs, inspect_source, finalize_version]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && 
-      github.event.pull_request.merged == true && needs.eval_source.outputs.docker == 'true' &&
+      github.event.pull_request.merged == true && needs.inspect_source.outputs.docker == 'true' &&
       (needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != '')
 
     defaults:
@@ -818,15 +817,15 @@ jobs:
           dst: |
             ${{ steps.dockerhub_meta.outputs.tags }}
 
-###################################################
-## BALENA FINALIZE JOBS
-###################################################
+  ###################################################
+  ## BALENA FINALIZE JOBS
+  ###################################################
 
   finalize_balena:
     name: Finalize balena
-    needs: [sanitize_inputs, eval_source, finalize_version]
+    needs: [sanitize_inputs, inspect_source, finalize_version]
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true && needs.eval_source.outputs.balena == 'true'
+    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true && needs.inspect_source.outputs.balena == 'true'
 
     defaults:
       run:
@@ -845,7 +844,6 @@ jobs:
           fleet: ${{ matrix.slug }}
           versionbot: false
           source: ${{ inputs.working_directory }}
-
 ###################################################
 ## TAG EVENTS
 ###################################################
