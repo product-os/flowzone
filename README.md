@@ -126,28 +126,27 @@ Open a PR with the following changes to migrate an existing resinCI enabled repo
 
 ### Generate GPG keys
 
-> [Managing commit signature verification
-> ](https://docs.github.com/en/authentication/managing-commit-signature-verification)
+[Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification)
 
-- generate new GPG key signing ensuring the name matches an existing GitHub user/identity
+1. generate new GPG key signing ensuring the name matches an existing GitHub user/identity
 
-```bash
-gpg --full-generate-key
-```
+    ```bash
+    gpg --full-generate-key
+    ```
 
-- get the key id
+2. get the key id
 
-```bash
-gpg --list-secret-keys --keyid-format=long
-```
+    ```bash
+    gpg --list-secret-keys --keyid-format=long
+    ```
 
-- export the key to be stored in `GPG_PRIVATE_KEY` GitHub organisation secret
+3. export the key to be stored in `GPG_PRIVATE_KEY` GitHub organisation secret
 
-```bash
-gpg --armor --export-secret-keys {{secret_key_id}}
-```
+    ```bash
+    gpg --armor --export-secret-keys {{secret_key_id}}
+    ```
 
-- set `GPG_PASSPHRASE` and `GPG_PRIVATE_KEY` GitHub organisation secrets
+4. set `GPG_PASSPHRASE` and `GPG_PRIVATE_KEY` GitHub organisation secrets
 
 ## Help
 
