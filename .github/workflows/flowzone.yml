@@ -107,6 +107,7 @@ jobs:
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
+      npm_private: ${{ steps.npm.outputs.private }}
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
 
@@ -124,7 +125,8 @@ jobs:
         run: |
           if test -f "package.json"; then
             echo "found package.json"
-            echo ::set-output name=enabled::"true"
+            echo "::set-output name=enabled::true"
+            echo "::set-output name=private::$(jq -r '.private' package.json 2>/dev/null || echo false)"
           else
             echo ::set-output name=enabled::"false"
           fi
@@ -366,11 +368,31 @@ jobs:
     runs-on: ubuntu-latest
     needs: [npm_matrix]
 
-    steps:
-      - shell: bash
-        run: echo "NPM jobs completed!"
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
 
-    # TODO: push to npmjs
+    # TODO: publish draft to npmjs
+
+    steps:
+      - run: echo "nothing to do!"
+
+  finalize_npm:
+    name: Finalize NPM
+    needs: [sanitize_inputs, inspect_source, finalize_version]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true && needs.inspect_source.outputs.npm_private == 'false'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    # TODO: publish final to npmjs
+
+    steps:
+      - run: echo "nothing to do!"
 
   ###################################################
   ## DOCKER DRAFT JOBS
@@ -828,6 +850,8 @@ jobs:
           fleet: ${{ matrix.slug }}
           versionbot: false
           source: ${{ inputs.working_directory }}
+
+
 ###################################################
 ## TAG EVENTS
 ###################################################
