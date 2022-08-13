@@ -148,3 +148,12 @@ gpg --armor --export-secret-keys {{secret_key_id}}
 ```
 
 - set `GPG_PASSPHRASE` and `GPG_PRIVATE_KEY` GitHub organisation secrets
+
+## Help
+
+If you're having trouble getting the project running,
+submit an issue or post on the forums at <https://forums.balena.io>.
+
+## Contributing
+
+Please open an issue or submit a pull request with any features, fixes, or changes.
