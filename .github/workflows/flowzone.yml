@@ -7,16 +7,19 @@ on:
         description: "Personal access token (PAT) for the GitHub service account with admin/owner permissions"
         required: true
       NPM_TOKEN:
+        description: "The NPM auth token to use for publishing"
         required: true
       DOCKER_REGISTRY_USER:
+        description: "Username to publish to the Docker Hub container registry"
         required: true
       DOCKER_REGISTRY_PASS:
+        description: "A personal access token to publish to the Docker Hub container registry"
         required: true
       BALENA_API_KEY_PUSH:
+        description: "API key for pushing releases to balena applications"
         required: true
-      BALENA_API_KEY_TEST:
-        required: false
       COMPOSE_VARS:
+        description: "Optional base64 encoded docker-compose `.env` file for testing Docker images"
         required: false
       GPG_PRIVATE_KEY:
         description: "GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits"
@@ -106,7 +109,6 @@ jobs:
       npm: ${{ steps.npm.outputs.enabled }}
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
-      resin_ci: ${{ steps.resin_ci.outputs.enabled }}
 
     steps:
       - name: Checkout source
@@ -144,25 +146,6 @@ jobs:
           then
             echo "found balena.yml"
             echo ::set-output name=enabled::"true"
-          else
-            echo ::set-output name=enabled::"false"
-          fi
-
-      # here we assume that if .resinci.yml is not found it must be disabled, which is not strictly true
-      # but it works for our purposes of making sure that some repos have to be intentional about disabling it
-      - name: Check for .resinci.yml
-        id: resin_ci
-        run: |
-          if test -f .resinci.yml
-          then
-            disabled="$(cat < "${SRC_PATH}/.resinci.yml" | yq e - -j | jq -r .disabled)"
-            echo "found .resinci.yml with disabled=${disabled}"
-            if [ -n $disabled ] && [[ $disabled =~ true|True|1|Yes|yes|On|on ]]
-            then
-              echo ::set-output name=enabled::"false"
-            else
-              echo ::set-output name=enabled::"true"
-            fi
           else
             echo ::set-output name=enabled::"false"
           fi
