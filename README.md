@@ -54,13 +54,33 @@ Open a PR with the following changes to migrate an existing resinCI enabled repo
 2. Ensure your `package.json`, `docker-compose.test.yml`, `balena.yml`, etc. contain correct information and Flowzone is passing all tests
 3. Disable resinCI in `.resinci.yml` by adding `disabled: true` key
 
-    ```yaml
-    # .resinci.yml
-    disabled: true
-    ```
+   ```yaml
+   # .resinci.yml
+   disabled: true
+   ```
 
 4. Once the resinCI is disabled, and the Flowzone tests have passed, the branch protection rules will be updated automatically. This requires admin access to revert!
 5. Seek approval or self-certify!
+
+## Customization
+
+### Secrets
+
+The following secrets should be set by an Owner at the Organization level,
+but they can also be [configured for personal repositories](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository).
+
+| Name                   | Required | Description                                                                                                                  |
+| ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `FLOWZONE_TOKEN`       | true     | Personal access token (PAT) for the GitHub service account with admin/owner permissions                                      |
+| `GPG_PRIVATE_KEY`      | true     | GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits                                         |
+| `GPG_PASSPHRASE`       | true     | Passphrase to decrypt GPG private key                                                                                        |
+| `NPM_TOKEN`            | true     | The NPM auth token to use for publishing                                                                                     |
+| `DOCKER_REGISTRY_USER` | true     | Username to publish to the Docker Hub container registry                                                                     |
+| `DOCKER_REGISTRY_PASS` | true     | A [personal access token](https://docs.docker.com/docker-hub/access-tokens/) to publish to the Docker Hub container registry |
+| `BALENA_API_KEY_PUSH`  | true     | [API key](https://www.balena.io/docs/learn/manage/account/#api-keys) for pushing releases to balena applications             |
+| `COMPOSE_VARS`         | false    | Optional base64 encoded docker-compose `.env` file for testing Docker images                                                 |
+
+These secrets can also be found at the top of [flowzone.yml](./.github/workflows/flowzone.yml).
 
 ## Maintenance
 

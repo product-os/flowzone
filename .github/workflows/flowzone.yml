@@ -7,16 +7,19 @@ on:
         description: "Personal access token (PAT) for the GitHub service account with admin/owner permissions"
         required: true
       NPM_TOKEN:
+        description: "The NPM auth token to use for publishing"
         required: true
       DOCKER_REGISTRY_USER:
+        description: "Username to publish to the Docker Hub container registry"
         required: true
       DOCKER_REGISTRY_PASS:
+        description: "A personal access token to publish to the Docker Hub container registry"
         required: true
       BALENA_API_KEY_PUSH:
+        description: "API key for pushing releases to balena applications"
         required: true
-      BALENA_API_KEY_TEST:
-        required: false
       COMPOSE_VARS:
+        description: "Optional base64 encoded docker-compose `.env` file for testing Docker images"
         required: false
       GPG_PRIVATE_KEY:
         description: "GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits"
