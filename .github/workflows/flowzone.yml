@@ -324,7 +324,10 @@ jobs:
     needs: [sanitize_inputs, inspect_source]
     runs-on: ubuntu-latest
     # only run on PR merge events
-    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true
+    if: |
+      github.event_name == 'pull_request' &&
+      github.base_ref == github.event.repository.default_branch &&
+      github.event.pull_request.merged == true
 
     defaults:
       run:
@@ -396,6 +399,28 @@ jobs:
           git --git-dir=/tmp/versioned-source/.git format-patch -k -1 --stdout ${REV} | git am -3 -k
           git tag -a "${VERSION}" -m "${VERSION}"
           git push origin HEAD:${BRANCH} --follow-tags
+
+  version_tag:
+    name: Version tag
+    needs: [sanitize_inputs, inspect_source]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'tag'
+
+    outputs:
+      versionbot: contains(github.event.head_commit.author.name, 'versionbot')
+      # raw:
+      # semver:
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    steps:
+      - name: Dump GitHub context
+        id: github_context_step
+        run: echo '${{ toJSON(github) }}'
 
   ###################################################
   ## NPM
@@ -811,12 +836,12 @@ jobs:
 
   balena_tag:
     name: balena tag
-    needs: [sanitize_inputs, inspect_source]
+    needs: [sanitize_inputs, inspect_source, version_tag]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'tag' &&
       needs.inspect_source.outputs.balena == 'true' &&
-      needs.version_merge.outputs.versionbot != 'true'
+      needs.version_tag.outputs.versionbot == 'false'
 
     defaults:
       run:
