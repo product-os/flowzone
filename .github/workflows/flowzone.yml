@@ -335,6 +335,7 @@ jobs:
       sha: ${{ steps.versioned.outputs.sha }}
       tag: ${{ steps.versioned.outputs.tag }}
       author: ${{ steps.versioned.outputs.author }}
+      versionbot: contains(steps.versioned.outputs.author, 'versionbot')
 
     steps:
       - name: Dump GitHub context
@@ -458,6 +459,8 @@ jobs:
     # TODO: publish draft to npmjs
 
     steps:
+      # just a catchall to ensure the matrix was successful so we can use this job as
+      # branch protection without knowing all the matrices
       - run: echo "nothing to do!"
 
   npm_merge:
@@ -469,17 +472,16 @@ jobs:
       github.base_ref == github.event.repository.default_branch &&
       github.event.pull_request.merged == true &&
       needs.inspect_source.outputs.npm_private == 'false' &&
-      contains(needs.version_merge.outputs.author, 'versionbot')
+      needs.version_merge.outputs.versionbot == 'true'
 
     defaults:
       run:
         working-directory: .
         shell: bash
 
-    # TODO: publish final to npmjs
-
     steps:
-      - run: echo "nothing to do!"
+      # TODO: publish final to npmjs
+      - run: echo "not yet implemented!"
 
   ###################################################
   ## DOCKER
@@ -715,7 +717,7 @@ jobs:
       github.event.pull_request.merged == true &&
       needs.inspect_source.outputs.docker == 'true' &&
       (needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != '') &&
-      contains(needs.version_merge.outputs.author, 'versionbot')
+      needs.version_merge.outputs.versionbot == 'true'
 
     defaults:
       run:
@@ -821,7 +823,7 @@ jobs:
         with:
           balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
           fleet: ${{ matrix.slug }}
-          versionbot: false
+          versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
 
   balena_draft:
@@ -829,9 +831,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: [balena_matrix]
 
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
     steps:
-      - shell: bash
-        run: echo "balena jobs completed!"
+      # just a catchall to ensure the matrix was successful so we can use this job as
+      # branch protection without knowing all the matrices
+      - run: echo "nothing to do!"
 
   balena_merge:
     name: balena merge
@@ -842,7 +850,34 @@ jobs:
       github.base_ref == github.event.repository.default_branch &&
       github.event.pull_request.merged == true &&
       needs.inspect_source.outputs.balena == 'true' &&
-      contains(needs.version_merge.outputs.author, 'versionbot')
+      needs.version_merge.outputs.versionbot == 'true'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
+
+    steps:
+      - uses: balena-io/deploy-to-balena-action@v0.12.1
+        with:
+          balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
+          fleet: ${{ matrix.slug }}
+          versionbot: false # disable the included versionbot branch checkout
+          source: ${{ inputs.working_directory }}
+
+  balena_tag:
+    name: balena tag
+    needs: [sanitize_inputs, inspect_source]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'tag' &&
+      needs.inspect_source.outputs.balena == 'true' &&
+      needs.version_merge.outputs.versionbot != 'true'
 
     defaults:
       run:
