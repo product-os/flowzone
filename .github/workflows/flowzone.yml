@@ -8,16 +8,16 @@ on:
         required: true
       NPM_TOKEN:
         description: "The NPM auth token to use for publishing"
-        required: true
+        required: false
       DOCKER_REGISTRY_USER:
         description: "Username to publish to the Docker Hub container registry"
-        required: true
+        required: false
       DOCKER_REGISTRY_PASS:
         description: "A personal access token to publish to the Docker Hub container registry"
-        required: true
+        required: false
       BALENA_API_KEY_PUSH:
         description: "API key for pushing releases to balena applications"
-        required: true
+        required: false
       COMPOSE_VARS:
         description: "Optional base64 encoded docker-compose `.env` file for testing Docker images"
         required: false
