@@ -101,8 +101,8 @@ jobs:
   ## GENERAL
   ###################################################
 
-  inspect_source:
-    name: Inspect source
+  source_check:
+    name: Source check
     runs-on: ubuntu-latest
 
     defaults:
@@ -154,8 +154,8 @@ jobs:
             echo ::set-output name=enabled::"false"
           fi
 
-  sanitize_inputs:
-    name: Sanitize inputs
+  context_check:
+    name: Context check
     runs-on: ubuntu-latest
 
     outputs:
@@ -234,8 +234,8 @@ jobs:
             "required_status_checks": {
               "strict": true,
               "contexts": [
-                "Flowzone / Sanitize inputs",
-                "Flowzone / Inspect source",
+                "Flowzone / Context check",
+                "Flowzone / Source check",
                 "Flowzone / Protect branch",
                 "Flowzone / Version draft",
                 "Flowzone / NPM draft",
@@ -277,7 +277,7 @@ jobs:
     runs-on: ubuntu-latest
     # only run on PR open or synchronize events
     if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action != 'closed'
-    needs: [inspect_source]
+    needs: [source_check]
 
     defaults:
       run:
@@ -318,7 +318,7 @@ jobs:
 
   version_merge:
     name: Version merge
-    needs: [sanitize_inputs, inspect_source]
+    needs: [context_check, source_check]
     runs-on: ubuntu-latest
     # only run on PR merge events
     if: |
@@ -398,7 +398,7 @@ jobs:
 
   version_tag:
     name: Version tag
-    needs: [sanitize_inputs, inspect_source]
+    needs: [context_check, source_check]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -426,8 +426,8 @@ jobs:
   npm_matrix:
     name: NPM
     runs-on: ubuntu-latest
-    needs: [version_draft, inspect_source, sanitize_inputs]
-    if: needs.inspect_source.outputs.npm == 'true'
+    needs: [version_draft, source_check, context_check]
+    if: needs.source_check.outputs.npm == 'true'
 
     defaults:
       run:
@@ -437,7 +437,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node_version: ${{ fromJSON(needs.sanitize_inputs.outputs.node_versions) }}
+        node_version: ${{ fromJSON(needs.context_check.outputs.node_versions) }}
 
     steps:
       - name: Download versioned source
@@ -471,9 +471,9 @@ jobs:
   npm_draft:
     name: NPM draft
     runs-on: ubuntu-latest
-    needs: [npm_matrix, inspect_source]
+    needs: [npm_matrix, source_check]
     if: |
-      needs.inspect_source.outputs.npm_private == 'false' &&
+      needs.source_check.outputs.npm_private == 'false' &&
       inputs.npmjs_repository != ''
 
     defaults:
@@ -490,13 +490,13 @@ jobs:
 
   npm_merge:
     name: NPM merge
-    needs: [sanitize_inputs, inspect_source, version_merge]
+    needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'pull_request' &&
       github.base_ref == github.event.repository.default_branch &&
       github.event.pull_request.merged == true &&
-      needs.inspect_source.outputs.npm_private == 'false' &&
+      needs.source_check.outputs.npm_private == 'false' &&
       inputs.npmjs_repository != '' &&
       needs.version_merge.outputs.versionbot == 'true'
 
@@ -511,11 +511,11 @@ jobs:
 
   npm_tag:
     name: NPM tag
-    needs: [sanitize_inputs, inspect_source, version_tag]
+    needs: [context_check, source_check, version_tag]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
-      needs.inspect_source.outputs.npm_private == 'false' &&
+      needs.source_check.outputs.npm_private == 'false' &&
       inputs.npmjs_repository != '' &&
       needs.version_tag.outputs.versionbot != 'true'
 
@@ -535,8 +535,8 @@ jobs:
   docker_matrix:
     name: Docker
     runs-on: ubuntu-latest
-    needs: [version_draft, inspect_source, sanitize_inputs]
-    if: needs.inspect_source.outputs.docker == 'true'
+    needs: [version_draft, source_check, context_check]
+    if: needs.source_check.outputs.docker == 'true'
 
     defaults:
       run:
@@ -557,11 +557,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: ${{ fromJSON(needs.sanitize_inputs.outputs.docker_platforms) }}
+        platform: ${{ fromJSON(needs.context_check.outputs.docker_platforms) }}
 
     steps:
       - name: Login to GitHub Container Registry
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
+        if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -569,7 +569,7 @@ jobs:
           password: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Login to Docker Hub
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+        if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
         uses: docker/login-action@v2
         with:
           registry: docker.io
@@ -604,8 +604,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
-            ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}
+            ${{ needs.context_check.outputs.ghcr_repo }}
+            ${{ needs.context_check.outputs.dockerhub_repo }}
             ${{ env.LOCAL_IMAGE }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.ref }}
@@ -659,8 +659,8 @@ jobs:
   docker_draft:
     name: Docker draft
     runs-on: ubuntu-latest
-    needs: [docker_matrix, sanitize_inputs]
-    if: needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != ''
+    needs: [docker_matrix, context_check]
+    if: needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != ''
 
     defaults:
       run:
@@ -669,7 +669,7 @@ jobs:
 
     steps:
       - name: Login to GitHub Container Registry
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
+        if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -677,7 +677,7 @@ jobs:
           password: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Login to Docker Hub
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+        if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
         uses: docker/login-action@v2
         with:
           registry: docker.io
@@ -689,8 +689,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
-            ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}
+            ${{ needs.context_check.outputs.ghcr_repo }}
+            ${{ needs.context_check.outputs.dockerhub_repo }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.ref }}
             type=ref,event=pr
@@ -700,44 +700,44 @@ jobs:
             suffix=
 
       - name: Create multi-arch manifest
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
+        if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
         uses: pixelfederation/gh-action-manifest-tool@v0.1.0
         with:
           username: ${{ env.GHCR_USER }}
           password: ${{ secrets.FLOWZONE_TOKEN }}
-          platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
-          template: ${{ needs.sanitize_inputs.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
-          target: ${{ needs.sanitize_inputs.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}
+          platforms: ${{ join(fromJSON(needs.context_check.outputs.docker_platforms)) }}
+          template: ${{ needs.context_check.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
+          target: ${{ needs.context_check.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}
           # see https://github.com/estesp/manifest-tool to understand template
 
       - name: Create multi-arch manifest
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+        if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
         uses: pixelfederation/gh-action-manifest-tool@v0.1.0
         with:
           username: ${{ secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
-          platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
-          template: ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
-          target: ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
+          platforms: ${{ join(fromJSON(needs.context_check.outputs.docker_platforms)) }}
+          template: ${{ needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
+          target: ${{ needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           # see https://github.com/estesp/manifest-tool to understand template
 
       - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
+          src: ${{ needs.context_check.outputs.ghcr_repo || needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
             ${{ steps.meta.outputs.tags }}
 
   docker_merge:
     name: Docker merge
-    needs: [sanitize_inputs, inspect_source, version_merge]
+    needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'pull_request' &&
       github.base_ref == github.event.repository.default_branch && 
       github.event.pull_request.merged == true &&
-      needs.inspect_source.outputs.docker == 'true' &&
-      (needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != '') &&
+      needs.source_check.outputs.docker == 'true' &&
+      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '') &&
       needs.version_merge.outputs.versionbot == 'true'
 
     defaults:
@@ -747,7 +747,7 @@ jobs:
 
     steps:
       - name: Login to GitHub Container Registry
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
+        if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -755,7 +755,7 @@ jobs:
           password: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Login to Docker Hub
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+        if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
         uses: docker/login-action@v2
         with:
           registry: docker.io
@@ -767,8 +767,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
-            ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}
+            ${{ needs.context_check.outputs.ghcr_repo }}
+            ${{ needs.context_check.outputs.dockerhub_repo }}
           tags: |
             type=raw,value=${{ needs.version_merge.outputs.raw }}
             type=raw,value=${{ needs.version_merge.outputs.semver }}
@@ -780,18 +780,18 @@ jobs:
       - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
+          src: ${{ needs.context_check.outputs.ghcr_repo || needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
             ${{ steps.meta.outputs.tags }}
 
   docker_tag:
     name: Docker tag
-    needs: [sanitize_inputs, inspect_source, version_tag]
+    needs: [context_check, source_check, version_tag]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
-      needs.inspect_source.outputs.docker == 'true' &&
-      (needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != '') &&
+      needs.source_check.outputs.docker == 'true' &&
+      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '') &&
       needs.version_tag.outputs.versionbot != 'true'
 
     defaults:
@@ -801,7 +801,7 @@ jobs:
 
     steps:
       - name: Login to GitHub Container Registry
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
+        if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -809,7 +809,7 @@ jobs:
           password: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Login to Docker Hub
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+        if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
         uses: docker/login-action@v2
         with:
           registry: docker.io
@@ -821,8 +821,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
-            ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}
+            ${{ needs.context_check.outputs.ghcr_repo }}
+            ${{ needs.context_check.outputs.dockerhub_repo }}
           tags: |
             type=ref,event=tag
             type=semver,pattern={{version}}
@@ -834,7 +834,7 @@ jobs:
       - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
+          src: ${{ needs.context_check.outputs.ghcr_repo || needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
             ${{ steps.meta.outputs.tags }}
 
@@ -845,13 +845,13 @@ jobs:
   balena_matrix:
     name: balena
     runs-on: ubuntu-latest
-    needs: [version_draft, inspect_source, sanitize_inputs]
-    if: needs.inspect_source.outputs.balena == 'true'
+    needs: [version_draft, source_check, context_check]
+    if: needs.source_check.outputs.balena == 'true'
 
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.context_check.outputs.balena_slugs) }}
 
     defaults:
       run:
@@ -892,13 +892,13 @@ jobs:
 
   balena_merge:
     name: balena merge
-    needs: [sanitize_inputs, inspect_source, version_merge]
+    needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'pull_request' &&
       github.base_ref == github.event.repository.default_branch &&
       github.event.pull_request.merged == true &&
-      needs.inspect_source.outputs.balena == 'true' &&
+      needs.source_check.outputs.balena == 'true' &&
       needs.version_merge.outputs.versionbot == 'true'
 
     defaults:
@@ -909,7 +909,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.context_check.outputs.balena_slugs) }}
 
     steps:
       - uses: balena-io/deploy-to-balena-action@v0.12.1
@@ -921,11 +921,11 @@ jobs:
 
   balena_tag:
     name: balena tag
-    needs: [sanitize_inputs, inspect_source, version_tag]
+    needs: [context_check, source_check, version_tag]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
-      needs.inspect_source.outputs.balena == 'true' &&
+      needs.source_check.outputs.balena == 'true' &&
       needs.version_tag.outputs.versionbot != 'true'
 
     defaults:
@@ -936,7 +936,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.context_check.outputs.balena_slugs) }}
 
     steps:
       - uses: balena-io/deploy-to-balena-action@v0.12.1
