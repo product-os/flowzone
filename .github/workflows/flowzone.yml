@@ -98,7 +98,7 @@ env:
 
 jobs:
   ###################################################
-  ## COMMON EVENTS
+  ## GENERAL
   ###################################################
 
   inspect_source:
@@ -204,7 +204,7 @@ jobs:
 
   protect-branch:
     name: Protect branch
-    needs: [draft_docker, draft_npm, draft_balena]
+    needs: [docker_draft, npm_draft, balena_draft]
     runs-on: ubuntu-latest
     # only run on PR open and synchronize events and when resinci is disabled or not found
     if: |
@@ -236,10 +236,10 @@ jobs:
                 "Flowzone / Sanitize inputs",
                 "Flowzone / Inspect source",
                 "Flowzone / Protect branch",
-                "Flowzone / Draft version",
-                "Flowzone / Draft NPM",
-                "Flowzone / Draft Docker",
-                "Flowzone / Draft balena",
+                "Flowzone / Version draft",
+                "Flowzone / NPM draft",
+                "Flowzone / Docker draft",
+                "Flowzone / balena draft",
                 "VersionBot/generate-version"
               ]
             },
@@ -268,11 +268,11 @@ jobs:
           echo ::set-output name=result::"${result}"
 
   ###################################################
-  ## VERSION DRAFT JOBS
+  ## VERSIONING
   ###################################################
 
-  draft_version:
-    name: Draft version
+  version_draft:
+    name: Version draft
     runs-on: ubuntu-latest
     # only run on PR open or synchronize events
     if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action != 'closed'
@@ -319,14 +319,125 @@ jobs:
           name: versioned-source-${{ github.event.pull_request.head.sha }}
           path: /tmp/versioned-source.tar
 
+  version_merge:
+    name: Version merge
+    needs: [sanitize_inputs, inspect_source]
+    runs-on: ubuntu-latest
+    # only run on PR merge events
+    if: |
+      github.event_name == 'pull_request' &&
+      github.base_ref == github.event.repository.default_branch &&
+      github.event.pull_request.merged == true
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    outputs:
+      sha: ${{ steps.versioned.outputs.sha }}
+      raw: ${{ steps.versioned.outputs.raw }}
+      semver: ${{ steps.versioned.outputs.semver }}
+      author: ${{ steps.versioned.outputs.author }}
+      versionbot: contains(steps.versioned.outputs.author, 'versionbot')
+
+    steps:
+      - name: Dump GitHub context
+        id: github_context_step
+        run: echo '${{ toJSON(github) }}'
+
+      - name: Download artifact
+        id: download
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          workflow_conclusion: success
+          pr: ${{ github.event.pull_request.number }}
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
+          search_artifacts: true
+
+      - name: Extract source
+        run: |
+          mkdir -p /tmp/versioned-source
+          tar -xvf versioned-source.tar -C /tmp/versioned-source
+
+      - name: Parse version
+        id: versioned
+        working-directory: /tmp/versioned-source
+        run: |
+          VERSION="$(head -n1 VERSION || jq -r '.version' package.json)"
+          echo "::set-output name=sha::$(git rev-parse HEAD)"
+          echo "::set-output name=raw::v${VERSION}"
+          echo "::set-output name=semver::${VERSION}"
+          echo "::set-output name=author::$(git log -1 --pretty=format:'%an' | xargs)"
+
+      - name: Import GPG key for signing commits
+        id: import-gpg
+        if: contains(steps.versioned.outputs.author, 'versionbot')
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_config_global: true
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Checkout source
+        if: contains(steps.versioned.outputs.author, 'versionbot')
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+
+      - name: Push versioned commit
+        if: contains(steps.versioned.outputs.author, 'versionbot')
+        env:
+          BRANCH: ${{ github.base_ref }}
+          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
+          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
+          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          VERSION: ${{ steps.versioned.outputs.raw }}
+          REV: ${{ steps.versioned.outputs.sha }}
+        run: |
+          git --git-dir=/tmp/versioned-source/.git format-patch -k -1 --stdout ${REV} | git am -3 -k
+          git tag -a "${VERSION}" -m "${VERSION}"
+          git push origin HEAD:${BRANCH} --follow-tags
+
+  version_tag:
+    name: Version tag
+    needs: [sanitize_inputs, inspect_source]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'tag'
+
+    outputs:
+      versionbot: contains(github.event.head_commit.author.name, 'versionbot')
+      raw: github.ref_name
+      semver: steps.format.outputs.semver
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    steps:
+      - name: Dump GitHub context
+        id: github_context_step
+        run: echo '${{ toJSON(github) }}'
+
+      - name: Format tag as semver
+        id: format
+        run: |
+          echo "::set-output name=semver::$(npx -q -y -- semver -c -l ${{ github.ref_name }})"
+
   ###################################################
-  ## NPM DRAFT JOBS
+  ## NPM
   ###################################################
 
   npm_matrix:
     name: NPM
     runs-on: ubuntu-latest
-    needs: [draft_version, inspect_source, sanitize_inputs]
+    needs: [version_draft, inspect_source, sanitize_inputs]
     if: needs.inspect_source.outputs.npm == 'true'
 
     defaults:
@@ -368,10 +479,13 @@ jobs:
       - name: Run tests
         run: npm test
 
-  draft_npm:
-    name: Draft NPM
+  npm_draft:
+    name: NPM draft
     runs-on: ubuntu-latest
-    needs: [npm_matrix]
+    needs: [npm_matrix, inspect_source]
+    if: |
+      needs.inspect_source.outputs.npm_private == 'false' &&
+      inputs.npmjs_repository != ''
 
     defaults:
       run:
@@ -381,37 +495,58 @@ jobs:
     # TODO: publish draft to npmjs
 
     steps:
+      # just a catchall to ensure the matrix was successful so we can use this job as
+      # branch protection without knowing all the matrices
       - run: echo "nothing to do!"
 
-  finalize_npm:
-    name: Finalize NPM
-    needs: [sanitize_inputs, inspect_source, finalize_version]
+  npm_merge:
+    name: NPM merge
+    needs: [sanitize_inputs, inspect_source, version_merge]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'pull_request' &&
       github.base_ref == github.event.repository.default_branch &&
       github.event.pull_request.merged == true &&
       needs.inspect_source.outputs.npm_private == 'false' &&
-      contains(needs.finalize_version.outputs.author, 'versionbot')
+      inputs.npmjs_repository != '' &&
+      needs.version_merge.outputs.versionbot == 'true'
 
     defaults:
       run:
         working-directory: .
         shell: bash
 
-    # TODO: publish final to npmjs
+    steps:
+      # TODO: publish final to npmjs
+      - run: echo "not yet implemented!"
+
+  npm_tag:
+    name: NPM tag
+    needs: [sanitize_inputs, inspect_source, version_tag]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'tag' &&
+      needs.inspect_source.outputs.npm_private == 'false' &&
+      inputs.npmjs_repository != '' &&
+      needs.version_tag.outputs.versionbot == 'false'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
 
     steps:
-      - run: echo "nothing to do!"
+      # TODO: publish final to npmjs
+      - run: echo "not yet implemented!"
 
   ###################################################
-  ## DOCKER DRAFT JOBS
+  ## DOCKER
   ###################################################
 
   docker_matrix:
     name: Docker
     runs-on: ubuntu-latest
-    needs: [draft_version, inspect_source, sanitize_inputs]
+    needs: [version_draft, inspect_source, sanitize_inputs]
     if: needs.inspect_source.outputs.docker == 'true'
 
     defaults:
@@ -532,8 +667,8 @@ jobs:
           dst: |
             ${{ steps.meta.outputs.tags }}
 
-  draft_docker:
-    name: Draft Docker
+  docker_draft:
+    name: Docker draft
     runs-on: ubuntu-latest
     needs: [docker_matrix, sanitize_inputs]
     if: needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != ''
@@ -552,13 +687,21 @@ jobs:
           username: ${{ env.GHCR_USER }}
           password: ${{ secrets.FLOWZONE_TOKEN }}
 
+      - name: Login to Docker Hub
+        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
+
       - name: Generate Docker labels and tags
-        id: ghcr_meta
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
+        id: meta
         uses: docker/metadata-action@v4
         with:
           images: |
             ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
+            ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.ref }}
             type=ref,event=pr
@@ -575,16 +718,52 @@ jobs:
           password: ${{ secrets.FLOWZONE_TOKEN }}
           platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
           template: ${{ needs.sanitize_inputs.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
-          target: ${{ needs.sanitize_inputs.outputs.ghcr_repo}}:${{ github.event.pull_request.head.sha }}
+          target: ${{ needs.sanitize_inputs.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}
           # see https://github.com/estesp/manifest-tool to understand template
 
-      - name: Push draft tags to Github Container Registry
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
+      - name: Create multi-arch manifest
+        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+        uses: pixelfederation/gh-action-manifest-tool@v0.1.0
+        with:
+          username: ${{ secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
+          platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
+          template: ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
+          target: ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
+          # see https://github.com/estesp/manifest-tool to understand template
+
+      - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo}}:${{ github.event.pull_request.head.sha }}
+          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
-            ${{ steps.ghcr_meta.outputs.tags }}
+            ${{ steps.meta.outputs.tags }}
+
+  docker_merge:
+    name: Docker merge
+    needs: [sanitize_inputs, inspect_source, version_merge]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      github.base_ref == github.event.repository.default_branch && 
+      github.event.pull_request.merged == true &&
+      needs.inspect_source.outputs.docker == 'true' &&
+      (needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != '') &&
+      needs.version_merge.outputs.versionbot == 'true'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    steps:
+      - name: Login to GitHub Container Registry
+        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USER }}
+          password: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Login to Docker Hub
         if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
@@ -595,47 +774,89 @@ jobs:
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
 
       - name: Generate Docker labels and tags
-        id: dockerhub_meta
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+        id: meta
         uses: docker/metadata-action@v4
         with:
           images: |
+            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
             ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}
           tags: |
-            type=raw,value=${{ github.event.pull_request.head.ref }}
-            type=ref,event=pr
+            type=raw,value=${{ needs.version_merge.outputs.raw }}
+            type=raw,value=${{ needs.version_merge.outputs.semver }}
+          flavor: |
+            latest=true
+            prefix=
+            suffix=
+
+      - name: Publish tags
+        uses: akhilerm/tag-push-action@v2.0.0
+        with:
+          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
+          dst: |
+            ${{ steps.meta.outputs.tags }}
+
+  docker_tag:
+    name: Docker tag
+    needs: [sanitize_inputs, inspect_source, version_tag]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'tag' &&
+      needs.inspect_source.outputs.docker == 'true' &&
+      (needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != '') &&
+      needs.version_tag.outputs.versionbot == 'false'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    steps:
+      - name: Login to GitHub Container Registry
+        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USER }}
+          password: ${{ secrets.FLOWZONE_TOKEN }}
+
+      - name: Login to Docker Hub
+        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
+
+      - name: Generate Docker labels and tags
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
+            ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}
+          tags: |
+            type=ref,event=tag
+            type=semver,pattern={{version}}
           flavor: |
             latest=auto
             prefix=
             suffix=
 
-      - name: Create multi-arch manifest
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
-        uses: pixelfederation/gh-action-manifest-tool@v0.1.0
-        with:
-          username: ${{ secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
-          platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
-          template: ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
-          target: ${{ needs.sanitize_inputs.outputs.dockerhub_repo}}:${{ github.event.pull_request.head.sha }}
-          # see https://github.com/estesp/manifest-tool to understand template
-
-      - name: Push draft tags to Docker Hub
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+      - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ needs.sanitize_inputs.outputs.dockerhub_repo}}:${{ github.event.pull_request.head.sha }}
+          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
-            ${{ steps.dockerhub_meta.outputs.tags }}
+            ${{ steps.meta.outputs.tags }}
 
   ###################################################
-  ## BALENA DRAFT JOBS
+  ## BALENA
   ###################################################
 
   balena_matrix:
     name: balena
     runs-on: ubuntu-latest
-    needs: [draft_version, inspect_source, sanitize_inputs]
+    needs: [version_draft, inspect_source, sanitize_inputs]
     if: needs.inspect_source.outputs.balena == 'true'
 
     strategy:
@@ -662,199 +883,61 @@ jobs:
         with:
           balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
           fleet: ${{ matrix.slug }}
-          versionbot: false
+          versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
 
-  draft_balena:
-    name: Draft balena
+  balena_draft:
+    name: balena draft
     runs-on: ubuntu-latest
     needs: [balena_matrix]
 
-    steps:
-      - shell: bash
-        run: echo "balena jobs completed!"
-
-  ###################################################
-  ## Finalize version
-  ###################################################
-
-  finalize_version:
-    name: Finalize version
-    needs: [sanitize_inputs, inspect_source]
-    runs-on: ubuntu-latest
-    # only run on PR merge events
-    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash
-
-    outputs:
-      sha: ${{ steps.versioned.outputs.sha }}
-      tag: ${{ steps.versioned.outputs.tag }}
-      author: ${{ steps.versioned.outputs.author }}
-
-    steps:
-      - name: Dump GitHub context
-        id: github_context_step
-        run: echo '${{ toJSON(github) }}'
-
-      - name: Download artifact
-        id: download
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          github_token: ${{ secrets.FLOWZONE_TOKEN }}
-          workflow_conclusion: success
-          pr: ${{ github.event.pull_request.number }}
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
-          search_artifacts: true
-
-      - name: Extract source
-        run: |
-          mkdir -p /tmp/versioned-source
-          tar -xvf versioned-source.tar -C /tmp/versioned-source
-
-      - name: Parse version
-        id: versioned
-        working-directory: /tmp/versioned-source
-        run: |
-          echo "::set-output name=sha::$(git rev-parse HEAD)"
-          echo "::set-output name=tag::v$(head -n1 VERSION || jq -r '.version' package.json)"
-          echo "::set-output name=author::$(git log -1 --pretty=format:'%an' | xargs)"
-
-      - name: Import GPG key for signing commits
-        id: import-gpg
-        if: contains(steps.versioned.outputs.author, 'versionbot')
-        uses: crazy-max/ghaction-import-gpg@v4
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          git_config_global: true
-          git_user_signingkey: true
-          git_commit_gpgsign: true
-
-      - name: Checkout source
-        if: contains(steps.versioned.outputs.author, 'versionbot')
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-
-      - name: Push versioned commit
-        if: contains(steps.versioned.outputs.author, 'versionbot')
-        env:
-          BRANCH: ${{ github.base_ref }}
-          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
-          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
-          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          VERSION: ${{ steps.versioned.outputs.tag }}
-          REV: ${{ steps.versioned.outputs.sha }}
-        run: |
-          git --git-dir=/tmp/versioned-source/.git format-patch -k -1 --stdout ${REV} | git am -3 -k
-          git tag -a "${VERSION}" -m "${VERSION}"
-          git push origin HEAD:${BRANCH} --follow-tags
-
-  ###################################################
-  ## DOCKER FINALIZE JOBS
-  ###################################################
-
-  finalize_docker:
-    name: Finalize Docker
-    needs: [sanitize_inputs, inspect_source, finalize_version]
-    runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'pull_request' &&
-      github.base_ref == github.event.repository.default_branch && 
-      github.event.pull_request.merged == true &&
-      needs.inspect_source.outputs.docker == 'true' &&
-      (needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != '') &&
-      contains(needs.finalize_version.outputs.author, 'versionbot')
-
     defaults:
       run:
         working-directory: .
         shell: bash
 
     steps:
-      - name: Login to GitHub Container Registry
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.FLOWZONE_TOKEN }}
+      # just a catchall to ensure the matrix was successful so we can use this job as
+      # branch protection without knowing all the matrices
+      - run: echo "nothing to do!"
 
-      - name: Generate Docker labels and tags
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
-        id: ghcr_meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
-          tags: |
-            type=ref,event=tag
-            type=raw,value=${{ needs.finalize_version.outputs.tag }}
-            type=semver,pattern={{version}}
-          flavor: |
-            latest=true
-            prefix=
-            suffix=
-
-      - name: Push final tags to GitHub Container Registry
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
-        uses: akhilerm/tag-push-action@v2.0.0
-        with:
-          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}
-          dst: |
-            ${{ steps.ghcr_meta.outputs.tags }}
-
-      - name: Login to Docker Hub
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
-        uses: docker/login-action@v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
-
-      - name: Generate Docker labels and tags
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
-        id: dockerhub_meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}
-          tags: |
-            type=ref,event=tag
-            type=raw,value=${{ needs.finalize_version.outputs.tag }}
-            type=semver,pattern={{version}}
-          flavor: |
-            latest=true
-            prefix=
-            suffix=
-
-      - name: Push final tags to Docker Hub
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
-        uses: akhilerm/tag-push-action@v2.0.0
-        with:
-          src: ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
-          dst: |
-            ${{ steps.dockerhub_meta.outputs.tags }}
-
-  ###################################################
-  ## BALENA FINALIZE JOBS
-  ###################################################
-
-  finalize_balena:
-    name: Finalize balena
-    needs: [sanitize_inputs, inspect_source, finalize_version]
+  balena_merge:
+    name: balena merge
+    needs: [sanitize_inputs, inspect_source, version_merge]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'pull_request' &&
       github.base_ref == github.event.repository.default_branch &&
       github.event.pull_request.merged == true &&
       needs.inspect_source.outputs.balena == 'true' &&
-      contains(needs.finalize_version.outputs.author, 'versionbot')
+      needs.version_merge.outputs.versionbot == 'true'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
+
+    steps:
+      - uses: balena-io/deploy-to-balena-action@v0.12.1
+        with:
+          balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
+          fleet: ${{ matrix.slug }}
+          versionbot: false # disable the included versionbot branch checkout
+          source: ${{ inputs.working_directory }}
+
+  balena_tag:
+    name: balena tag
+    needs: [sanitize_inputs, inspect_source, version_tag]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'tag' &&
+      needs.inspect_source.outputs.balena == 'true' &&
+      needs.version_tag.outputs.versionbot == 'false'
 
     defaults:
       run:
@@ -873,8 +956,3 @@ jobs:
           fleet: ${{ matrix.slug }}
           versionbot: false
           source: ${{ inputs.working_directory }}
-###################################################
-## TAG EVENTS
-###################################################
-
-# TBD
