@@ -34,17 +34,32 @@ Flowzone will automatically select an appropriate runner based on your project's
 
 ## Supported project types
 
+Note that these project types are _not_ mutually exclusive, and your project may execute one or more of the following.
+
 ### NodeJS
 
-Currently testing with NodeJS 16.x is supported. These tests will be run if a `package.json` file is found in the root of the repository. If a `package-lock.json` file is found in the root of the repository, dependencies will be install with `npm ci`, otherwise `npm i` will be used.
-If a build script is present in `package.json` it will be called before the tests are run.
-Testing is done by calling `npm test`.
+These tests will be run if a `package.json` file is found in the root of the repository. If a `package-lock.json` file is found in the root of the repository, dependencies will be install with `npm ci`, otherwise `npm i` will be used.
+If a build script is present in `package.json` it will be called before the tests are run. Testing is done by calling `npm test`.
 
-### Docker compose w/ SUT container
+The `node_versions` [input](#inputs) will determine the NodeJS versions used for testing.
 
-If a `docker-compose.yml` _and_ a `docker-compose.test.yml` is found in the root of the repository, Flowzone will test your project using Docker. The compose script will merge the to yaml file together and wait on a container named `sut` to finish. The result of the test is determined by the exit code of the `sut` container.
-Typically, the `sut` container will container your e2e or integration tests and will exit on test completion.
-If you need to provide environment variables to the compose environment you can add a repository secret called `COMPOSE_VARS` that should be a base64 encoded `.env` file. This will be decoded and written to a `.env` file inside the test worker at runtim.
+If `npmjs_repository` is provided as an [input](#inputs), draft artifacts will be published and these artifacts will be finalized on merge.
+
+### Docker
+
+If a `docker-compose.yml` _and_ a `docker-compose.test.yml` are found in the root of the repository, Flowzone will test your project using Docker compose.
+
+The compose script will merge the to yaml file together and wait on a container named `sut` to finish. The result of the test is determined by the exit code of the `sut` container.
+Typically, the `sut` container will execute your e2e or integration tests and will exit on test completion.
+
+If you need to provide environment variables to the compose environment you can add a repository secret called `COMPOSE_VARS` that should be a base64 encoded `.env` file. This will be decoded and written to a `.env` file inside the test worker at runtime.
+
+If `dockerhub_repo` or `ghcr_repo` are provided as [inputs](#inputs), draft artifacts will be published and these artifacts will be finalized on merge.
+
+### Balena
+
+If a `balena.yml` file is found in the root of the repository and `balena_slugs` is provided as an [input](#inputs), Flowzone will attempt to push draft releases to your applications.
+On merge these releases will be finalized.
 
 ## Customization
 
@@ -83,6 +98,7 @@ These inputs are all optional and include some opinionated defaults.
 | `docker_target`                   |                                                                                                              | Sets the target stage to build                                                 |
 | `balena_slugs`                    | `${{ github.repository }}-amd64`<br>`${{ github.repository }}-aarch64`<br>`${{ github.repository }}-armv7hf` | Newline-delimited string of balenaCloud apps, fleets, or blocks to deploy      |
 | `node_versions`                   | `14.x`<br>`16.x`<br>`18.x`                                                                                   | Newline-delimited string of Node.js versions to test                           |
+| `npmjs_repository`                | `${{ github.repository }}`                                                                                   | NPM repository for NodeJS projects, skipped if empty                           |
 
 These inputs can also be found at the top of [flowzone.yml](./.github/workflows/flowzone.yml).
 
@@ -130,21 +146,21 @@ Open a PR with the following changes to migrate an existing resinCI enabled repo
 
 1. generate new GPG key signing ensuring the name matches an existing GitHub user/identity
 
-    ```bash
-    gpg --full-generate-key
-    ```
+   ```bash
+   gpg --full-generate-key
+   ```
 
 2. get the key id
 
-    ```bash
-    gpg --list-secret-keys --keyid-format=long
-    ```
+   ```bash
+   gpg --list-secret-keys --keyid-format=long
+   ```
 
 3. export the key to be stored in `GPG_PRIVATE_KEY` GitHub organisation secret
 
-    ```bash
-    gpg --armor --export-secret-keys {{secret_key_id}}
-    ```
+   ```bash
+   gpg --armor --export-secret-keys {{secret_key_id}}
+   ```
 
 4. set `GPG_PASSPHRASE` and `GPG_PRIVATE_KEY` GitHub organisation secrets
 
