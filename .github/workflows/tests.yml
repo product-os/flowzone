@@ -6,6 +6,9 @@ on:
     branches:
       - "main"
       - "master"
+  push:
+    tags:
+      - v*
 
 jobs:
   flowzone:

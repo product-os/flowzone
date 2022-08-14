@@ -528,7 +528,7 @@ jobs:
       github.event_name == 'tag' &&
       needs.inspect_source.outputs.npm_private == 'false' &&
       inputs.npmjs_repository != '' &&
-      needs.version_tag.outputs.versionbot == 'false'
+      needs.version_tag.outputs.versionbot != 'true'
 
     defaults:
       run:
@@ -803,7 +803,7 @@ jobs:
       github.event_name == 'tag' &&
       needs.inspect_source.outputs.docker == 'true' &&
       (needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != '') &&
-      needs.version_tag.outputs.versionbot == 'false'
+      needs.version_tag.outputs.versionbot != 'true'
 
     defaults:
       run:
@@ -937,7 +937,7 @@ jobs:
     if: |
       github.event_name == 'tag' &&
       needs.inspect_source.outputs.balena == 'true' &&
-      needs.version_tag.outputs.versionbot == 'false'
+      needs.version_tag.outputs.versionbot != 'true'
 
     defaults:
       run:
