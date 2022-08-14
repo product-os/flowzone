@@ -101,9 +101,65 @@ jobs:
   ## GENERAL
   ###################################################
 
+  context_check:
+    name: Context check
+    runs-on: ubuntu-latest
+    # limit to only Flowzone supported event types here as all other jobs depend on this one
+    if: |
+      ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'opened') ||
+      ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'synchronize') ||
+      ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'closed' && github.event.pull_request.merged == true) ||
+      ( github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && contains(github.event.head_commit.author.name, 'versionbot') != true )
+
+    outputs:
+      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
+      docker_platforms: ${{ steps.docker_platforms.outputs.build }}
+      node_versions: ${{ steps.node_versions.outputs.build }}
+      ghcr_repo: ${{ steps.ghcr_repo.outputs.value }}
+      dockerhub_repo: ${{ steps.dockerhub_repo.outputs.value }}
+
+    steps:
+      - name: Dump GitHub context
+        run: |
+          echo '${{ toJSON(github) }}'
+          
+      - name: Convert to a JSON array
+        id: balena_slugs
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.balena_slugs }}
+          separator: "newline"
+
+      - name: Convert to a JSON array
+        id: docker_platforms
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.docker_platforms }}
+          separator: "newline"
+
+      - name: Convert to a JSON array
+        id: node_versions
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: ${{ inputs.node_versions }}
+          separator: "newline"
+
+      - name: Add ghcr.io prefix
+        if: inputs.ghcr_repo != ''
+        id: ghcr_repo
+        run: |
+          echo "::set-output name=value::$(echo ghcr.io/${{ inputs.ghcr_repo }})"
+
+      - name: Add docker.io prefix
+        if: inputs.dockerhub_repo != ''
+        id: dockerhub_repo
+        run: |
+          echo "::set-output name=value::$(echo docker.io/${{ inputs.dockerhub_repo }})"
+
   source_check:
     name: Source check
     runs-on: ubuntu-latest
+    needs: [context_check]
 
     defaults:
       run:
@@ -154,64 +210,11 @@ jobs:
             echo ::set-output name=enabled::"false"
           fi
 
-  context_check:
-    name: Context check
-    runs-on: ubuntu-latest
-
-    outputs:
-      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
-      docker_platforms: ${{ steps.docker_platforms.outputs.build }}
-      node_versions: ${{ steps.node_versions.outputs.build }}
-      ghcr_repo: ${{ steps.ghcr_repo.outputs.value }}
-      dockerhub_repo: ${{ steps.dockerhub_repo.outputs.value }}
-
-    steps:
-      - name: Dump GitHub context
-        run: |
-          echo '${{ toJSON(github) }}'
-          
-      - name: Convert to a JSON array
-        id: balena_slugs
-        uses: kanga333/json-array-builder@v0.1.0
-        with:
-          str: ${{ inputs.balena_slugs }}
-          separator: "newline"
-
-      - name: Convert to a JSON array
-        id: docker_platforms
-        uses: kanga333/json-array-builder@v0.1.0
-        with:
-          str: ${{ inputs.docker_platforms }}
-          separator: "newline"
-
-      - name: Convert to a JSON array
-        id: node_versions
-        uses: kanga333/json-array-builder@v0.1.0
-        with:
-          str: ${{ inputs.node_versions }}
-          separator: "newline"
-
-      - name: Add ghcr.io prefix
-        if: inputs.ghcr_repo != ''
-        id: ghcr_repo
-        run: |
-          echo "::set-output name=value::$(echo ghcr.io/${{ inputs.ghcr_repo }})"
-
-      - name: Add docker.io prefix
-        if: inputs.dockerhub_repo != ''
-        id: dockerhub_repo
-        run: |
-          echo "::set-output name=value::$(echo docker.io/${{ inputs.dockerhub_repo }})"
-
   protect-branch:
     name: Protect branch
-    needs: [docker_draft, npm_draft, balena_draft]
+    needs: [context_check, version_draft, docker_draft, npm_draft, balena_draft]
     runs-on: ubuntu-latest
-    # only run on PR open and synchronize events and when resinci is disabled or not found
-    if: |
-      !failure() && !cancelled() &&
-      github.event_name == 'pull_request' && github.event.action != 'closed' &&
-      github.base_ref == github.event.repository.default_branch
+    if: "!failure() && !cancelled()"
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
@@ -276,7 +279,7 @@ jobs:
     name: Version draft
     runs-on: ubuntu-latest
     # only run on PR open or synchronize events
-    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action != 'closed'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     needs: [source_check]
 
     defaults:
@@ -321,10 +324,7 @@ jobs:
     needs: [context_check, source_check]
     runs-on: ubuntu-latest
     # only run on PR merge events
-    if: |
-      github.event_name == 'pull_request' &&
-      github.base_ref == github.event.repository.default_branch &&
-      github.event.pull_request.merged == true
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
 
     defaults:
       run:
@@ -400,11 +400,10 @@ jobs:
     name: Version tag
     needs: [context_check, source_check]
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    # only run on tag push events
+    if: github.event_name == 'push'
 
     outputs:
-      versionbot: contains(github.event.head_commit.author.name, 'versionbot')
       raw: github.ref_name
       semver: steps.format.outputs.semver
 
@@ -493,9 +492,6 @@ jobs:
     needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'pull_request' &&
-      github.base_ref == github.event.repository.default_branch &&
-      github.event.pull_request.merged == true &&
       needs.source_check.outputs.npm_private == 'false' &&
       inputs.npmjs_repository != '' &&
       needs.version_merge.outputs.versionbot == 'true'
@@ -514,10 +510,8 @@ jobs:
     needs: [context_check, source_check, version_tag]
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
       needs.source_check.outputs.npm_private == 'false' &&
-      inputs.npmjs_repository != '' &&
-      needs.version_tag.outputs.versionbot != 'true'
+      inputs.npmjs_repository != ''
 
     defaults:
       run:
@@ -733,9 +727,6 @@ jobs:
     needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'pull_request' &&
-      github.base_ref == github.event.repository.default_branch && 
-      github.event.pull_request.merged == true &&
       needs.source_check.outputs.docker == 'true' &&
       (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '') &&
       needs.version_merge.outputs.versionbot == 'true'
@@ -789,10 +780,8 @@ jobs:
     needs: [context_check, source_check, version_tag]
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
       needs.source_check.outputs.docker == 'true' &&
-      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '') &&
-      needs.version_tag.outputs.versionbot != 'true'
+      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '')
 
     defaults:
       run:
@@ -895,9 +884,6 @@ jobs:
     needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'pull_request' &&
-      github.base_ref == github.event.repository.default_branch &&
-      github.event.pull_request.merged == true &&
       needs.source_check.outputs.balena == 'true' &&
       needs.version_merge.outputs.versionbot == 'true'
 
@@ -923,10 +909,7 @@ jobs:
     name: balena tag
     needs: [context_check, source_check, version_tag]
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
-      needs.source_check.outputs.balena == 'true' &&
-      needs.version_tag.outputs.versionbot != 'true'
+    if: needs.source_check.outputs.balena == 'true'
 
     defaults:
       run:
