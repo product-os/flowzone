@@ -168,7 +168,7 @@ jobs:
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
-      npm_private: ${{ steps.npm.outputs.private }}
+      npm_private: ${{ steps.npm.outputs.private || 'null' }}
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
 
@@ -184,7 +184,7 @@ jobs:
           if test -f "package.json"; then
             echo "found package.json"
             echo "::set-output name=enabled::true"
-            echo "::set-output name=private::$(jq -r '.private' package.json 2>/dev/null || echo false)"
+            echo "::set-output name=private::$(jq -r '.private' package.json)"
           else
             echo ::set-output name=enabled::"false"
           fi
@@ -472,7 +472,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [npm_matrix, source_check]
     if: |
-      needs.source_check.outputs.npm_private == 'false' &&
+      needs.source_check.outputs.npm_private != 'true' &&
       inputs.npmjs_repository != ''
 
     defaults:
@@ -492,7 +492,7 @@ jobs:
     needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
     if: |
-      needs.source_check.outputs.npm_private == 'false' &&
+      needs.source_check.outputs.npm_private != 'true' &&
       inputs.npmjs_repository != '' &&
       needs.version_merge.outputs.versionbot == 'true'
 
@@ -510,7 +510,7 @@ jobs:
     needs: [context_check, source_check, version_tag]
     runs-on: ubuntu-latest
     if: |
-      needs.source_check.outputs.npm_private == 'false' &&
+      needs.source_check.outputs.npm_private != 'true' &&
       inputs.npmjs_repository != ''
 
     defaults:
