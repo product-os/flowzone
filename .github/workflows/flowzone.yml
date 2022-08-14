@@ -387,7 +387,12 @@ jobs:
     name: Finalize NPM
     needs: [sanitize_inputs, inspect_source, finalize_version]
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true && needs.inspect_source.outputs.npm_private == 'false'
+    if: |
+      github.event_name == 'pull_request' &&
+      github.base_ref == github.event.repository.default_branch &&
+      github.event.pull_request.merged == true &&
+      needs.inspect_source.outputs.npm_private == 'false' &&
+      contains(needs.finalize_version.outputs.author, 'versionbot')
 
     defaults:
       run:
@@ -688,6 +693,7 @@ jobs:
     outputs:
       sha: ${{ steps.versioned.outputs.sha }}
       tag: ${{ steps.versioned.outputs.tag }}
+      author: ${{ steps.versioned.outputs.author }}
 
     steps:
       - name: Dump GitHub context
@@ -715,9 +721,11 @@ jobs:
         run: |
           echo "::set-output name=sha::$(git rev-parse HEAD)"
           echo "::set-output name=tag::v$(head -n1 VERSION || jq -r '.version' package.json)"
+          echo "::set-output name=author::$(git log -1 --pretty=format:'%an' | xargs)"
 
       - name: Import GPG key for signing commits
         id: import-gpg
+        if: contains(steps.versioned.outputs.author, 'versionbot')
         uses: crazy-max/ghaction-import-gpg@v4
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -727,11 +735,13 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Checkout source
+        if: contains(steps.versioned.outputs.author, 'versionbot')
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Push versioned commit
+        if: contains(steps.versioned.outputs.author, 'versionbot')
         env:
           BRANCH: ${{ github.base_ref }}
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
@@ -754,9 +764,12 @@ jobs:
     needs: [sanitize_inputs, inspect_source, finalize_version]
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && 
-      github.event.pull_request.merged == true && needs.inspect_source.outputs.docker == 'true' &&
-      (needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != '')
+      github.event_name == 'pull_request' &&
+      github.base_ref == github.event.repository.default_branch && 
+      github.event.pull_request.merged == true &&
+      needs.inspect_source.outputs.docker == 'true' &&
+      (needs.sanitize_inputs.outputs.ghcr_repo != '' || needs.sanitize_inputs.outputs.dockerhub_repo != '') &&
+      contains(needs.finalize_version.outputs.author, 'versionbot')
 
     defaults:
       run:
@@ -836,7 +849,12 @@ jobs:
     name: Finalize balena
     needs: [sanitize_inputs, inspect_source, finalize_version]
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.pull_request.merged == true && needs.inspect_source.outputs.balena == 'true'
+    if: |
+      github.event_name == 'pull_request' &&
+      github.base_ref == github.event.repository.default_branch &&
+      github.event.pull_request.merged == true &&
+      needs.inspect_source.outputs.balena == 'true' &&
+      contains(needs.finalize_version.outputs.author, 'versionbot')
 
     defaults:
       run:
