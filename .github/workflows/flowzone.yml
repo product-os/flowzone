@@ -482,7 +482,10 @@ jobs:
   npm_draft:
     name: NPM draft
     runs-on: ubuntu-latest
-    needs: [npm_matrix]
+    needs: [npm_matrix, inspect_source]
+    if: |
+      needs.inspect_source.outputs.npm_private == 'false' &&
+      inputs.npmjs_repository != ''
 
     defaults:
       run:
@@ -505,7 +508,27 @@ jobs:
       github.base_ref == github.event.repository.default_branch &&
       github.event.pull_request.merged == true &&
       needs.inspect_source.outputs.npm_private == 'false' &&
+      inputs.npmjs_repository != '' &&
       needs.version_merge.outputs.versionbot == 'true'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    steps:
+      # TODO: publish final to npmjs
+      - run: echo "not yet implemented!"
+
+  npm_tag:
+    name: NPM tag
+    needs: [sanitize_inputs, inspect_source, version_tag]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'tag' &&
+      needs.inspect_source.outputs.npm_private == 'false' &&
+      inputs.npmjs_repository != '' &&
+      needs.version_tag.outputs.versionbot == 'false'
 
     defaults:
       run:
