@@ -339,7 +339,7 @@ jobs:
       raw: ${{ steps.versioned.outputs.raw }}
       semver: ${{ steps.versioned.outputs.semver }}
       author: ${{ steps.versioned.outputs.author }}
-      versionbot: contains(steps.versioned.outputs.author, 'versionbot')
+      versionbot: ${{ contains(steps.versioned.outputs.author, 'versionbot') }}
 
     steps:
       - name: Dump GitHub context
