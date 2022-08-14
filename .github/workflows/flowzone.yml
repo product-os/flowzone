@@ -631,40 +631,6 @@ jobs:
           username: ${{ env.GHCR_USER }}
           password: ${{ secrets.FLOWZONE_TOKEN }}
 
-      - name: Generate Docker labels and tags
-        id: ghcr_meta
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
-          tags: |
-            type=raw,value=${{ github.event.pull_request.head.ref }}
-            type=ref,event=pr
-          flavor: |
-            latest=auto
-            prefix=
-            suffix=
-
-      - name: Create multi-arch manifest
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
-        uses: pixelfederation/gh-action-manifest-tool@v0.1.0
-        with:
-          username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.FLOWZONE_TOKEN }}
-          platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
-          template: ${{ needs.sanitize_inputs.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
-          target: ${{ needs.sanitize_inputs.outputs.ghcr_repo}}:${{ github.event.pull_request.head.sha }}
-          # see https://github.com/estesp/manifest-tool to understand template
-
-      - name: Push draft tags to Github Container Registry
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
-        uses: akhilerm/tag-push-action@v2.0.0
-        with:
-          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo}}:${{ github.event.pull_request.head.sha }}
-          dst: |
-            ${{ steps.ghcr_meta.outputs.tags }}
-
       - name: Login to Docker Hub
         if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
         uses: docker/login-action@v2
@@ -674,11 +640,11 @@ jobs:
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
 
       - name: Generate Docker labels and tags
-        id: dockerhub_meta
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+        id: meta
         uses: docker/metadata-action@v4
         with:
           images: |
+            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
             ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.ref }}
@@ -689,23 +655,21 @@ jobs:
             suffix=
 
       - name: Create multi-arch manifest
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
         uses: pixelfederation/gh-action-manifest-tool@v0.1.0
         with:
           username: ${{ secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
           platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
-          template: ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
-          target: ${{ needs.sanitize_inputs.outputs.dockerhub_repo}}:${{ github.event.pull_request.head.sha }}
+          template: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
+          target: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           # see https://github.com/estesp/manifest-tool to understand template
 
-      - name: Push draft tags to Docker Hub
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+      - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ needs.sanitize_inputs.outputs.dockerhub_repo}}:${{ github.event.pull_request.head.sha }}
+          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
-            ${{ steps.dockerhub_meta.outputs.tags }}
+            ${{ steps.meta.outputs.tags }}
 
   docker_merge:
     name: Docker merge
@@ -733,30 +697,6 @@ jobs:
           username: ${{ env.GHCR_USER }}
           password: ${{ secrets.FLOWZONE_TOKEN }}
 
-      - name: Generate Docker labels and tags
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
-        id: ghcr_meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
-          tags: |
-            type=ref,event=tag
-            type=raw,value=${{ needs.version_merge.outputs.tag }}
-            type=semver,pattern={{version}}
-          flavor: |
-            latest=true
-            prefix=
-            suffix=
-
-      - name: Push final tags to GitHub Container Registry
-        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
-        uses: akhilerm/tag-push-action@v2.0.0
-        with:
-          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}
-          dst: |
-            ${{ steps.ghcr_meta.outputs.tags }}
-
       - name: Login to Docker Hub
         if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
         uses: docker/login-action@v2
@@ -766,11 +706,11 @@ jobs:
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
 
       - name: Generate Docker labels and tags
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
-        id: dockerhub_meta
+        id: meta
         uses: docker/metadata-action@v4
         with:
           images: |
+            ${{ needs.sanitize_inputs.outputs.ghcr_repo }}
             ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}
           tags: |
             type=ref,event=tag
@@ -781,13 +721,12 @@ jobs:
             prefix=
             suffix=
 
-      - name: Push final tags to Docker Hub
-        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
+      - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
+          src: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
-            ${{ steps.dockerhub_meta.outputs.tags }}
+            ${{ steps.meta.outputs.tags }}
 
   ###################################################
   ## BALENA
