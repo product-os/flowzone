@@ -680,13 +680,25 @@ jobs:
             suffix=
 
       - name: Create multi-arch manifest
+        if: ${{ needs.sanitize_inputs.outputs.ghcr_repo != '' }}
+        uses: pixelfederation/gh-action-manifest-tool@v0.1.0
+        with:
+          username: ${{ env.GHCR_USER }}
+          password: ${{ secrets.FLOWZONE_TOKEN }}
+          platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
+          template: ${{ needs.sanitize_inputs.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
+          target: ${{ needs.sanitize_inputs.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}
+          # see https://github.com/estesp/manifest-tool to understand template
+
+      - name: Create multi-arch manifest
+        if: ${{ needs.sanitize_inputs.outputs.dockerhub_repo != '' }}
         uses: pixelfederation/gh-action-manifest-tool@v0.1.0
         with:
           username: ${{ secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
           platforms: ${{ join(fromJSON(needs.sanitize_inputs.outputs.docker_platforms)) }}
-          template: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
-          target: ${{ needs.sanitize_inputs.outputs.ghcr_repo || needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
+          template: ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
+          target: ${{ needs.sanitize_inputs.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           # see https://github.com/estesp/manifest-tool to understand template
 
       - name: Publish tags
