@@ -4,14 +4,50 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 
 ## ToC
 
+- [Getting Started](#getting-started)
 - [Usage](#usage)
 - [Supported project types](#supported-project-types)
-- [Migration from resinCI](#migration-from-resinci)
+- [Customization](#customization)
 - [Maintenance](#maintenance)
+
+## Getting Started
+
+Open a PR with the following changes to test and enable Flowzone:
+
+1. Create `.github/workflows/flowzone.yml` (see [Usage](#usage)) in a new PR
+2. Ensure your `package.json`, `docker-compose.test.yml`, `balena.yml`, etc. contain correct information and Flowzone is passing all tests
+3. The branch protection rules will be updated automatically. This requires admin access to revert!
+4. Seek approval or self-certify!
 
 ## Usage
 
 Simply add the following to `./github/workflows/flowzone.yml`:
+
+```yml
+name: Flowzone
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches:
+      - "main"
+      - "master"
+
+jobs:
+  flowzone:
+    name: Flowzone
+    uses: product-os/flowzone/.github/workflows/flowzone.yml@master
+    secrets:
+      FLOWZONE_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      DOCKER_REGISTRY_USER: ${{ secrets.DOCKER_REGISTRY_USER }}
+      DOCKER_REGISTRY_PASS: ${{ secrets.DOCKER_REGISTRY_PASS }}
+      BALENA_API_KEY_PUSH: ${{ secrets.BALENA_API_KEY_PUSH }}
+```
+
+Workflows that call reusable workflows in the same organization or enterprise can use the inherit keyword to implicitly pass the secrets.
 
 ```yml
 name: Flowzone
@@ -60,6 +96,10 @@ If `dockerhub_repo` or `ghcr_repo` are provided as [inputs](#inputs), draft arti
 
 If a `balena.yml` file is found in the root of the repository and `balena_slugs` is provided as an [input](#inputs), Flowzone will attempt to push draft releases to your applications.
 On merge these releases will be finalized.
+
+### Versionbot
+
+Flowzone works very well with [versionbot](https://github.com/apps/versionbot3) and will cherry-pick draft versions from pull requests into the main branch automatically.
 
 ## Customization
 
@@ -122,22 +162,6 @@ jobs:
         16.x
         18.x
 ```
-
-## Migration from resinCI
-
-Open a PR with the following changes to migrate an existing resinCI enabled repository to Flowzone:
-
-1. Create `.github/workflows/flowzone.yml` (see [Usage](#usage)) in a new PR
-2. Ensure your `package.json`, `docker-compose.test.yml`, `balena.yml`, etc. contain correct information and Flowzone is passing all tests
-3. Disable resinCI in `.resinci.yml` by adding `disabled: true` key
-
-   ```yaml
-   # .resinci.yml
-   disabled: true
-   ```
-
-4. Once the resinCI is disabled, and the Flowzone tests have passed, the branch protection rules will be updated automatically. This requires admin access to revert!
-5. Seek approval or self-certify!
 
 ## Maintenance
 
