@@ -87,6 +87,10 @@ If `dockerhub_repo` or `ghcr_repo` are provided as [inputs](#inputs), draft arti
 If a `balena.yml` file is found in the root of the repository and `balena_slugs` is provided as an [input](#inputs), Flowzone will attempt to push draft releases to your applications.
 On merge these releases will be finalized.
 
+### Versionbot
+
+Flowzone works very well with [versionbot](https://github.com/apps/versionbot3) and will cherry-pick draft versions from pull requests into the main branch automatically.
+
 ## Customization
 
 ### Secrets
