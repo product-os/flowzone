@@ -112,7 +112,7 @@ jobs:
     name: Flowzone
     uses: product-os/flowzone/.github/workflows/flowzone.yml@master
     secrets: inherit
-    inputs:
+    with:
       docker_platforms: |
         linux/amd64
         linux/arm64
