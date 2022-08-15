@@ -737,8 +737,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       needs.source_check.outputs.docker == 'true' &&
-      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '') &&
-      needs.version_merge.outputs.versionbot == 'true'
+      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '')
 
     defaults:
       run:
@@ -762,8 +761,10 @@ jobs:
           username: ${{ secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
 
+      # use the versioned tag when merging PRs with versionbot
       - name: Generate Docker labels and tags
-        id: meta
+        if: needs.version_merge.outputs.versionbot == 'true'
+        id: versioned-meta
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -777,12 +778,29 @@ jobs:
             prefix=
             suffix=
 
+      # use the 'edge' tag when merging PRs without versionbot
+      - name: Generate Docker labels and tags
+        if: needs.version_merge.outputs.versionbot != 'true'
+        id: edge-meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ needs.context_check.outputs.ghcr_repo }}
+            ${{ needs.context_check.outputs.dockerhub_repo }}
+          tags: |
+            type=edge,enable=true,branch=${{ github.event.repository.default_branch }}
+          flavor: |
+            latest=false
+            prefix=
+            suffix=
+
       - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
           src: ${{ needs.context_check.outputs.ghcr_repo || needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
-            ${{ steps.meta.outputs.tags }}
+            ${{ steps.versioned-meta.outputs.tags }}
+            ${{ steps.edge-meta.outputs.tags }}
 
   docker_tag:
     name: Docker tag
