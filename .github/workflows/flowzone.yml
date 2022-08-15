@@ -490,7 +490,9 @@ jobs:
     name: NPM draft
     runs-on: ubuntu-latest
     needs: [npm_matrix, source_check]
-    if: needs.source_check.outputs.npm_private != 'true' && inputs.npmjs_repository != ''
+    if:
+      needs.source_check.outputs.npm_private != 'true' &&
+      inputs.npmjs_repository != ''
 
     defaults:
       run:
@@ -508,7 +510,10 @@ jobs:
     name: NPM merge
     needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
-    if: needs.source_check.outputs.npm_private != 'true' && inputs.npmjs_repository != ''
+    if:
+      needs.source_check.outputs.npm == 'true' &&
+      needs.source_check.outputs.npm_private != 'true' &&
+      inputs.npmjs_repository != ''
 
     defaults:
       run:
@@ -534,7 +539,10 @@ jobs:
     name: NPM tag
     needs: [context_check, source_check, version_tag]
     runs-on: ubuntu-latest
-    if: needs.source_check.outputs.npm_private != 'true' && inputs.npmjs_repository != ''
+    if:
+      needs.source_check.outputs.npm == 'true' &&
+      needs.source_check.outputs.npm_private != 'true' &&
+      inputs.npmjs_repository != ''
 
     defaults:
       run:
