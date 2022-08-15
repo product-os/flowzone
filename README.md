@@ -4,10 +4,20 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 
 ## ToC
 
+- [Getting Started](#getting-started)
 - [Usage](#usage)
 - [Supported project types](#supported-project-types)
-- [Migration from resinCI](#migration-from-resinci)
+- [Customization](#customization)
 - [Maintenance](#maintenance)
+
+## Getting Started
+
+Open a PR with the following changes to test and enable Flowzone:
+
+1. Create `.github/workflows/flowzone.yml` (see [Usage](#usage)) in a new PR
+2. Ensure your `package.json`, `docker-compose.test.yml`, `balena.yml`, etc. contain correct information and Flowzone is passing all tests
+3. The branch protection rules will be updated automatically. This requires admin access to revert!
+4. Seek approval or self-certify!
 
 ## Usage
 
@@ -152,22 +162,6 @@ jobs:
         16.x
         18.x
 ```
-
-## Migration from resinCI
-
-Open a PR with the following changes to migrate an existing resinCI enabled repository to Flowzone:
-
-1. Create `.github/workflows/flowzone.yml` (see [Usage](#usage)) in a new PR
-2. Ensure your `package.json`, `docker-compose.test.yml`, `balena.yml`, etc. contain correct information and Flowzone is passing all tests
-3. Disable resinCI in `.resinci.yml` by adding `disabled: true` key
-
-   ```yaml
-   # .resinci.yml
-   disabled: true
-   ```
-
-4. Once the resinCI is disabled, and the Flowzone tests have passed, the branch protection rules will be updated automatically. This requires admin access to revert!
-5. Seek approval or self-certify!
 
 ## Maintenance
 
