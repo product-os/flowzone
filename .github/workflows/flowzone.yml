@@ -797,8 +797,6 @@ jobs:
             type=raw,value=${{ needs.version_merge.outputs.semver }}
           flavor: |
             latest=true
-            prefix=
-            suffix=
 
       # use the 'edge' tag when merging PRs without versionbot
       - name: Generate Docker labels and tags
@@ -810,11 +808,9 @@ jobs:
             ${{ needs.context_check.outputs.ghcr_repo }}
             ${{ needs.context_check.outputs.dockerhub_repo }}
           tags: |
-            type=edge,enable=true,branch=${{ github.event.repository.default_branch }}
+            type=raw,value=edge
           flavor: |
             latest=false
-            prefix=
-            suffix=
 
       - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
