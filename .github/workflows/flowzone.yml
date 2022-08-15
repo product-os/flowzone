@@ -92,6 +92,11 @@ on:
         type: string
         required: false
         default: ${{ github.repository }}
+      protect_branch:
+        description: "Set to false to disable updating branch protection rules after a successful run"
+        type: boolean
+        required: false
+        default: true
 
 env:
   GHCR_USER: balena-ci # https://github.com/balena-ci
@@ -215,7 +220,7 @@ jobs:
     needs: [context_check, version_draft, docker_draft, npm_draft, balena_draft]
     runs-on: ubuntu-latest
     # run if all the test jobs are success or skipped, but still require context and version checks to be success
-    if: "!failure() && !cancelled() && needs.context_check.result == 'success' && needs.version_draft.result == 'success'"
+    if: "!failure() && !cancelled() && needs.context_check.result == 'success' && needs.version_draft.result == 'success' && inputs.protect_branch == true"
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
