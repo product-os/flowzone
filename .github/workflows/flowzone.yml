@@ -611,12 +611,11 @@ jobs:
             ${{ needs.context_check.outputs.dockerhub_repo }}
             ${{ env.LOCAL_IMAGE }}
           tags: |
-            type=raw,value=${{ github.event.pull_request.head.ref }}
-            type=ref,event=pr
-            type=raw,value=${{ github.event.pull_request.head.sha }}
+            type=raw,value=${{ github.event.pull_request.head.ref }},suffix=-${{ steps.suffix.outputs.string }}
+            type=ref,event=pr,suffix=-${{ steps.suffix.outputs.string }}
+            type=raw,value=${{ github.event.pull_request.head.sha }},suffix=-${{ steps.suffix.outputs.string }}
           flavor: |
             latest=false
-            suffix=-${{ steps.suffix.outputs.string }}
 
       - name: Build and load
         id: build
@@ -698,9 +697,7 @@ jobs:
             type=raw,value=${{ github.event.pull_request.head.ref }}
             type=ref,event=pr
           flavor: |
-            latest=auto
-            prefix=
-            suffix=
+            latest=false
 
       - name: Create multi-arch manifest
         if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
