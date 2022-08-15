@@ -888,13 +888,12 @@ jobs:
       # branch protection without knowing all the matrices
       - run: echo "nothing to do!"
 
+  # balena_merge is functionally the same as balena_tag for now
   balena_merge:
     name: balena merge
     needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
-    if: |
-      needs.source_check.outputs.balena == 'true' &&
-      needs.version_merge.outputs.versionbot == 'true'
+    if: needs.source_check.outputs.balena == 'true'
 
     defaults:
       run:
@@ -914,6 +913,7 @@ jobs:
           versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
 
+  # balena_merge is functionally the same as balena_tag for now
   balena_tag:
     name: balena tag
     needs: [context_check, source_check, version_tag]
@@ -935,5 +935,5 @@ jobs:
         with:
           balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
           fleet: ${{ matrix.slug }}
-          versionbot: false
+          versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
