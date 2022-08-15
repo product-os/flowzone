@@ -348,8 +348,8 @@ jobs:
       sha: ${{ steps.versioned.outputs.sha }}
       raw: ${{ steps.versioned.outputs.raw }}
       semver: ${{ steps.versioned.outputs.semver }}
-      author: ${{ steps.versioned.outputs.author }}
-      versionbot: ${{ contains(steps.versioned.outputs.author, 'versionbot') }}
+      author: ${{ steps.author.outputs.name }}
+      versionbot: ${{ contains(steps.author.outputs.name, 'versionbot') }}
 
     steps:
       - name: Download artifact
@@ -367,19 +367,25 @@ jobs:
           mkdir -p /tmp/versioned-source
           tar -xvf versioned-source.tar -C /tmp/versioned-source
 
+      - name: Check author
+        id: author
+        working-directory: /tmp/versioned-source
+        run: |
+          echo "::set-output name=name::$(git log -1 --pretty=format:'%an' | xargs)"
+
       - name: Parse version
         id: versioned
+        if: contains(steps.author.outputs.name, 'versionbot')
         working-directory: /tmp/versioned-source
         run: |
           VERSION="$(head -n1 VERSION || jq -r '.version' package.json)"
           echo "::set-output name=sha::$(git rev-parse HEAD)"
           echo "::set-output name=raw::v${VERSION}"
           echo "::set-output name=semver::${VERSION}"
-          echo "::set-output name=author::$(git log -1 --pretty=format:'%an' | xargs)"
 
       - name: Import GPG key for signing commits
         id: import-gpg
-        if: contains(steps.versioned.outputs.author, 'versionbot')
+        if: contains(steps.author.outputs.name, 'versionbot')
         uses: crazy-max/ghaction-import-gpg@v4
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -389,13 +395,13 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Checkout source
-        if: contains(steps.versioned.outputs.author, 'versionbot')
+        if: contains(steps.author.outputs.name, 'versionbot')
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Push versioned commit
-        if: contains(steps.versioned.outputs.author, 'versionbot')
+        if: contains(steps.author.outputs.name, 'versionbot')
         env:
           BRANCH: ${{ github.base_ref }}
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
