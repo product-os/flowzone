@@ -114,7 +114,7 @@ jobs:
       ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'opened') ||
       ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'synchronize') ||
       ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'closed' && github.event.pull_request.merged == true) ||
-      ( github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && contains(github.event.head_commit.author.name, 'versionbot') != true )
+      ( github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && contains(github.event.head_commit.author.name, 'versionbot') != true )
 
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
@@ -127,7 +127,7 @@ jobs:
       - name: Dump GitHub context
         run: |
           echo '${{ toJSON(github) }}'
-          
+
       - name: Convert to a JSON array
         id: balena_slugs
         uses: kanga333/json-array-builder@v0.1.0
@@ -480,30 +480,25 @@ jobs:
     name: NPM draft
     runs-on: ubuntu-latest
     needs: [npm_matrix, source_check]
-    if: |
-      needs.source_check.outputs.npm_private != 'true' &&
-      inputs.npmjs_repository != ''
+    if: needs.source_check.outputs.npm_private != 'true' && inputs.npmjs_repository != ''
 
     defaults:
       run:
         working-directory: .
         shell: bash
 
-    # TODO: publish draft to npmjs
-
     steps:
-      # just a catchall to ensure the matrix was successful so we can use this job as
-      # branch protection without knowing all the matrices
-      - run: echo "nothing to do!"
+      - name: Publish draft tag
+        run: |
+          echo "not yet implemented!"
+
+      # TODO: publish to npmjs
 
   npm_merge:
     name: NPM merge
     needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
-    if: |
-      needs.source_check.outputs.npm_private != 'true' &&
-      inputs.npmjs_repository != '' &&
-      needs.version_merge.outputs.versionbot == 'true'
+    if: needs.source_check.outputs.npm_private != 'true' && inputs.npmjs_repository != ''
 
     defaults:
       run:
@@ -511,16 +506,25 @@ jobs:
         shell: bash
 
     steps:
-      # TODO: publish final to npmjs
-      - run: echo "not yet implemented!"
+      # use the versioned tag when merging PRs with versionbot
+      - name: Publish versioned tag
+        if: needs.version_merge.outputs.versionbot == 'true'
+        run: |
+          echo "not yet implemented!"
+
+      # use the 'edge' tag when merging PRs without versionbot
+      - name: Publish 'edge' tag
+        if: needs.version_merge.outputs.versionbot != 'true'
+        run: |
+          echo "not yet implemented!"
+
+      # TODO: publish to npmjs
 
   npm_tag:
     name: NPM tag
     needs: [context_check, source_check, version_tag]
     runs-on: ubuntu-latest
-    if: |
-      needs.source_check.outputs.npm_private != 'true' &&
-      inputs.npmjs_repository != ''
+    if: needs.source_check.outputs.npm_private != 'true' && inputs.npmjs_repository != ''
 
     defaults:
       run:
@@ -528,8 +532,12 @@ jobs:
         shell: bash
 
     steps:
-      # TODO: publish final to npmjs
-      - run: echo "not yet implemented!"
+      - name: Publish versioned tag
+        run: |
+          echo "not yet implemented!"
+
+      # TODO: publish to npmjs
+      
 
   ###################################################
   ## DOCKER
@@ -611,12 +619,11 @@ jobs:
             ${{ needs.context_check.outputs.dockerhub_repo }}
             ${{ env.LOCAL_IMAGE }}
           tags: |
-            type=raw,value=${{ github.event.pull_request.head.ref }}
-            type=ref,event=pr
-            type=raw,value=${{ github.event.pull_request.head.sha }}
+            type=raw,value=${{ github.event.pull_request.head.ref }},suffix=-${{ steps.suffix.outputs.string }}
+            type=ref,event=pr,suffix=-${{ steps.suffix.outputs.string }}
+            type=raw,value=${{ github.event.pull_request.head.sha }},suffix=-${{ steps.suffix.outputs.string }}
           flavor: |
             latest=false
-            suffix=-${{ steps.suffix.outputs.string }}
 
       - name: Build and load
         id: build
@@ -698,9 +705,7 @@ jobs:
             type=raw,value=${{ github.event.pull_request.head.ref }}
             type=ref,event=pr
           flavor: |
-            latest=auto
-            prefix=
-            suffix=
+            latest=false
 
       - name: Create multi-arch manifest
         if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
@@ -737,8 +742,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       needs.source_check.outputs.docker == 'true' &&
-      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '') &&
-      needs.version_merge.outputs.versionbot == 'true'
+      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '')
 
     defaults:
       run:
@@ -762,8 +766,10 @@ jobs:
           username: ${{ secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
 
+      # use the versioned tag when merging PRs with versionbot
       - name: Generate Docker labels and tags
-        id: meta
+        if: needs.version_merge.outputs.versionbot == 'true'
+        id: versioned-meta
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -777,12 +783,29 @@ jobs:
             prefix=
             suffix=
 
+      # use the 'edge' tag when merging PRs without versionbot
+      - name: Generate Docker labels and tags
+        if: needs.version_merge.outputs.versionbot != 'true'
+        id: edge-meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ needs.context_check.outputs.ghcr_repo }}
+            ${{ needs.context_check.outputs.dockerhub_repo }}
+          tags: |
+            type=edge,enable=true,branch=${{ github.event.repository.default_branch }}
+          flavor: |
+            latest=false
+            prefix=
+            suffix=
+
       - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
           src: ${{ needs.context_check.outputs.ghcr_repo || needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
-            ${{ steps.meta.outputs.tags }}
+            ${{ steps.versioned-meta.outputs.tags }}
+            ${{ steps.edge-meta.outputs.tags }}
 
   docker_tag:
     name: Docker tag
@@ -888,13 +911,12 @@ jobs:
       # branch protection without knowing all the matrices
       - run: echo "nothing to do!"
 
+  # balena_merge is functionally the same as balena_tag for now
   balena_merge:
     name: balena merge
     needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
-    if: |
-      needs.source_check.outputs.balena == 'true' &&
-      needs.version_merge.outputs.versionbot == 'true'
+    if: needs.source_check.outputs.balena == 'true'
 
     defaults:
       run:
@@ -914,6 +936,7 @@ jobs:
           versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
 
+  # balena_merge is functionally the same as balena_tag for now
   balena_tag:
     name: balena tag
     needs: [context_check, source_check, version_tag]
@@ -935,5 +958,5 @@ jobs:
         with:
           balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
           fleet: ${{ matrix.slug }}
-          versionbot: false
+          versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
