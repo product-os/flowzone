@@ -90,16 +90,21 @@ on:
           14.x
           16.x
           18.x
-      npmjs_repository:
+      npm_registry:
         description: "NPM repository for NodeJS projects, skipped if empty"
         type: string
         required: false
-        default: ${{ github.repository }}
+        default: registry.npmjs.org
       protect_branch:
         description: "Set to false to disable updating branch protection rules after a successful run"
         type: boolean
         required: false
         default: true
+      verbose:
+        description: "Shell command tracing"
+        type: boolean
+        required: false
+        default: false
 
 env:
   GHCR_USER: "flowzone" # does not seem to matter what is used here
@@ -177,7 +182,6 @@ jobs:
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
-      npm_private: ${{ steps.npm.outputs.private || 'null' }}
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
 
@@ -193,7 +197,6 @@ jobs:
           if test -f "package.json"; then
             echo "found package.json"
             echo "::set-output name=enabled::true"
-            echo "::set-output name=private::$(jq -r '.private' package.json)"
           else
             echo ::set-output name=enabled::"false"
           fi
@@ -497,21 +500,61 @@ jobs:
     name: NPM draft
     runs-on: ubuntu-latest
     needs: [npm_matrix, source_check]
-    if:
-      needs.source_check.outputs.npm_private != 'true' &&
-      inputs.npmjs_repository != ''
+    if: inputs.npm_registry != ''
 
     defaults:
       run:
-        working-directory: .
+        working-directory: ${{ inputs.working_directory }}
         shell: bash
 
     steps:
+      - name: Download versioned source
+        uses: actions/download-artifact@v3
+        with:
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
+
+      - name: Extract versioned source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
+
       - name: Publish draft tag
         run: |
-          echo "not yet implemented!"
+          if [[ '${{ inputs.verbose }}' =~ 1|on|On|Yes|yes|true|True ]]; then
+              set -x
+              env
+          fi
 
-      # TODO: publish to npmjs
+          echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+
+          npm whoami
+
+          if [[ "$(jq -r '.private' package.json)" =~ true ]]; then
+              access=restricted
+          else
+              access=public
+          fi
+
+          package="$(jq -r '.name' package.json)"
+          version="$(jq -r '.version' package.json)"
+          branch="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          tag="${branch}-${{ github.event.pull_request.head.sha }}"
+          tmp_version="${version}-${tag}"
+
+          npm --no-git-tag-version version "${tmp_version}"
+
+          for t in "${tag}" "${branch}"; do
+              npm dist-tag rm "${package}" "${t}" || true
+          done
+
+          npm publish --tag "${tag}" --access="${access}" \
+            || find ~/.npm/_logs -name '*.log' | xargs cat
+
+          for t in "${branch}" latest; do
+              npm dist-tag add "${package}@${tmp_version}" "${t}" \
+                || find ~/.npm/_logs -name '*.log' | xargs cat
+          done
+
+          npm dist-tag ls
 
   npm_merge:
     name: NPM merge
@@ -519,49 +562,51 @@ jobs:
     runs-on: ubuntu-latest
     if:
       needs.source_check.outputs.npm == 'true' &&
-      needs.source_check.outputs.npm_private != 'true' &&
-      inputs.npmjs_repository != ''
+      inputs.npm_registry != ''
 
     defaults:
       run:
-        working-directory: .
+        working-directory: ${{ inputs.working_directory }}
         shell: bash
 
     steps:
+      - name: Download versioned source
+        uses: actions/download-artifact@v3
+        with:
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
+
+      - name: Extract versioned source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
+
       # use the versioned tag when merging PRs with versionbot
       - name: Publish versioned tag
         if: needs.version_merge.outputs.versionbot == 'true'
         run: |
-          echo "not yet implemented!"
+          if [[ '${{ inputs.verbose }}' =~ 1|on|On|Yes|yes|true|True ]]; then
+              set -x
+              env
+          fi
 
-      # use the 'edge' tag when merging PRs without versionbot
-      - name: Publish 'edge' tag
-        if: needs.version_merge.outputs.versionbot != 'true'
-        run: |
-          echo "not yet implemented!"
+          echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
 
-      # TODO: publish to npmjs
+          npm whoami
 
-  npm_tag:
-    name: NPM tag
-    needs: [context_check, source_check, version_tag]
-    runs-on: ubuntu-latest
-    if:
-      needs.source_check.outputs.npm == 'true' &&
-      needs.source_check.outputs.npm_private != 'true' &&
-      inputs.npmjs_repository != ''
+          if [[ "$(jq -r '.private' package.json)" =~ true ]]; then
+              access=restricted
+          else
+              access=public
+          fi
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash
+          version="$(jq -r '.version' package.json)"
 
-    steps:
-      - name: Publish versioned tag
-        run: |
-          echo "not yet implemented!"
+          npm version --allow-same-version "${version}"
 
-      # TODO: publish to npmjs
+          npm publish --access="${access}" \
+            || find ~/.npm/_logs -name '*.log' | xargs cat
+
+          npm dist-tag ls
+
 
   ###################################################
   ## DOCKER
