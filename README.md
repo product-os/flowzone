@@ -85,20 +85,21 @@ These secrets can also be found at the top of [flowzone.yml](./.github/workflows
 
 These inputs are all optional and include some opinionated defaults.
 
-| Name                              | Default                                                                                                      | Description                                                                    |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| `working_directory`               | `.`                                                                                                          | GitHub actions working directory                                               |
-| `required_approving_review_count` | `1`                                                                                                          | Setting this value to zero effectively means merge==deploy without approval(s) |
-| `dockerhub_repo`                  |                                                                                                              | Docker Hub repository for Docker projects, skipped if empty                    |
-| `ghcr_repo`                       | `${{ github.repository }}`                                                                                   | GitHub Container Registry repository for Docker projects, skipped if empty     |
-| `docker_cache_from`               |                                                                                                              | Newline-delimited string of additional external cache sources                  |
-| `docker_platforms`                | `linux/amd64`<br>`linux/arm64`<br>`linux/arm/v7`                                                             | Newline-delimited string of Docker target platforms                            |
-| `docker_context`                  | `.`                                                                                                          | Docker build context directory                                                 |
-| `docker_file`                     | `Dockerfile`                                                                                                 | Path to the Dockerfile relative to the context                                 |
-| `docker_target`                   |                                                                                                              | Sets the target stage to build                                                 |
-| `balena_slugs`                    | `${{ github.repository }}-amd64`<br>`${{ github.repository }}-aarch64`<br>`${{ github.repository }}-armv7hf` | Newline-delimited string of balenaCloud apps, fleets, or blocks to deploy      |
-| `node_versions`                   | `14.x`<br>`16.x`<br>`18.x`                                                                                   | Newline-delimited string of Node.js versions to test                           |
-| `npmjs_repository`                | `${{ github.repository }}`                                                                                   | NPM repository for NodeJS projects, skipped if empty                           |
+| Name                              | Default                                                                                                      | Description                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `working_directory`               | `.`                                                                                                          | GitHub actions working directory                                                |
+| `required_approving_review_count` | `1`                                                                                                          | Setting this value to zero effectively means merge==deploy without approval(s)  |
+| `dockerhub_repo`                  |                                                                                                              | Docker Hub repository for Docker projects, skipped if empty                     |
+| `ghcr_repo`                       | `${{ github.repository }}`                                                                                   | GitHub Container Registry repository for Docker projects, skipped if empty      |
+| `docker_cache_from`               |                                                                                                              | Newline-delimited string of additional external cache sources                   |
+| `docker_platforms`                | `linux/amd64`<br>`linux/arm64`<br>`linux/arm/v7`                                                             | Newline-delimited string of Docker target platforms                             |
+| `docker_context`                  | `.`                                                                                                          | Docker build context directory                                                  |
+| `docker_file`                     | `Dockerfile`                                                                                                 | Path to the Dockerfile relative to the context                                  |
+| `docker_target`                   |                                                                                                              | Sets the target stage to build                                                  |
+| `balena_slugs`                    | `${{ github.repository }}-amd64`<br>`${{ github.repository }}-aarch64`<br>`${{ github.repository }}-armv7hf` | Newline-delimited string of balenaCloud apps, fleets, or blocks to deploy       |
+| `node_versions`                   | `14.x`<br>`16.x`<br>`18.x`                                                                                   | Newline-delimited string of Node.js versions to test                            |
+| `npmjs_repository`                | `${{ github.repository }}`                                                                                   | NPM repository for NodeJS projects, skipped if empty                            |
+| `protect_branch`                  | true                                                                                                         | Set to false to disable updating branch protection rules after a successful run |
 
 These inputs can also be found at the top of [flowzone.yml](./.github/workflows/flowzone.yml).
 
