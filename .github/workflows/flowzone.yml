@@ -128,9 +128,9 @@ jobs:
       dockerhub_repo: ${{ steps.dockerhub_repo.outputs.value }}
 
     steps:
-      - name: Dump GitHub context
-        run: |
-          echo '${{ toJSON(github) }}'
+      # - name: Dump GitHub context
+      #   run: |
+      #     echo '${{ toJSON(github) }}'
 
       - name: Convert to a JSON array
         id: balena_slugs
