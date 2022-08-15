@@ -27,6 +27,32 @@ jobs:
   flowzone:
     name: Flowzone
     uses: product-os/flowzone/.github/workflows/flowzone.yml@master
+    secrets:
+      FLOWZONE_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      DOCKER_REGISTRY_USER: ${{ secrets.DOCKER_REGISTRY_USER }}
+      DOCKER_REGISTRY_PASS: ${{ secrets.DOCKER_REGISTRY_PASS }}
+      BALENA_API_KEY_PUSH: ${{ secrets.BALENA_API_KEY_PUSH }}
+```
+
+Workflows that call reusable workflows in the same organization or enterprise can use the inherit keyword to implicitly pass the secrets.
+
+```yml
+name: Flowzone
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches:
+      - "main"
+      - "master"
+
+jobs:
+  flowzone:
+    name: Flowzone
+    uses: product-os/flowzone/.github/workflows/flowzone.yml@master
     secrets: inherit
 ```
 
