@@ -210,11 +210,12 @@ jobs:
             echo ::set-output name=enabled::"false"
           fi
 
-  protect-branch:
+  protect_branch:
     name: Protect branch
     needs: [context_check, version_draft, docker_draft, npm_draft, balena_draft]
     runs-on: ubuntu-latest
-    if: "!failure() && !cancelled()"
+    # run if all the test jobs are success or skipped, but still require context and version checks to be success
+    if: "!failure() && !cancelled() && needs.context_check.result == 'success' && needs.version_draft.result == 'success'"
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
