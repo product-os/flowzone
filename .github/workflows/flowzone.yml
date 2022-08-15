@@ -9,6 +9,9 @@ on:
       NPM_TOKEN:
         description: "The NPM auth token to use for publishing"
         required: false
+      GHCR_TOKEN:
+        description: "A personal access token to publish to the GitHub Container Registry, will use FLOWZONE_TOKEN if unset"
+        required: false
       DOCKER_REGISTRY_USER:
         description: "Username to publish to the Docker Hub container registry"
         required: false
@@ -99,7 +102,8 @@ on:
         default: true
 
 env:
-  GHCR_USER: balena-ci # https://github.com/balena-ci
+  GHCR_USER: "flowzone" # does not seem to matter what is used here
+  GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
 
 jobs:
   ###################################################
@@ -124,9 +128,9 @@ jobs:
       dockerhub_repo: ${{ steps.dockerhub_repo.outputs.value }}
 
     steps:
-      - name: Dump GitHub context
-        run: |
-          echo '${{ toJSON(github) }}'
+      # - name: Dump GitHub context
+      #   run: |
+      #     echo '${{ toJSON(github) }}'
 
       - name: Convert to a JSON array
         id: balena_slugs
@@ -537,7 +541,6 @@ jobs:
           echo "not yet implemented!"
 
       # TODO: publish to npmjs
-      
 
   ###################################################
   ## DOCKER
@@ -577,7 +580,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.FLOWZONE_TOKEN }}
+          password: ${{ env.GHCR_TOKEN }}
 
       - name: Login to Docker Hub
         if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
@@ -684,7 +687,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.FLOWZONE_TOKEN }}
+          password: ${{ env.GHCR_TOKEN }}
 
       - name: Login to Docker Hub
         if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
@@ -712,7 +715,7 @@ jobs:
         uses: pixelfederation/gh-action-manifest-tool@v0.1.0
         with:
           username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.FLOWZONE_TOKEN }}
+          password: ${{ env.GHCR_TOKEN }}
           platforms: ${{ join(fromJSON(needs.context_check.outputs.docker_platforms)) }}
           template: ${{ needs.context_check.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
           target: ${{ needs.context_check.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}
@@ -756,7 +759,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.FLOWZONE_TOKEN }}
+          password: ${{ env.GHCR_TOKEN }}
 
       - name: Login to Docker Hub
         if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
@@ -827,7 +830,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.FLOWZONE_TOKEN }}
+          password: ${{ env.GHCR_TOKEN }}
 
       - name: Login to Docker Hub
         if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}

@@ -113,6 +113,7 @@ but they can also be [configured for personal repositories](https://docs.github.
 | `FLOWZONE_TOKEN`       | true     | Personal access token (PAT) for the GitHub service account with admin/owner permissions                                      |
 | `GPG_PRIVATE_KEY`      | true     | GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits                                         |
 | `GPG_PASSPHRASE`       | true     | Passphrase to decrypt GPG private key                                                                                        |
+| `GHCR_TOKEN`           | false    | A personal access token to publish to the GitHub Container Registry, will use FLOWZONE_TOKEN if unset                        |
 | `NPM_TOKEN`            | false    | The NPM auth token to use for publishing                                                                                     |
 | `DOCKER_REGISTRY_USER` | false    | Username to publish to the Docker Hub container registry                                                                     |
 | `DOCKER_REGISTRY_PASS` | false    | A [personal access token](https://docs.docker.com/docker-hub/access-tokens/) to publish to the Docker Hub container registry |
