@@ -297,7 +297,6 @@ jobs:
       versionbot: ${{ steps.versionbot_checkout.outcome }}
 
     steps:
-      # TODO: is there a chance that this branch could be out of date?
       - name: Checkout versioned source
         id: versionbot_checkout
         continue-on-error: true
@@ -306,6 +305,10 @@ jobs:
           ref: versionbot/pr/${{ github.event.pull_request.number }}
           fetch-depth: 2
           token: ${{ secrets.FLOWZONE_TOKEN }}
+
+      - name: Assert that versioned source is up-to-date
+        if: ${{ steps.versionbot_checkout.outcome == 'success' }}
+        run: git merge-base --is-ancestor ${{ github.event.pull_request.head.sha }} HEAD
 
       # Fallback to unversioned source if versionbot branch does not exist
       - name: Checkout original source
