@@ -127,7 +127,7 @@ jobs:
       - name: Dump GitHub context
         run: |
           echo '${{ toJSON(github) }}'
-          
+
       - name: Convert to a JSON array
         id: balena_slugs
         uses: kanga333/json-array-builder@v0.1.0
@@ -480,30 +480,25 @@ jobs:
     name: NPM draft
     runs-on: ubuntu-latest
     needs: [npm_matrix, source_check]
-    if: |
-      needs.source_check.outputs.npm_private != 'true' &&
-      inputs.npmjs_repository != ''
+    if: needs.source_check.outputs.npm_private != 'true' && inputs.npmjs_repository != ''
 
     defaults:
       run:
         working-directory: .
         shell: bash
 
-    # TODO: publish draft to npmjs
-
     steps:
-      # just a catchall to ensure the matrix was successful so we can use this job as
-      # branch protection without knowing all the matrices
-      - run: echo "nothing to do!"
+      - name: Publish draft tag
+        run: |
+          echo "not yet implemented!"
+
+      # TODO: publish to npmjs
 
   npm_merge:
     name: NPM merge
     needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
-    if: |
-      needs.source_check.outputs.npm_private != 'true' &&
-      inputs.npmjs_repository != '' &&
-      needs.version_merge.outputs.versionbot == 'true'
+    if: needs.source_check.outputs.npm_private != 'true' && inputs.npmjs_repository != ''
 
     defaults:
       run:
@@ -511,16 +506,25 @@ jobs:
         shell: bash
 
     steps:
-      # TODO: publish final to npmjs
-      - run: echo "not yet implemented!"
+      # use the versioned tag when merging PRs with versionbot
+      - name: Publish versioned tag
+        if: needs.version_merge.outputs.versionbot == 'true'
+        run: |
+          echo "not yet implemented!"
+
+      # use the 'edge' tag when merging PRs without versionbot
+      - name: Publish 'edge' tag
+        if: needs.version_merge.outputs.versionbot != 'true'
+        run: |
+          echo "not yet implemented!"
+
+      # TODO: publish to npmjs
 
   npm_tag:
     name: NPM tag
     needs: [context_check, source_check, version_tag]
     runs-on: ubuntu-latest
-    if: |
-      needs.source_check.outputs.npm_private != 'true' &&
-      inputs.npmjs_repository != ''
+    if: needs.source_check.outputs.npm_private != 'true' && inputs.npmjs_repository != ''
 
     defaults:
       run:
@@ -528,8 +532,12 @@ jobs:
         shell: bash
 
     steps:
-      # TODO: publish final to npmjs
-      - run: echo "not yet implemented!"
+      - name: Publish versioned tag
+        run: |
+          echo "not yet implemented!"
+
+      # TODO: publish to npmjs
+      
 
   ###################################################
   ## DOCKER
