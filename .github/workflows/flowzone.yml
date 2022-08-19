@@ -322,6 +322,13 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
+      # Run balena-versionist in Github actions when the versionbot branch could not be checked out
+      - name: Version original source
+        if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
+        run: |
+          npm install -g balena-versionist versionist
+          balena-versionist
+
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress source
         run: tar -cvf /tmp/versioned-source.tar .
