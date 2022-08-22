@@ -598,9 +598,7 @@ jobs:
               access=public
           fi
 
-          version="$(jq -r '.version' package.json)"
-
-          npm version --allow-same-version "${version}"
+          npm version --allow-same-version "${{ needs.version_merge.outputs.semver }}"
 
           npm publish --access="${access}" \
             || find ~/.npm/_logs -name '*.log' | xargs cat
