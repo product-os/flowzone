@@ -18,6 +18,7 @@ jobs:
     with:
       working_directory: ./tests
       required_approving_review_count: 0
+      verbose: false
       balena_slugs: |
         product_os/flowzone-aarch64
         product_os/flowzone-amd64
