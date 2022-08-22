@@ -362,8 +362,7 @@ jobs:
       versionbot: ${{ contains(steps.author.outputs.name, 'versionbot') }}
 
     steps:
-      - name: Download artifact
-        id: download
+      - name: Download versioned source
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
@@ -571,9 +570,13 @@ jobs:
 
     steps:
       - name: Download versioned source
-        uses: actions/download-artifact@v3
+        uses: dawidd6/action-download-artifact@v2
         with:
+          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          workflow_conclusion: success
+          pr: ${{ github.event.pull_request.number }}
           name: versioned-source-${{ github.event.pull_request.head.sha }}
+          search_artifacts: true
 
       - name: Extract versioned source
         working-directory: .
@@ -598,9 +601,7 @@ jobs:
               access=public
           fi
 
-          version="$(jq -r '.version' package.json)"
-
-          npm version --allow-same-version "${version}"
+          npm version --allow-same-version "${{ needs.version_merge.outputs.semver }}"
 
           npm publish --access="${access}" \
             || find ~/.npm/_logs -name '*.log' | xargs cat
