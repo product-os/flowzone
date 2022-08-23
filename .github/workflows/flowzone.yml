@@ -245,7 +245,7 @@ jobs:
 
   protect_branch:
     name: Protect branch
-    needs: [context_check, versioned_source, docker_draft, npm_publish, balena_all]
+    needs: [context_check, versioned_source, docker_publish, npm_publish, balena_all]
     runs-on: ubuntu-latest
     # run if all the test jobs are success or skipped, but still require context and version checks to be success
     if: "!failure() && !cancelled() && needs.context_check.result == 'success' && needs.versioned_source.result == 'success' && inputs.protect_branch == true"
@@ -276,7 +276,7 @@ jobs:
                 "Flowzone / Protect branch",
                 "Flowzone / Versioned source",
                 "Flowzone / npm publish",
-                "Flowzone / Docker draft",
+                "Flowzone / docker publish",
                 "Flowzone / balena all"
               ]
             },
@@ -451,11 +451,11 @@ jobs:
     name: npm publish
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source, npm_matrix]
+    # allow publish to run even when matrix is skipped
     if: |
-      needs.source_check.outputs.npm == 'true' &&
-      inputs.npm_registry != '' &&
+      needs.source_check.outputs.npm == 'true' && inputs.npm_registry != '' &&
       (github.event_name == 'pull_request' || github.event_name == 'push') &&
-      (needs.npm_matrix.result == 'success' || needs.npm_matrix.result == 'skipped')
+      !failure() && !cancelled() && needs.context_check.result == 'success' && needs.source_check.result == 'success' && needs.versioned_source.result == 'success'
 
     defaults:
       run:
@@ -505,7 +505,7 @@ jobs:
           npm --loglevel=verbose --logs-max=0 publish --access=${{ needs.source_check.outputs.npm_access }} --tag "latest"
 
   ###################################################
-  ## DOCKER
+  ## docker
   ###################################################
 
   docker_matrix:
@@ -587,8 +587,8 @@ jobs:
             ${{ needs.context_check.outputs.dockerhub_repo }}
             ${{ env.LOCAL_IMAGE }}
           tags: |
-            type=raw,value=${{ github.event.pull_request.head.ref }},suffix=-${{ steps.suffix.outputs.string }}
             type=ref,event=pr,suffix=-${{ steps.suffix.outputs.string }}
+            type=raw,value=${{ github.event.pull_request.head.ref }},suffix=-${{ steps.suffix.outputs.string }}
             type=raw,value=${{ github.event.pull_request.head.sha }},suffix=-${{ steps.suffix.outputs.string }}
           flavor: |
             latest=false
@@ -634,11 +634,16 @@ jobs:
           dst: |
             ${{ steps.meta.outputs.tags }}
 
-  docker_draft:
-    name: Docker draft
+  docker_publish:
+    name: docker publish
     runs-on: ubuntu-latest
-    needs: [docker_matrix, context_check]
-    if: needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != ''
+    needs: [context_check, source_check, docker_matrix]
+    # allow publish to run even when matrix is skipped
+    if: |
+      needs.source_check.outputs.docker == 'true' &&
+      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '') &&
+      (github.event_name == 'pull_request' || github.event_name == 'push') &&
+      !failure() && !cancelled() && needs.context_check.result == 'success' && needs.source_check.result == 'success'
 
     defaults:
       run:
@@ -662,8 +667,9 @@ jobs:
           username: ${{ secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
 
-      - name: Generate Docker labels and tags
-        id: meta
+      - name: Generate draft labels and tags
+        id: draft_meta
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -675,8 +681,52 @@ jobs:
           flavor: |
             latest=false
 
+      # use the versioned tag when merging PRs with versioning
+      - name: Generate versioned labels and tags
+        id: versioned_meta
+        if: inputs.skip_versioning == false && github.event.pull_request.merged == true
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ needs.context_check.outputs.ghcr_repo }}
+            ${{ needs.context_check.outputs.dockerhub_repo }}
+          tags: |
+            type=raw,value=${{ needs.versioned_source.outputs.tag }}
+            type=raw,value=${{ needs.versioned_source.outputs.version }}
+          flavor: |
+            latest=true
+
+      # use the 'edge' tag when merging PRs without versioning
+      - name: Generate edge labels and tags
+        id: edge_meta
+        if: inputs.skip_versioning == true && github.event.pull_request.merged == true
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ needs.context_check.outputs.ghcr_repo }}
+            ${{ needs.context_check.outputs.dockerhub_repo }}
+          tags: |
+            type=raw,value=edge
+          flavor: |
+            latest=false
+
+      # use the provided tag when tagging commits
+      - name: Generate provided labels and tags
+        id: tagged_meta
+        if: github.event_name == 'push'
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ needs.context_check.outputs.ghcr_repo }}
+            ${{ needs.context_check.outputs.dockerhub_repo }}
+          tags: |
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+          flavor: |
+            latest=auto
+
       - name: Create multi-arch manifest
-        if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
+        if: needs.context_check.outputs.ghcr_repo != '' && github.event_name == 'pull_request' && github.event.pull_request.merged == false
         uses: pixelfederation/gh-action-manifest-tool@v0.1.0
         with:
           username: ${{ env.GHCR_USER }}
@@ -687,7 +737,7 @@ jobs:
           # see https://github.com/estesp/manifest-tool to understand template
 
       - name: Create multi-arch manifest
-        if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
+        if: needs.context_check.outputs.dockerhub_repo != '' && github.event_name == 'pull_request' && github.event.pull_request.merged == false
         uses: pixelfederation/gh-action-manifest-tool@v0.1.0
         with:
           username: ${{ secrets.DOCKER_REGISTRY_USER }}
@@ -702,95 +752,13 @@ jobs:
         with:
           src: ${{ needs.context_check.outputs.ghcr_repo || needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
-            ${{ steps.meta.outputs.tags }}
-
-  docker_finalize:
-    name: Docker finalize
-    needs: [context_check, source_check, versioned_source]
-    runs-on: ubuntu-latest
-    # trigger on tag and merge events
-    if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.source_check.outputs.docker == 'true' &&
-      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '')
-
-    defaults:
-      run:
-        working-directory: .
-        shell: ${{ needs.context_check.outputs.shell }}
-
-    steps:
-      - name: Login to GitHub Container Registry
-        if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
-          password: ${{ env.GHCR_TOKEN }}
-
-      - name: Login to Docker Hub
-        if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
-        uses: docker/login-action@v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
-
-      # use the versioned tag when merging PRs with versioning
-      - name: Generate Docker labels and tags
-        id: versioned-meta
-        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ needs.context_check.outputs.ghcr_repo }}
-            ${{ needs.context_check.outputs.dockerhub_repo }}
-          tags: |
-            type=raw,value=${{ needs.versioned_source.outputs.tag }}
-            type=raw,value=${{ needs.versioned_source.outputs.version }}
-          flavor: |
-            latest=true
-
-      # use the 'edge' tag when merging PRs without versioning
-      - name: Generate Docker labels and tags
-        id: edge-meta
-        if: inputs.skip_versioning != false && github.event_name == 'pull_request'
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ needs.context_check.outputs.ghcr_repo }}
-            ${{ needs.context_check.outputs.dockerhub_repo }}
-          tags: |
-            type=raw,value=edge
-          flavor: |
-            latest=false
-
-      # use the provided tag when tagging commits
-      - name: Generate Docker labels and tags
-        id: tagged-meta
-        if: github.event_name == 'push'
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ needs.context_check.outputs.ghcr_repo }}
-            ${{ needs.context_check.outputs.dockerhub_repo }}
-          tags: |
-            type=ref,event=tag
-            type=semver,pattern={{version}}
-          flavor: |
-            latest=auto
-
-      - name: Publish tags
-        uses: akhilerm/tag-push-action@v2.0.0
-        with:
-          src: ${{ needs.context_check.outputs.ghcr_repo || needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
-          dst: |
-            ${{ steps.versioned-meta.outputs.tags }}
-            ${{ steps.edge-meta.outputs.tags }}
-            ${{ steps.tagged-meta.outputs.tags }}
+            ${{ steps.draft_meta.outputs.tags }}
+            ${{ steps.versioned_meta.outputs.tags }}
+            ${{ steps.edge_meta.outputs.tags }}
+            ${{ steps.tagged_meta.outputs.tags }}
 
   ###################################################
-  ## BALENA
+  ## balena
   ###################################################
 
   balena_matrix:
