@@ -7,7 +7,7 @@ on:
         description: "Personal access token (PAT) for the GitHub service account with admin/owner permissions"
         required: true
       NPM_TOKEN:
-        description: "The NPM auth token to use for publishing"
+        description: "The npm auth token to use for publishing"
         required: false
       GHCR_TOKEN:
         description: "A personal access token to publish to the GitHub Container Registry, will use FLOWZONE_TOKEN if unset"
@@ -91,7 +91,7 @@ on:
           16.x
           18.x
       npm_registry:
-        description: "NPM repository for NodeJS projects, skipped if empty"
+        description: "npm repository for NodeJS projects, skipped if empty"
         type: string
         required: false
         default: registry.npmjs.org
@@ -254,7 +254,7 @@ jobs:
                 "Flowzone / Source check",
                 "Flowzone / Protect branch",
                 "Flowzone / Version draft",
-                "Flowzone / NPM draft",
+                "Flowzone / npm draft",
                 "Flowzone / Docker draft",
                 "Flowzone / balena draft",
                 "VersionBot/generate-version"
@@ -448,11 +448,11 @@ jobs:
           echo "::set-output name=semver::$(npx -q -y -- semver -c -l ${{ github.ref_name }})"
 
   ###################################################
-  ## NPM
+  ## npm
   ###################################################
 
   npm_matrix:
-    name: NPM
+    name: npm
     runs-on: ubuntu-latest
     needs: [version_draft, source_check, context_check]
     if: needs.source_check.outputs.npm == 'true'
@@ -497,7 +497,7 @@ jobs:
         run: npm test
 
   npm_draft:
-    name: NPM draft
+    name: npm draft
     runs-on: ubuntu-latest
     needs: [npm_matrix, source_check]
     if: inputs.npm_registry != ''
@@ -557,7 +557,7 @@ jobs:
           npm dist-tag ls
 
   npm_merge:
-    name: NPM merge
+    name: npm merge
     needs: [context_check, source_check, version_merge]
     runs-on: ubuntu-latest
     if:
