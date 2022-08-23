@@ -194,6 +194,7 @@ jobs:
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
+      npm_access: ${{ steps.npm.outputs.access }}
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
 
@@ -206,12 +207,20 @@ jobs:
       - name: Check for package.json
         id: npm
         run: |
-          if test -f "package.json"; then
+          if test -f "package.json"
+          then
             echo "found package.json"
             echo "::set-output name=enabled::true"
+            if [[ "$(jq -r '.private' package.json)" =~ true ]]
+            then
+              echo "::set-output name=access::restricted"
+            else
+              echo "::set-output name=access::public"
+            fi
           else
             echo ::set-output name=enabled::"false"
           fi
+          
 
       - name: Check for docker-compose.test.yml
         id: docker
@@ -462,14 +471,7 @@ jobs:
       - name: Publish draft tag
         run: |
           echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-
           npm whoami
-
-          if [[ "$(jq -r '.private' package.json)" =~ true ]]; then
-            access=restricted
-          else
-            access=public
-          fi
 
           package="$(jq -r '.name' package.json)"
           version="$(jq -r '.version' package.json)"
@@ -479,17 +481,10 @@ jobs:
 
           npm --no-git-tag-version version "${tmp_version}"
 
-          for t in "${tag}" "${branch}"; do
-            npm dist-tag rm "${package}" "${t}" || true
-          done
+          npm dist-tag rm "${package}" "${branch}" || true
+          npm dist-tag rm "${package}" "${tag}" || true
 
-          npm publish --tag "${tag}" --access="${access}" \
-            || find ~/.npm/_logs -name '*.log' | xargs cat
-
-          for t in "${branch}" latest; do
-            npm dist-tag add "${package}@${tmp_version}" "${t}" \
-              || find ~/.npm/_logs -name '*.log' | xargs cat
-          done
+          npm publish --access="{{ needs.source_check.outputs.npm_access }}" --loglevel=verbose --logs-max=0 --tag "${tag}" --tag "${branch}"
 
   npm_finalize:
     name: npm finalize
@@ -519,18 +514,8 @@ jobs:
       - name: Publish to registry
         run: |
           echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-
           npm whoami
-
-          if [[ "$(jq -r '.private' package.json)" =~ true ]]; then
-            access=restricted
-          else
-            access=public
-          fi
-
-          npm publish --access="${access}" \
-            || find ~/.npm/_logs -name '*.log' | xargs cat
-
+          npm publish --access="{{ needs.source_check.outputs.npm_access }}" --loglevel=verbose --logs-max=0 --tag "latest"
 
   ###################################################
   ## DOCKER
