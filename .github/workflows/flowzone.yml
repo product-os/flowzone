@@ -362,8 +362,8 @@ jobs:
 
     outputs:
       sha: ${{ steps.versioned.outputs.sha }}
-      raw: ${{ steps.versioned.outputs.raw }}
-      semver: ${{ steps.versioned.outputs.semver }}
+      tag: ${{ steps.versioned.outputs.tag }}
+      version: ${{ steps.versioned.outputs.version }}
       author: ${{ steps.author.outputs.name }}
       versioning: ${{ contains(steps.author.outputs.name, inputs.git_commit_author) }}
 
@@ -392,12 +392,19 @@ jobs:
         id: versioned
         if: contains(steps.author.outputs.name, inputs.git_commit_author)
         working-directory: /tmp/versioned-source
-        # TODO: depending on the repo type we may extract the wrong version here
         run: |
-          VERSION="$(jq -r '.version' package.json || head -n1 VERSION)"
+          test -f balena.yml && balena_version="$(cat < balena.yml | yq e - -o json | jq -r .version)"
+          test -f package.json && npm_version="$(jq -r '.version' package.json)"
+          test -f VERSION && generic_version="$(head -n1 VERSION)"
+          VERSION="$(npx -q -y -- semver $npm_version $generic_version $balena_version | tail -n1)"
+          if [ -n "${VERSION}" ]
+          then
+            echo "::set-output name=tag::v${VERSION}"
+            echo "::set-output name=version::${VERSION}"
+          else
+            echo "::set-output name=tag::edge"
+          fi
           echo "::set-output name=sha::$(git rev-parse HEAD)"
-          echo "::set-output name=raw::v${VERSION}"
-          echo "::set-output name=semver::${VERSION}"
 
       - name: Import GPG key for signing commits
         id: import-gpg
@@ -424,7 +431,7 @@ jobs:
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          VERSION: ${{ steps.versioned.outputs.raw }}
+          VERSION: ${{ steps.versioned.outputs.tag }}
           REV: ${{ steps.versioned.outputs.sha }}
         run: |
           git --git-dir=/tmp/versioned-source/.git format-patch -k -1 --stdout ${REV} | git am -3 -k
@@ -439,8 +446,8 @@ jobs:
     if: github.event_name == 'push'
 
     outputs:
-      raw: github.ref_name
-      semver: steps.format.outputs.semver
+      tag: github.ref_name
+      version: steps.format.outputs.version
 
     defaults:
       run:
@@ -451,7 +458,7 @@ jobs:
       - name: Format tag as semver
         id: format
         run: |
-          echo "::set-output name=semver::$(npx -q -y -- semver -c -l ${{ github.ref_name }})"
+          echo "::set-output name=version::$(npx -q -y -- semver -c -l ${{ github.ref_name }})"
 
   ###################################################
   ## npm
@@ -608,7 +615,7 @@ jobs:
               access=public
           fi
 
-          npm version --allow-same-version "${{ needs.version_merge.outputs.semver }}"
+          npm version --allow-same-version "${{ needs.version_merge.outputs.version }}"
 
           npm publish --access="${access}" \
             || find ~/.npm/_logs -name '*.log' | xargs cat
@@ -853,8 +860,8 @@ jobs:
             ${{ needs.context_check.outputs.ghcr_repo }}
             ${{ needs.context_check.outputs.dockerhub_repo }}
           tags: |
-            type=raw,value=${{ needs.version_merge.outputs.raw }}
-            type=raw,value=${{ needs.version_merge.outputs.semver }}
+            type=raw,value=${{ needs.version_merge.outputs.tag }}
+            type=raw,value=${{ needs.version_merge.outputs.version }}
           flavor: |
             latest=true
 
