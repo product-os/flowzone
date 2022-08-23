@@ -330,10 +330,18 @@ jobs:
             npm install -g balena-versionist versionist
             balena-versionist
             git status
-            VERSION="$(head -n1 VERSION || jq -r '.version' package.json)"
-            git add --all
-            git -c "user.name=${{ inputs.git_commit_author }}" -c "user.email=${{ inputs.git_commit_email }}" commit --allow-empty -m "${VERSION}"
-            git log -n 2
+            test -f balena.yml && balena_version="$(cat < balena.yml | yq e - -o json | jq -r .version)"
+            test -f package.json && npm_version="$(jq -r '.version' package.json)"
+            test -f VERSION && generic_version="$(head -n1 VERSION)"
+            VERSION="$(npx -q -y -- semver $npm_version $generic_version $balena_version | tail -n1)"
+            if [ -n "${VERSION}" ]
+            then
+              git add --all
+              git -c "user.name=${{ inputs.git_commit_author }}" -c "user.email=${{ inputs.git_commit_email }}" commit --allow-empty -m "${VERSION}"
+              git log -n 2
+            else
+              echo "Unable to determine version for commit!"
+            fi
           else
             echo "This branch does not have a repo.yml file. Versioning will be skipped."
           fi
