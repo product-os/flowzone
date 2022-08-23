@@ -365,7 +365,6 @@ jobs:
       tag: ${{ steps.versioned.outputs.tag }}
       version: ${{ steps.versioned.outputs.version }}
       author: ${{ steps.author.outputs.name }}
-      versioning: ${{ contains(steps.author.outputs.name, inputs.git_commit_author) }}
 
     steps:
       - name: Download versioned source
@@ -390,7 +389,7 @@ jobs:
 
       - name: Parse version
         id: versioned
-        if: contains(steps.author.outputs.name, inputs.git_commit_author)
+        if: inputs.skip_versioning == false
         working-directory: /tmp/versioned-source
         run: |
           test -f balena.yml && balena_version="$(cat < balena.yml | yq e - -o json | jq -r .version)"
@@ -408,7 +407,7 @@ jobs:
 
       - name: Import GPG key for signing commits
         id: import-gpg
-        if: contains(steps.author.outputs.name, inputs.git_commit_author)
+        if: inputs.skip_versioning == false
         uses: crazy-max/ghaction-import-gpg@v4
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -418,13 +417,13 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Checkout source
-        if: contains(steps.author.outputs.name, inputs.git_commit_author)
+        if: inputs.skip_versioning == false
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Push versioned commit
-        if: contains(steps.author.outputs.name, inputs.git_commit_author)
+        if: inputs.skip_versioning == false
         env:
           BRANCH: ${{ github.base_ref }}
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
@@ -598,7 +597,7 @@ jobs:
 
       # use the versioned tag when merging PRs with versioning
       - name: Publish versioned tag
-        if: needs.version_merge.outputs.versioning == true
+        if: inputs.skip_versioning == false
         run: |
           if [[ '${{ inputs.verbose }}' =~ 1|on|On|Yes|yes|true|True ]]; then
               set -x
@@ -852,7 +851,7 @@ jobs:
 
       # use the versioned tag when merging PRs with versioning
       - name: Generate Docker labels and tags
-        if: needs.version_merge.outputs.versioning == true
+        if: inputs.skip_versioning == false
         id: versioned-meta
         uses: docker/metadata-action@v4
         with:
@@ -867,7 +866,7 @@ jobs:
 
       # use the 'edge' tag when merging PRs without versioning
       - name: Generate Docker labels and tags
-        if: needs.version_merge.outputs.versioning != true
+        if: inputs.skip_versioning == true
         id: edge-meta
         uses: docker/metadata-action@v4
         with:
