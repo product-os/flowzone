@@ -379,28 +379,6 @@ jobs:
           name: versioned-source-${{ github.event.pull_request.head.sha }}
           path: /tmp/versioned-source.tar
 
-  tagged_source:
-    name: Tagged source
-    needs: [context_check]
-    runs-on: ubuntu-latest
-    # only run on tag push events
-    if: github.event_name == 'push'
-
-    outputs:
-      tag: github.ref_name
-      version: steps.format.outputs.version
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash
-
-    steps:
-      - name: Format tag as semver
-        id: format
-        run: |
-          echo "::set-output name=version::$(npx -q -y -- semver -c -l ${{ github.ref_name }})"
-
   ###################################################
   ## npm
   ###################################################
