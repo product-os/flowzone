@@ -305,7 +305,7 @@ jobs:
 
     outputs:
       tag: ${{ steps.versionist.outputs.tag }}
-      version: ${{ steps.versionist.outputs.version }}}
+      version: ${{ steps.versionist.outputs.version }}
 
     steps:
       - name: Checkout source
