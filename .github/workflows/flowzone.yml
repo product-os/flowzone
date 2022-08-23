@@ -431,8 +431,11 @@ jobs:
   npm_draft:
     name: npm draft
     runs-on: ubuntu-latest
-    needs: [npm_matrix, source_check, versioned_source]
-    if: inputs.npm_registry != '' && github.event.pull_request.merged == false
+    needs: [npm_matrix, versioned_source]
+    if: |
+      inputs.npm_registry != '' &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == false
 
     defaults:
       run:
@@ -452,8 +455,8 @@ jobs:
       - name: Publish draft tag
         run: |
           if [[ '${{ inputs.verbose }}' =~ 1|on|On|Yes|yes|true|True ]]; then
-              set -x
-              env
+            set -x
+            env
           fi
 
           echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
@@ -461,9 +464,9 @@ jobs:
           npm whoami
 
           if [[ "$(jq -r '.private' package.json)" =~ true ]]; then
-              access=restricted
+            access=restricted
           else
-              access=public
+            access=public
           fi
 
           package="$(jq -r '.name' package.json)"
@@ -475,25 +478,24 @@ jobs:
           npm --no-git-tag-version version "${tmp_version}"
 
           for t in "${tag}" "${branch}"; do
-              npm dist-tag rm "${package}" "${t}" || true
+            npm dist-tag rm "${package}" "${t}" || true
           done
 
           npm publish --tag "${tag}" --access="${access}" \
             || find ~/.npm/_logs -name '*.log' | xargs cat
 
           for t in "${branch}" latest; do
-              npm dist-tag add "${package}@${tmp_version}" "${t}" \
-                || find ~/.npm/_logs -name '*.log' | xargs cat
+            npm dist-tag add "${package}@${tmp_version}" "${t}" \
+              || find ~/.npm/_logs -name '*.log' | xargs cat
           done
-
-          npm dist-tag ls
 
   npm_finalize:
     name: npm finalize
     needs: [context_check, source_check, versioned_source]
     runs-on: ubuntu-latest
-    if:
-      github.event.pull_request.merged == true &&
+    # trigger on tag and merge events
+    if: |
+      (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.source_check.outputs.npm == 'true' &&
       inputs.npm_registry != ''
 
@@ -512,13 +514,11 @@ jobs:
         working-directory: .
         run: tar -xvf versioned-source.tar
 
-      # use the versioned tag when merging PRs with versioning
-      - name: Publish versioned tag
-        if: inputs.skip_versioning == false
+      - name: Publish to registry
         run: |
           if [[ '${{ inputs.verbose }}' =~ 1|on|On|Yes|yes|true|True ]]; then
-              set -x
-              env
+            set -x
+            env
           fi
 
           echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
@@ -526,15 +526,13 @@ jobs:
           npm whoami
 
           if [[ "$(jq -r '.private' package.json)" =~ true ]]; then
-              access=restricted
+            access=restricted
           else
-              access=public
+            access=public
           fi
 
           npm publish --access="${access}" \
             || find ~/.npm/_logs -name '*.log' | xargs cat
-
-          npm dist-tag ls
 
 
   ###################################################
@@ -545,7 +543,10 @@ jobs:
     name: Docker
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source]
-    if: needs.source_check.outputs.docker == 'true' && github.event.pull_request.merged == false
+    if: |
+      needs.source_check.outputs.docker == 'true' &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == false
 
     defaults:
       run:
