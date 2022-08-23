@@ -95,16 +95,6 @@ on:
         type: string
         required: false
         default: registry.npmjs.org
-      git_commit_author:
-        description: "The git user name that Flowzone will use to add commits to the branch"
-        type: string
-        required: false
-        default: Versionist
-      git_commit_email:
-        description: "The git user email that Flowzone will use to add commits to the branch"
-        type: string
-        required: false
-        default: versionist@balena.io
       skip_versioning:
         description: "Set to true to skip adding a version commit on top of the original source "
         type: boolean
@@ -239,10 +229,10 @@ jobs:
 
   protect_branch:
     name: Protect branch
-    needs: [context_check, version_draft, docker_draft, npm_draft, balena_draft]
+    needs: [context_check, versioned_source, docker_draft, npm_draft, balena_all]
     runs-on: ubuntu-latest
     # run if all the test jobs are success or skipped, but still require context and version checks to be success
-    if: "!failure() && !cancelled() && needs.context_check.result == 'success' && needs.version_draft.result == 'success' && inputs.protect_branch == true"
+    if: "!failure() && !cancelled() && needs.context_check.result == 'success' && needs.versioned_source.result == 'success' && inputs.protect_branch == true"
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
@@ -268,10 +258,10 @@ jobs:
                 "Flowzone / Context check",
                 "Flowzone / Source check",
                 "Flowzone / Protect branch",
-                "Flowzone / Version draft",
+                "Flowzone / Versioned source",
                 "Flowzone / npm draft",
                 "Flowzone / Docker draft",
-                "Flowzone / balena draft"
+                "Flowzone / balena all"
               ]
             },
             "enforce_admins": false,
@@ -302,58 +292,11 @@ jobs:
   ## VERSIONING
   ###################################################
 
-  version_draft:
-    name: Version draft
+  versioned_source:
+    name: Versioned source
     runs-on: ubuntu-latest
-    # only run on PR open or synchronize events
-    if: github.event_name == 'pull_request' && github.event.action != 'closed'
-    needs: [source_check]
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash
-
-    steps:
-      - name: Checkout source from branch
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-
-      - name: Version source
-        id: versioning
-        if: inputs.skip_versioning == false
-        run: |
-          if [ -f repo.yml ]
-          then
-            npm install -g balena-versionist versionist
-            balena-versionist
-            git status
-            VERSION="$(head -n1 VERSION || jq -r '.version' package.json)"
-            git add --all
-            git -c "user.name=${{ inputs.git_commit_author }}" -c "user.email=${{ inputs.git_commit_email }}" commit --allow-empty -m "${VERSION}"
-            git log -n 2
-          else
-            echo "This branch does not have a repo.yml file. Versioning will be skipped."
-          fi
-
-      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
-      - name: Compress source
-        run: tar -cvf /tmp/versioned-source.tar .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
-          path: /tmp/versioned-source.tar
-
-  version_merge:
-    name: Version merge
-    needs: [context_check, source_check]
-    runs-on: ubuntu-latest
-    # only run on PR merge events
-    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    if: github.event_name == 'pull_request'
+    needs: [context_check]
 
     defaults:
       run:
@@ -361,50 +304,16 @@ jobs:
         shell: bash
 
     outputs:
-      sha: ${{ steps.versioned.outputs.sha }}
-      tag: ${{ steps.versioned.outputs.tag }}
-      version: ${{ steps.versioned.outputs.version }}
-      author: ${{ steps.author.outputs.name }}
+      tag: ${{ steps.versionist.outputs.tag }}
+      version: ${{ steps.versionist.outputs.version }}}
 
     steps:
-      - name: Download versioned source
-        uses: dawidd6/action-download-artifact@v2
+      - name: Checkout source
+        uses: actions/checkout@v3
         with:
-          github_token: ${{ secrets.FLOWZONE_TOKEN }}
-          workflow_conclusion: success
-          pr: ${{ github.event.pull_request.number }}
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
-          search_artifacts: true
-
-      - name: Extract source
-        run: |
-          mkdir -p /tmp/versioned-source
-          tar -xvf versioned-source.tar -C /tmp/versioned-source
-
-      - name: Check author
-        id: author
-        working-directory: /tmp/versioned-source
-        run: |
-          echo "::set-output name=name::$(git log -1 --pretty=format:'%an' | xargs)"
-
-      - name: Parse version
-        id: versioned
-        if: inputs.skip_versioning == false
-        working-directory: /tmp/versioned-source
-        run: |
-          test -f balena.yml && balena_version="$(cat < balena.yml | yq e - -o json | jq -r .version)"
-          test -f package.json && npm_version="$(jq -r '.version' package.json)"
-          test -f VERSION && generic_version="$(head -n1 VERSION)"
-          VERSION="$(npx -q -y -- semver $npm_version $generic_version $balena_version | tail -n1)"
-          if [ -n "${VERSION}" ]
-          then
-            echo "::set-output name=tag::v${VERSION}"
-            echo "::set-output name=version::${VERSION}"
-          else
-            echo "::set-output name=tag::edge"
-          fi
-          echo "::set-output name=sha::$(git rev-parse HEAD)"
-
+          fetch-depth: 1
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+        
       - name: Import GPG key for signing commits
         id: import-gpg
         if: inputs.skip_versioning == false
@@ -416,30 +325,63 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
-      - name: Checkout source
+      - name: Run versionist
+        id: versionist
         if: inputs.skip_versioning == false
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+        run: |
+          if [ -f repo.yml ]
+          then
+            npm install -g balena-versionist versionist
+            balena-versionist
+            git status
+            test -f balena.yml && balena_version="$(cat < balena.yml | yq e - -o json | jq -r .version)"
+            test -f package.json && npm_version="$(jq -r '.version' package.json)"
+            test -f VERSION && generic_version="$(head -n1 VERSION)"
+            VERSION="$(npx -q -y -- semver $npm_version $generic_version $balena_version | tail -n1)"
+            if [ -n "${VERSION}" ]
+            then
+              echo "::set-output name=tag::v${VERSION}"
+              echo "::set-output name=version::${VERSION}"
+            else
+              echo "::set-output name=tag::edge"
+            fi
+          else
+            echo "This branch does not have a repo.yml file. Versioning will be skipped."
+            echo "::set-output name=tag::edge"
+          fi
 
-      - name: Push versioned commit
-        if: inputs.skip_versioning == false
+      - name: Create versioned commit
+        if: steps.versionist.outputs.version != ''
         env:
-          BRANCH: ${{ github.base_ref }}
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          VERSION: ${{ steps.versioned.outputs.tag }}
-          REV: ${{ steps.versioned.outputs.sha }}
+          TAG: ${{ steps.versionist.outputs.tag }}
         run: |
-          git --git-dir=/tmp/versioned-source/.git format-patch -k -1 --stdout ${REV} | git am -3 -k
-          git tag -a "${VERSION}" -m "${VERSION}"
-          git push origin HEAD:${BRANCH} --follow-tags
+          git add --all
+          git commit -m "${TAG}" --allow-empty
+          git tag -a "${TAG}" -m "${TAG}"
+          git log -n 2
 
-  version_tag:
-    name: Version tag
-    needs: [context_check, source_check]
+      - name: Push versioned commit
+        if: github.event.pull_request.merged == true && steps.versionist.outputs.version != ''
+        run: |
+          git push origin HEAD:${{ github.base_ref }} --follow-tags
+
+      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
+      - name: Compress source
+        run: tar -cvf /tmp/versioned-source.tar .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
+          path: /tmp/versioned-source.tar
+
+  tagged_source:
+    name: Tagged source
+    needs: [context_check]
     runs-on: ubuntu-latest
     # only run on tag push events
     if: github.event_name == 'push'
@@ -466,8 +408,8 @@ jobs:
   npm_matrix:
     name: npm
     runs-on: ubuntu-latest
-    needs: [version_draft, source_check, context_check]
-    if: needs.source_check.outputs.npm == 'true'
+    needs: [context_check, source_check, versioned_source]
+    if: needs.source_check.outputs.npm == 'true' && github.event.pull_request.merged == false
 
     defaults:
       run:
@@ -511,8 +453,8 @@ jobs:
   npm_draft:
     name: npm draft
     runs-on: ubuntu-latest
-    needs: [npm_matrix, source_check]
-    if: inputs.npm_registry != ''
+    needs: [npm_matrix, source_check, versioned_source]
+    if: inputs.npm_registry != '' && github.event.pull_request.merged == false
 
     defaults:
       run:
@@ -570,9 +512,10 @@ jobs:
 
   npm_merge:
     name: npm merge
-    needs: [context_check, source_check, version_merge]
+    needs: [context_check, source_check, versioned_source]
     runs-on: ubuntu-latest
     if:
+      github.event.pull_request.merged == true &&
       needs.source_check.outputs.npm == 'true' &&
       inputs.npm_registry != ''
 
@@ -583,13 +526,9 @@ jobs:
 
     steps:
       - name: Download versioned source
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
-          github_token: ${{ secrets.FLOWZONE_TOKEN }}
-          workflow_conclusion: success
-          pr: ${{ github.event.pull_request.number }}
           name: versioned-source-${{ github.event.pull_request.head.sha }}
-          search_artifacts: true
 
       - name: Extract versioned source
         working-directory: .
@@ -614,7 +553,7 @@ jobs:
               access=public
           fi
 
-          npm version --allow-same-version "${{ needs.version_merge.outputs.version }}"
+          npm version --allow-same-version "${{ needs.versioned_source.outputs.version }}"
 
           npm publish --access="${access}" \
             || find ~/.npm/_logs -name '*.log' | xargs cat
@@ -629,8 +568,8 @@ jobs:
   docker_matrix:
     name: Docker
     runs-on: ubuntu-latest
-    needs: [version_draft, source_check, context_check]
-    if: needs.source_check.outputs.docker == 'true'
+    needs: [context_check, source_check, versioned_source]
+    if: needs.source_check.outputs.docker == 'true' && github.event.pull_request.merged == false
 
     defaults:
       run:
@@ -821,9 +760,10 @@ jobs:
 
   docker_merge:
     name: Docker merge
-    needs: [context_check, source_check, version_merge]
+    needs: [context_check, source_check, versioned_source]
     runs-on: ubuntu-latest
     if: |
+      github.event.pull_request.merged == true &&
       needs.source_check.outputs.docker == 'true' &&
       (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '')
 
@@ -859,8 +799,8 @@ jobs:
             ${{ needs.context_check.outputs.ghcr_repo }}
             ${{ needs.context_check.outputs.dockerhub_repo }}
           tags: |
-            type=raw,value=${{ needs.version_merge.outputs.tag }}
-            type=raw,value=${{ needs.version_merge.outputs.version }}
+            type=raw,value=${{ needs.versioned_source.outputs.tag }}
+            type=raw,value=${{ needs.versioned_source.outputs.version }}
           flavor: |
             latest=true
 
@@ -888,7 +828,7 @@ jobs:
 
   docker_tag:
     name: Docker tag
-    needs: [context_check, source_check, version_tag]
+    needs: [context_check, source_check, tagged_source]
     runs-on: ubuntu-latest
     if: |
       needs.source_check.outputs.docker == 'true' &&
@@ -945,7 +885,7 @@ jobs:
   balena_matrix:
     name: balena
     runs-on: ubuntu-latest
-    needs: [version_draft, source_check, context_check]
+    needs: [context_check, source_check, versioned_source]
     if: needs.source_check.outputs.balena == 'true'
 
     strategy:
@@ -975,8 +915,8 @@ jobs:
           versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
 
-  balena_draft:
-    name: balena draft
+  balena_all:
+    name: balena all
     runs-on: ubuntu-latest
     needs: [balena_matrix]
 
@@ -989,53 +929,3 @@ jobs:
       # just a catchall to ensure the matrix was successful so we can use this job as
       # branch protection without knowing all the matrices
       - run: echo "nothing to do!"
-
-  # balena_merge is functionally the same as balena_tag for now
-  balena_merge:
-    name: balena merge
-    needs: [context_check, source_check, version_merge]
-    runs-on: ubuntu-latest
-    if: needs.source_check.outputs.balena == 'true'
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash
-
-    strategy:
-      fail-fast: false
-      matrix:
-        slug: ${{ fromJSON(needs.context_check.outputs.balena_slugs) }}
-
-    steps:
-      - uses: balena-io/deploy-to-balena-action@v0.12.1
-        with:
-          balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
-          fleet: ${{ matrix.slug }}
-          versionbot: false # disable the included versionbot branch checkout
-          source: ${{ inputs.working_directory }}
-
-  # balena_merge is functionally the same as balena_tag for now
-  balena_tag:
-    name: balena tag
-    needs: [context_check, source_check, version_tag]
-    runs-on: ubuntu-latest
-    if: needs.source_check.outputs.balena == 'true'
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash
-
-    strategy:
-      fail-fast: false
-      matrix:
-        slug: ${{ fromJSON(needs.context_check.outputs.balena_slugs) }}
-
-    steps:
-      - uses: balena-io/deploy-to-balena-action@v0.12.1
-        with:
-          balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
-          fleet: ${{ matrix.slug }}
-          versionbot: false # disable the included versionbot branch checkout
-          source: ${{ inputs.working_directory }}
