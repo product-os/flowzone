@@ -510,8 +510,8 @@ jobs:
 
           npm dist-tag ls
 
-  npm_merge:
-    name: npm merge
+  npm_finalize:
+    name: npm finalize
     needs: [context_check, source_check, versioned_source]
     runs-on: ubuntu-latest
     if:
@@ -756,12 +756,13 @@ jobs:
           dst: |
             ${{ steps.meta.outputs.tags }}
 
-  docker_merge:
-    name: Docker merge
+  docker_finalize:
+    name: Docker finalize
     needs: [context_check, source_check, versioned_source]
     runs-on: ubuntu-latest
+    # trigger on tag and merge events
     if: |
-      github.event.pull_request.merged == true &&
+      (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.source_check.outputs.docker == 'true' &&
       (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '')
 
@@ -789,8 +790,8 @@ jobs:
 
       # use the versioned tag when merging PRs with versioning
       - name: Generate Docker labels and tags
-        if: inputs.skip_versioning == false
         id: versioned-meta
+        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -804,8 +805,8 @@ jobs:
 
       # use the 'edge' tag when merging PRs without versioning
       - name: Generate Docker labels and tags
-        if: inputs.skip_versioning == true
         id: edge-meta
+        if: inputs.skip_versioning != false && github.event_name == 'pull_request'
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -816,46 +817,10 @@ jobs:
           flavor: |
             latest=false
 
-      - name: Publish tags
-        uses: akhilerm/tag-push-action@v2.0.0
-        with:
-          src: ${{ needs.context_check.outputs.ghcr_repo || needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
-          dst: |
-            ${{ steps.versioned-meta.outputs.tags }}
-            ${{ steps.edge-meta.outputs.tags }}
-
-  docker_tag:
-    name: Docker tag
-    needs: [context_check, source_check, tagged_source]
-    runs-on: ubuntu-latest
-    if: |
-      needs.source_check.outputs.docker == 'true' &&
-      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '')
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash
-
-    steps:
-      - name: Login to GitHub Container Registry
-        if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
-          password: ${{ env.GHCR_TOKEN }}
-
-      - name: Login to Docker Hub
-        if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
-        uses: docker/login-action@v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
-
+      # use the provided tag when tagging commits
       - name: Generate Docker labels and tags
-        id: meta
+        id: tagged-meta
+        if: github.event_name == 'push'
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -866,15 +831,15 @@ jobs:
             type=semver,pattern={{version}}
           flavor: |
             latest=auto
-            prefix=
-            suffix=
 
       - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
           src: ${{ needs.context_check.outputs.ghcr_repo || needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
           dst: |
-            ${{ steps.meta.outputs.tags }}
+            ${{ steps.versioned-meta.outputs.tags }}
+            ${{ steps.edge-meta.outputs.tags }}
+            ${{ steps.tagged-meta.outputs.tags }}
 
   ###################################################
   ## BALENA
