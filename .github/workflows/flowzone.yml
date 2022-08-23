@@ -194,6 +194,7 @@ jobs:
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
+      npm_access: ${{ steps.npm.outputs.access }}
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
 
@@ -206,12 +207,20 @@ jobs:
       - name: Check for package.json
         id: npm
         run: |
-          if test -f "package.json"; then
+          if test -f "package.json"
+          then
             echo "found package.json"
             echo "::set-output name=enabled::true"
+            if [[ "$(jq -r '.private' package.json)" =~ true ]]
+            then
+              echo "::set-output name=access::restricted"
+            else
+              echo "::set-output name=access::public"
+            fi
           else
             echo ::set-output name=enabled::"false"
           fi
+          
 
       - name: Check for docker-compose.test.yml
         id: docker
@@ -236,7 +245,7 @@ jobs:
 
   protect_branch:
     name: Protect branch
-    needs: [context_check, versioned_source, docker_draft, npm_draft, balena_all]
+    needs: [context_check, versioned_source, docker_draft, npm_publish, balena_all]
     runs-on: ubuntu-latest
     # run if all the test jobs are success or skipped, but still require context and version checks to be success
     if: "!failure() && !cancelled() && needs.context_check.result == 'success' && needs.versioned_source.result == 'success' && inputs.protect_branch == true"
@@ -266,7 +275,7 @@ jobs:
                 "Flowzone / Source check",
                 "Flowzone / Protect branch",
                 "Flowzone / Versioned source",
-                "Flowzone / npm draft",
+                "Flowzone / npm publish",
                 "Flowzone / Docker draft",
                 "Flowzone / balena all"
               ]
@@ -394,7 +403,10 @@ jobs:
     name: npm
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source]
-    if: needs.source_check.outputs.npm == 'true' && github.event.pull_request.merged == false
+    if: |
+      needs.source_check.outputs.npm == 'true' &&
+      github.event.pull_request.merged == false &&
+      github.event_name == 'pull_request'
 
     defaults:
       run:
@@ -435,14 +447,15 @@ jobs:
       - name: Run tests
         run: npm test
 
-  npm_draft:
-    name: npm draft
+  npm_publish:
+    name: npm publish
     runs-on: ubuntu-latest
-    needs: [context_check, npm_matrix, versioned_source]
+    needs: [context_check, source_check, versioned_source, npm_matrix]
     if: |
+      needs.source_check.outputs.npm == 'true' &&
       inputs.npm_registry != '' &&
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.merged == false
+      (github.event_name == 'pull_request' || github.event_name == 'push') &&
+      (needs.npm_matrix.result == 'success' || needs.npm_matrix.result == 'skipped')
 
     defaults:
       run:
@@ -459,78 +472,37 @@ jobs:
         working-directory: .
         run: tar -xvf versioned-source.tar
 
-      - name: Publish draft tag
+      - name: Generate tags
+        id: meta
         run: |
-          echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-
-          npm whoami
-
-          if [[ "$(jq -r '.private' package.json)" =~ true ]]; then
-            access=restricted
-          else
-            access=public
-          fi
-
           package="$(jq -r '.name' package.json)"
           version="$(jq -r '.version' package.json)"
-          branch="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
-          tag="${branch}-${{ github.event.pull_request.head.sha }}"
-          tmp_version="${version}-${tag}"
+          branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
-          npm --no-git-tag-version version "${tmp_version}"
+          echo "::set-output name=package::${package}"
+          echo "::set-output name=version::${version}"
+          echo "::set-output name=branch_tag::${branch_tag}"
+          echo "::set-output name=sha_tag::${sha_tag}"
+          echo "::set-output name=version_tag::${version_tag}"
 
-          for t in "${tag}" "${branch}"; do
-            npm dist-tag rm "${package}" "${t}" || true
-          done
-
-          npm publish --tag "${tag}" --access="${access}" \
-            || find ~/.npm/_logs -name '*.log' | xargs cat
-
-          for t in "${branch}" latest; do
-            npm dist-tag add "${package}@${tmp_version}" "${t}" \
-              || find ~/.npm/_logs -name '*.log' | xargs cat
-          done
-
-  npm_finalize:
-    name: npm finalize
-    needs: [context_check, source_check, versioned_source]
-    runs-on: ubuntu-latest
-    # trigger on tag and merge events
-    if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.source_check.outputs.npm == 'true' &&
-      inputs.npm_registry != ''
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: ${{ needs.context_check.outputs.shell }}
-
-    steps:
-      - name: Download versioned source
-        uses: actions/download-artifact@v3
-        with:
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
-
-      - name: Extract versioned source
-        working-directory: .
-        run: tar -xvf versioned-source.tar
-
-      - name: Publish to registry
+      - name: Login to registry
         run: |
           echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-
           npm whoami
 
-          if [[ "$(jq -r '.private' package.json)" =~ true ]]; then
-            access=restricted
-          else
-            access=public
-          fi
+      - name: Publish draft release
+        if: github.event.pull_request.merged == false && github.event_name == 'pull_request'
+        run: |
+          npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ steps.meta.outputs.version_tag }}
+          npm --loglevel=verbose --logs-max=0 publish --access=${{ needs.source_check.outputs.npm_access }} --tag=${{ steps.meta.outputs.sha_tag }}
+          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ steps.meta.outputs.package }}@${{ steps.meta.outputs.version_tag }} ${{ steps.meta.outputs.branch_tag }}
 
-          npm publish --access="${access}" \
-            || find ~/.npm/_logs -name '*.log' | xargs cat
-
+      - name: Publish final release
+        if: github.event.pull_request.merged == true || github.event_name == 'push'
+        run: |
+          npm --loglevel=verbose --logs-max=0 publish --access=${{ needs.source_check.outputs.npm_access }} --tag "latest"
 
   ###################################################
   ## DOCKER
