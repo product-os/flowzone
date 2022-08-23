@@ -249,7 +249,7 @@ jobs:
     # depend on all the jobs but allow them to be skipped
     needs: [context_check, source_check, versioned_source, docker_matrix, docker_publish, npm_matrix, npm_publish, balena_matrix, balena_all]
     if: |
-      !failure() && !cancelled() && inputs.protect_branch == true
+      !failure() && !cancelled() && inputs.protect_branch == true && github.event_name == 'pull_request'
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
