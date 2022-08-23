@@ -553,8 +553,6 @@ jobs:
               access=public
           fi
 
-          npm version --allow-same-version "${{ needs.versioned_source.outputs.version }}"
-
           npm publish --access="${access}" \
             || find ~/.npm/_logs -name '*.log' | xargs cat
 
