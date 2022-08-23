@@ -140,8 +140,6 @@ These inputs are all optional and include some opinionated defaults.
 | `balena_slugs`                    | `${{ github.repository }}-amd64`<br>`${{ github.repository }}-aarch64`<br>`${{ github.repository }}-armv7hf` | Newline-delimited string of balenaCloud apps, fleets, or blocks to deploy       |
 | `node_versions`                   | `14.x`<br>`16.x`<br>`18.x`                                                                                   | Newline-delimited string of Node.js versions to test                            |
 | `npmjs_repository`                | `${{ github.repository }}`                                                                                   | NPM repository for NodeJS projects, skipped if empty                            |
-| `git_commit_author`               | `Versionist`                                                                                                 | The git user name that Flowzone will use to add commits to the branch           |
-| `git_commit_email`                | `versionist@balena.io`                                                                                       | The git user email that Flowzone will use to add commits to the branch          |
 | `skip_versioning`                 | false                                                                                                        | Set to true to skip adding a version commit on top of the original source       |
 | `protect_branch`                  | true                                                                                                         | Set to false to disable updating branch protection rules after a successful run |
 
