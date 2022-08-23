@@ -95,6 +95,21 @@ on:
         type: string
         required: false
         default: registry.npmjs.org
+      git_commit_author:
+        description: "The git user name that Flowzone will use to add commits to the branch"
+        type: string
+        required: false
+        default: Versionist
+      git_commit_email:
+        description: "The git user email that Flowzone will use to add commits to the branch"
+        type: string
+        required: false
+        default: versionist@balena.io
+      skip_versioning:
+        description: "Set to true to skip adding a version commit on top of the original source "
+        type: boolean
+        required: false
+        default: false
       protect_branch:
         description: "Set to false to disable updating branch protection rules after a successful run"
         type: boolean
@@ -123,7 +138,7 @@ jobs:
       ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'opened') ||
       ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'synchronize') ||
       ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'closed' && github.event.pull_request.merged == true) ||
-      ( github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && contains(github.event.head_commit.author.name, 'versionbot') != true )
+      ( github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && contains(github.event.head_commit.author.name, inputs.git_commit_author) != true )
 
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
@@ -256,8 +271,7 @@ jobs:
                 "Flowzone / Version draft",
                 "Flowzone / npm draft",
                 "Flowzone / Docker draft",
-                "Flowzone / balena draft",
-                "VersionBot/generate-version"
+                "Flowzone / balena draft"
               ]
             },
             "enforce_admins": false,
@@ -300,37 +314,29 @@ jobs:
         working-directory: .
         shell: bash
 
-    outputs:
-      versionbot: ${{ steps.versionbot_checkout.outcome }}
-
     steps:
-      - name: Checkout versioned source
-        id: versionbot_checkout
-        continue-on-error: true
+      - name: Checkout source from branch
         uses: actions/checkout@v3
         with:
-          ref: versionbot/pr/${{ github.event.pull_request.number }}
-          fetch-depth: 2
+          fetch-depth: 0
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
-      - name: Assert that versioned source is up-to-date
-        if: ${{ steps.versionbot_checkout.outcome == 'success' }}
-        run: git merge-base --is-ancestor ${{ github.event.pull_request.head.sha }} HEAD
-
-      # Fallback to unversioned source if versionbot branch does not exist
-      - name: Checkout original source
-        if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-
-      # Run balena-versionist in Github actions when the versionbot branch could not be checked out
-      - name: Version original source
-        if: ${{ steps.versionbot_checkout.outcome == 'failure' }}
+      - name: Version source
+        id: versioning
+        if: inputs.skip_versioning == false
         run: |
-          npm install -g balena-versionist versionist
-          balena-versionist
+          if [ -f repo.yml ]
+          then
+            npm install -g balena-versionist versionist
+            balena-versionist
+            git status
+            VERSION="$(head -n1 VERSION || jq -r '.version' package.json)"
+            git add --all
+            git -c "user.name=${{ inputs.git_commit_author }}" -c "user.email=${{ inputs.git_commit_email }}" commit --allow-empty -m "${VERSION}"
+            git log -n 2
+          else
+            echo "This branch does not have a repo.yml file. Versioning will be skipped."
+          fi
 
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress source
@@ -359,7 +365,7 @@ jobs:
       raw: ${{ steps.versioned.outputs.raw }}
       semver: ${{ steps.versioned.outputs.semver }}
       author: ${{ steps.author.outputs.name }}
-      versionbot: ${{ contains(steps.author.outputs.name, 'versionbot') }}
+      versioning: ${{ contains(steps.author.outputs.name, inputs.git_commit_author) }}
 
     steps:
       - name: Download versioned source
@@ -384,7 +390,7 @@ jobs:
 
       - name: Parse version
         id: versioned
-        if: contains(steps.author.outputs.name, 'versionbot')
+        if: contains(steps.author.outputs.name, inputs.git_commit_author)
         working-directory: /tmp/versioned-source
         # TODO: depending on the repo type we may extract the wrong version here
         run: |
@@ -395,7 +401,7 @@ jobs:
 
       - name: Import GPG key for signing commits
         id: import-gpg
-        if: contains(steps.author.outputs.name, 'versionbot')
+        if: contains(steps.author.outputs.name, inputs.git_commit_author)
         uses: crazy-max/ghaction-import-gpg@v4
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -405,13 +411,13 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Checkout source
-        if: contains(steps.author.outputs.name, 'versionbot')
+        if: contains(steps.author.outputs.name, inputs.git_commit_author)
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Push versioned commit
-        if: contains(steps.author.outputs.name, 'versionbot')
+        if: contains(steps.author.outputs.name, inputs.git_commit_author)
         env:
           BRANCH: ${{ github.base_ref }}
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
@@ -583,9 +589,9 @@ jobs:
         working-directory: .
         run: tar -xvf versioned-source.tar
 
-      # use the versioned tag when merging PRs with versionbot
+      # use the versioned tag when merging PRs with versioning
       - name: Publish versioned tag
-        if: needs.version_merge.outputs.versionbot == 'true'
+        if: needs.version_merge.outputs.versioning == true
         run: |
           if [[ '${{ inputs.verbose }}' =~ 1|on|On|Yes|yes|true|True ]]; then
               set -x
@@ -837,9 +843,9 @@ jobs:
           username: ${{ secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKER_REGISTRY_PASS }}
 
-      # use the versioned tag when merging PRs with versionbot
+      # use the versioned tag when merging PRs with versioning
       - name: Generate Docker labels and tags
-        if: needs.version_merge.outputs.versionbot == 'true'
+        if: needs.version_merge.outputs.versioning == true
         id: versioned-meta
         uses: docker/metadata-action@v4
         with:
@@ -852,9 +858,9 @@ jobs:
           flavor: |
             latest=true
 
-      # use the 'edge' tag when merging PRs without versionbot
+      # use the 'edge' tag when merging PRs without versioning
       - name: Generate Docker labels and tags
-        if: needs.version_merge.outputs.versionbot != 'true'
+        if: needs.version_merge.outputs.versioning != true
         id: edge-meta
         uses: docker/metadata-action@v4
         with:
