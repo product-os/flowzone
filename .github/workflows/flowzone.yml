@@ -245,10 +245,11 @@ jobs:
 
   protect_branch:
     name: Protect branch
-    needs: [context_check, versioned_source, docker_publish, npm_publish, balena_all]
     runs-on: ubuntu-latest
-    # run if all the test jobs are success or skipped, but still require context and version checks to be success
-    if: "!failure() && !cancelled() && needs.context_check.result == 'success' && needs.versioned_source.result == 'success' && inputs.protect_branch == true"
+    # depend on all the jobs but allow them to be skipped
+    needs: [context_check, source_check, versioned_source, docker_matrix, docker_publish, npm_matrix, npm_publish, balena_matrix, balena_all]
+    if: |
+      !failure() && !cancelled()
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
