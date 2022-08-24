@@ -209,36 +209,36 @@ They can also be found at the top of [flowzone.yml](./.github/workflows/flowzone
 
 #### `working_directory`
 
+GitHub actions working directory.
+
 ```yaml
-description: "GitHub actions working directory"
 type: string
-required: false
 default: "."
 ```
 
 #### `dockerhub_repo`
 
+Docker Hub repository for Docker projects, skipped if empty.
+
 ```yaml
-description: "Docker Hub repository for Docker projects, skipped if empty"
 type: string
-required: false
 ```
 
 #### `ghcr_repo`
 
+GitHub Container Registry repository for Docker projects, skipped if empty.
+
 ```yaml
-description: "GitHub Container Registry repository for Docker projects, skipped if empty"
 type: string
-required: false
 default: ${{ github.repository }}
 ```
 
 #### `docker_platforms`
 
+Comma-delimited string of Docker target platforms.
+
 ```yaml
-description: "Comma-delimited string of Docker target platforms"
 type: string
-required: false
 default: |
   linux/amd64,
   linux/arm64,
@@ -247,34 +247,34 @@ default: |
 
 #### `docker_context`
 
+Docker build context directory relative to [`working_directory`](#-working-directory-).
+
 ```yaml
-description: "Docker build context directory"
 type: string
-required: false
 ```
 
 #### `docker_file`
 
+Path to the Dockerfile relative to the context.
+
 ```yaml
-description: "Path to the Dockerfile relative to the context"
 type: string
-required: false
 ```
 
 #### `docker_target`
 
+Sets the target stage to build.
+
 ```yaml
-description: "Sets the target stage to build"
 type: string
-required: false
 ```
 
 #### `balena_slugs`
 
+Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy.
+
 ```yaml
-description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy"
 type: string
-required: false
 default: |
   ${{ github.repository }}-amd64,
   ${{ github.repository }}-aarch64,
@@ -283,10 +283,10 @@ default: |
 
 #### `node_versions`
 
+Comma-delimited string of Node.js versions to test.
+
 ```yaml
-description: "Comma-delimited string of Node.js versions to test"
 type: string
-required: false
 default: |
   14.x,
   16.x,
@@ -295,46 +295,46 @@ default: |
 
 #### `npm_registry`
 
+Registry for publishing npm projects, skipped if empty.
+
 ```yaml
-description: "Registry for publishing npm projects, skipped if empty"
 type: string
-required: false
 default: registry.npmjs.org
 ```
 
 #### `skip_versioning`
 
+Set to `true` to skip adding a version commit on top of the original source.
+
 ```yaml
-description: "Set to true to skip adding a version commit on top of the original source"
 type: boolean
-required: false
 default: false
 ```
 
 #### `protect_branch`
 
+Set to false to disable updating branch protection rules after a successful run.
+
 ```yaml
-description: "Set to false to disable updating branch protection rules after a successful run"
 type: boolean
-required: false
 default: true
 ```
 
 #### `required_approving_review_count`
 
+Setting this value to zero effectively means merge==deploy without approval(s).
+
 ```yaml
-description: "Setting this value to zero effectively means merge==deploy without approval(s)"
 type: string
-required: false
 default: "1"
 ```
 
 #### `required_status_checks`
 
+Comma-delimited string of additional required status checks for branch protection.
+
 ```yaml
-description: "Comma separated list of additional required status checks for branch protection"
 type: string
-required: false
 default: |
   "Flowzone / npm publish",
   "Flowzone / docker publish",
@@ -343,10 +343,10 @@ default: |
 
 #### `verbose`
 
+Enable shell command tracing.
+
 ```yaml
-description: "Shell command tracing"
 type: boolean
-required: false
 default: false
 ```
 
