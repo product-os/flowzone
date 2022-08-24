@@ -15,9 +15,10 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 Open a PR with the following changes to test and enable Flowzone:
 
 1. Create `.github/workflows/flowzone.yml` (see [Usage](#usage)) in a new PR
-2. Ensure your `package.json`, `docker-compose.test.yml`, `balena.yml`, etc. contain correct information and Flowzone is passing all tests
-3. The branch protection rules will be updated automatically. This requires admin access to revert!
-4. Seek approval or self-certify!
+2. Set the input `protect_branch: false` until you are certain that the tests are passing
+3. Ensure your `package.json`, `docker-compose.test.yml`, `balena.yml`, etc. contain correct information and Flowzone is passing all tests
+4. Remove the `protect_branch` input to apply new rules automatically. This requires admin access to revert!
+5. Seek approval or self-certify!
 
 ## Usage
 
