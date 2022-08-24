@@ -129,7 +129,6 @@ These inputs are all optional and include some opinionated defaults.
 | Name                              | Default                                                                                                      | Description                                                                     |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | `working_directory`               | `.`                                                                                                          | GitHub actions working directory                                                |
-| `required_approving_review_count` | `1`                                                                                                          | Setting this value to zero effectively means merge==deploy without approval(s)  |
 | `dockerhub_repo`                  |                                                                                                              | Docker Hub repository for Docker projects, skipped if empty                     |
 | `ghcr_repo`                       | `${{ github.repository }}`                                                                                   | GitHub Container Registry repository for Docker projects, skipped if empty      |
 | `docker_platforms`                | `linux/amd64`<br>`linux/arm64`<br>`linux/arm/v7`                                                             | Newline-delimited string of Docker target platforms                             |
@@ -141,6 +140,8 @@ These inputs are all optional and include some opinionated defaults.
 | `npmjs_repository`                | `${{ github.repository }}`                                                                                   | NPM repository for NodeJS projects, skipped if empty                            |
 | `skip_versioning`                 | false                                                                                                        | Set to true to skip adding a version commit on top of the original source       |
 | `protect_branch`                  | true                                                                                                         | Set to false to disable updating branch protection rules after a successful run |
+| `required_approving_review_count` | `1`                                                                                                          | Setting this value to zero effectively means merge==deploy without approval(s)  |
+| `required_status_checks`          | `Flowzone / npm publish, Flowzone / docker publish, Flowzone / balena all`                                   | Comma separated list of additional required status checks for branch protection |
 
 These inputs can also be found at the top of [flowzone.yml](./.github/workflows/flowzone.yml).
 

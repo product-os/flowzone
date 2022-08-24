@@ -36,11 +36,6 @@ on:
         type: string
         required: false
         default: "."
-      required_approving_review_count:
-        description: "Setting this value to zero effectively means merge==deploy without approval(s)"
-        type: string
-        required: false
-        default: "1"
       dockerhub_repo:
         description: "Docker Hub repository for Docker projects, skipped if empty"
         type: string
@@ -101,6 +96,19 @@ on:
         type: boolean
         required: false
         default: true
+      required_approving_review_count:
+        description: "Setting this value to zero effectively means merge==deploy without approval(s)"
+        type: string
+        required: false
+        default: "1"
+      required_status_checks:
+        description: "Comma separated list of additional required status checks for branch protection"
+        type: string
+        required: false
+        default: |
+          "Flowzone / npm publish",
+          "Flowzone / docker publish",
+          "Flowzone / balena all"
       verbose:
         description: "Shell command tracing"
         type: boolean
@@ -272,9 +280,7 @@ jobs:
                 "Flowzone / Source check",
                 "Flowzone / Protect branch",
                 "Flowzone / Versioned source",
-                "Flowzone / npm publish",
-                "Flowzone / docker publish",
-                "Flowzone / balena all"
+                ${{ inputs.required_status_checks }}
               ]
             },
             "enforce_admins": false,
