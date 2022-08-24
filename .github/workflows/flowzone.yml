@@ -342,22 +342,14 @@ jobs:
         id: versionist
         if: inputs.skip_versioning == false
         run: |
-          if [ -f repo.yml ]
+          npm install -g balena-versionist versionist
+          balena-versionist
+          git status
+          version="$(grep '^## ' CHANGELOG.md | head -n1 | awk '{print $2}')"
+          if [ -n "${version}" ]
           then
-            npm install -g balena-versionist versionist
-            balena-versionist
-            git status
-            test -f balena.yml && balena_version="$(cat < balena.yml | yq e - -o json | jq -r .version)"
-            test -f package.json && npm_version="$(jq -r '.version' package.json)"
-            test -f VERSION && generic_version="$(head -n1 VERSION)"
-            VERSION="$(npx -q -y -- semver $npm_version $generic_version $balena_version | tail -n1)"
-            if [ -n "${VERSION}" ]
-            then
-              echo "::set-output name=tag::v${VERSION}"
-              echo "::set-output name=version::${VERSION}"
-            fi
-          else
-            echo "This branch does not have a repo.yml file. Versioning will be skipped."
+            echo "::set-output name=tag::v${version}"
+            echo "::set-output name=version::${version}"
           fi
 
       - name: Create versioned commit
