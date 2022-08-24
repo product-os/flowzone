@@ -390,7 +390,7 @@ jobs:
         run: |
           git add --all
           git commit -m "${TAG}" --allow-empty
-          git tag -a "${TAG}" -m "${TAG}"
+          git tag -a "${TAG}" -m "${TAG}" -f
           git log -n 2
 
       # push the versioned commit only if the PR is merged
