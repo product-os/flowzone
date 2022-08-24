@@ -102,7 +102,7 @@ on:
         required: false
         default: "1"
       required_status_checks:
-        description: "Comma separated list of additional required status checks for branch protection"
+        description: "Comma-delimited string of additional required status checks for branch protection"
         type: string
         required: false
         default: |
@@ -110,7 +110,7 @@ on:
           "Flowzone / docker publish",
           "Flowzone / balena all"
       verbose:
-        description: "Shell command tracing"
+        description: "Enable shell command tracing"
         type: boolean
         required: false
         default: false
