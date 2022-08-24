@@ -82,7 +82,7 @@ on:
           16.x
           18.x
       npm_registry:
-        description: "npm repository for NodeJS projects, skipped if empty"
+        description: "Registry for publishing npm projects, skipped if empty"
         type: string
         required: false
         default: registry.npmjs.org
