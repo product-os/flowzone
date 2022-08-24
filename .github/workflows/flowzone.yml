@@ -237,7 +237,6 @@ jobs:
           else
             echo ::set-output name=enabled::"false"
           fi
-          
 
       - name: Check for docker-compose.test.yml
         id: docker
@@ -264,7 +263,18 @@ jobs:
     name: Protect branch
     runs-on: ubuntu-latest
     # depend on all the jobs but allow them to be skipped
-    needs: [context_check, source_check, versioned_source, docker_matrix, docker_publish, npm_matrix, npm_publish, balena_matrix, balena_all]
+    needs:
+      [
+        context_check,
+        source_check,
+        versioned_source,
+        docker_matrix,
+        docker_publish,
+        npm_matrix,
+        npm_publish,
+        balena_matrix,
+        balena_all,
+      ]
     if: |
       !failure() && !cancelled() && inputs.protect_branch == true && github.event_name == 'pull_request'
 
@@ -345,7 +355,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.FLOWZONE_TOKEN }}
-        
+
       - name: Import GPG key for signing commits
         id: import-gpg
         if: inputs.skip_versioning == false
