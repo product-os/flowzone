@@ -342,6 +342,7 @@ jobs:
         id: versionist
         if: inputs.skip_versioning == false
         run: |
+          test -f repo.yml || echo 'type: node' > repo.yml
           npm install -g balena-versionist versionist
           balena-versionist
           git status
