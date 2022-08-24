@@ -18,8 +18,8 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`GPG_PASSPHRASE`](#gpg_passphrase)
     - [`NPM_TOKEN`](#npm_token)
     - [`GHCR_TOKEN`](#ghcr_token)
-    - [`DOCKER_REGISTRY_USER`](#docker_registry_user)
-    - [`DOCKER_REGISTRY_PASS`](#docker_registry_pass)
+    - [`DOCKERHUB_USER`](#dockerhub_user)
+    - [`DOCKERHUB_TOKEN`](#dockerhub_token)
     - [`BALENA_API_KEY`](#balena_api_key)
     - [`COMPOSE_VARS`](#compose_vars)
   - [Inputs](#inputs)
@@ -76,8 +76,8 @@ jobs:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      DOCKER_REGISTRY_USER: ${{ secrets.DOCKER_REGISTRY_USER }}
-      DOCKER_REGISTRY_PASS: ${{ secrets.DOCKER_REGISTRY_PASS }}
+      DOCKERHUB_USER: ${{ secrets.DOCKER_REGISTRY_USER }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKER_REGISTRY_PASS }}
       BALENA_API_KEY: ${{ secrets.BALENA_API_KEY }}
 ```
 
@@ -180,13 +180,13 @@ A personal access token to publish to the GitHub Container Registry, will use [`
 
 Required for [Docker](#docker) projects.
 
-#### `DOCKER_REGISTRY_USER`
+#### `DOCKERHUB_USER`
 
 Username to publish to the Docker Hub container registry.
 
 Required for [Docker](#docker) projects.
 
-#### `DOCKER_REGISTRY_PASS`
+#### `DOCKERHUB_TOKEN`
 
 A [personal access token](https://docs.docker.com/docker-hub/access-tokens/) to publish to the Docker Hub container registry.
 
