@@ -46,12 +46,12 @@ on:
         required: false
         default: ${{ github.repository }}
       docker_platforms:
-        description: "Newline separated list of Docker target platforms"
+        description: "Comma-delimited string of Docker target platforms"
         type: string
         required: false
         default: |
-          linux/amd64
-          linux/arm64
+          linux/amd64,
+          linux/arm64,
           linux/arm/v7
       docker_context:
         description: "Docker build context directory"
@@ -66,20 +66,20 @@ on:
         type: string
         required: false
       balena_slugs:
-        description: "Newline separated list of balenaCloud apps, fleets, or blocks to deploy"
+        description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy"
         type: string
         required: false
         default: |
-          ${{ github.repository }}-amd64
-          ${{ github.repository }}-aarch64
+          ${{ github.repository }}-amd64,
+          ${{ github.repository }}-aarch64,
           ${{ github.repository }}-armv7hf
       node_versions:
-        description: "Newline separated list of Node.js versions to test"
+        description: "Comma-delimited string of Node.js versions to test"
         type: string
         required: false
         default: |
-          14.x
-          16.x
+          14.x,
+          16.x,
           18.x
       npm_registry:
         description: "Registry for publishing npm projects, skipped if empty"
@@ -147,26 +147,32 @@ jobs:
       #   run: |
       #     echo '${{ toJSON(github) }}'
 
-      - name: Convert to a JSON array
+      - name: Convert input to a JSON array
         id: balena_slugs
         uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.balena_slugs }}
         with:
-          str: ${{ inputs.balena_slugs }}
-          separator: "newline"
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
 
-      - name: Convert to a JSON array
+      - name: Convert input to a JSON array
         id: docker_platforms
         uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.docker_platforms }}
         with:
-          str: ${{ inputs.docker_platforms }}
-          separator: "newline"
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
 
-      - name: Convert to a JSON array
+      - name: Convert input to a JSON array
         id: node_versions
         uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.node_versions }}
         with:
-          str: ${{ inputs.node_versions }}
-          separator: "newline"
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
 
       - name: Add ghcr.io prefix
         if: inputs.ghcr_repo != ''
