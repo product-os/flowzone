@@ -43,6 +43,7 @@ on:
         description: "Docker Hub repository for Docker projects, skipped if empty"
         type: string
         required: false
+        default: ${{ github.repository }}
       ghcr_repo:
         description: "GitHub Container Registry repository for Docker projects, skipped if empty"
         type: string

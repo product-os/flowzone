@@ -222,6 +222,7 @@ Docker Hub repository for Docker projects, skipped if empty.
 
 ```yaml
 type: string
+default: ${{ github.repository }}
 ```
 
 #### `ghcr_repo`
