@@ -13,30 +13,30 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [Versionbot](#versionbot)
 - [Customization](#customization)
   - [Secrets](#secrets)
-    - [`FLOWZONE_TOKEN`](#-flowzone-token-)
-    - [`GPG_PRIVATE_KEY`](#-gpg-private-key-)
-    - [`GPG_PASSPHRASE`](#-gpg-passphrase-)
-    - [`NPM_TOKEN`](#-npm-token-)
-    - [`GHCR_TOKEN`](#-ghcr-token-)
-    - [`DOCKER_REGISTRY_USER`](#-docker-registry-user-)
-    - [`DOCKER_REGISTRY_PASS`](#-docker-registry-pass-)
-    - [`BALENA_API_KEY`](#-balena-api-key-)
-    - [`COMPOSE_VARS`](#-compose-vars-)
+    - [`FLOWZONE_TOKEN`](#flowzone_token)
+    - [`GPG_PRIVATE_KEY`](#gpg_private_key)
+    - [`GPG_PASSPHRASE`](#gpg_passphrase)
+    - [`NPM_TOKEN`](#npm_token)
+    - [`GHCR_TOKEN`](#ghcr_token)
+    - [`DOCKER_REGISTRY_USER`](#docker_registry_user)
+    - [`DOCKER_REGISTRY_PASS`](#docker_registry_pass)
+    - [`BALENA_API_KEY`](#balena_api_key)
+    - [`COMPOSE_VARS`](#compose_vars)
   - [Inputs](#inputs)
-    - [`working_directory`](#-working-directory-)
-    - [`dockerhub_repo`](#-dockerhub-repo-)
-    - [`ghcr_repo`](#-ghcr-repo-)
-    - [`docker_platforms`](#-docker-platforms-)
-    - [`docker_context`](#-docker-context-)
-    - [`docker_file`](#-docker-file-)
-    - [`docker_target`](#-docker-target-)
-    - [`balena_slugs`](#-balena-slugs-)
-    - [`node_versions`](#-node-versions-)
-    - [`npm_registry`](#-npm-registry-)
-    - [`skip_versioning`](#-skip-versioning-)
-    - [`protect_branch`](#-protect-branch-)
-    - [`required_approving_review_count`](#-required-approving-review-count-)
-    - [`required_status_checks`](#-required-status-checks-)
+    - [`working_directory`](#working_directory)
+    - [`dockerhub_repo`](#dockerhub_repo)
+    - [`ghcr_repo`](#ghcr_repo)
+    - [`docker_platforms`](#docker_platforms)
+    - [`docker_context`](#docker_context)
+    - [`docker_file`](#docker_file)
+    - [`docker_target`](#docker_target)
+    - [`balena_slugs`](#balena_slugs)
+    - [`node_versions`](#node_versions)
+    - [`npm_registry`](#npm_registry)
+    - [`skip_versioning`](#skip_versioning)
+    - [`protect_branch`](#protect_branch)
+    - [`required_approving_review_count`](#required_approving_review_count)
+    - [`required_status_checks`](#required_status_checks)
     - [`verbose`](#-verbose-)
 - [Maintenance](#maintenance)
   - [Generate GPG keys](#generate-gpg-keys)
@@ -111,11 +111,11 @@ Note that these project types are _not_ mutually exclusive, and your project may
 These tests will be run if a `package.json` file is found in the root of the repository. If a `package-lock.json` file is found in the root of the repository, dependencies will be install with `npm ci`, otherwise `npm i` will be used.
 If a build script is present in `package.json` it will be called before the tests are run. Testing is done by calling `npm test`.
 
-The [`node_versions`](#-node-versions-) will determine the Node.js versions used for testing.
+The [`node_versions`](#node_versions) will determine the Node.js versions used for testing.
 
 Artifacts are automatically published but if `private:` is set to `true` in `package.json` then the packages will be marked as restricted.
 
-To disable publishing of artifacts set [`npm_registry`](#-npm-registry-) to `""`.
+To disable publishing of artifacts set [`npm_registry`](#npm_registry) to `""`.
 
 ### Docker
 
@@ -124,18 +124,18 @@ If a `docker-compose.yml` _and_ a `docker-compose.test.yml` are found in the roo
 The compose script will merge the to yaml file together and wait on a container named `sut` to finish. The result of the test is determined by the exit code of the `sut` container.
 Typically, the `sut` container will execute your e2e or integration tests and will exit on test completion.
 
-If you need to provide environment variables to the compose environment you can add a repository secret called [`COMPOSE_VARS`](#-compose-vars-) that should be a base64 encoded `.env` file.
+If you need to provide environment variables to the compose environment you can add a repository secret called [`COMPOSE_VARS`](#compose_vars) that should be a base64 encoded `.env` file.
 This will be decoded and written to a `.env` file inside the test worker at runtime.
 
-To disable publishing of artifacts to Docker Hub set [`dockerhub_repo`](#-dockerhub-repo-) to `""`.
+To disable publishing of artifacts to Docker Hub set [`dockerhub_repo`](#dockerhub_repo) to `""`.
 
-To disable publishing of artifacts to GitHub Container Registry set [`ghcr_repo`](#-ghcr-repo-) to `""`.
+To disable publishing of artifacts to GitHub Container Registry set [`ghcr_repo`](#ghcr_repo) to `""`.
 
 ### balena
 
 If a `balena.yml` file is found in the root of the repository Flowzone will attempt to push draft releases to your application slug(s) and finalize on merge.
 
-To disable publishing of releases to balenaCloud set [`balena_slugs`](#-balena-slugs-) to `""`.
+To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
 
 ### Versionbot
 
@@ -160,13 +160,13 @@ Always required.
 
 GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits.
 
-Required if [versioning is enabled](#-skip-versioning-).
+Required if [versioning is enabled](#skip_versioning).
 
 #### `GPG_PASSPHRASE`
 
 Passphrase to decrypt GPG private key.
 
-Required if [versioning is enabled](#-skip-versioning-).
+Required if [versioning is enabled](#skip_versioning).
 
 #### `NPM_TOKEN`
 
@@ -176,7 +176,7 @@ Required for [npm](#npm) projects.
 
 #### `GHCR_TOKEN`
 
-A personal access token to publish to the GitHub Container Registry, will use [`FLOWZONE_TOKEN`](#-flowzone-token-) if unset.
+A personal access token to publish to the GitHub Container Registry, will use [`FLOWZONE_TOKEN`](#flowzone_token) if unset.
 
 Required for [Docker](#docker) projects.
 
@@ -247,7 +247,7 @@ default: |
 
 #### `docker_context`
 
-Docker build context directory relative to [`working_directory`](#-working-directory-).
+Docker build context directory relative to [`working_directory`](#working_directory).
 
 ```yaml
 type: string
