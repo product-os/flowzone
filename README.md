@@ -211,142 +211,121 @@ They can also be found at the top of [flowzone.yml](./.github/workflows/flowzone
 
 GitHub actions working directory.
 
-```yaml
-type: string
-default: "."
-```
+Type: _string_
+
+Default: `.`
 
 #### `dockerhub_repo`
 
 Docker Hub repository for Docker projects (skipped if empty).
 
-```yaml
-type: string
-default: ${{ github.repository }}
-```
+Type: _string_
+
+Default: `${{ github.repository }}`
 
 #### `ghcr_repo`
 
 GitHub Container Registry repository for Docker projects (skipped if empty).
 
-```yaml
-type: string
-default: ${{ github.repository }}
-```
+Type: _string_
+
+Default: `${{ github.repository }}`
 
 #### `balena_slugs`
 
 Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty).
 
-```yaml
-type: string
-default: ${{ github.repository }}
-```
+Type: _string_
+
+Default: `${{ github.repository }}`
 
 #### `npm_registry`
 
-Registry for publishing npm projects, skipped if empty.
+Registry for publishing npm projects (skipped if empty).
 
-```yaml
-type: string
-default: registry.npmjs.org
-```
+Type: _string_
+
+Default: `registry.npmjs.org`
 
 #### `docker_platforms`
 
 Comma-delimited string of Docker target platforms.
 
-```yaml
-type: string
-default: |
-  linux/amd64,
-  linux/arm64,
-  linux/arm/v7
-```
+Type: _string_
+
+Default: `linux/amd64,linux/arm64,linux/arm/v7`
 
 #### `docker_context`
 
 Docker build context directory relative to [`working_directory`](#working_directory).
 
-```yaml
-type: string
-```
+Type: _string_
+
+Default: `.`
 
 #### `docker_file`
 
 Path to the Dockerfile relative to the context.
 
-```yaml
-type: string
-```
+Type: _string_
+
+Default: `Dockerfile`
 
 #### `docker_target`
 
 Sets the target stage to build.
 
-```yaml
-type: string
-```
+Type: _string_
+
+Default: all stages
 
 #### `node_versions`
 
 Comma-delimited string of Node.js versions to test.
 
-```yaml
-type: string
-default: |
-  14.x,
-  16.x,
-  18.x
-```
+Type: _string_
+
+Default: `14.x,16.x,18.x`
 
 #### `skip_versioning`
 
 Set to `true` to skip adding a version commit on top of the original source.
 
-```yaml
-type: boolean
-default: false
-```
+Type: _boolean_
+
+Default: `false`
 
 #### `protect_branch`
 
 Set to false to disable updating branch protection rules after a successful run.
 
-```yaml
-type: boolean
-default: true
-```
+Type: _boolean_
+
+Default: `true`
 
 #### `required_approving_review_count`
 
 Setting this value to zero effectively means merge==deploy without approval(s).
 
-```yaml
-type: string
-default: "1"
-```
+Type: _string_
+
+Default: `1`
 
 #### `required_status_checks`
 
 Comma-delimited string of additional required status checks for branch protection.
 
-```yaml
-type: string
-default: |
-  "Flowzone / npm publish",
-  "Flowzone / docker publish",
-  "Flowzone / balena all"
-```
+Type: _string_
+
+Default: `"Flowzone / npm publish","Flowzone / docker publish","Flowzone / balena all"`
 
 #### `verbose`
 
 Enable shell command tracing.
 
-```yaml
-type: boolean
-default: false
-```
+Type: _boolean_
+
+Default: `false`
 
 ## Maintenance
 
