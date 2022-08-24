@@ -3,6 +3,7 @@
   "version": "0.13.4",
   "description": "Sample NPM package for testing the build process",
   "main": "index.js",
+  "private": true,
   "scripts": {
     "test": "jest"
   },
