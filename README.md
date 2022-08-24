@@ -20,7 +20,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`GHCR_TOKEN`](#-ghcr-token-)
     - [`DOCKER_REGISTRY_USER`](#-docker-registry-user-)
     - [`DOCKER_REGISTRY_PASS`](#-docker-registry-pass-)
-    - [`BALENA_API_KEY_PUSH`](#-balena-api-key-push-)
+    - [`BALENA_API_KEY`](#-balena-api-key-)
     - [`COMPOSE_VARS`](#-compose-vars-)
   - [Inputs](#inputs)
     - [`working_directory`](#-working-directory-)
@@ -78,7 +78,7 @@ jobs:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       DOCKER_REGISTRY_USER: ${{ secrets.DOCKER_REGISTRY_USER }}
       DOCKER_REGISTRY_PASS: ${{ secrets.DOCKER_REGISTRY_PASS }}
-      BALENA_API_KEY_PUSH: ${{ secrets.BALENA_API_KEY_PUSH }}
+      BALENA_API_KEY: ${{ secrets.BALENA_API_KEY }}
 ```
 
 Workflows that call reusable workflows in the same organization or enterprise can use the inherit keyword to implicitly pass the secrets.
@@ -192,7 +192,7 @@ A [personal access token](https://docs.docker.com/docker-hub/access-tokens/) to 
 
 Required for [Docker](#docker) projects.
 
-#### `BALENA_API_KEY_PUSH`
+#### `BALENA_API_KEY`
 
 [API key](https://www.balena.io/docs/learn/manage/account/#api-keys) for pushing releases to balena applications.
 

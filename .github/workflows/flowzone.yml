@@ -24,8 +24,11 @@ on:
       DOCKER_REGISTRY_PASS:
         description: "A personal access token to publish to the Docker Hub container registry"
         required: false
-      BALENA_API_KEY_PUSH:
+      BALENA_API_KEY:
         description: "API key for pushing releases to balena applications"
+        required: false
+      BALENA_API_KEY_PUSH:
+        description: "Deprecated, use BALENA_API_KEY instead"
         required: false
       COMPOSE_VARS:
         description: "Optional base64 encoded docker-compose `.env` file for testing Docker images"
@@ -802,7 +805,7 @@ jobs:
 
       - uses: balena-io/deploy-to-balena-action@v0.12.1
         with:
-          balena_token: ${{ secrets.BALENA_API_KEY_PUSH }}
+          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
           fleet: ${{ matrix.slug }}
           versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
