@@ -355,16 +355,13 @@ jobs:
             then
               echo "::set-output name=tag::v${VERSION}"
               echo "::set-output name=version::${VERSION}"
-            else
-              echo "::set-output name=tag::edge"
             fi
           else
             echo "This branch does not have a repo.yml file. Versioning will be skipped."
-            echo "::set-output name=tag::edge"
           fi
 
       - name: Create versioned commit
-        if: steps.versionist.outputs.version != ''
+        if: steps.versionist.outputs.tag != ''
         env:
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
@@ -378,7 +375,7 @@ jobs:
           git log -n 2
 
       - name: Push versioned commit
-        if: github.event.pull_request.merged == true && steps.versionist.outputs.version != ''
+        if: github.event.pull_request.merged == true && steps.versionist.outputs.tag != ''
         run: |
           git push origin HEAD:${{ github.base_ref }} --follow-tags
 
@@ -691,7 +688,6 @@ jobs:
             ${{ needs.context_check.outputs.ghcr_repo }}
             ${{ needs.context_check.outputs.dockerhub_repo }}
           tags: |
-            type=raw,value=${{ needs.versioned_source.outputs.tag }}
             type=raw,value=${{ needs.versioned_source.outputs.version }}
           flavor: |
             latest=true
