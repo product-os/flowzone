@@ -18,21 +18,21 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`GPG_PASSPHRASE`](#gpg_passphrase)
     - [`NPM_TOKEN`](#npm_token)
     - [`GHCR_TOKEN`](#ghcr_token)
-    - [`DOCKER_REGISTRY_USER`](#docker_registry_user)
-    - [`DOCKER_REGISTRY_PASS`](#docker_registry_pass)
+    - [`DOCKERHUB_USER`](#dockerhub_user)
+    - [`DOCKERHUB_TOKEN`](#dockerhub_token)
     - [`BALENA_API_KEY`](#balena_api_key)
     - [`COMPOSE_VARS`](#compose_vars)
   - [Inputs](#inputs)
     - [`working_directory`](#working_directory)
     - [`dockerhub_repo`](#dockerhub_repo)
     - [`ghcr_repo`](#ghcr_repo)
+    - [`balena_slugs`](#balena_slugs)
+    - [`npm_registry`](#npm_registry)
     - [`docker_platforms`](#docker_platforms)
     - [`docker_context`](#docker_context)
     - [`docker_file`](#docker_file)
     - [`docker_target`](#docker_target)
-    - [`balena_slugs`](#balena_slugs)
     - [`node_versions`](#node_versions)
-    - [`npm_registry`](#npm_registry)
     - [`skip_versioning`](#skip_versioning)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
@@ -76,8 +76,8 @@ jobs:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      DOCKER_REGISTRY_USER: ${{ secrets.DOCKER_REGISTRY_USER }}
-      DOCKER_REGISTRY_PASS: ${{ secrets.DOCKER_REGISTRY_PASS }}
+      DOCKERHUB_USER: ${{ secrets.DOCKER_REGISTRY_USER }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKER_REGISTRY_PASS }}
       BALENA_API_KEY: ${{ secrets.BALENA_API_KEY }}
 ```
 
@@ -113,9 +113,7 @@ If a build script is present in `package.json` it will be called before the test
 
 The [`node_versions`](#node_versions) will determine the Node.js versions used for testing.
 
-Artifacts are automatically published but if `private:` is set to `true` in `package.json` then the packages will be marked as restricted.
-
-To disable publishing of artifacts set [`npm_registry`](#npm_registry) to `""`.
+To disable publishing of artifacts set [`npm_registry`](#npm_registry) to `""` or set `"private": true` in `package.json`.
 
 ### Docker
 
@@ -180,13 +178,13 @@ A personal access token to publish to the GitHub Container Registry, will use [`
 
 Required for [Docker](#docker) projects.
 
-#### `DOCKER_REGISTRY_USER`
+#### `DOCKERHUB_USER`
 
 Username to publish to the Docker Hub container registry.
 
 Required for [Docker](#docker) projects.
 
-#### `DOCKER_REGISTRY_PASS`
+#### `DOCKERHUB_TOKEN`
 
 A [personal access token](https://docs.docker.com/docker-hub/access-tokens/) to publish to the Docker Hub container registry.
 
@@ -211,144 +209,121 @@ They can also be found at the top of [flowzone.yml](./.github/workflows/flowzone
 
 GitHub actions working directory.
 
-```yaml
-type: string
-default: "."
-```
+Type: _string_
+
+Default: `.`
 
 #### `dockerhub_repo`
 
-Docker Hub repository for Docker projects, skipped if empty.
+Docker Hub repository for Docker projects (skipped if empty).
 
-```yaml
-type: string
-```
+Type: _string_
+
+Default: `${{ github.repository }}`
 
 #### `ghcr_repo`
 
-GitHub Container Registry repository for Docker projects, skipped if empty.
+GitHub Container Registry repository for Docker projects (skipped if empty).
 
-```yaml
-type: string
-default: ${{ github.repository }}
-```
+Type: _string_
+
+Default: `${{ github.repository }}`
+
+#### `balena_slugs`
+
+Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty).
+
+Type: _string_
+
+Default: `${{ github.repository }}`
+
+#### `npm_registry`
+
+Registry for publishing npm projects (skipped if empty).
+
+Type: _string_
+
+Default: `registry.npmjs.org`
 
 #### `docker_platforms`
 
 Comma-delimited string of Docker target platforms.
 
-```yaml
-type: string
-default: |
-  linux/amd64,
-  linux/arm64,
-  linux/arm/v7
-```
+Type: _string_
+
+Default: `linux/amd64,linux/arm64,linux/arm/v7`
 
 #### `docker_context`
 
 Docker build context directory relative to [`working_directory`](#working_directory).
 
-```yaml
-type: string
-```
+Type: _string_
+
+Default: `.`
 
 #### `docker_file`
 
 Path to the Dockerfile relative to the context.
 
-```yaml
-type: string
-```
+Type: _string_
+
+Default: `Dockerfile`
 
 #### `docker_target`
 
 Sets the target stage to build.
 
-```yaml
-type: string
-```
+Type: _string_
 
-#### `balena_slugs`
-
-Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy.
-
-```yaml
-type: string
-default: |
-  ${{ github.repository }}-amd64,
-  ${{ github.repository }}-aarch64,
-  ${{ github.repository }}-armv7hf
-```
+Default: all stages
 
 #### `node_versions`
 
 Comma-delimited string of Node.js versions to test.
 
-```yaml
-type: string
-default: |
-  14.x,
-  16.x,
-  18.x
-```
+Type: _string_
 
-#### `npm_registry`
-
-Registry for publishing npm projects, skipped if empty.
-
-```yaml
-type: string
-default: registry.npmjs.org
-```
+Default: `14.x,16.x,18.x`
 
 #### `skip_versioning`
 
 Set to `true` to skip adding a version commit on top of the original source.
 
-```yaml
-type: boolean
-default: false
-```
+Type: _boolean_
+
+Default: `false`
 
 #### `protect_branch`
 
 Set to false to disable updating branch protection rules after a successful run.
 
-```yaml
-type: boolean
-default: true
-```
+Type: _boolean_
+
+Default: `true`
 
 #### `required_approving_review_count`
 
 Setting this value to zero effectively means merge==deploy without approval(s).
 
-```yaml
-type: string
-default: "1"
-```
+Type: _string_
+
+Default: `1`
 
 #### `required_status_checks`
 
 Comma-delimited string of additional required status checks for branch protection.
 
-```yaml
-type: string
-default: |
-  "Flowzone / npm publish",
-  "Flowzone / docker publish",
-  "Flowzone / balena all"
-```
+Type: _string_
+
+Default: `"Flowzone / npm publish","Flowzone / docker publish","Flowzone / balena all"`
 
 #### `verbose`
 
 Enable shell command tracing.
 
-```yaml
-type: boolean
-default: false
-```
+Type: _boolean_
+
+Default: `false`
 
 ## Maintenance
 

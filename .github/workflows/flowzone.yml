@@ -18,11 +18,17 @@ on:
       GHCR_TOKEN:
         description: "A personal access token to publish to the GitHub Container Registry, will use FLOWZONE_TOKEN if unset"
         required: false
-      DOCKER_REGISTRY_USER:
+      DOCKERHUB_USER:
         description: "Username to publish to the Docker Hub container registry"
         required: false
-      DOCKER_REGISTRY_PASS:
+      DOCKER_REGISTRY_USER:
+        description: "Deprecated, use DOCKERHUB_USER instead"
+        required: false
+      DOCKERHUB_TOKEN:
         description: "A personal access token to publish to the Docker Hub container registry"
+        required: false
+      DOCKER_REGISTRY_PASS:
+        description: "Deprecated, use DOCKERHUB_TOKEN instead"
         required: false
       BALENA_API_KEY:
         description: "API key for pushing releases to balena applications"
@@ -40,14 +46,25 @@ on:
         required: false
         default: "."
       dockerhub_repo:
-        description: "Docker Hub repository for Docker projects, skipped if empty"
-        type: string
-        required: false
-      ghcr_repo:
-        description: "GitHub Container Registry repository for Docker projects, skipped if empty"
+        description: "Docker Hub repository for Docker projects (skipped if empty)"
         type: string
         required: false
         default: ${{ github.repository }}
+      ghcr_repo:
+        description: "GitHub Container Registry repository for Docker projects (skipped if empty)"
+        type: string
+        required: false
+        default: ${{ github.repository }}
+      balena_slugs:
+        description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty)"
+        type: string
+        required: false
+        default: ${{ github.repository }}
+      npm_registry:
+        description: "Registry for publishing npm projects (skipped if empty)"
+        type: string
+        required: false
+        default: registry.npmjs.org
       docker_platforms:
         description: "Comma-delimited string of Docker target platforms"
         type: string
@@ -68,14 +85,6 @@ on:
         description: "Sets the target stage to build"
         type: string
         required: false
-      balena_slugs:
-        description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy"
-        type: string
-        required: false
-        default: |
-          ${{ github.repository }}-amd64,
-          ${{ github.repository }}-aarch64,
-          ${{ github.repository }}-armv7hf
       node_versions:
         description: "Comma-delimited string of Node.js versions to test"
         type: string
@@ -84,11 +93,6 @@ on:
           14.x,
           16.x,
           18.x
-      npm_registry:
-        description: "Registry for publishing npm projects, skipped if empty"
-        type: string
-        required: false
-        default: registry.npmjs.org
       skip_versioning:
         description: "Set to true to skip adding a version commit on top of the original source"
         type: boolean
@@ -207,7 +211,7 @@ jobs:
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
-      npm_access: ${{ steps.npm.outputs.access }}
+      npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
 
@@ -224,16 +228,10 @@ jobs:
           then
             echo "found package.json"
             echo "::set-output name=enabled::true"
-            if [[ "$(jq -r '.private' package.json)" =~ true ]]
-            then
-              echo "::set-output name=access::restricted"
-            else
-              echo "::set-output name=access::public"
-            fi
+            echo "::set-output name=private::$(jq -r '.private' package.json)"
           else
             echo ::set-output name=enabled::"false"
           fi
-          
 
       - name: Check for docker-compose.test.yml
         id: docker
@@ -260,7 +258,18 @@ jobs:
     name: Protect branch
     runs-on: ubuntu-latest
     # depend on all the jobs but allow them to be skipped
-    needs: [context_check, source_check, versioned_source, docker_matrix, docker_publish, npm_matrix, npm_publish, balena_matrix, balena_all]
+    needs:
+      [
+        context_check,
+        source_check,
+        versioned_source,
+        docker_matrix,
+        docker_publish,
+        npm_matrix,
+        npm_publish,
+        balena_matrix,
+        balena_all,
+      ]
     if: |
       !failure() && !cancelled() && inputs.protect_branch == true && github.event_name == 'pull_request'
 
@@ -341,7 +350,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.FLOWZONE_TOKEN }}
-        
+
       - name: Import GPG key for signing commits
         id: import-gpg
         if: inputs.skip_versioning == false
@@ -353,8 +362,8 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
-      # call balena-versionist with a default repo type for now
-      # (TODO: call versionist directly with sane configuration defaults)
+      # create a repo.yml if not present as we need the custom changelog formatting
+      # install and run versionist and balena-versionist
       # set the version output only if it could be extracted from the changelog
       # set the new_tag output only if versionist modified some files (version has changed)
       # this allows PRs with no change type to proceed with draft releases
@@ -362,7 +371,13 @@ jobs:
         id: versionist
         if: inputs.skip_versioning == false
         run: |
-          test -f repo.yml || echo 'type: generic' > repo.yml
+          if test -f package.json
+          then
+            test -f repo.yml || echo 'type: node' > repo.yml
+          else
+            test -f repo.yml || echo 'type: generic' > repo.yml
+          fi
+
           npm install -g balena-versionist versionist
           balena-versionist
 
@@ -467,7 +482,7 @@ jobs:
     needs: [context_check, source_check, versioned_source, npm_matrix]
     # allow publish to run even when matrix is skipped
     if: |
-      needs.source_check.outputs.npm == 'true' && inputs.npm_registry != '' &&
+      needs.source_check.outputs.npm == 'true' && inputs.npm_registry != '' && needs.source_check.outputs.npm_private != 'true' &&
       (github.event_name == 'pull_request' || github.event_name == 'push') &&
       !failure() && !cancelled() && needs.context_check.result == 'success' && needs.source_check.result == 'success' && needs.versioned_source.result == 'success'
 
@@ -510,13 +525,13 @@ jobs:
         if: github.event.pull_request.merged == false && github.event_name == 'pull_request'
         run: |
           npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ steps.meta.outputs.version_tag }}
-          npm --loglevel=verbose --logs-max=0 publish --access=${{ needs.source_check.outputs.npm_access }} --tag=${{ steps.meta.outputs.sha_tag }}
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ steps.meta.outputs.sha_tag }}
           npm --loglevel=verbose --logs-max=0 dist-tag add ${{ steps.meta.outputs.package }}@${{ steps.meta.outputs.version_tag }} ${{ steps.meta.outputs.branch_tag }}
 
       - name: Publish final release
         if: github.event.pull_request.merged == true || github.event_name == 'push'
         run: |
-          npm --loglevel=verbose --logs-max=0 publish --access=${{ needs.source_check.outputs.npm_access }} --tag "latest"
+          npm --loglevel=verbose --logs-max=0 publish --tag "latest"
 
   ###################################################
   ## docker
@@ -566,8 +581,8 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: docker.io
-          username: ${{ secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
       - name: Download versioned source
         uses: actions/download-artifact@v3
@@ -681,8 +696,8 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: docker.io
-          username: ${{ secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
       - name: Generate draft labels and tags
         id: draft_meta
@@ -803,7 +818,7 @@ jobs:
         working-directory: .
         run: tar -xvf versioned-source.tar
 
-      - uses: balena-io/deploy-to-balena-action@v0.12.1
+      - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
           fleet: ${{ matrix.slug }}
