@@ -6,6 +6,12 @@ on:
       FLOWZONE_TOKEN:
         description: "Personal access token (PAT) for the GitHub service account with admin/owner permissions"
         required: true
+      GPG_PRIVATE_KEY:
+        description: "GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits"
+        required: false
+      GPG_PASSPHRASE:
+        description: "Passphrase to decrypt GPG private key"
+        required: false
       NPM_TOKEN:
         description: "The npm auth token to use for publishing"
         required: false
@@ -24,12 +30,6 @@ on:
       COMPOSE_VARS:
         description: "Optional base64 encoded docker-compose `.env` file for testing Docker images"
         required: false
-      GPG_PRIVATE_KEY:
-        description: "GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits"
-        required: true
-      GPG_PASSPHRASE:
-        description: "Passphrase to decrypt GPG private key"
-        required: true
     inputs:
       working_directory:
         description: "GitHub actions working directory"
@@ -87,7 +87,7 @@ on:
         required: false
         default: registry.npmjs.org
       skip_versioning:
-        description: "Set to true to skip adding a version commit on top of the original source "
+        description: "Set to true to skip adding a version commit on top of the original source"
         type: boolean
         required: false
         default: false
