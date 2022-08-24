@@ -211,7 +211,7 @@ jobs:
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
-      npm_access: ${{ steps.npm.outputs.access }}
+      npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
 
@@ -228,12 +228,7 @@ jobs:
           then
             echo "found package.json"
             echo "::set-output name=enabled::true"
-            if [[ "$(jq -r '.private' package.json)" =~ true ]]
-            then
-              echo "::set-output name=access::restricted"
-            else
-              echo "::set-output name=access::public"
-            fi
+            echo "::set-output name=private::$(jq -r '.private' package.json)"
           else
             echo ::set-output name=enabled::"false"
           fi
@@ -487,7 +482,7 @@ jobs:
     needs: [context_check, source_check, versioned_source, npm_matrix]
     # allow publish to run even when matrix is skipped
     if: |
-      needs.source_check.outputs.npm == 'true' && inputs.npm_registry != '' &&
+      needs.source_check.outputs.npm == 'true' && inputs.npm_registry != '' && needs.source_check.outputs.npm_private != 'true' &&
       (github.event_name == 'pull_request' || github.event_name == 'push') &&
       !failure() && !cancelled() && needs.context_check.result == 'success' && needs.source_check.result == 'success' && needs.versioned_source.result == 'success'
 
@@ -530,13 +525,13 @@ jobs:
         if: github.event.pull_request.merged == false && github.event_name == 'pull_request'
         run: |
           npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ steps.meta.outputs.version_tag }}
-          npm --loglevel=verbose --logs-max=0 publish --access=${{ needs.source_check.outputs.npm_access }} --tag=${{ steps.meta.outputs.sha_tag }}
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ steps.meta.outputs.sha_tag }}
           npm --loglevel=verbose --logs-max=0 dist-tag add ${{ steps.meta.outputs.package }}@${{ steps.meta.outputs.version_tag }} ${{ steps.meta.outputs.branch_tag }}
 
       - name: Publish final release
         if: github.event.pull_request.merged == true || github.event_name == 'push'
         run: |
-          npm --loglevel=verbose --logs-max=0 publish --access=${{ needs.source_check.outputs.npm_access }} --tag "latest"
+          npm --loglevel=verbose --logs-max=0 publish --tag "latest"
 
   ###################################################
   ## docker

@@ -113,9 +113,7 @@ If a build script is present in `package.json` it will be called before the test
 
 The [`node_versions`](#node_versions) will determine the Node.js versions used for testing.
 
-Artifacts are automatically published but if `private:` is set to `true` in `package.json` then the packages will be marked as restricted.
-
-To disable publishing of artifacts set [`npm_registry`](#npm_registry) to `""`.
+To disable publishing of artifacts set [`npm_registry`](#npm_registry) to `""` or set `"private": true` in `package.json`.
 
 ### Docker
 
