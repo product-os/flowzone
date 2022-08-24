@@ -357,12 +357,15 @@ jobs:
           test -f repo.yml || echo 'type: node' > repo.yml
           npm install -g balena-versionist versionist
           balena-versionist
-          git status
-          version="$(grep '^## ' CHANGELOG.md | head -n1 | awk '{print $2}')"
-          if [ -n "${version}" ]
+          git status --porcelain
+          if [ -n "$(git status --porcelain)" ]
           then
-            echo "::set-output name=tag::v${version}"
-            echo "::set-output name=version::${version}"
+            version="$(grep '^## ' CHANGELOG.md | head -n1 | awk '{print $2}')"
+            if [ -n "${version}" ]
+            then
+              echo "::set-output name=tag::v${version}"
+              echo "::set-output name=version::${version}"
+            fi
           fi
 
       - name: Create versioned commit
