@@ -40,15 +40,25 @@ on:
         required: false
         default: "."
       dockerhub_repo:
-        description: "Docker Hub repository for Docker projects, skipped if empty"
+        description: "Docker Hub repository for Docker projects (skipped if empty)"
         type: string
         required: false
         default: ${{ github.repository }}
       ghcr_repo:
-        description: "GitHub Container Registry repository for Docker projects, skipped if empty"
+        description: "GitHub Container Registry repository for Docker projects (skipped if empty)"
         type: string
         required: false
         default: ${{ github.repository }}
+      balena_slugs:
+        description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty)"
+        type: string
+        required: false
+        default: ${{ github.repository }}
+      npm_registry:
+        description: "Registry for publishing npm projects (skipped if empty)"
+        type: string
+        required: false
+        default: registry.npmjs.org
       docker_platforms:
         description: "Comma-delimited string of Docker target platforms"
         type: string
@@ -69,14 +79,6 @@ on:
         description: "Sets the target stage to build"
         type: string
         required: false
-      balena_slugs:
-        description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy"
-        type: string
-        required: false
-        default: |
-          ${{ github.repository }}-amd64,
-          ${{ github.repository }}-aarch64,
-          ${{ github.repository }}-armv7hf
       node_versions:
         description: "Comma-delimited string of Node.js versions to test"
         type: string
@@ -85,11 +87,6 @@ on:
           14.x,
           16.x,
           18.x
-      npm_registry:
-        description: "Registry for publishing npm projects, skipped if empty"
-        type: string
-        required: false
-        default: registry.npmjs.org
       skip_versioning:
         description: "Set to true to skip adding a version commit on top of the original source"
         type: boolean

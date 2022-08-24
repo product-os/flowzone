@@ -17,7 +17,4 @@ jobs:
       required_approving_review_count: 0
       verbose: true
       dockerhub_repo: ""
-      balena_slugs: |
-        product_os/flowzone-aarch64,
-        product_os/flowzone-amd64,
-        product_os/flowzone-armv7hf
+      balena_slugs: product_os/flowzone

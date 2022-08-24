@@ -26,13 +26,13 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`working_directory`](#working_directory)
     - [`dockerhub_repo`](#dockerhub_repo)
     - [`ghcr_repo`](#ghcr_repo)
+    - [`balena_slugs`](#balena_slugs)
+    - [`npm_registry`](#npm_registry)
     - [`docker_platforms`](#docker_platforms)
     - [`docker_context`](#docker_context)
     - [`docker_file`](#docker_file)
     - [`docker_target`](#docker_target)
-    - [`balena_slugs`](#balena_slugs)
     - [`node_versions`](#node_versions)
-    - [`npm_registry`](#npm_registry)
     - [`skip_versioning`](#skip_versioning)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
@@ -218,7 +218,7 @@ default: "."
 
 #### `dockerhub_repo`
 
-Docker Hub repository for Docker projects, skipped if empty.
+Docker Hub repository for Docker projects (skipped if empty).
 
 ```yaml
 type: string
@@ -227,11 +227,29 @@ default: ${{ github.repository }}
 
 #### `ghcr_repo`
 
-GitHub Container Registry repository for Docker projects, skipped if empty.
+GitHub Container Registry repository for Docker projects (skipped if empty).
 
 ```yaml
 type: string
 default: ${{ github.repository }}
+```
+
+#### `balena_slugs`
+
+Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty).
+
+```yaml
+type: string
+default: ${{ github.repository }}
+```
+
+#### `npm_registry`
+
+Registry for publishing npm projects, skipped if empty.
+
+```yaml
+type: string
+default: registry.npmjs.org
 ```
 
 #### `docker_platforms`
@@ -270,18 +288,6 @@ Sets the target stage to build.
 type: string
 ```
 
-#### `balena_slugs`
-
-Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy.
-
-```yaml
-type: string
-default: |
-  ${{ github.repository }}-amd64,
-  ${{ github.repository }}-aarch64,
-  ${{ github.repository }}-armv7hf
-```
-
 #### `node_versions`
 
 Comma-delimited string of Node.js versions to test.
@@ -292,15 +298,6 @@ default: |
   14.x,
   16.x,
   18.x
-```
-
-#### `npm_registry`
-
-Registry for publishing npm projects, skipped if empty.
-
-```yaml
-type: string
-default: registry.npmjs.org
 ```
 
 #### `skip_versioning`
