@@ -357,8 +357,8 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
-      # call balena-versionist with a default repo type for now
-      # (TODO: call versionist directly with sane configuration defaults)
+      # create a repo.yml if not present as we need the custom changelog formatting
+      # install and run versionist and balena-versionist
       # set the version output only if it could be extracted from the changelog
       # set the new_tag output only if versionist modified some files (version has changed)
       # this allows PRs with no change type to proceed with draft releases
@@ -366,7 +366,13 @@ jobs:
         id: versionist
         if: inputs.skip_versioning == false
         run: |
-          test -f repo.yml || echo 'type: generic' > repo.yml
+          if test -f package.json
+          then
+            test -f repo.yml || echo 'type: node' > repo.yml
+          else
+            test -f repo.yml || echo 'type: generic' > repo.yml
+          fi
+
           npm install -g balena-versionist versionist
           balena-versionist
 
