@@ -353,35 +353,27 @@ jobs:
           git_commit_gpgsign: true
 
       # install and run versionist and balena-versionist
-      # set the version output only if it could be extracted from the changelog
-      # set the new_tag output only if versionist modified some files (version has changed)
-      # this allows PRs with no change type to proceed with draft releases
+      # extract the latest version from the changelog
       - name: Run versionist
         id: versionist
         if: inputs.skip_versioning == false
         run: |
-          if test -f package.json
-          then
-            test -f repo.yml || echo 'type: node' > repo.yml
-          else
-            test -f repo.yml || echo 'type: generic' > repo.yml
-          fi
-
           npm install -g balena-versionist versionist
           balena-versionist
 
-          version="$(grep -E '^# v|^## ' CHANGELOG.md | head -n1 | awk '{print $2}' | tr -d 'v')"
+          git status --porcelain
+          version="$(grep -E '^# v[0-9]+\.[0-9]+\.[0-9]+|^## [0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | head -n1 | awk '{print $2}' | tr -d 'v')"
 
-          if [ -n "${version}" ]
-          then
-            echo "::set-output name=version::${version}"
+          test -n "${version}" || { echo "Failed to parse version from changelog!" ; exit 1 ; }
 
-            git status --porcelain
-            if [ -n "$(git status --porcelain)" ]
-            then
-              echo "::set-output name=new_tag::v${version}"
-            fi
-          fi
+          echo "::set-output name=version::${version}"
+          echo "::set-output name=new_tag::v${version}"
+
+      # exit if versionist didn't change anything or the changelog could not be parsed
+      - name: Assert versionist results
+        if: inputs.skip_versioning == false && github.event.pull_request.merged != true
+        run: |
+          test -n "$(git status --porcelain)" || { echo "Failed to version any files, did you include a Change-type?" ; exit 1 ; }
 
       # create a versioned commit only if the the version has changed
       - name: Create versioned commit
@@ -752,7 +744,7 @@ jobs:
         if: steps.manifest.outcome == 'skipped'
         env:
           IMAGES: ${{ needs.context_check.outputs.docker_images }}
-        run:
+        run: |
           for image in ${IMAGES}
           do
             docker pull ${image}:${{ github.event.pull_request.head.ref }} || continue
