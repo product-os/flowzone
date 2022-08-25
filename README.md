@@ -79,8 +79,8 @@ jobs:
       DOCKERHUB_USER: ${{ secrets.DOCKER_REGISTRY_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKER_REGISTRY_PASS }}
       BALENA_API_KEY: ${{ secrets.BALENA_API_KEY }}
-	with:
-	  protect_branch: false
+    with:
+      protect_branch: false
 ```
 
 Workflows that call reusable workflows in the same organization or enterprise can use the inherit keyword to implicitly pass the secrets.
