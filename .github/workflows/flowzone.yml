@@ -45,16 +45,11 @@ on:
         type: string
         required: false
         default: "."
-      dockerhub_repo:
-        description: "Docker Hub repository for Docker projects (skipped if empty)"
+      docker_images:
+        description: "Comma-delimited string of Docker images (without tags) to publish (skipped if empty)"
         type: string
         required: false
-        default: ${{ github.repository }}
-      ghcr_repo:
-        description: "GitHub Container Registry repository for Docker projects (skipped if empty)"
-        type: string
-        required: false
-        default: ${{ github.repository }}
+        default: ghcr.io/${{ github.repository }}
       balena_slugs:
         description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty)"
         type: string
@@ -145,8 +140,7 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       docker_platforms: ${{ steps.docker_platforms.outputs.build }}
       node_versions: ${{ steps.node_versions.outputs.build }}
-      ghcr_repo: ${{ steps.ghcr_repo.outputs.value }}
-      dockerhub_repo: ${{ steps.dockerhub_repo.outputs.value }}
+      docker_images: ${{ steps.docker_images.outputs.build }}
       shell: ${{ steps.shell.outputs.value || 'bash' }}
 
     steps:
@@ -181,17 +175,14 @@ jobs:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
 
-      - name: Add ghcr.io prefix
-        if: inputs.ghcr_repo != ''
-        id: ghcr_repo
-        run: |
-          echo "::set-output name=value::$(echo ghcr.io/${{ inputs.ghcr_repo }})"
-
-      - name: Add docker.io prefix
-        if: inputs.dockerhub_repo != ''
-        id: dockerhub_repo
-        run: |
-          echo "::set-output name=value::$(echo docker.io/${{ inputs.dockerhub_repo }})"
+      - name: Convert input to a JSON array
+        id: docker_images
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.docker_images }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
 
       - name: Enable shell tracing
         if: inputs.verbose == true
@@ -553,14 +544,6 @@ jobs:
 
     env:
       COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
-      LOCAL_IMAGE: localhost:5000/sut
-      LOCAL_TAG: localhost:5000/sut:latest
-
-    services:
-      registry:
-        image: registry:2.8.1
-        ports:
-          - 5000:5000
 
     strategy:
       fail-fast: false
@@ -568,22 +551,6 @@ jobs:
         platform: ${{ fromJSON(needs.context_check.outputs.docker_platforms) }}
 
     steps:
-      - name: Login to GitHub Container Registry
-        if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
-          password: ${{ env.GHCR_TOKEN }}
-
-      - name: Login to Docker Hub
-        if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
-        uses: docker/login-action@v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-
       - name: Download versioned source
         uses: actions/download-artifact@v3
         with:
@@ -611,16 +578,17 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
+          # even though this build is not published directly, extra image tags
+          # can be used in docker-compose.test.yml and for pulling cache
           images: |
-            ${{ needs.context_check.outputs.ghcr_repo }}
-            ${{ needs.context_check.outputs.dockerhub_repo }}
-            ${{ env.LOCAL_IMAGE }}
+            ${{ join(fromJSON(needs.context_check.outputs.docker_images), ' ') }}
+            ${{ github.repository }}
+            sut
           tags: |
-            type=ref,event=pr,suffix=-${{ steps.suffix.outputs.string }}
-            type=raw,value=${{ github.event.pull_request.head.ref }},suffix=-${{ steps.suffix.outputs.string }}
-            type=raw,value=${{ github.event.pull_request.head.sha }},suffix=-${{ steps.suffix.outputs.string }}
+            type=raw,value=${{ steps.suffix.outputs.string }}
+            type=raw,value=edge
           flavor: |
-            latest=false
+            latest=true
 
       - name: Build and load
         id: build
@@ -632,21 +600,14 @@ jobs:
           cache-from: |
             type=gha
             ${{ steps.meta.outputs.tags }}
-            ${{ needs.context_check.outputs.ghcr_repo || env.LOCAL_IMAGE }}:latest
-            ${{ needs.context_check.outputs.ghcr_repo || env.LOCAL_IMAGE }}:edge
-            ${{ needs.context_check.outputs.dockerhub_repo || env.LOCAL_IMAGE }}:latest
-            ${{ needs.context_check.outputs.dockerhub_repo || env.LOCAL_IMAGE }}:edge
           context: ${{ inputs.docker_context || inputs.working_directory }}
           file: ${{ inputs.docker_file }}
           target: ${{ inputs.docker_target }}
-          # extra tags for convenience, can be used in docker-compose.test.yml
           tags: |
             ${{ steps.meta.outputs.tags }}
-            ${{ github.repository }}:latest
-            sut:latest
-            ${{ env.LOCAL_TAG }}
           load: true
           push: false
+          # outputs: type=docker,dest=/tmp/docker.tar
 
       - name: Run docker-compose tests
         run: |
@@ -655,16 +616,16 @@ jobs:
           fi
           docker compose -f docker-compose.yml -f docker-compose.test.yml up --no-build --exit-code-from sut
 
-      - name: Push image to local registry
+      - name: Docker save to file
         run: |
-          docker push ${{ env.LOCAL_TAG }}
+          docker save ${{ github.repository }}:${{ steps.suffix.outputs.string }} > /tmp/docker.tar
 
-      - name: Push tags to public registries
-        uses: akhilerm/tag-push-action@v2.0.0
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
         with:
-          src: ${{ env.LOCAL_TAG }}
-          dst: |
-            ${{ steps.meta.outputs.tags }}
+          name: docker-${{ steps.suffix.outputs.string }}
+          path: /tmp/docker.tar
+          retention-days: 1
 
   docker_publish:
     name: docker publish
@@ -672,9 +633,7 @@ jobs:
     needs: [context_check, source_check, versioned_source, docker_matrix]
     # allow publish to run even when matrix is skipped
     if: |
-      needs.source_check.outputs.docker == 'true' &&
-      (needs.context_check.outputs.ghcr_repo != '' || needs.context_check.outputs.dockerhub_repo != '') &&
-      (github.event_name == 'pull_request' || github.event_name == 'push') &&
+      needs.source_check.outputs.docker == 'true' && inputs.docker_images != '' &&
       !failure() && !cancelled() && needs.context_check.result == 'success' && needs.source_check.result == 'success' && needs.versioned_source.result == 'success'
 
     defaults:
@@ -682,9 +641,18 @@ jobs:
         working-directory: .
         shell: ${{ needs.context_check.outputs.shell }}
 
+    env:
+      LOCAL_IMAGE: localhost:5000/${{ github.repository }}
+
+    services:
+      registry:
+        image: registry:2.8.1
+        ports:
+          - 5000:5000
+
     steps:
       - name: Login to GitHub Container Registry
-        if: ${{ needs.context_check.outputs.ghcr_repo != '' }}
+        continue-on-error: true
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -692,96 +660,94 @@ jobs:
           password: ${{ env.GHCR_TOKEN }}
 
       - name: Login to Docker Hub
-        if: ${{ needs.context_check.outputs.dockerhub_repo != '' }}
+        continue-on-error: true
         uses: docker/login-action@v2
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: /tmp
+
+      - name: Load images
+        run: |
+          for image in /tmp/docker-*/*.tar
+          do
+            ARCHVARIANT="$(dirname "${image}" | awk -F- '{print $NF}')"
+            docker load -i "${image}" | tee /dev/stderr | awk '{print $NF}' |
+              xargs -i docker tag {} "${{ env.LOCAL_IMAGE }}:${ARCHVARIANT}"
+            docker push "${{ env.LOCAL_IMAGE }}:${ARCHVARIANT}"
+          done
+
+      # see https://github.com/estesp/manifest-tool to understand template
+      - name: Create multi-arch manifest
+        run: |
+          docker run --rm --network=host mplatform/manifest-tool:alpine-v2.0.5 push from-args \
+            --platforms ${{ join(fromJSON(needs.context_check.outputs.docker_platforms)) }} \
+            --template ${{ env.LOCAL_IMAGE }}:ARCHVARIANT \
+            --target ${{ env.LOCAL_IMAGE }}:latest
+
+      # unmerged pull requests
       - name: Generate draft labels and tags
         id: draft_meta
         if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.context_check.outputs.ghcr_repo }}
-            ${{ needs.context_check.outputs.dockerhub_repo }}
+            ${{ join(fromJSON(needs.context_check.outputs.docker_images), ' ') }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.ref }}
             type=ref,event=pr
           flavor: |
             latest=false
 
-      # use the versioned tag when merging PRs with versioning
+      # merged pull requests
       - name: Generate versioned labels and tags
         id: versioned_meta
         if: inputs.skip_versioning == false && github.event.pull_request.merged == true
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.context_check.outputs.ghcr_repo }}
-            ${{ needs.context_check.outputs.dockerhub_repo }}
+            ${{ join(fromJSON(needs.context_check.outputs.docker_images), ' ') }}
           tags: |
             type=raw,value=${{ needs.versioned_source.outputs.version }}
           flavor: |
             latest=true
 
-      # use the 'edge' tag when merging PRs without versioning
+      # merged pull requests with versioning disabled
       - name: Generate edge labels and tags
         id: edge_meta
         if: inputs.skip_versioning == true && github.event.pull_request.merged == true
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.context_check.outputs.ghcr_repo }}
-            ${{ needs.context_check.outputs.dockerhub_repo }}
+            ${{ join(fromJSON(needs.context_check.outputs.docker_images), ' ') }}
           tags: |
             type=raw,value=edge
           flavor: |
             latest=false
 
-      # use the provided tag when tagging commits
+      # tag pushed to main branch
       - name: Generate provided labels and tags
         id: tagged_meta
         if: github.event_name == 'push'
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.context_check.outputs.ghcr_repo }}
-            ${{ needs.context_check.outputs.dockerhub_repo }}
+            ${{ join(fromJSON(needs.context_check.outputs.docker_images), ' ') }}
           tags: |
             type=ref,event=tag
             type=semver,pattern={{version}}
           flavor: |
             latest=auto
 
-      - name: Create multi-arch manifest
-        if: needs.context_check.outputs.ghcr_repo != '' && github.event_name == 'pull_request' && github.event.pull_request.merged == false
-        uses: pixelfederation/gh-action-manifest-tool@v0.1.0
-        with:
-          username: ${{ env.GHCR_USER }}
-          password: ${{ env.GHCR_TOKEN }}
-          platforms: ${{ join(fromJSON(needs.context_check.outputs.docker_platforms)) }}
-          template: ${{ needs.context_check.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
-          target: ${{ needs.context_check.outputs.ghcr_repo }}:${{ github.event.pull_request.head.sha }}
-          # see https://github.com/estesp/manifest-tool to understand template
-
-      - name: Create multi-arch manifest
-        if: needs.context_check.outputs.dockerhub_repo != '' && github.event_name == 'pull_request' && github.event.pull_request.merged == false
-        uses: pixelfederation/gh-action-manifest-tool@v0.1.0
-        with:
-          username: ${{ secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASS }}
-          platforms: ${{ join(fromJSON(needs.context_check.outputs.docker_platforms)) }}
-          template: ${{ needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}-ARCHVARIANT
-          target: ${{ needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
-          # see https://github.com/estesp/manifest-tool to understand template
-
       - name: Publish tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ needs.context_check.outputs.ghcr_repo || needs.context_check.outputs.dockerhub_repo }}:${{ github.event.pull_request.head.sha }}
+          src: ${{ env.LOCAL_IMAGE }}:latest
           dst: |
             ${{ steps.draft_meta.outputs.tags }}
             ${{ steps.versioned_meta.outputs.tags }}

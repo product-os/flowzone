@@ -15,6 +15,5 @@ jobs:
     with:
       working_directory: ./tests
       required_approving_review_count: 1
-      verbose: true
-      dockerhub_repo: ""
       balena_slugs: product_os/flowzone
+      verbose: true

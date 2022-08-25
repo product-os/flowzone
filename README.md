@@ -24,8 +24,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`COMPOSE_VARS`](#compose_vars)
   - [Inputs](#inputs)
     - [`working_directory`](#working_directory)
-    - [`dockerhub_repo`](#dockerhub_repo)
-    - [`ghcr_repo`](#ghcr_repo)
+    - [`docker_images`](#docker_images)
     - [`balena_slugs`](#balena_slugs)
     - [`npm_registry`](#npm_registry)
     - [`docker_platforms`](#docker_platforms)
@@ -127,9 +126,7 @@ Typically, the `sut` container will execute your e2e or integration tests and wi
 If you need to provide environment variables to the compose environment you can add a repository secret called [`COMPOSE_VARS`](#compose_vars) that should be a base64 encoded `.env` file.
 This will be decoded and written to a `.env` file inside the test worker at runtime.
 
-To disable publishing of artifacts to Docker Hub set [`dockerhub_repo`](#dockerhub_repo) to `""`.
-
-To disable publishing of artifacts to GitHub Container Registry set [`ghcr_repo`](#ghcr_repo) to `""`.
+To disable publishing of Docker artifacts set [`docker_images`](#docker_images) to `""`.
 
 ### balena
 
@@ -215,21 +212,13 @@ Type: _string_
 
 Default: `.`
 
-#### `dockerhub_repo`
+#### `docker_images`
 
-Docker Hub repository for Docker projects (skipped if empty).
-
-Type: _string_
-
-Default: `${{ github.repository }}`
-
-#### `ghcr_repo`
-
-GitHub Container Registry repository for Docker projects (skipped if empty).
+Comma-delimited string of Docker images (without tags) to publish (skipped if empty).
 
 Type: _string_
 
-Default: `${{ github.repository }}`
+Default: `ghcr.io/${{ github.repository }}`
 
 #### `balena_slugs`
 
