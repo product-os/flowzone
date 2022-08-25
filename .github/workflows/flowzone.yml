@@ -148,7 +148,7 @@ jobs:
       #   run: |
       #     echo '${{ toJSON(github) }}'
 
-      - name: Convert input to a JSON array
+      - name: Convert balena_slugs to a JSON array
         id: balena_slugs
         uses: kanga333/json-array-builder@v0.1.0
         env:
@@ -157,7 +157,7 @@ jobs:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
 
-      - name: Convert input to a JSON array
+      - name: Convert docker_platforms to a JSON array
         id: docker_platforms
         uses: kanga333/json-array-builder@v0.1.0
         env:
@@ -166,7 +166,7 @@ jobs:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
 
-      - name: Convert input to a JSON array
+      - name: Convert node_versions to a JSON array
         id: node_versions
         uses: kanga333/json-array-builder@v0.1.0
         env:
@@ -175,14 +175,13 @@ jobs:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
 
-      - name: Convert input to a JSON array
+      - name: Convert docker_images to a newline list
         id: docker_images
-        uses: kanga333/json-array-builder@v0.1.0
         env:
           INPUT: ${{ inputs.docker_images }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
+        run: |
+          string="${INPUT//','/'%0A'}"
+          echo "::set-output name=build::${string}"
 
       - name: Enable shell tracing
         if: inputs.verbose == true
@@ -581,7 +580,7 @@ jobs:
           # even though this build is not published directly, extra image tags
           # can be used in docker-compose.test.yml and for pulling cache
           images: |
-            ${{ join(fromJSON(needs.context_check.outputs.docker_images), ' ') }}
+            ${{ needs.context_check.outputs.docker_images }}
             ${{ github.repository }}
             sut
           tags: |
@@ -668,11 +667,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
       - name: Download all artifacts
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
         uses: actions/download-artifact@v3
         with:
           path: /tmp
 
       - name: Load images
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
         run: |
           for image in /tmp/docker-*/*.tar
           do
@@ -684,6 +685,8 @@ jobs:
 
       # see https://github.com/estesp/manifest-tool to understand template
       - name: Create multi-arch manifest
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
+        id: manifest
         run: |
           docker run --rm --network=host mplatform/manifest-tool:alpine-v2.0.5 push from-args \
             --platforms ${{ join(fromJSON(needs.context_check.outputs.docker_platforms)) }} \
@@ -693,11 +696,11 @@ jobs:
       # unmerged pull requests
       - name: Generate draft labels and tags
         id: draft_meta
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
         uses: docker/metadata-action@v4
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
         with:
           images: |
-            ${{ join(fromJSON(needs.context_check.outputs.docker_images), ' ') }}
+            ${{ needs.context_check.outputs.docker_images }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.ref }}
             type=ref,event=pr
@@ -711,7 +714,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ join(fromJSON(needs.context_check.outputs.docker_images), ' ') }}
+            ${{ needs.context_check.outputs.docker_images }}
           tags: |
             type=raw,value=${{ needs.versioned_source.outputs.version }}
           flavor: |
@@ -724,7 +727,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ join(fromJSON(needs.context_check.outputs.docker_images), ' ') }}
+            ${{ needs.context_check.outputs.docker_images }}
           tags: |
             type=raw,value=edge
           flavor: |
@@ -737,14 +740,31 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ join(fromJSON(needs.context_check.outputs.docker_images), ' ') }}
+            ${{ needs.context_check.outputs.docker_images }}
           tags: |
             type=ref,event=tag
             type=semver,pattern={{version}}
           flavor: |
             latest=auto
 
-      - name: Publish tags
+      # try to pull existing draft releases that we can republish as final
+      - name: Pull draft images
+        if: steps.manifest.outcome == 'skipped'
+        env:
+          IMAGES: ${{ needs.context_check.outputs.docker_images }}
+        run:
+          for image in ${IMAGES}
+          do
+            docker pull ${image}:${{ github.event.pull_request.head.ref }} || continue
+            docker tag ${image}:${{ github.event.pull_request.head.ref }} ${{ env.LOCAL_IMAGE }}:latest
+            docker push ${{ env.LOCAL_IMAGE }}:latest
+            success=1
+            break
+          done
+          test -n "${success}"
+
+      # only one of the destination lines should have values based on the meta restrictions above
+      - name: Publish final tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
           src: ${{ env.LOCAL_IMAGE }}:latest

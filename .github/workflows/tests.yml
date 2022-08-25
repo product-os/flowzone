@@ -15,5 +15,6 @@ jobs:
     with:
       working_directory: ./tests
       required_approving_review_count: 1
+      docker_images: ghcr.io/product-os/flowzone,ghcr.io/product-os/flowzone
       balena_slugs: product_os/flowzone
       verbose: true
