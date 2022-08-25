@@ -261,7 +261,7 @@ jobs:
         balena_all,
       ]
     if: |
-      !failure() && !cancelled() && inputs.protect_branch == true && github.event_name == 'pull_request'
+      always() && inputs.protect_branch == true && github.event_name == 'pull_request'
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
@@ -272,6 +272,21 @@ jobs:
         shell: ${{ needs.context_check.outputs.shell }}
 
     steps:
+      # reuse this snippet!
+      # it loops over all needed jobs and fails this job if any of them failed
+      # it requires that always() be one of the conditions of this job to avoid being skipped
+      # that way we can add a branch rule on this job and avoid having it be marked as skipped
+      # when other jobs fail
+      - name: Check overall result
+        run: |
+          for result in $(echo '${{ toJSON(needs.*.result) }}' | jq -cr '.[]')
+          do
+            test "${result}" = "success" && continue
+            test "${result}" = "skipped" && continue
+            echo "Exiting with overall result ${result}"
+            exit 1
+          done
+
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
         run: |
