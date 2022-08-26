@@ -397,8 +397,8 @@ jobs:
   ## npm
   ###################################################
 
-  npm_matrix:
-    name: npm
+  npm_test:
+    name: npm test
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source]
     if: |
@@ -448,7 +448,7 @@ jobs:
   npm_publish:
     name: npm publish
     runs-on: ubuntu-latest
-    needs: [context_check, source_check, versioned_source, npm_matrix]
+    needs: [context_check, source_check, versioned_source, npm_test]
     # allow publish to run even when matrix is skipped
     if: |
       needs.source_check.outputs.npm == 'true' && inputs.npm_registry != '' && needs.source_check.outputs.npm_private != 'true' &&
@@ -506,8 +506,8 @@ jobs:
   ## docker
   ###################################################
 
-  docker_matrix:
-    name: Docker
+  docker_test:
+    name: docker test
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source]
     if: |
@@ -608,7 +608,7 @@ jobs:
   docker_publish:
     name: docker publish
     runs-on: ubuntu-latest
-    needs: [context_check, source_check, versioned_source, docker_matrix]
+    needs: [context_check, source_check, versioned_source, docker_test]
     # allow publish to run even when matrix is skipped
     if: |
       needs.source_check.outputs.docker == 'true' && inputs.docker_images != '' &&
@@ -800,9 +800,9 @@ jobs:
         context_check,
         source_check,
         versioned_source,
-        docker_matrix,
+        docker_test,
         docker_publish,
-        npm_matrix,
+        npm_test,
         npm_publish,
         balena_push,
       ]
