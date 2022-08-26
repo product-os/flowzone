@@ -439,7 +439,7 @@ jobs:
   ###################################################
 
   npm_test:
-    name: npm test
+    name: Test npm
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source]
     if: |
@@ -575,7 +575,7 @@ jobs:
   ###################################################
 
   docker_test:
-    name: docker test
+    name: Test docker
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source]
     if: |
@@ -748,6 +748,7 @@ jobs:
           images: |
             ${{ needs.context_check.outputs.docker_images }}
           tags: |
+            type=raw,value=${{ github.event.pull_request.head.sha }}
             type=raw,value=${{ github.event.pull_request.head.ref }}
             type=ref,event=pr
           flavor: |
@@ -847,8 +848,8 @@ jobs:
         run: |
           for image in ${IMAGES}
           do
-            docker pull ${image}:${{ github.event.pull_request.head.ref }} || continue
-            docker tag ${image}:${{ github.event.pull_request.head.ref }} ${{ env.LOCAL_IMAGE }}:latest
+            docker pull ${image}:${{ github.event.pull_request.head.sha }} || continue
+            docker tag ${image}:${{ github.event.pull_request.head.sha }} ${{ env.LOCAL_IMAGE }}:latest
             docker push ${{ env.LOCAL_IMAGE }}:latest
             success=1
             break
@@ -870,7 +871,7 @@ jobs:
   ###################################################
 
   balena_push:
-    name: balena push
+    name: Push balena
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source]
     if: needs.project_types.outputs.balena == 'true'
