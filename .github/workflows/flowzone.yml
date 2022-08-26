@@ -148,10 +148,6 @@ jobs:
         shell: bash
 
     steps:
-      # - name: Dump GitHub context
-      #   run: |
-      #     echo '${{ toJSON(github) }}'
-
       - name: Convert balena_slugs to a JSON array
         id: balena_slugs
         uses: kanga333/json-array-builder@v0.1.0
@@ -260,9 +256,18 @@ jobs:
         id: custom
         working-directory: .
         run: |
-          test -d .github/flowzone/draft && echo "::set-output name=draft::true"
-          test -d .github/flowzone/finalize && echo "::set-output name=finalize::true"
-          test -d .github/flowzone/test && echo "::set-output name=test::true"
+          if [ test -d .github/flowzone/draft ]
+          then
+            echo "::set-output name=draft::true"
+          fi
+          if [ test -d .github/flowzone/finalize ]
+          then
+            echo "::set-output name=finalize::true"
+          fi
+          if [ -d .github/flowzone/test ]
+          then
+            echo "::set-output name=test::true"
+          fi
 
   # this job will always run so it can be used as a branch rule
   # and other stages can depend on it to control job order
@@ -965,9 +970,10 @@ jobs:
         run: tar -xvf source.tar
 
       - name: Call custom action
-        uses: ./.github/flowzone/test
+        uses: ./.github/flowzone/finalize
         with:
-          who-to-greet: "Mona the Octocat"
+          flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
+          shell: ${{ needs.context_check.outputs.shell }}
 
   custom_draft:
     name: Draft custom
@@ -994,9 +1000,10 @@ jobs:
         run: tar -xvf source.tar
 
       - name: Call custom action
-        uses: ./.github/flowzone/draft
+        uses: ./.github/flowzone/finalize
         with:
-          who-to-greet: "Mona the Octocat"
+          flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
+          shell: ${{ needs.context_check.outputs.shell }}
 
   custom_finalize:
     name: Finalize custom
@@ -1024,4 +1031,5 @@ jobs:
       - name: Call custom action
         uses: ./.github/flowzone/finalize
         with:
-          who-to-greet: "Mona the Octocat"
+          flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
+          shell: ${{ needs.context_check.outputs.shell }}

@@ -1,20 +1,21 @@
 # https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
-name: 'Draft custom'
-description: 'Greet someone'
+name: "Draft custom"
+description: "Custom draft step to run after all tests have passed"
 inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
+  flowzone_token:
+    description: "Flowzone token"
     required: true
-    default: 'World'
-outputs:
-  random-number:
-    description: "Random number"
-    value: ${{ steps.random-number-generator.outputs.random-number }}
+  shell:
+    description: "Shell"
+    required: false
+    default: bash
 runs:
   using: "composite"
   steps:
-    - run: echo Hello ${{ inputs.who-to-greet }}.
-      shell: bash
-    - id: random-number-generator
-      run: echo "::set-output name=random-number::$(echo $RANDOM)"
-      shell: bash
+    - name: Dump inputs context
+      shell: ${{ inputs.shell }}
+      run: echo '${{ toJSON(inputs) }}'
+
+    - name: Dump github context
+      shell: ${{ inputs.shell }}
+      run: echo '${{ toJSON(github) }}'
