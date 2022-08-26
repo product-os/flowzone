@@ -110,7 +110,6 @@ on:
         default: |
           "Flowzone / npm publish",
           "Flowzone / docker publish",
-          "Flowzone / balena all"
       verbose:
         description: "Enable shell command tracing"
         type: boolean
@@ -758,8 +757,8 @@ jobs:
   ## balena
   ###################################################
 
-  balena_matrix:
-    name: balena
+  balena_push:
+    name: balena push
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source]
     if: needs.source_check.outputs.balena == 'true'
@@ -791,21 +790,6 @@ jobs:
           versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
 
-  balena_all:
-    name: balena all
-    runs-on: ubuntu-latest
-    needs: [context_check, balena_matrix]
-
-    defaults:
-      run:
-        working-directory: .
-        shell: ${{ needs.context_check.outputs.shell }}
-
-    steps:
-      # just a catchall to ensure the matrix was successful so we can use this job as
-      # branch protection without knowing all the matrices
-      - run: echo "nothing to do!"
-
   # this job will always run so it can be used as a branch rule
   check_results:
     name: Check results
@@ -820,8 +804,7 @@ jobs:
         docker_publish,
         npm_matrix,
         npm_publish,
-        balena_matrix,
-        balena_all,
+        balena_push,
       ]
     # always run to avoid being skipped when dependencies fail
     if: always()
