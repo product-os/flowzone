@@ -132,7 +132,7 @@ jobs:
     if: |
       ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'opened') ||
       ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'synchronize') ||
-      ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'closed' && github.event.pull_request.merged == true) ||
+      ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'closed' && github.event.pull_request.merged == 'true') ||
       ( github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && contains(github.event.head_commit.author.name, inputs.git_commit_author) != true )
 
     outputs:
@@ -379,7 +379,7 @@ jobs:
 
       # push the versioned commit only if the PR is merged
       - name: Push versioned commit
-        if: github.event.pull_request.merged == true && steps.versionist.outputs.new_tag != ''
+        if: github.event.pull_request.merged == 'true' && steps.versionist.outputs.new_tag != ''
         run: |
           git push origin HEAD:${{ github.base_ref }} --follow-tags
 
@@ -403,7 +403,7 @@ jobs:
     needs: [context_check, source_check, versioned_source]
     if: |
       needs.source_check.outputs.npm == 'true' &&
-      github.event.pull_request.merged == false &&
+      github.event.pull_request.merged == 'false' &&
       github.event_name == 'pull_request'
 
     defaults:
@@ -445,15 +445,13 @@ jobs:
       - name: Run tests
         run: npm test
 
-  npm_publish:
-    name: npm publish
+  npm_draft:
+    name: npm draft
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source, npm_test]
-    # allow publish to run even when matrix is skipped
     if: |
-      needs.source_check.outputs.npm == 'true' && inputs.npm_registry != '' && needs.source_check.outputs.npm_private != 'true' &&
-      (github.event_name == 'pull_request' || github.event_name == 'push') &&
-      !failure() && !cancelled() && needs.context_check.result == 'success' && needs.source_check.result == 'success' && needs.versioned_source.result == 'success'
+      inputs.npm_registry != '' &&
+      needs.source_check.outputs.npm_private != 'true'
 
     defaults:
       run:
@@ -491,14 +489,42 @@ jobs:
           npm whoami
 
       - name: Publish draft release
-        if: github.event.pull_request.merged == false && github.event_name == 'pull_request'
         run: |
           npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ steps.meta.outputs.version_tag }}
           npm --loglevel=verbose --logs-max=0 publish --tag=${{ steps.meta.outputs.sha_tag }}
           npm --loglevel=verbose --logs-max=0 dist-tag add ${{ steps.meta.outputs.package }}@${{ steps.meta.outputs.version_tag }} ${{ steps.meta.outputs.branch_tag }}
 
+  npm_finalize:
+    name: npm finalize
+    runs-on: ubuntu-latest
+    needs: [context_check, source_check, versioned_source]
+    if: |
+      inputs.npm_registry != '' &&
+      needs.source_check.outputs.npm == 'true' &&
+      needs.source_check.outputs.npm_private != 'true' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.merged == 'true' )
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: ${{ needs.context_check.outputs.shell }}
+
+    steps:
+      - name: Download versioned source
+        uses: actions/download-artifact@v3
+        with:
+          name: versioned-source-${{ github.event.pull_request.head.sha }}
+
+      - name: Extract versioned source
+        working-directory: .
+        run: tar -xvf versioned-source.tar
+
+      - name: Login to registry
+        run: |
+          echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+          npm whoami
+
       - name: Publish final release
-        if: github.event.pull_request.merged == true || github.event_name == 'push'
         run: |
           npm --loglevel=verbose --logs-max=0 publish --tag "latest"
 
@@ -513,7 +539,7 @@ jobs:
     if: |
       needs.source_check.outputs.docker == 'true' &&
       github.event_name == 'pull_request' &&
-      github.event.pull_request.merged == false
+      github.event.pull_request.merged == 'false'
 
     defaults:
       run:
@@ -646,13 +672,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
       - name: Download all artifacts
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == 'false'
         uses: actions/download-artifact@v3
         with:
           path: /tmp
 
       - name: Load images
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == 'false'
         run: |
           for image in /tmp/docker-*/*.tar
           do
@@ -664,7 +690,7 @@ jobs:
 
       # see https://github.com/estesp/manifest-tool to understand template
       - name: Create multi-arch manifest
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == 'false'
         id: manifest
         run: |
           docker run --rm --network=host mplatform/manifest-tool:alpine-v2.0.5 push from-args \
@@ -676,7 +702,7 @@ jobs:
       - name: Generate draft labels and tags
         id: draft_meta
         uses: docker/metadata-action@v4
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == false
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == 'false'
         with:
           images: |
             ${{ needs.context_check.outputs.docker_images }}
@@ -689,7 +715,7 @@ jobs:
       # merged pull requests
       - name: Generate versioned labels and tags
         id: versioned_meta
-        if: inputs.skip_versioning == false && github.event.pull_request.merged == true
+        if: inputs.skip_versioning == false && github.event.pull_request.merged == 'true'
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -702,7 +728,7 @@ jobs:
       # merged pull requests with versioning disabled
       - name: Generate edge labels and tags
         id: edge_meta
-        if: inputs.skip_versioning == true && github.event.pull_request.merged == true
+        if: inputs.skip_versioning == true && github.event.pull_request.merged == 'true'
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -803,7 +829,8 @@ jobs:
         docker_test,
         docker_publish,
         npm_test,
-        npm_publish,
+        npm_draft,
+        npm_finalize,
         balena_push,
       ]
     # always run to avoid being skipped when dependencies fail
