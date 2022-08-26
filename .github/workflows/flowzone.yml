@@ -256,11 +256,11 @@ jobs:
         id: custom
         working-directory: .
         run: |
-          if [ test -d .github/flowzone/draft ]
+          if [ -d .github/flowzone/draft ]
           then
             echo "::set-output name=draft::true"
           fi
-          if [ test -d .github/flowzone/finalize ]
+          if [ -d .github/flowzone/finalize ]
           then
             echo "::set-output name=finalize::true"
           fi
