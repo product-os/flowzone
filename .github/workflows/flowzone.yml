@@ -439,7 +439,7 @@ jobs:
   ###################################################
 
   npm_test:
-    name: npm test
+    name: Test npm
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source]
     if: |
@@ -575,7 +575,7 @@ jobs:
   ###################################################
 
   docker_test:
-    name: docker test
+    name: Test docker
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source]
     if: |
@@ -871,7 +871,7 @@ jobs:
   ###################################################
 
   balena_push:
-    name: balena push
+    name: Push balena
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source]
     if: needs.project_types.outputs.balena == 'true'
