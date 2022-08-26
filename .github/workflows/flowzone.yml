@@ -108,8 +108,8 @@ on:
         type: string
         required: false
         default: |
-          "Flowzone / npm draft",
-          "Flowzone / docker draft"
+          "Flowzone / Draft npm",
+          "Flowzone / Draft docker"
       verbose:
         description: "Enable shell command tracing"
         type: boolean
@@ -191,12 +191,11 @@ jobs:
   source_check:
     name: Source check
     runs-on: ubuntu-latest
-    needs: [context_check]
 
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
-        shell: ${{ needs.context_check.outputs.shell }}
+        shell: bash
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
@@ -450,7 +449,7 @@ jobs:
         run: npm test
 
   npm_draft:
-    name: npm draft
+    name: Draft npm
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source, npm_test]
     if: |
@@ -499,7 +498,7 @@ jobs:
           npm --loglevel=verbose --logs-max=0 dist-tag add ${{ steps.meta.outputs.package }}@${{ steps.meta.outputs.version_tag }} ${{ steps.meta.outputs.branch_tag }}
 
   npm_finalize:
-    name: npm finalize
+    name: Finalize npm
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source]
     if: |
@@ -636,7 +635,7 @@ jobs:
           retention-days: 1
 
   docker_draft:
-    name: docker draft
+    name: Draft docker
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source, docker_test]
     if: |
@@ -717,7 +716,7 @@ jobs:
             ${{ steps.meta.outputs.tags }}
 
   docker_finalize:
-    name: docker finalize
+    name: Finalize docker
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source]
     if: |

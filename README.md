@@ -306,7 +306,7 @@ Comma-delimited string of additional required status checks for branch protectio
 
 Type: _string_
 
-Default: `"Flowzone / npm publish","Flowzone / docker publish","Flowzone / balena all"`
+Default: `"Flowzone / Draft npm","Flowzone / Draft docker"`
 
 #### `verbose`
 
