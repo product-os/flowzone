@@ -247,7 +247,11 @@ jobs:
     name: Protect branch
     runs-on: ubuntu-latest
     needs: [context_check, check_results]
-    if: inputs.protect_branch == true && github.event_name == 'pull_request'
+    if: |
+      always() &&
+      inputs.protect_branch == true &&
+      github.event_name == 'pull_request' &&
+      needs.check_results.result == 'success'
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
