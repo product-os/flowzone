@@ -108,8 +108,8 @@ on:
         type: string
         required: false
         default: |
-          "Flowzone / npm publish",
-          "Flowzone / docker publish",
+          "Flowzone / npm draft",
+          "Flowzone / docker draft"
       verbose:
         description: "Enable shell command tracing"
         type: boolean
@@ -132,7 +132,7 @@ jobs:
     if: |
       ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'opened') ||
       ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'synchronize') ||
-      ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'closed' && github.event.pull_request.merged == 'true') ||
+      ( github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch && github.event.action == 'closed' && github.event.pull_request.merged == true) ||
       ( github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && contains(github.event.head_commit.author.name, inputs.git_commit_author) != true )
 
     outputs:
@@ -383,7 +383,7 @@ jobs:
 
       # push the versioned commit only if the PR is merged
       - name: Push versioned commit
-        if: github.event.pull_request.merged == 'true' && steps.versionist.outputs.new_tag != ''
+        if: github.event.pull_request.merged == true && steps.versionist.outputs.new_tag != ''
         run: |
           git push origin HEAD:${{ github.base_ref }} --follow-tags
 
@@ -407,7 +407,7 @@ jobs:
     needs: [context_check, source_check, versioned_source]
     if: |
       needs.source_check.outputs.npm == 'true' &&
-      github.event.pull_request.merged == 'false' &&
+      github.event.pull_request.merged == false &&
       github.event_name == 'pull_request'
 
     defaults:
@@ -506,7 +506,7 @@ jobs:
       inputs.npm_registry != '' &&
       needs.source_check.outputs.npm == 'true' &&
       needs.source_check.outputs.npm_private != 'true' &&
-      (github.event_name != 'pull_request' || github.event.pull_request.merged == 'true' )
+      (github.event_name != 'pull_request' || github.event.pull_request.merged == true )
 
     defaults:
       run:
@@ -543,7 +543,7 @@ jobs:
     if: |
       needs.source_check.outputs.docker == 'true' &&
       github.event_name == 'pull_request' &&
-      github.event.pull_request.merged == 'false'
+      github.event.pull_request.merged == false
 
     defaults:
       run:
@@ -635,14 +635,12 @@ jobs:
           path: /tmp/docker.tar
           retention-days: 1
 
-  docker_publish:
-    name: docker publish
+  docker_draft:
+    name: docker draft
     runs-on: ubuntu-latest
     needs: [context_check, source_check, versioned_source, docker_test]
-    # allow publish to run even when matrix is skipped
     if: |
-      needs.source_check.outputs.docker == 'true' && inputs.docker_images != '' &&
-      !failure() && !cancelled() && needs.context_check.result == 'success' && needs.source_check.result == 'success' && needs.versioned_source.result == 'success'
+      inputs.docker_images != ''
 
     defaults:
       run:
@@ -676,13 +674,11 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
       - name: Download all artifacts
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == 'false'
         uses: actions/download-artifact@v3
         with:
           path: /tmp
 
       - name: Load images
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == 'false'
         run: |
           for image in /tmp/docker-*/*.tar
           do
@@ -694,7 +690,6 @@ jobs:
 
       # see https://github.com/estesp/manifest-tool to understand template
       - name: Create multi-arch manifest
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == 'false'
         id: manifest
         run: |
           docker run --rm --network=host mplatform/manifest-tool:alpine-v2.0.5 push from-args \
@@ -702,11 +697,9 @@ jobs:
             --template ${{ env.LOCAL_IMAGE }}:ARCHVARIANT \
             --target ${{ env.LOCAL_IMAGE }}:latest
 
-      # unmerged pull requests
       - name: Generate draft labels and tags
-        id: draft_meta
+        id: meta
         uses: docker/metadata-action@v4
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == 'false'
         with:
           images: |
             ${{ needs.context_check.outputs.docker_images }}
@@ -716,10 +709,57 @@ jobs:
           flavor: |
             latest=false
 
+      - name: Publish draft tags
+        uses: akhilerm/tag-push-action@v2.0.0
+        with:
+          src: ${{ env.LOCAL_IMAGE }}:latest
+          dst: |
+            ${{ steps.meta.outputs.tags }}
+
+  docker_finalize:
+    name: docker finalize
+    runs-on: ubuntu-latest
+    needs: [context_check, source_check, versioned_source]
+    if: |
+      inputs.docker_images != '' &&
+      needs.source_check.outputs.docker == 'true' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.merged == true)
+
+    defaults:
+      run:
+        working-directory: .
+        shell: ${{ needs.context_check.outputs.shell }}
+
+    env:
+      LOCAL_IMAGE: localhost:5000/${{ github.repository }}
+
+    services:
+      registry:
+        image: registry:2.8.1
+        ports:
+          - 5000:5000
+
+    steps:
+      - name: Login to GitHub Container Registry
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USER }}
+          password: ${{ env.GHCR_TOKEN }}
+
+      - name: Login to Docker Hub
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+
       # merged pull requests
       - name: Generate versioned labels and tags
         id: versioned_meta
-        if: inputs.skip_versioning == false && github.event.pull_request.merged == 'true'
+        if: inputs.skip_versioning == false && github.event.pull_request.merged == true
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -732,7 +772,7 @@ jobs:
       # merged pull requests with versioning disabled
       - name: Generate edge labels and tags
         id: edge_meta
-        if: inputs.skip_versioning == true && github.event.pull_request.merged == 'true'
+        if: inputs.skip_versioning == true && github.event.pull_request.merged == true
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -743,7 +783,7 @@ jobs:
             latest=false
 
       # tag pushed to main branch
-      - name: Generate provided labels and tags
+      - name: Generate tagged labels and tags
         id: tagged_meta
         if: github.event_name == 'push'
         uses: docker/metadata-action@v4
@@ -758,7 +798,6 @@ jobs:
 
       # try to pull existing draft releases that we can republish as final
       - name: Pull draft images
-        if: steps.manifest.outcome == 'skipped'
         env:
           IMAGES: ${{ needs.context_check.outputs.docker_images }}
         run: |
@@ -778,7 +817,6 @@ jobs:
         with:
           src: ${{ env.LOCAL_IMAGE }}:latest
           dst: |
-            ${{ steps.draft_meta.outputs.tags }}
             ${{ steps.versioned_meta.outputs.tags }}
             ${{ steps.edge_meta.outputs.tags }}
             ${{ steps.tagged_meta.outputs.tags }}
@@ -831,7 +869,8 @@ jobs:
         source_check,
         versioned_source,
         docker_test,
-        docker_publish,
+        docker_draft,
+        docker_finalize,
         npm_test,
         npm_draft,
         npm_finalize,
