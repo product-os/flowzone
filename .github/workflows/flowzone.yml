@@ -247,21 +247,8 @@ jobs:
   protect_branch:
     name: Protect branch
     runs-on: ubuntu-latest
-    # depend on all the jobs but allow them to be skipped
-    needs:
-      [
-        context_check,
-        source_check,
-        versioned_source,
-        docker_matrix,
-        docker_publish,
-        npm_matrix,
-        npm_publish,
-        balena_matrix,
-        balena_all,
-      ]
-    if: |
-      always() && inputs.protect_branch == true && github.event_name == 'pull_request'
+    needs: [context_check, check_results]
+    if: inputs.protect_branch == true && github.event_name == 'pull_request'
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
@@ -272,21 +259,6 @@ jobs:
         shell: ${{ needs.context_check.outputs.shell }}
 
     steps:
-      # reuse this snippet!
-      # it loops over all needed jobs and fails this job if any of them failed
-      # it requires that always() be one of the conditions of this job to avoid being skipped
-      # that way we can add a branch rule on this job and avoid having it be marked as skipped
-      # when other jobs fail
-      - name: Check overall result
-        run: |
-          for result in $(echo '${{ toJSON(needs.*.result) }}' | jq -cr '.[]')
-          do
-            test "${result}" = "success" && continue
-            test "${result}" = "skipped" && continue
-            echo "Exiting with overall result ${result}"
-            exit 1
-          done
-
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
         run: |
@@ -303,6 +275,7 @@ jobs:
                 "Flowzone / Source check",
                 "Flowzone / Protect branch",
                 "Flowzone / Versioned source",
+                "Flowzone / Check results",
                 ${{ inputs.required_status_checks }}
               ]
             },
@@ -832,3 +805,35 @@ jobs:
       # just a catchall to ensure the matrix was successful so we can use this job as
       # branch protection without knowing all the matrices
       - run: echo "nothing to do!"
+
+  # this job will always run so it can be used as a branch rule
+  check_results:
+    name: Check results
+    runs-on: ubuntu-latest
+    # depend on all the jobs to check overall success
+    needs:
+      [
+        context_check,
+        source_check,
+        versioned_source,
+        docker_matrix,
+        docker_publish,
+        npm_matrix,
+        npm_publish,
+        balena_matrix,
+        balena_all,
+      ]
+    # always run to avoid being skipped when dependencies fail
+    if: always()
+
+    steps:
+      # loop over all needed jobs and fail this job if any of them failed
+      - name: Check overall result
+        run: |
+          for result in $(echo '${{ toJSON(needs.*.result) }}' | jq -cr '.[]')
+          do
+            test "${result}" = "success" && continue
+            test "${result}" = "skipped" && continue
+            echo "Exiting with overall result ${result}"
+            exit 1
+          done
