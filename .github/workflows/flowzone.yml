@@ -148,10 +148,6 @@ jobs:
         shell: bash
 
     steps:
-      # - name: Dump GitHub context
-      #   run: |
-      #     echo '${{ toJSON(github) }}'
-
       - name: Convert balena_slugs to a JSON array
         id: balena_slugs
         uses: kanga333/json-array-builder@v0.1.0
@@ -965,9 +961,10 @@ jobs:
         run: tar -xvf source.tar
 
       - name: Call custom action
-        uses: ./.github/flowzone/test
+        uses: ./.github/flowzone/finalize
         with:
-          who-to-greet: "Mona the Octocat"
+          flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
+          shell: ${{ needs.context_check.outputs.shell }}
 
   custom_draft:
     name: Draft custom
@@ -994,9 +991,10 @@ jobs:
         run: tar -xvf source.tar
 
       - name: Call custom action
-        uses: ./.github/flowzone/draft
+        uses: ./.github/flowzone/finalize
         with:
-          who-to-greet: "Mona the Octocat"
+          flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
+          shell: ${{ needs.context_check.outputs.shell }}
 
   custom_finalize:
     name: Finalize custom
@@ -1024,4 +1022,5 @@ jobs:
       - name: Call custom action
         uses: ./.github/flowzone/finalize
         with:
-          who-to-greet: "Mona the Octocat"
+          flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
+          shell: ${{ needs.context_check.outputs.shell }}
