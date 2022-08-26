@@ -122,11 +122,11 @@ env:
 
 jobs:
   ###################################################
-  ## GENERAL
+  ## common
   ###################################################
 
   context_check:
-    name: Context check
+    name: Check context
     runs-on: ubuntu-latest
     # limit to only Flowzone supported event types here as all other jobs depend on this one
     if: |
@@ -141,6 +141,11 @@ jobs:
       node_versions: ${{ steps.node_versions.outputs.build }}
       docker_images: ${{ steps.docker_images.outputs.build }}
       shell: ${{ steps.shell.outputs.value || 'bash' }}
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
 
     steps:
       # - name: Dump GitHub context
@@ -188,14 +193,15 @@ jobs:
         run: |
           echo "::set-output name=value::$(echo 'bash --noprofile --norc -eo pipefail -x {0}')"
 
-  source_check:
-    name: Source check
+  project_types:
+    name: Project types
     runs-on: ubuntu-latest
+    needs: [context_check, package_source]
 
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
-        shell: bash
+        shell: ${{ needs.context_check.outputs.shell }}
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
@@ -204,10 +210,14 @@ jobs:
       balena: ${{ steps.balena.outputs.enabled }}
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
         with:
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          name: source-${{ github.event.pull_request.head.sha }}
+
+      - name: Extract source artifact
+        working-directory: .
+        run: tar -xvf source.tar
 
       - name: Check for package.json
         id: npm
@@ -242,6 +252,39 @@ jobs:
             echo ::set-output name=enabled::"false"
           fi
 
+  # this job will always run so it can be used as a branch rule
+  check_results:
+    name: Check results
+    runs-on: ubuntu-latest
+    # depend on all the jobs to check overall success
+    needs:
+      [
+        context_check,
+        project_types,
+        package_source,
+        docker_test,
+        docker_draft,
+        docker_finalize,
+        npm_test,
+        npm_draft,
+        npm_finalize,
+        balena_push,
+      ]
+    # always run to avoid being skipped when dependencies fail
+    if: always()
+
+    steps:
+      # loop over all needed jobs and fail this job if any of them failed
+      - name: Check overall result
+        run: |
+          for result in $(echo '${{ toJSON(needs.*.result) }}' | jq -cr '.[]')
+          do
+            test "${result}" = "success" && continue
+            test "${result}" = "skipped" && continue
+            echo "Exiting with overall result ${result}"
+            exit 1
+          done
+
   protect_branch:
     name: Protect branch
     runs-on: ubuntu-latest
@@ -273,11 +316,9 @@ jobs:
             "required_status_checks": {
               "strict": true,
               "contexts": [
-                "Flowzone / Context check",
-                "Flowzone / Source check",
-                "Flowzone / Protect branch",
-                "Flowzone / Versioned source",
+                "Flowzone / Check context",
                 "Flowzone / Check results",
+                "Flowzone / Protect branch",
                 ${{ inputs.required_status_checks }}
               ]
             },
@@ -306,13 +347,12 @@ jobs:
           echo ::set-output name=result::"${result}"
 
   ###################################################
-  ## VERSIONING
+  ## source
   ###################################################
 
-  versioned_source:
-    name: Versioned source
+  package_source:
+    name: Package source
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     needs: [context_check]
 
     defaults:
@@ -321,8 +361,8 @@ jobs:
         shell: ${{ needs.context_check.outputs.shell }}
 
     outputs:
-      new_tag: ${{ steps.versionist.outputs.new_tag }}
-      version: ${{ steps.versionist.outputs.version }}
+      new_tag: ${{ steps.version_check.outputs.new_tag }}
+      version: ${{ steps.version_check.outputs.version }}
 
     steps:
       - name: Checkout source
@@ -332,8 +372,8 @@ jobs:
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Import GPG key for signing commits
+        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
         id: import-gpg
-        if: inputs.skip_versioning == false
         uses: crazy-max/ghaction-import-gpg@v4
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -345,35 +385,33 @@ jobs:
       # install and run versionist and balena-versionist
       # extract the latest version from the changelog
       - name: Run versionist
+        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
         id: versionist
-        if: inputs.skip_versioning == false
         run: |
           npm install -g balena-versionist versionist
           balena-versionist
-
           git status --porcelain
+
+      # exit if versionist didn't change anything or the changelog could not be parsed
+      - name: Check versionist results
+        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
+        id: version_check
+        run: |
+          test -n "$(git status --porcelain)" || { echo "Failed to version any files, did you include a Change-type?" ; exit 1 ; }
           version="$(grep -E '^# v[0-9]+\.[0-9]+\.[0-9]+|^## [0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | head -n1 | awk '{print $2}' | tr -d 'v')"
-
           test -n "${version}" || { echo "Failed to parse version from changelog!" ; exit 1 ; }
-
           echo "::set-output name=version::${version}"
           echo "::set-output name=new_tag::v${version}"
 
-      # exit if versionist didn't change anything or the changelog could not be parsed
-      - name: Assert versionist results
-        if: inputs.skip_versioning == false && github.event.pull_request.merged != true
-        run: |
-          test -n "$(git status --porcelain)" || { echo "Failed to version any files, did you include a Change-type?" ; exit 1 ; }
-
       # create a versioned commit only if the the version has changed
       - name: Create versioned commit
-        if: steps.versionist.outputs.new_tag != ''
+        if: steps.version_check.outputs.new_tag != ''
         env:
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          TAG: ${{ steps.versionist.outputs.new_tag }}
+          TAG: ${{ steps.version_check.outputs.new_tag }}
         run: |
           git add --all
           git commit -m "${TAG}" --allow-empty
@@ -382,19 +420,19 @@ jobs:
 
       # push the versioned commit only if the PR is merged
       - name: Push versioned commit
-        if: github.event.pull_request.merged == true && steps.versionist.outputs.new_tag != ''
+        if: github.event.pull_request.merged == true && steps.version_check.outputs.new_tag != ''
         run: |
           git push origin HEAD:${{ github.base_ref }} --follow-tags
 
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress source
-        run: tar -cvf /tmp/versioned-source.tar .
+        run: tar -cvf /tmp/source.tar .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
-          path: /tmp/versioned-source.tar
+          name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp/source.tar
 
   ###################################################
   ## npm
@@ -403,9 +441,9 @@ jobs:
   npm_test:
     name: npm test
     runs-on: ubuntu-latest
-    needs: [context_check, source_check, versioned_source]
+    needs: [context_check, project_types, package_source]
     if: |
-      needs.source_check.outputs.npm == 'true' &&
+      needs.project_types.outputs.npm == 'true' &&
       github.event.pull_request.merged == false &&
       github.event_name == 'pull_request'
 
@@ -420,14 +458,14 @@ jobs:
         node_version: ${{ fromJSON(needs.context_check.outputs.node_versions) }}
 
     steps:
-      - name: Download versioned source
+      - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha }}
 
-      - name: Extract versioned source
+      - name: Extract source artifact
         working-directory: .
-        run: tar -xvf versioned-source.tar
+        run: tar -xvf source.tar
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -451,10 +489,11 @@ jobs:
   npm_draft:
     name: Draft npm
     runs-on: ubuntu-latest
-    needs: [context_check, source_check, versioned_source, npm_test]
+    needs:
+      [context_check, project_types, package_source, npm_test]
     if: |
       inputs.npm_registry != '' &&
-      needs.source_check.outputs.npm_private != 'true'
+      needs.project_types.outputs.npm_private != 'true'
 
     defaults:
       run:
@@ -462,14 +501,14 @@ jobs:
         shell: ${{ needs.context_check.outputs.shell }}
 
     steps:
-      - name: Download versioned source
+      - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha }}
 
-      - name: Extract versioned source
+      - name: Extract source artifact
         working-directory: .
-        run: tar -xvf versioned-source.tar
+        run: tar -xvf source.tar
 
       - name: Generate tags
         id: meta
@@ -500,11 +539,11 @@ jobs:
   npm_finalize:
     name: Finalize npm
     runs-on: ubuntu-latest
-    needs: [context_check, source_check, versioned_source]
+    needs: [context_check, project_types, package_source]
     if: |
       inputs.npm_registry != '' &&
-      needs.source_check.outputs.npm == 'true' &&
-      needs.source_check.outputs.npm_private != 'true' &&
+      needs.project_types.outputs.npm == 'true' &&
+      needs.project_types.outputs.npm_private != 'true' &&
       (github.event_name != 'pull_request' || github.event.pull_request.merged == true )
 
     defaults:
@@ -513,14 +552,14 @@ jobs:
         shell: ${{ needs.context_check.outputs.shell }}
 
     steps:
-      - name: Download versioned source
+      - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha }}
 
-      - name: Extract versioned source
+      - name: Extract source artifact
         working-directory: .
-        run: tar -xvf versioned-source.tar
+        run: tar -xvf source.tar
 
       - name: Login to registry
         run: |
@@ -538,9 +577,9 @@ jobs:
   docker_test:
     name: docker test
     runs-on: ubuntu-latest
-    needs: [context_check, source_check, versioned_source]
+    needs: [context_check, project_types, package_source]
     if: |
-      needs.source_check.outputs.docker == 'true' &&
+      needs.project_types.outputs.docker == 'true' &&
       github.event_name == 'pull_request' &&
       github.event.pull_request.merged == false
 
@@ -558,14 +597,14 @@ jobs:
         platform: ${{ fromJSON(needs.context_check.outputs.docker_platforms) }}
 
     steps:
-      - name: Download versioned source
+      - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha }}
 
-      - name: Extract versioned source
+      - name: Extract source artifact
         working-directory: .
-        run: tar -xvf versioned-source.tar
+        run: tar -xvf source.tar
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -637,7 +676,13 @@ jobs:
   docker_draft:
     name: Draft docker
     runs-on: ubuntu-latest
-    needs: [context_check, source_check, versioned_source, docker_test]
+    needs:
+      [
+        context_check,
+        project_types,
+        package_source,
+        docker_test,
+      ]
     if: |
       inputs.docker_images != ''
 
@@ -718,10 +763,10 @@ jobs:
   docker_finalize:
     name: Finalize docker
     runs-on: ubuntu-latest
-    needs: [context_check, source_check, versioned_source]
+    needs: [context_check, project_types, package_source]
     if: |
       inputs.docker_images != '' &&
-      needs.source_check.outputs.docker == 'true' &&
+      needs.project_types.outputs.docker == 'true' &&
       (github.event_name != 'pull_request' || github.event.pull_request.merged == true)
 
     defaults:
@@ -758,7 +803,7 @@ jobs:
       # merged pull requests
       - name: Generate versioned labels and tags
         id: versioned_meta
-        if: inputs.skip_versioning == false && github.event.pull_request.merged == true
+        if: github.event.pull_request.merged == true && needs.versioned_source.outputs.version != ''
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -771,7 +816,7 @@ jobs:
       # merged pull requests with versioning disabled
       - name: Generate edge labels and tags
         id: edge_meta
-        if: inputs.skip_versioning == true && github.event.pull_request.merged == true
+        if: github.event.pull_request.merged == true && needs.versioned_source.outputs.version == ''
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -827,8 +872,8 @@ jobs:
   balena_push:
     name: balena push
     runs-on: ubuntu-latest
-    needs: [context_check, source_check, versioned_source]
-    if: needs.source_check.outputs.balena == 'true'
+    needs: [context_check, project_types, package_source]
+    if: needs.project_types.outputs.balena == 'true'
 
     strategy:
       fail-fast: false
@@ -841,14 +886,14 @@ jobs:
         shell: ${{ needs.context_check.outputs.shell }}
 
     steps:
-      - name: Download versioned source
+      - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: versioned-source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha }}
 
-      - name: Extract versioned source
+      - name: Extract source artifact
         working-directory: .
-        run: tar -xvf versioned-source.tar
+        run: tar -xvf source.tar
 
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
@@ -856,36 +901,3 @@ jobs:
           fleet: ${{ matrix.slug }}
           versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
-
-  # this job will always run so it can be used as a branch rule
-  check_results:
-    name: Check results
-    runs-on: ubuntu-latest
-    # depend on all the jobs to check overall success
-    needs:
-      [
-        context_check,
-        source_check,
-        versioned_source,
-        docker_test,
-        docker_draft,
-        docker_finalize,
-        npm_test,
-        npm_draft,
-        npm_finalize,
-        balena_push,
-      ]
-    # always run to avoid being skipped when dependencies fail
-    if: always()
-
-    steps:
-      # loop over all needed jobs and fail this job if any of them failed
-      - name: Check overall result
-        run: |
-          for result in $(echo '${{ toJSON(needs.*.result) }}' | jq -cr '.[]')
-          do
-            test "${result}" = "success" && continue
-            test "${result}" = "skipped" && continue
-            echo "Exiting with overall result ${result}"
-            exit 1
-          done
