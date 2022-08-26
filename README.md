@@ -1,3 +1,4 @@
+![ridiculous logo about hating and flowing](logo.png)
 # Flowzone
 
 Reusable, opinionated, zero-conf workflows for GitHub actions
