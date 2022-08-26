@@ -256,9 +256,18 @@ jobs:
         id: custom
         working-directory: .
         run: |
-          test -d .github/flowzone/draft && echo "::set-output name=draft::true"
-          test -d .github/flowzone/finalize && echo "::set-output name=finalize::true"
-          test -d .github/flowzone/test && echo "::set-output name=test::true"
+          if [ test -d .github/flowzone/draft ]
+          then
+            echo "::set-output name=draft::true"
+          fi
+          if [ test -d .github/flowzone/finalize ]
+          then
+            echo "::set-output name=finalize::true"
+          fi
+          if [ -d .github/flowzone/test ]
+          then
+            echo "::set-output name=test::true"
+          fi
 
   # this job will always run so it can be used as a branch rule
   # and other stages can depend on it to control job order
