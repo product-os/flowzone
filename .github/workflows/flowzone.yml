@@ -278,7 +278,10 @@ jobs:
         balena_publish,
       ]
     # always run to avoid being skipped when dependencies are skipped
-    if: always()
+    if: |
+      always() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == false
 
     steps:
       # loop over all needed jobs and fail this job if any of them failed
@@ -306,8 +309,10 @@ jobs:
         npm_test,
         custom_test,
       ]
-    # always run to avoid being skipped when dependencies are skipped
-    if: always()
+    if: |
+      always() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == false
 
     steps:
       # loop over all needed jobs and fail this job if any of them failed
@@ -326,11 +331,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [context_check, all_published, all_tests]
     if: |
-      always() &&
-      inputs.protect_branch == true &&
+      !failure() && !cancelled() &&
       github.event_name == 'pull_request' &&
-      needs.all_published.result == 'success' &&
-      needs.all_tests.result == 'success'
+      github.event.pull_request.merged == false &&
+      inputs.protect_branch == true
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
@@ -354,6 +358,8 @@ jobs:
               "strict": true,
               "contexts": [
                 "Flowzone / Check context",
+                "Flowzone / Package source",
+                "Flowzone / Project types",
                 "Flowzone / All tests",
                 "Flowzone / All published",
                 "Flowzone / Protect branch"
