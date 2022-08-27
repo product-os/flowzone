@@ -722,6 +722,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source, all_tests]
     if: |
+      needs.project_types.outputs.docker == 'true' &&
       inputs.docker_images != ''
 
     defaults:
