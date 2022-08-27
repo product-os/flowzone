@@ -36,7 +36,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`skip_versioning`](#skip_versioning)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
-    - [`required_status_checks`](#required_status_checks)
     - [`verbose`](#-verbose-)
 - [Maintenance](#maintenance)
   - [Generate GPG keys](#generate-gpg-keys)
@@ -300,14 +299,6 @@ Setting this value to zero effectively means merge==deploy without approval(s).
 Type: _string_
 
 Default: `1`
-
-#### `required_status_checks`
-
-Comma-delimited string of additional required status checks for branch protection.
-
-Type: _string_
-
-Default: `"Flowzone / Draft npm","Flowzone / Draft docker"`
 
 #### `verbose`
 

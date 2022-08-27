@@ -103,13 +103,6 @@ on:
         type: string
         required: false
         default: "1"
-      required_status_checks:
-        description: "Comma-delimited string of additional required status checks for branch protection"
-        type: string
-        required: false
-        default: |
-          "Flowzone / Draft npm",
-          "Flowzone / Draft docker"
       verbose:
         description: "Enable shell command tracing"
         type: boolean
@@ -205,7 +198,7 @@ jobs:
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
 
-      custom_draft: ${{ steps.custom.outputs.draft }}
+      custom_publish: ${{ steps.custom.outputs.draft }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_test: ${{ steps.custom.outputs.test }}
 
@@ -271,18 +264,18 @@ jobs:
 
   # this job will always run so it can be used as a branch rule
   # and other stages can depend on it to control job order
-  all_drafts:
-    name: Draft checkpoint
+  all_published:
+    name: All published
     runs-on: ubuntu-latest
     needs:
       [
         context_check,
         project_types,
         package_source,
-        docker_draft,
-        npm_draft,
-        custom_draft,
-        balena_push,
+        docker_publish,
+        npm_publish,
+        custom_publish,
+        balena_publish,
       ]
     # always run to avoid being skipped when dependencies are skipped
     if: always()
@@ -302,7 +295,7 @@ jobs:
   # this job will always run so it can be used as a branch rule
   # and other stages can depend on it to control job order
   all_tests:
-    name: Test checkpoint
+    name: All tests
     runs-on: ubuntu-latest
     needs:
       [
@@ -331,12 +324,12 @@ jobs:
   protect_branch:
     name: Protect branch
     runs-on: ubuntu-latest
-    needs: [context_check, all_drafts, all_tests]
+    needs: [context_check, all_published, all_tests]
     if: |
       always() &&
       inputs.protect_branch == true &&
       github.event_name == 'pull_request' &&
-      needs.all_drafts.result == 'success' &&
+      needs.all_published.result == 'success' &&
       needs.all_tests.result == 'success'
 
     outputs:
@@ -361,10 +354,9 @@ jobs:
               "strict": true,
               "contexts": [
                 "Flowzone / Check context",
-                "Flowzone / Test checkpoint",
-                "Flowzone / Draft checkpoint",
+                "Flowzone / All tests",
+                "Flowzone / All published",
                 "Flowzone / Protect branch",
-                ${{ inputs.required_status_checks }}
               ]
             },
             "enforce_admins": false,
@@ -531,8 +523,8 @@ jobs:
       - name: Run tests
         run: npm test
 
-  npm_draft:
-    name: Draft npm
+  npm_publish:
+    name: Publish npm
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source, all_tests]
     if: |
@@ -717,11 +709,12 @@ jobs:
           path: /tmp/docker.tar
           retention-days: 1
 
-  docker_draft:
-    name: Draft docker
+  docker_publish:
+    name: Publish docker
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source, all_tests]
     if: |
+      needs.project_types.outputs.docker == 'true' &&
       inputs.docker_images != ''
 
     defaults:
@@ -908,8 +901,8 @@ jobs:
   ## balena
   ###################################################
 
-  balena_push:
-    name: Push balena
+  balena_publish:
+    name: Publish balena
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source, all_tests]
     if: needs.project_types.outputs.balena == 'true'
@@ -975,12 +968,12 @@ jobs:
           flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
           shell: ${{ needs.context_check.outputs.shell }}
 
-  custom_draft:
-    name: Draft custom
+  custom_publish:
+    name: Publish custom
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source, all_tests]
     if: |
-      needs.project_types.outputs.custom_draft == 'true' &&
+      needs.project_types.outputs.custom_publish == 'true' &&
       github.event_name == 'pull_request' &&
       github.event.pull_request.merged == false
 
