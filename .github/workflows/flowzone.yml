@@ -905,7 +905,43 @@ jobs:
     name: Publish balena
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source, all_tests]
-    if: needs.project_types.outputs.balena == 'true'
+    if: |
+      needs.project_types.outputs.balena == 'true'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        slug: ${{ fromJSON(needs.context_check.outputs.balena_slugs) }}
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: ${{ needs.context_check.outputs.shell }}
+
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha }}
+
+      - name: Extract source artifact
+        working-directory: .
+        run: tar -xvf source.tar
+
+      - uses: balena-io/deploy-to-balena-action@v0.13.0
+        with:
+          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
+          fleet: ${{ matrix.slug }}
+          versionbot: false # disable the included versionbot branch checkout
+          source: ${{ inputs.working_directory }}
+
+  balena_finalize:
+    name: Finalize balena
+    runs-on: ubuntu-latest
+    needs: [context_check, project_types, package_source]
+    if: |
+      needs.project_types.outputs.balena == 'true' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.merged == true)
 
     strategy:
       fail-fast: false
