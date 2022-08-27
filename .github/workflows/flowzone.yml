@@ -354,6 +354,8 @@ jobs:
               "strict": true,
               "contexts": [
                 "Flowzone / Check context",
+                "Flowzone / Package source",
+                "Flowzone / Project types",
                 "Flowzone / All tests",
                 "Flowzone / All published",
                 "Flowzone / Protect branch"
