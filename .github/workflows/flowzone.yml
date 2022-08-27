@@ -103,13 +103,6 @@ on:
         type: string
         required: false
         default: "1"
-      required_status_checks:
-        description: "Comma-delimited string of additional required status checks for branch protection"
-        type: string
-        required: false
-        default: |
-          "Flowzone / Publish npm",
-          "Flowzone / Publish docker"
       verbose:
         description: "Enable shell command tracing"
         type: boolean
@@ -364,7 +357,6 @@ jobs:
                 "Flowzone / All tests",
                 "Flowzone / All published",
                 "Flowzone / Protect branch",
-                ${{ inputs.required_status_checks }}
               ]
             },
             "enforce_admins": false,
