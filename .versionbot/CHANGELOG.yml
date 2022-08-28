@@ -1,4 +1,32 @@
 - commits:
+    - subject: Remove docker platforms input and limit to amd64 for now
+      hash: 26faddb6bd11bae3e61faa3104eac224333d10b6
+      body: |
+        Going forward we should get advanced docker build options
+        from project files like docker-compose and bake files.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Remove node versions input and limit to 16.x for now
+      hash: da565a6e877d8ee678d998e12c836b9adcff28a7
+      body: |
+        This will be replaced by testing a range of LTS releases
+        defined within the engines.node section of the package.json.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.19.0
+  title: ""
+  date: 2022-08-28T23:29:12.512Z
+- commits:
     - subject: Generate changelog before running versionist
       hash: 18b503cc9bf6646439c4c2627fced13e58754d55
       body: ""
