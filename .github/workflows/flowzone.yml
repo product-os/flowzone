@@ -83,11 +83,6 @@ on:
           14.x,
           16.x,
           18.x
-      skip_versioning:
-        description: "Set to true to skip adding a version commit on top of the original source"
-        type: boolean
-        required: false
-        default: false
       protect_branch:
         description: "Set to false to disable updating branch protection rules after a successful run"
         type: boolean
@@ -181,7 +176,7 @@ jobs:
   project_types:
     name: Project types
     runs-on: ubuntu-latest
-    needs: [context_check, package_source]
+    needs: [context_check]
 
     defaults:
       run:
@@ -193,20 +188,18 @@ jobs:
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
+      repo_type: ${{ steps.repo.outputs.type }} # can be null or unset
 
       custom_publish: ${{ steps.custom.outputs.draft }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_test: ${{ steps.custom.outputs.test }}
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
+      - name: Checkout source
+        uses: actions/checkout@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
-
-      - name: Extract source artifact
-        working-directory: .
-        run: tar -xvf source.tar
+          fetch-depth: 1
+          token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Check for package.json
         id: npm
@@ -256,6 +249,15 @@ jobs:
           if [ -d .github/flowzone/test ]
           then
             echo "::set-output name=test::true"
+          fi
+
+      - name: Check for repo.yml
+        id: repo
+        working-directory: .
+        run: |
+          if [ -f repo.yml ]
+          then
+            echo "::set-output name=type::$(yq e .type repo.yml)"
           fi
 
   # this job will always run so it can be used as a branch rule
@@ -392,7 +394,7 @@ jobs:
   package_source:
     name: Package source
     runs-on: ubuntu-latest
-    needs: [context_check]
+    needs: [context_check, project_types]
 
     defaults:
       run:
@@ -411,7 +413,7 @@ jobs:
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Import GPG key for signing commits
-        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
+        if: needs.project_types.outputs.repo_type != '' && github.event_name == 'pull_request'
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@v4
         with:
@@ -424,7 +426,7 @@ jobs:
       # install and run versionist and balena-versionist
       # extract the latest version from the changelog
       - name: Run versionist
-        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
+        if: needs.project_types.outputs.repo_type != '' && github.event_name == 'pull_request'
         id: versionist
         run: |
           npm install -g balena-versionist versionist
@@ -433,7 +435,7 @@ jobs:
 
       # exit if versionist didn't change anything or the changelog could not be parsed
       - name: Check versionist results
-        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
+        if: needs.project_types.outputs.repo_type != '' && github.event_name == 'pull_request'
         id: version_check
         run: |
           test -n "$(git status --porcelain)" || { echo "Failed to version any files, did you include a Change-type?" ; exit 1 ; }

@@ -12,7 +12,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [npm](#npm)
   - [Docker](#docker)
   - [balena](#balena)
-  - [Versionbot](#versionbot)
+  - [Versioning](#versioning)
 - [Customization](#customization)
   - [Secrets](#secrets)
     - [`FLOWZONE_TOKEN`](#flowzone_token)
@@ -33,7 +33,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`docker_file`](#docker_file)
     - [`docker_target`](#docker_target)
     - [`node_versions`](#node_versions)
-    - [`skip_versioning`](#skip_versioning)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
     - [`verbose`](#-verbose-)
@@ -134,9 +133,11 @@ If a `balena.yml` file is found in the root of the repository Flowzone will atte
 
 To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
 
-### Versionbot
+### Versioning
 
-Flowzone ignores [versionbot](https://github.com/apps/versionbot3) and will run [balena-versionist](https://github.com/product-os/balena-versionist) directly on the PR's branch.
+If a `repo.yml` file is found in the root of the repository Flowzone will attempt run [balena-versionist](https://github.com/product-os/balena-versionist) directly on the PR's source.
+
+If you have [VersionBot3](https://github.com/apps/versionbot3) installed it will be ignored as far as versioning is concerned, so no need to disable it.
 
 ## Customization
 
@@ -157,13 +158,13 @@ Always required.
 
 GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits.
 
-Required if [versioning is enabled](#skip_versioning).
+Required for [versioned](#versioning) projects.
 
 #### `GPG_PASSPHRASE`
 
 Passphrase to decrypt GPG private key.
 
-Required if [versioning is enabled](#skip_versioning).
+Required for [versioned](#versioning) projects.
 
 #### `NPM_TOKEN`
 
@@ -267,14 +268,6 @@ Comma-delimited string of Node.js versions to test.
 Type: _string_
 
 Default: `14.x,16.x,18.x`
-
-#### `skip_versioning`
-
-Set to `true` to skip adding a version commit on top of the original source.
-
-Type: _boolean_
-
-Default: `false`
 
 #### `protect_branch`
 
