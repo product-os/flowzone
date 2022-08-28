@@ -55,11 +55,6 @@ on:
         type: string
         required: false
         default: ${{ github.repository }}
-      npm_registry:
-        description: "Registry for publishing npm projects (skipped if empty)"
-        type: string
-        required: false
-        default: registry.npmjs.org
       docker_platforms:
         description: "Comma-delimited string of Docker target platforms"
         type: string
@@ -112,6 +107,7 @@ on:
 env:
   GHCR_USER: "flowzone" # does not seem to matter what is used here
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
+  NPM_REGISTRY: registry.npmjs.org
 
 jobs:
   ###################################################
@@ -534,7 +530,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source, all_tests]
     if: |
-      inputs.npm_registry != '' &&
       needs.project_types.outputs.npm_private != 'true'
 
     defaults:
@@ -569,7 +564,7 @@ jobs:
 
       - name: Login to registry
         run: |
-          echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+          echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
           npm whoami
 
       - name: Publish draft release
@@ -583,7 +578,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [context_check, project_types, package_source]
     if: |
-      inputs.npm_registry != '' &&
       needs.project_types.outputs.npm == 'true' &&
       needs.project_types.outputs.npm_private != 'true' &&
       (github.event_name != 'pull_request' || github.event.pull_request.merged == true )
@@ -605,7 +599,7 @@ jobs:
 
       - name: Login to registry
         run: |
-          echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+          echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
           npm whoami
 
       - name: Publish final release

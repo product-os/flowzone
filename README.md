@@ -28,7 +28,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`working_directory`](#working_directory)
     - [`docker_images`](#docker_images)
     - [`balena_slugs`](#balena_slugs)
-    - [`npm_registry`](#npm_registry)
     - [`docker_platforms`](#docker_platforms)
     - [`docker_context`](#docker_context)
     - [`docker_file`](#docker_file)
@@ -115,7 +114,7 @@ If a build script is present in `package.json` it will be called before the test
 
 The [`node_versions`](#node_versions) will determine the Node.js versions used for testing.
 
-To disable publishing of artifacts set [`npm_registry`](#npm_registry) to `""` or set `"private": true` in `package.json`.
+To disable publishing of artifacts set `"private": true` in `package.json`.
 
 ### Docker
 
@@ -228,14 +227,6 @@ Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped
 Type: _string_
 
 Default: `${{ github.repository }}`
-
-#### `npm_registry`
-
-Registry for publishing npm projects (skipped if empty).
-
-Type: _string_
-
-Default: `registry.npmjs.org`
 
 #### `docker_platforms`
 
