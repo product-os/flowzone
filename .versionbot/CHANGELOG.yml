@@ -1,2778 +1,2793 @@
+- commits:
+    - subject: Generate changelog before running versionist
+      hash: 18b503cc9bf6646439c4c2627fced13e58754d55
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.18.2
+  title: ""
+  date: 2022-08-28T17:55:56.376Z
 - version: 0.18.0
   date: 2022-08-28T16:07:59Z
   commits:
-  - hash: 7c37cb45cf5daf396eee834a7568115e76c419d4
-    author: Kyle Harding
-    footers:
-      change-type: patch
-      signed-off-by: Kyle Harding <kyle@balena.io>
-    subject: Remove optional npm_registry input
-    body:
-  - hash: 0443e9958f86232a9164c53744e05342a9d574e9
-    author: Kyle Harding
-    footers:
-      change-type: minor
-      signed-off-by: Kyle Harding <kyle@balena.io>
-    subject: Apply versioning based on presence of repo.yml
-    body: Avoid having multiple methods of toggling features.
-  - hash: 3400a2de6733be4c057aef36220cccd07a4e937f
-    author: Kyle Harding
-    footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
-    subject: Rename package_source to versioned_source
-    body:
-  - hash: 37e21ca1a44431ac98e3adfa4ea5302fbbad0787
-    author: Kyle Harding
-    footers:
-      change-type: patch
-      signed-off-by: Kyle Harding <kyle@balena.io>
-    subject: Create .versionbot/CHANGELOG.yml if it does not exist
-    body: |-
-      This is the preferred way to parse the latest version, and also
-      enables embedded changelogs when consumed by another project using
-      versionist.
-  - hash: 5af10a8a4a07017d739eb1fc33545ce9a349e5c1
-    author: Kyle Harding
-    footers:
-      change-type: patch
-      signed-off-by: Kyle Harding <kyle@balena.io>
-    subject: Remove advanced docker inputs for now
-    body: |-
-      These inputs are prone to change and not fully tested, so
-      remove them for now.
-      Ideally we could get these values from a docker-compose or
-      buildx bake file going forward.
+    - hash: 7c37cb45cf5daf396eee834a7568115e76c419d4
+      author: Kyle Harding
+      footers:
+        change-type: patch
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      subject: Remove optional npm_registry input
+      body: null
+    - hash: 0443e9958f86232a9164c53744e05342a9d574e9
+      author: Kyle Harding
+      footers:
+        change-type: minor
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      subject: Apply versioning based on presence of repo.yml
+      body: Avoid having multiple methods of toggling features.
+    - hash: 3400a2de6733be4c057aef36220cccd07a4e937f
+      author: Kyle Harding
+      footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      subject: Rename package_source to versioned_source
+      body: null
+    - hash: 37e21ca1a44431ac98e3adfa4ea5302fbbad0787
+      author: Kyle Harding
+      footers:
+        change-type: patch
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      subject: Create .versionbot/CHANGELOG.yml if it does not exist
+      body: |-
+        This is the preferred way to parse the latest version, and also
+        enables embedded changelogs when consumed by another project using
+        versionist.
+    - hash: 5af10a8a4a07017d739eb1fc33545ce9a349e5c1
+      author: Kyle Harding
+      footers:
+        change-type: patch
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      subject: Remove advanced docker inputs for now
+      body: |-
+        These inputs are prone to change and not fully tested, so
+        remove them for now.
+        Ideally we could get these values from a docker-compose or
+        buildx bake file going forward.
 - version: 0.17.3
 - date: 2022-08-27T16:18:58Z
 - commits:
-  - hash: 49aa197ee175b77d6298856f75d390697dbcc072
+    - hash: 49aa197ee175b77d6298856f75d390697dbcc072
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add package source and project types to branch rules
+    - subject: Add package source and project types to branch rules
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 59da52f1128e028c017f6a12da3222b15220064a
+    - hash: 59da52f1128e028c017f6a12da3222b15220064a
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix markdown warnings in README
+    - subject: Fix markdown warnings in README
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 7fe0c0506608e3ed56ac14311f26eb9e7d91cdb2
+    - hash: 7fe0c0506608e3ed56ac14311f26eb9e7d91cdb2
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Only run protect branch on unmerged pull requests
+    - subject: Only run protect branch on unmerged pull requests
 - commits:
-  - body:
+    - ? body
 - version: 0.17.2
 - date: 2022-08-27T15:33:48Z
 - commits:
-  - hash: 98171fff4d4279cb93e6c685d914aa5045ae8f3a
+    - hash: 98171fff4d4279cb93e6c685d914aa5045ae8f3a
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix typo in branch rules
+    - subject: Fix typo in branch rules
 - commits:
-  - body:
+    - ? body
 - version: 0.17.1
 - date: 2022-08-27T13:11:47Z
 - commits:
-  - hash: 23b36ec0614f64379af3feb9b66e4489bba91442
+    - hash: 23b36ec0614f64379af3feb9b66e4489bba91442
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Restore missing balena finalize job
+    - subject: Restore missing balena finalize job
 - commits:
-  - body: |-
-      This is nearly identical to the balena publish
-      job but it makes it clear from the job flow what
-      is being done.
+    - body: |-
+        This is nearly identical to the balena publish
+        job but it makes it clear from the job flow what
+        is being done.
 - version: 0.17.0
 - date: 2022-08-27T12:53:53Z
 - commits:
-  - hash: af88cf28d1ec77394d7fd6d51a754df7fcb3bc97
+    - hash: af88cf28d1ec77394d7fd6d51a754df7fcb3bc97
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove resinCI config
+    - subject: Remove resinCI config
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: ff64dc07f9cb92284090c086cc7845ffa53c8aac
+    - hash: ff64dc07f9cb92284090c086cc7845ffa53c8aac
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Only run docker publish if project type includes docker
+    - subject: Only run docker publish if project type includes docker
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: cbec8c79c3e109dcf392cdda139a3cd9f6acdc6b
+    - hash: cbec8c79c3e109dcf392cdda139a3cd9f6acdc6b
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename draft jobs to publish
+    - subject: Rename draft jobs to publish
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 6c644d598f4103f11f50f7385837ce9f22a8feb3
+    - hash: 6c644d598f4103f11f50f7385837ce9f22a8feb3
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove required status checks input
+    - subject: Remove required status checks input
 - commits:
-  - body: |-
-      This input was very easy to break with formatting issues
-      and did not take into account the fact that Flowzone job
-      names may change.
-      A suitable replacement should be considered to adjust the existing
-      branch rules rather than apply all new ones.
+    - body: |-
+        This input was very easy to break with formatting issues
+        and did not take into account the fact that Flowzone job
+        names may change.
+        A suitable replacement should be considered to adjust the existing
+        branch rules rather than apply all new ones.
 - commits:
-  - hash: 22448f6bf3d20cfc37ca7c5215a7a9f810ac90c0
+    - hash: 22448f6bf3d20cfc37ca7c5215a7a9f810ac90c0
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename push balena to publish balena to align with other types
+    - subject: Rename push balena to publish balena to align with other types
 - commits:
-  - body:
+    - ? body
 - version: 0.16.5
 - date: 2022-08-26T18:34:46Z
 - commits:
-  - hash: 9083897934f6a0871ee1d9c7903779ae13c53e7b
+    - hash: 9083897934f6a0871ee1d9c7903779ae13c53e7b
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Fix typo in custom action detection'
+    - subject: "patch: Fix typo in custom action detection"
 - commits:
-  - body:
+    - ? body
 - version: 0.16.4
 - date: 2022-08-26T18:22:06Z
 - commits:
-  - hash: 4a0cc5da062ba2587eb241fae11a42a5d88134e2
+    - hash: 4a0cc5da062ba2587eb241fae11a42a5d88134e2
 - commits:
-  - author: Phil Wilson
+    - author: Phil Wilson
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Phil Wilson <phil@balena.io>
+    - footers:
+        signed-off-by: Phil Wilson <phil@balena.io>
 - commits:
-  - subject: Add cool logo
+    - subject: Add cool logo
 - commits:
-  - body:
+    - ? body
 - version: 0.16.3
 - date: 2022-08-26T17:48:10Z
 - commits:
-  - hash: 1e11832384b6e07a217ff0d32f96b10159c04599
+    - hash: 1e11832384b6e07a217ff0d32f96b10159c04599
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add required inputs to custom composite actions
+    - subject: Add required inputs to custom composite actions
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: e919e0bcd923a403ff8b90798526961f29e90361
+    - hash: e919e0bcd923a403ff8b90798526961f29e90361
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Catch errors when custom actions are not found
+    - subject: Catch errors when custom actions are not found
 - commits:
-  - body:
+    - ? body
 - version: 0.16.2
 - date: 2022-08-26T16:29:57Z
 - commits:
-  - hash: ab21889316b6003d2d51e2a29ee7c06c39a3d995
+    - hash: ab21889316b6003d2d51e2a29ee7c06c39a3d995
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add composite workflow support
+    - subject: Add composite workflow support
 - commits:
-  - body:
+    - ? body
 - version: 0.16.1
 - date: 2022-08-26T03:10:30Z
 - commits:
-  - hash: 8262cf4f043248647da3d4bb9922803e79d8440c
+    - hash: 8262cf4f043248647da3d4bb9922803e79d8440c
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix tagging of draft docker images
+    - subject: Fix tagging of draft docker images
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: b72e17c390bf431dc7bc046b11497249b5443bf3
+    - hash: b72e17c390bf431dc7bc046b11497249b5443bf3
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename jobs to use verb first
+    - subject: Rename jobs to use verb first
 - commits:
-  - body:
+    - ? body
 - version: 0.16.0
 - date: 2022-08-26T02:56:01Z
 - commits:
-  - hash: 91f2d6325bfbf57ed8037fc725d42351517cf64e
+    - hash: 91f2d6325bfbf57ed8037fc725d42351517cf64e
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add a check results job to check the results of all other jobs
+    - subject: Add a check results job to check the results of all other jobs
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 9bdbc035f67713cd5bbc1e6e419f8da326ad9756
+    - hash: 9bdbc035f67713cd5bbc1e6e419f8da326ad9756
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove balena all job and just check on balena push
+    - subject: Remove balena all job and just check on balena push
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 9637d764c413b30cdd506193cf732fde1fb1fcc0
+    - hash: 9637d764c413b30cdd506193cf732fde1fb1fcc0
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename docker and npm test jobs
+    - subject: Rename docker and npm test jobs
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: a008090769450138728ea62b14b141cd66ee7982
+    - hash: a008090769450138728ea62b14b141cd66ee7982
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Separate npm draft and finalize steps
+    - subject: Separate npm draft and finalize steps
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: e62a06499459f4ee2ee446371b9d97d8957dab5d
+    - hash: e62a06499459f4ee2ee446371b9d97d8957dab5d
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix protect branch conditions to always run
+    - subject: Fix protect branch conditions to always run
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 83df4b131d500b940e58876367b4563872c2448c
+    - hash: 83df4b131d500b940e58876367b4563872c2448c
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Split docker publish steps into draft and finalize
+    - subject: Split docker publish steps into draft and finalize
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 9dd98893c81e9d083a1875e4aaa523263247b823
+    - hash: 9dd98893c81e9d083a1875e4aaa523263247b823
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename some jobs and remove context requirement from source check
+    - subject: Rename some jobs and remove context requirement from source check
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 16c7855775c5baa5b6c9685df88e4ba8e9b97ec5
+    - hash: 16c7855775c5baa5b6c9685df88e4ba8e9b97ec5
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename versioned source to package source
+    - subject: Rename versioned source to package source
 - commits:
-  - body:
+    - ? body
 - version: 0.15.4
 - date: 2022-08-26T00:59:44Z
 - commits:
-  - hash: f8b96b810d8142c8cfd273c0b93d3ef73dabb79a
+    - hash: f8b96b810d8142c8cfd273c0b93d3ef73dabb79a
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Always run protect branch job and check for overall failure
+    - subject: Always run protect branch job and check for overall failure
 - commits:
-  - body:
+    - ? body
 - version: 0.15.3
 - date: 2022-08-25T18:38:24Z
 - commits:
-  - hash: 5a4980e83f139213872efea8a102d3b0c13b1cae
+    - hash: 5a4980e83f139213872efea8a102d3b0c13b1cae
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Require a change-type for pull requests
+    - subject: Require a change-type for pull requests
 - commits:
-  - body:
+    - ? body
 - version: 0.15.2
 - date: 2022-08-25T17:57:54Z
 - commits:
-  - hash: c53099c0e9502b2af5209476250a9473e3ae85ec
+    - hash: c53099c0e9502b2af5209476250a9473e3ae85ec
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix parsing of the changelog when repo type is not node
+    - subject: Fix parsing of the changelog when repo type is not node
 - commits:
-  - body:
+    - ? body
 - version: 0.15.1
 - date: 2022-08-25T16:22:13Z
 - commits:
-  - hash: 9a6f18fcebdbee42f85fc5ef406719de84688fd4
+    - hash: 9a6f18fcebdbee42f85fc5ef406719de84688fd4
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Test with multiple docker images input
+    - subject: Test with multiple docker images input
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 7df85267740d2465da109f86fc459d63fd594944
+    - hash: 7df85267740d2465da109f86fc459d63fd594944
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix input parsing when multiple docker images are provided
+    - subject: Fix input parsing when multiple docker images are provided
 - commits:
-  - body:
+    - ? body
 - version: 0.15.0
 - date: 2022-08-25T14:40:40Z
 - commits:
-  - hash: 8fa752fd418215e30952207d695feeab004a9849
+    - hash: 8fa752fd418215e30952207d695feeab004a9849
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Combine ghcr and dockerhub image lists into one
+    - subject: Combine ghcr and dockerhub image lists into one
 - commits:
-  - body: |-
-      This simplifies the workflow and configuration of inputs
-      and allows for extending to additional registries in the
-      future.
+    - body: |-
+        This simplifies the workflow and configuration of inputs
+        and allows for extending to additional registries in the
+        future.
 - version: 0.14.2
 - date: 2022-08-25T10:10:51Z
 - commits:
-  - hash: 72f1850dce7ef71f568712c5bf67b763164fba26
+    - hash: 72f1850dce7ef71f568712c5bf67b763164fba26
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Set required approvals back to 1 for flowzone
+    - subject: Set required approvals back to 1 for flowzone
 - commits:
-  - body:
+    - ? body
 - version: 0.14.1
 - date: 2022-08-25T09:57:43Z
 - commits:
-  - hash: c7aaa2c4736c4a692675a92a3cae618f91eb98af
+    - hash: c7aaa2c4736c4a692675a92a3cae618f91eb98af
 - commits:
-  - author: Anuj Deshpande
+    - author: Anuj Deshpande
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - subject: Add example of configuring input to usage
+    - subject: Add example of configuring input to usage
 - commits:
-  - body:
+    - ? body
 - version: 0.14.0
 - date: 2022-08-24T23:44:17Z
 - commits:
-  - hash: 1642eaa5b1acd8497f7dc1260bd7b1f59ca028c9
+    - hash: 1642eaa5b1acd8497f7dc1260bd7b1f59ca028c9
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Enable dockerhub artifacts by default
+    - subject: Enable dockerhub artifacts by default
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 0e4accc226ecfad86d88a34e0c1564228ad14c09
+    - hash: 0e4accc226ecfad86d88a34e0c1564228ad14c09
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Only push one balenaCloud release by default
+    - subject: Only push one balenaCloud release by default
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 157d3c3e4ee55c1e7c2cb8d4519921b80fbde486
+    - hash: 157d3c3e4ee55c1e7c2cb8d4519921b80fbde486
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename docker credential secrets to be specific to DockerHub
+    - subject: Rename docker credential secrets to be specific to DockerHub
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: c2ccd93822eefcb3fc2974cc27a8bd1867f595fc
+    - hash: c2ccd93822eefcb3fc2974cc27a8bd1867f595fc
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Update deploy-to-balena action to 0.13.0
+    - subject: Update deploy-to-balena action to 0.13.0
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 6cc97807f8c0b42927383ace80ea4823e94bb5e9
+    - hash: 6cc97807f8c0b42927383ace80ea4823e94bb5e9
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove YAML from inputs section of readme
+    - subject: Remove YAML from inputs section of readme
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: f2097a3a2c947f54adeac650fea2e5542b5a5500
+    - hash: f2097a3a2c947f54adeac650fea2e5542b5a5500
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Set test npm project to private
+    - subject: Set test npm project to private
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 84c45f165445098854244efb2f548b4ed5adf868
+    - hash: 84c45f165445098854244efb2f548b4ed5adf868
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Set repo type to node if package.json is detected
+    - subject: Set repo type to node if package.json is detected
 - commits:
-  - body: This only happens if repo.yml does not exist
+    - body: This only happens if repo.yml does not exist
 - commits:
-  - hash: aa2b1eb8e1eadeb225beb13f057d556ce1f3b44f
+    - hash: aa2b1eb8e1eadeb225beb13f057d556ce1f3b44f
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Apply formatting to workflow
+    - subject: Apply formatting to workflow
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 7afecfff082faa570c4dc91a378d66342b86c4cd
+    - hash: 7afecfff082faa570c4dc91a378d66342b86c4cd
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix behaviour of the npm private flag
+    - subject: Fix behaviour of the npm private flag
 - commits:
-  - body:
+    - ? body
 - version: 0.13.4
 - date: 2022-08-24T20:01:48Z
 - commits:
-  - hash: 17ad26c5ebdad709e4ee76590b36ea6328192445
+    - hash: 17ad26c5ebdad709e4ee76590b36ea6328192445
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Force tagging because the previous commit must not have merged
+    - subject: Force tagging because the previous commit must not have merged
 - commits:
-  - body:
+    - ? body
 - version: 0.13.3
 - date: 2022-08-24T18:42:22Z
 - commits:
-  - hash: 3dbfb284d500b0a7c699c2303bbef439706212d2
+    - hash: 3dbfb284d500b0a7c699c2303bbef439706212d2
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Replace BALENA_API_KEY_PUSH secret with BALENA_API_KEY
+    - subject: Replace BALENA_API_KEY_PUSH secret with BALENA_API_KEY
 - commits:
-  - body:
+    - ? body
 - version: 0.13.2
 - date: 2022-08-24T18:03:07Z
 - commits:
-  - hash: a34950304de3f8ed607f61a388e4861d9a2f4f0d
+    - hash: a34950304de3f8ed607f61a388e4861d9a2f4f0d
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Allow PRs without a change type to publish draft releases
+    - subject: Allow PRs without a change type to publish draft releases
 - commits:
-  - body: Failures are still expected on merge as npm cannot overwrite a release.
+    - body: Failures are still expected on merge as npm cannot overwrite a release.
 - commits:
-  - hash: 8f743eaff9dc6be9a4465d313c2333ee582b268d
+    - hash: 8f743eaff9dc6be9a4465d313c2333ee582b268d
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Clean up the detail for inputs
+    - subject: Clean up the detail for inputs
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 8c5808b3725a09b26185d8df42b69bf50c3a578e
+    - hash: 8c5808b3725a09b26185d8df42b69bf50c3a578e
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Skip versioned commit if no changes were made by versionist
+    - subject: Skip versioned commit if no changes were made by versionist
 - commits:
-  - body:
+    - ? body
 - version: 0.13.1
 - date: 2022-08-24T17:17:04Z
 - commits:
-  - hash: a25a6711f06f9202f68f22e0f9acf2f95c3bb82f
+    - hash: a25a6711f06f9202f68f22e0f9acf2f95c3bb82f
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Describe secrets and inputs with headings instead of a table
+    - subject: Describe secrets and inputs with headings instead of a table
 - commits:
-  - body:
+    - ? body
 - version: 0.13.0
 - date: 2022-08-24T16:07:38Z
 - commits:
-  - hash: 0efa9cc5ee540f765c3aad84f282d36b278d778b
+    - hash: 0efa9cc5ee540f765c3aad84f282d36b278d778b
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Allow configuring of additional required status checks
+    - subject: Allow configuring of additional required status checks
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: d6d37e7d8733d9516d1b06f1b834c86d13141e7d
+    - hash: d6d37e7d8733d9516d1b06f1b834c86d13141e7d
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Update readme to include npm_registry input
+    - subject: Update readme to include npm_registry input
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: c4d67aafb1c5b2ee1fc24d1f19f07b4ee06eaafc
+    - hash: c4d67aafb1c5b2ee1fc24d1f19f07b4ee06eaafc
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Clarify in getting started that branch protection rules can be disabled
+    - subject: Clarify in getting started that branch protection rules can be disabled
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 107af59ec4b92a139155c5d88881102082565ffb
+    - hash: 107af59ec4b92a139155c5d88881102082565ffb
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'BREAKING: Switch to comma-delimited strings for inputs'
+    - subject: "BREAKING: Switch to comma-delimited strings for inputs"
 - commits:
-  - body:
+    - ? body
 - version: 0.12.8
 - date: 2022-08-24T01:46:25Z
 - commits:
-  - hash: 692baba742a58237fba84544d79b560b89232652
+    - hash: 692baba742a58237fba84544d79b560b89232652
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Create a symlink to balena.yml so it can be versioned
+    - subject: Create a symlink to balena.yml so it can be versioned
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 217fe740d3bff85ac5cea9400b4e49ce25c973e2
+    - hash: 217fe740d3bff85ac5cea9400b4e49ce25c973e2
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove stale version file as the repo type is node
+    - subject: Remove stale version file as the repo type is node
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 2a7e363f261d639f5d83e929b18cadab153ad213
+    - hash: 2a7e363f261d639f5d83e929b18cadab153ad213
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Inject a repo.yml if one does not exist
+    - subject: Inject a repo.yml if one does not exist
 - commits:
-  - body: |-
-      The presence or absense of repo.yml will change the formatting
-      of the changelog and break the version parsing used in this job.
+    - body: |-
+        The presence or absense of repo.yml will change the formatting
+        of the changelog and break the version parsing used in this job.
 - version: 0.12.7
 - date: 2022-08-24T00:59:59Z
 - commits:
-  - hash: 09a3d53bfa7da85253a3e3f5406a487677c8eff1
+    - hash: 09a3d53bfa7da85253a3e3f5406a487677c8eff1
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Extract the new version from the changelog
+    - subject: Extract the new version from the changelog
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: c554e0f37e61a907a9610df91417d6467053f2ac
+    - hash: c554e0f37e61a907a9610df91417d6467053f2ac
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove check for repo.yml
+    - subject: Remove check for repo.yml
 - commits:
-  - body: Ideally we could remove this requirement from versionist.
+    - body: Ideally we could remove this requirement from versionist.
 - version: 0.12.6
 - date: 2022-08-24T00:34:45Z
 - commits:
-  - hash: 68c89d31b1407bfa14c04bd49a7bf80ebeefc3be
+    - hash: 68c89d31b1407bfa14c04bd49a7bf80ebeefc3be
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Do not include the v prefix on versioned docker tags
+    - subject: Do not include the v prefix on versioned docker tags
 - commits:
-  - body:
+    - ? body
 - version: 0.12.5
 - date: 2022-08-24T00:08:28Z
 - commits:
-  - hash: 26de65ad903c943415a22fb05f2c5ac67a88d1db
+    - hash: 26de65ad903c943415a22fb05f2c5ac67a88d1db
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove docker cache from input and use latest and edge tags
+    - subject: Remove docker cache from input and use latest and edge tags
 - commits:
-  - body:
+    - ? body
 - version: 0.12.4
 - date: 2022-08-24T00:03:44Z
 - commits:
-  - hash: 4f35b00aaf83821143177f0788e2b47f8155a4fc
+    - hash: 4f35b00aaf83821143177f0788e2b47f8155a4fc
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Only run protect branch on pull request events
+    - subject: Only run protect branch on pull request events
 - commits:
-  - body:
+    - ? body
 - version: 0.12.3
 - date: 2022-08-23T21:53:09Z
 - commits:
-  - hash: baa87567f2081d386e0d083ffca5176bd60f3a00
+    - hash: baa87567f2081d386e0d083ffca5176bd60f3a00
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Restore protect branch input that was removed by mistake
+    - subject: Restore protect branch input that was removed by mistake
 - commits:
-  - body:
+    - ? body
 - version: 0.12.2
 - date: 2022-08-23T20:04:06Z
 - commits:
-  - hash: b5e8345dcf42f2fca6812a4b757621faaba91fee
+    - hash: b5e8345dcf42f2fca6812a4b757621faaba91fee
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Protect branch depends on all other jobs but allows skipped jobs
+    - subject: Protect branch depends on all other jobs but allows skipped jobs
 - commits:
-  - body:
+    - ? body
 - version: 0.12.1
 - date: 2022-08-23T19:58:29Z
 - commits:
-  - hash: 19a794054c2634a6736e451308c519792da8ecc0
+    - hash: 19a794054c2634a6736e451308c519792da8ecc0
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix missing dependency on versioned source for docker publish
+    - subject: Fix missing dependency on versioned source for docker publish
 - commits:
-  - body:
+    - ? body
 - version: 0.12.0
 - date: 2022-08-23T19:52:07Z
 - commits:
-  - hash: 981dcba1fbab5e541ddf135b97891ff709d47e3a
+    - hash: 981dcba1fbab5e541ddf135b97891ff709d47e3a
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Merge docker draft and docker finalize jobs
+    - subject: Merge docker draft and docker finalize jobs
 - commits:
-  - body:
+    - ? body
 - version: 0.11.0
 - date: 2022-08-23T19:23:40Z
 - commits:
-  - hash: 53f81120f989492b2c937c3614a53292c45e2acf
+    - hash: 53f81120f989492b2c937c3614a53292c45e2acf
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Increase logging of npm publish commands
+    - subject: Increase logging of npm publish commands
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: f394373b24c4ae9f943c6340f77625ca4f428cb6
+    - hash: f394373b24c4ae9f943c6340f77625ca4f428cb6
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Combine npm draft and npm final steps
+    - subject: Combine npm draft and npm final steps
 - commits:
-  - body:
+    - ? body
 - version: 0.10.1
 - date: 2022-08-23T17:59:56Z
 - commits:
-  - hash: f8295ebb1d065689e6b10e9ea10d4a6087981524
+    - hash: f8295ebb1d065689e6b10e9ea10d4a6087981524
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Combine docker merge and tagged steps
+    - subject: Combine docker merge and tagged steps
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 282d1c0056080fc456bf49603983690c0661ac87
+    - hash: 282d1c0056080fc456bf49603983690c0661ac87
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove tagged source job
+    - subject: Remove tagged source job
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 9aaff985949bacf3d26ba2e5631f916223d9e2d5
+    - hash: 9aaff985949bacf3d26ba2e5631f916223d9e2d5
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Clean up job dependencies
+    - subject: Clean up job dependencies
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 928891deed027a2edb685a6bb79b277241d0b24e
+    - hash: 928891deed027a2edb685a6bb79b277241d0b24e
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Enable shell tracing across all jobs
+    - subject: Enable shell tracing across all jobs
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 488348a766f83d1b1a22191e4138b2546e5c1be0
+    - hash: 488348a766f83d1b1a22191e4138b2546e5c1be0
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Skip triggers on tags for this repo
+    - subject: Skip triggers on tags for this repo
 - commits:
-  - body:
+    - ? body
 - version: 0.10.0
 - date: 2022-08-23T16:56:54Z
 - commits:
-  - hash: a85d6559dec4d0ed7d4138cfdc9e3bfff7965124
+    - hash: a85d6559dec4d0ed7d4138cfdc9e3bfff7965124
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Require full fetch depth for versionist'
+    - subject: "patch: Require full fetch depth for versionist"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 34e3cc739af282d24081efb25dcbba85e60d81a3
+    - hash: 34e3cc739af282d24081efb25dcbba85e60d81a3
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Skip extra versioning on npm merge
+    - subject: Skip extra versioning on npm merge
 - commits:
-  - body: The source should already be up-to-date
+    - body: The source should already be up-to-date
 - commits:
-  - hash: f905739576c5f6dd4c896c1d622b7c1c210b2e8e
+    - hash: f905739576c5f6dd4c896c1d622b7c1c210b2e8e
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix typo in versioned source outputs
+    - subject: Fix typo in versioned source outputs
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 4e657171864d718e730008e6fe7ddcd826b2358e
+    - hash: 4e657171864d718e730008e6fe7ddcd826b2358e
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Automatically determine max version applied by versionist
+    - subject: Automatically determine max version applied by versionist
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: f178e1fe0794cbfb9edb7673eb1a164a4a40c451
+    - hash: f178e1fe0794cbfb9edb7673eb1a164a4a40c451
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Combine version draft and tag jobs
+    - subject: Combine version draft and tag jobs
 - commits:
-  - body:
+    - ? body
 - version: 0.9.1
 - date: 2022-08-23T15:44:09Z
 - commits:
-  - hash: d8a802b6c8f7381584f7de8f5822154c55fe0305
+    - hash: d8a802b6c8f7381584f7de8f5822154c55fe0305
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Determine the highest version in all versioned files
+    - subject: Determine the highest version in all versioned files
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 89a641b3ac1c5bf071807317086037eba2177dbc
+    - hash: 89a641b3ac1c5bf071807317086037eba2177dbc
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Use skip_versioning flag to determine whether source is versioned
+    - subject: Use skip_versioning flag to determine whether source is versioned
 - commits:
-  - body:
+    - ? body
 - version: 0.9.0
 - date: 2022-08-23T15:33:35Z
 - commits:
-  - hash: b567fa1e83c6593ca915b22538dbe4004bfe237d
+    - hash: b567fa1e83c6593ca915b22538dbe4004bfe237d
 - commits:
-  - author: Carlo Miguel F. Cruz
+    - author: Carlo Miguel F. Cruz
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Carlo Miguel F. Cruz <carloc@balena.io>
+    - footers:
+        signed-off-by: Carlo Miguel F. Cruz <carloc@balena.io>
 - commits:
-  - subject: Do versioning on the PR branch using balena-versionist.
+    - subject: Do versioning on the PR branch using balena-versionist.
 - commits:
-  - body: |-
-      Versioning used to be done by the balenaCI but we can already
-      do the same using Flowzone and ignore the versioned branch created
-      by the balenaCI's Versionbot.
+    - body: |-
+        Versioning used to be done by the balenaCI but we can already
+        do the same using Flowzone and ignore the versioned branch created
+        by the balenaCI's Versionbot.
 - version: 0.8.3
 - date: 2022-08-23T00:17:02Z
 - commits:
-  - hash: b6cd15285e14d5d4010d45ac1b14e36ce3f95392
+    - hash: b6cd15285e14d5d4010d45ac1b14e36ce3f95392
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename NPM to npm to match the official product name
+    - subject: Rename NPM to npm to match the official product name
 - commits:
-  - body:
+    - ? body
 - version: 0.8.2
 - date: 2022-08-23T00:06:35Z
 - commits:
-  - hash: 0cc41793d3b4fee39c310d64d999fb18114a7573
+    - hash: 0cc41793d3b4fee39c310d64d999fb18114a7573
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'version_draft: Prefer version in package.json over VERSION file'
+    - subject: "version_draft: Prefer version in package.json over VERSION file"
 - commits:
-  - body: If package.json exists it would be more likely to be up-to-date.
+    - body: If package.json exists it would be more likely to be up-to-date.
 - commits:
-  - hash: e2b673520633e34217ae23e5108f9d6537405f6c
+    - hash: e2b673520633e34217ae23e5108f9d6537405f6c
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'npm_merge: Get version from version_merge job'
+    - subject: "npm_merge: Get version from version_merge job"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 765012d03d3d176c33895ac8dde07256af2b80ae
+    - hash: 765012d03d3d176c33895ac8dde07256af2b80ae
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'npm_merge: Download versioned source from previous workflow run'
+    - subject: "npm_merge: Download versioned source from previous workflow run"
 - commits:
-  - body: |-
-      Similar to version_merge, npm_merge requires package.json with the
-      new version in order to publish.
+    - body: |-
+        Similar to version_merge, npm_merge requires package.json with the
+        new version in order to publish.
 - commits:
-  - hash: 39a8d5dd3f301940c266d2602042f831783d2134
+    - hash: 39a8d5dd3f301940c266d2602042f831783d2134
 - commits:
-  - author: ab77
+    - author: ab77
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - subject: Node npm package publishing
+    - subject: Node npm package publishing
 - commits:
-  - body:
+    - ? body
 - version: 0.7.0
 - date: 2022-08-19T10:49:26Z
 - commits:
-  - hash: ad298034c48b09b0bc9e89ab5c83ba267a157d12
+    - hash: ad298034c48b09b0bc9e89ab5c83ba267a157d12
 - commits:
-  - author: Carlo Miguel F. Cruz
+    - author: Carlo Miguel F. Cruz
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Carlo Miguel F. Cruz <carloc@balena.io>
+    - footers:
+        signed-off-by: Carlo Miguel F. Cruz <carloc@balena.io>
 - commits:
-  - subject: Run versionist if versiobot branch for PR does not exist.
+    - subject: Run versionist if versiobot branch for PR does not exist.
 - commits:
-  - body:
+    - ? body
 - version: 0.6.12
 - date: 2022-08-15T16:18:00Z
 - commits:
-  - hash: 9cc28d59e6e0c34c31e4abe4e5544eb02ef07eb8
+    - hash: 9cc28d59e6e0c34c31e4abe4e5544eb02ef07eb8
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Ensure NPM merge and tag only runs when npm sources are found
+    - subject: Ensure NPM merge and tag only runs when npm sources are found
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 1be10b248a64305bea05f60a3d8fb546ba3095fa
+    - hash: 1be10b248a64305bea05f60a3d8fb546ba3095fa
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Hardcode the edge tag when merging without versionbot
+    - subject: Hardcode the edge tag when merging without versionbot
 - commits:
-  - body: The metadata action does not treat merge events as edge.
+    - body: The metadata action does not treat merge events as edge.
 - version: 0.6.11
 - date: 2022-08-15T16:08:25Z
 - commits:
-  - hash: fedb907b1d1efe2a4c6402d716552ca622406b8b
+    - hash: fedb907b1d1efe2a4c6402d716552ca622406b8b
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Only extract version info if author is versionbot'
+    - subject: "patch: Only extract version info if author is versionbot"
 - commits:
-  - body:
+    - ? body
 - version: 0.6.10
 - date: 2022-08-15T15:55:20Z
 - commits:
-  - hash: 72bbfaad8f5a99c27c6af6e4ef59dc3a569d7cf0
+    - hash: 72bbfaad8f5a99c27c6af6e4ef59dc3a569d7cf0
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Set ghcr.io username to flowzone
+    - subject: Set ghcr.io username to flowzone
 - commits:
-  - body: |-
-      It doesn't seem to matter what username we have here so might
-      as well set it to something generic.
+    - body: |-
+        It doesn't seem to matter what username we have here so might
+        as well set it to something generic.
 - commits:
-  - hash: f000aa7bc14816d2cb1b799afb093d5adaa67036
+    - hash: f000aa7bc14816d2cb1b799afb093d5adaa67036
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add optional secret for the ghcr.io token
+    - subject: Add optional secret for the ghcr.io token
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: b526ecc0de927dd55167249948bdd6c976c0f2a8
+    - hash: b526ecc0de927dd55167249948bdd6c976c0f2a8
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Disable github context debugging
+    - subject: Disable github context debugging
 - commits:
-  - body:
+    - ? body
 - version: 0.6.9
 - date: 2022-08-15T15:20:35Z
 - commits:
-  - hash: de7fc99706457e6cb62fc71f7ec150222d3d257e
+    - hash: de7fc99706457e6cb62fc71f7ec150222d3d257e
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Demonstrate that secrets can only be inherited in some cases
+    - subject: Demonstrate that secrets can only be inherited in some cases
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 66f8b13a5423853cca7b551fe27e1b7682e2dab8
+    - hash: 66f8b13a5423853cca7b551fe27e1b7682e2dab8
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add versionbot section to the readme
+    - subject: Add versionbot section to the readme
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: cfbf6a3e61589dc5966b61f3d8c01788e9036ca4
+    - hash: cfbf6a3e61589dc5966b61f3d8c01788e9036ca4
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Move migration steps to a generic Getting Started section
+    - subject: Move migration steps to a generic Getting Started section
 - commits:
-  - body: The resinCI disable steps were no longer required anyway.
+    - body: The resinCI disable steps were no longer required anyway.
 - version: 0.6.8
 - date: 2022-08-15T14:49:43Z
 - commits:
-  - hash: c004af5e9ac08db1e16fc22d197b2bccb70c356a
+    - hash: c004af5e9ac08db1e16fc22d197b2bccb70c356a
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Remove prefix restrictions from tags trigger'
+    - subject: "patch: Remove prefix restrictions from tags trigger"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 6b89ec3b1ef802372c5459dedf21de7eb2a0bc43
+    - hash: 6b89ec3b1ef802372c5459dedf21de7eb2a0bc43
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Remove unecessary versionbot check from balena_merge'
+    - subject: "patch: Remove unecessary versionbot check from balena_merge"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 9879ac9bb2090cebceafcec52eb82fa8b170edef
+    - hash: 9879ac9bb2090cebceafcec52eb82fa8b170edef
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Generate Docker edge tags for merges without versionbot
+    - subject: Generate Docker edge tags for merges without versionbot
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 50feb95291319ad486cf0ed27194488375ad5aed
+    - hash: 50feb95291319ad486cf0ed27194488375ad5aed
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Only apply platform suffix to image tags, not labels
+    - subject: Only apply platform suffix to image tags, not labels
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: c0cc231d13ad751b0e2a6c61a6229d6550b03c82
+    - hash: c0cc231d13ad751b0e2a6c61a6229d6550b03c82
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add placeholder for npm edge tag publish
+    - subject: Add placeholder for npm edge tag publish
 - commits:
-  - body:
+    - ? body
 - version: 0.6.7
 - date: 2022-08-15T01:42:10Z
 - commits:
-  - hash: 151916d87733fdeca8aed0a8221c6fa8483fa346
+    - hash: 151916d87733fdeca8aed0a8221c6fa8483fa346
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Fix inputs example in readme'
+    - subject: "patch: Fix inputs example in readme"
 - commits:
-  - body:
+    - ? body
 - version: 0.6.6
 - date: 2022-08-15T01:33:26Z
 - commits:
-  - hash: 0c2f4dd27bb6ab73d1e7c5ebd970aa8d4c739304
+    - hash: 0c2f4dd27bb6ab73d1e7c5ebd970aa8d4c739304
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Assert that versioned source is up-to-date
+    - subject: Assert that versioned source is up-to-date
 - commits:
-  - body:
+    - ? body
 - version: 0.6.5
 - date: 2022-08-15T01:16:31Z
 - commits:
-  - hash: d33f08335a233aa97eb2f9e3fa37fdc6d315f52d
+    - hash: d33f08335a233aa97eb2f9e3fa37fdc6d315f52d
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix protect branch run conditions
+    - subject: Fix protect branch run conditions
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 848a81f718f4d7c232ad71d5c03b9d1edb87c441
+    - hash: 848a81f718f4d7c232ad71d5c03b9d1edb87c441
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add new input to optionally disable setting of branch protections
+    - subject: Add new input to optionally disable setting of branch protections
 - commits:
-  - body:
+    - ? body
 - version: 0.6.4
 - date: 2022-08-15T00:50:43Z
 - commits:
-  - hash: 88d16e6a2b6b769cd87a5166a4df0719b0d83455
+    - hash: 88d16e6a2b6b769cd87a5166a4df0719b0d83455
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename source and context checks
+    - subject: Rename source and context checks
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 18030b148f042c00a4556adb1c018f0b93408473
+    - hash: 18030b148f042c00a4556adb1c018f0b93408473
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Refactor job dependencies
+    - subject: Refactor job dependencies
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: d3d551d6428e670c3de4cb7a069dd5c236d89f45
+    - hash: d3d551d6428e670c3de4cb7a069dd5c236d89f45
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix npm private check
+    - subject: Fix npm private check
 - commits:
-  - body:
+    - ? body
 - version: 0.6.3
 - date: 2022-08-14T17:39:29Z
 - commits:
-  - hash: bf10d2acee026e3638e8811fb79002e3a3602e64
+    - hash: bf10d2acee026e3638e8811fb79002e3a3602e64
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Fix check for tag events'
+    - subject: "patch: Fix check for tag events"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 9732704a3313c51b18763a9f1b30c6dc2eca8a84
+    - hash: 9732704a3313c51b18763a9f1b30c6dc2eca8a84
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Only dump github context during the sanitize inputs job
+    - subject: Only dump github context during the sanitize inputs job
 - commits:
-  - body: This is for debugging and can be removed later
+    - body: This is for debugging and can be removed later
 - version: 0.6.2
 - date: 2022-08-14T17:25:43Z
 - commits:
-  - hash: 1a5fbba9a3f32f911bcf50944ed3d18cb7876586
+    - hash: 1a5fbba9a3f32f911bcf50944ed3d18cb7876586
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Enable tag events for this repo only
+    - subject: Enable tag events for this repo only
 - commits:
-  - body: Just to confirm that tags are ignored when versionbot is enabled.
+    - body: Just to confirm that tags are ignored when versionbot is enabled.
 - version: 0.6.1
 - date: 2022-08-14T17:13:38Z
 - commits:
-  - hash: 2d645f5a79237f94ab8fb127317bf2aeb28c2e00
+    - hash: 2d645f5a79237f94ab8fb127317bf2aeb28c2e00
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Fix check for versionbot author'
+    - subject: "patch: Fix check for versionbot author"
 - commits:
-  - body:
+    - ? body
 - version: 0.6.0
 - date: 2022-08-14T17:00:56Z
 - commits:
-  - hash: 5fdc56be16620e7e758757d2a6d3199defcd842b
+    - hash: 5fdc56be16620e7e758757d2a6d3199defcd842b
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Group jobs by project type, not events'
+    - subject: "patch: Group jobs by project type, not events"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 9c7eedc3a8961fc4ce5c4aa7f5a61239b0ac7751
+    - hash: 9c7eedc3a8961fc4ce5c4aa7f5a61239b0ac7751
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Rename jobs with project type prefix'
+    - subject: "patch: Rename jobs with project type prefix"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: bd9048f5f0b2e3fe253567622797ab67bc21d3c4
+    - hash: bd9048f5f0b2e3fe253567622797ab67bc21d3c4
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Finalize balena releases on non-versionbot tags
+    - subject: Finalize balena releases on non-versionbot tags
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: ae02f28ae1d64c1271ef2d62fe1060b647f3c8d9
+    - hash: ae02f28ae1d64c1271ef2d62fe1060b647f3c8d9
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Refactor the ghcr.io and docker.io deploy steps
+    - subject: Refactor the ghcr.io and docker.io deploy steps
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: f022d556fca0d65633ddb114cb97376af3a2ae26
+    - hash: f022d556fca0d65633ddb114cb97376af3a2ae26
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Create version tag event to extract tag info
+    - subject: Create version tag event to extract tag info
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 4435634d9fae384e7125d3fad878a416e3900048
+    - hash: 4435634d9fae384e7125d3fad878a416e3900048
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Split the multi-arch manifest creation as it requires registry auth
+    - subject: Split the multi-arch manifest creation as it requires registry auth
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 400611ffcf4f74c4391c728b0ee638706a6c4e87
+    - hash: 400611ffcf4f74c4391c728b0ee638706a6c4e87
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add docker job for tagged commits
+    - subject: Add docker job for tagged commits
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 4955c6f7ca869d98a721b703e8e356fddc6ae3b6
+    - hash: 4955c6f7ca869d98a721b703e8e356fddc6ae3b6
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add npm tag job
+    - subject: Add npm tag job
 - commits:
-  - body:
+    - ? body
 - version: 0.5.5
 - date: 2022-08-14T14:08:12Z
 - commits:
-  - hash: 13fb09dc3a6e62987c07b3c1fd98e4a44a24bc4d
+    - hash: 13fb09dc3a6e62987c07b3c1fd98e4a44a24bc4d
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Make some project-specific secrets optional
+    - subject: Make some project-specific secrets optional
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 174d2d7e3550a68d0cdccf1e04abc33e914c27a5
+    - hash: 174d2d7e3550a68d0cdccf1e04abc33e914c27a5
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Only finalize artifacts on merge if versionbot is in use
+    - subject: Only finalize artifacts on merge if versionbot is in use
 - commits:
-  - body:
+    - ? body
 - version: 0.5.4
 - date: 2022-08-14T13:48:11Z
 - commits:
-  - hash: b27c0582aee7342f469c8f25d6b86284960b1b5a
+    - hash: b27c0582aee7342f469c8f25d6b86284960b1b5a
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Update documentation for the supported project types
+    - subject: Update documentation for the supported project types
 - commits:
-  - body:
+    - ? body
 - version: 0.5.3
 - date: 2022-08-13T17:25:29Z
 - commits:
-  - hash: a65c211d37a19000708f89123273297c8656b24c
+    - hash: a65c211d37a19000708f89123273297c8656b24c
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Update maintenance section of readme'
+    - subject: "patch: Update maintenance section of readme"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 756346f0f5cbce85f48d6f1f6f2895e106053a5e
+    - hash: 756346f0f5cbce85f48d6f1f6f2895e106053a5e
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add placeholder for NPM finalize
+    - subject: Add placeholder for NPM finalize
 - commits:
-  - body:
+    - ? body
 - version: 0.5.2
 - date: 2022-08-13T17:19:26Z
 - commits:
-  - hash: 03cfa8d699bcc20ca72c490e817f188b3c745276
+    - hash: 03cfa8d699bcc20ca72c490e817f188b3c745276
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - subject: Create LICENSE
+    - subject: Create LICENSE
 - commits:
-  - body:
+    - ? body
 - version: 0.5.1
 - date: 2022-08-13T17:12:07Z
 - commits:
-  - hash: fdbd49b91f3e300155de7affdb47a2f79e45086a
+    - hash: fdbd49b91f3e300155de7affdb47a2f79e45086a
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Document required secrets in readme
+    - subject: Document required secrets in readme
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 9e6439f4c826dbf87d16c1a7d6b5e478c3b42e25
+    - hash: 9e6439f4c826dbf87d16c1a7d6b5e478c3b42e25
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Document inputs and defaults in the readme
+    - subject: Document inputs and defaults in the readme
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 5a87c2aa74d454df8afbd0aa1d664abf696ac1f9
+    - hash: 5a87c2aa74d454df8afbd0aa1d664abf696ac1f9
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove old resinCI check
+    - subject: Remove old resinCI check
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: d899467794f8c31cebc4559a16f6e3ea2ade525f
+    - hash: d899467794f8c31cebc4559a16f6e3ea2ade525f
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add contributing and help to the readme
+    - subject: Add contributing and help to the readme
 - commits:
-  - body:
+    - ? body
 - version: 0.5.0
 - date: 2022-08-13T00:18:21Z
 - commits:
-  - hash: ae49628173b14e26cc2d427893289a183d2a1751
+    - hash: ae49628173b14e26cc2d427893289a183d2a1751
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename some jobs to reflect draft vs final
+    - subject: Rename some jobs to reflect draft vs final
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 5d888417b942fe84b5d68320842111ddf24d4c0b
+    - hash: 5d888417b942fe84b5d68320842111ddf24d4c0b
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove unused artifact upload from finalize version job
+    - subject: Remove unused artifact upload from finalize version job
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 321de3d3e4c097bf6a9f290281c797abed159a5f
+    - hash: 321de3d3e4c097bf6a9f290281c797abed159a5f
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Refactor docker repositories into just ghcr.io and docker.io
+    - subject: Refactor docker repositories into just ghcr.io and docker.io
 - commits:
-  - body: |-
-      This is easier to maintain than a freeform array and is unlikely
-      to change in the near future.
+    - body: |-
+        This is easier to maintain than a freeform array and is unlikely
+        to change in the near future.
 - commits:
-  - hash: a560769996dba96c070be0710d148774ed990f9f
+    - hash: a560769996dba96c070be0710d148774ed990f9f
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rename eval_source job to inspect_source
+    - subject: Rename eval_source job to inspect_source
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 94c57f1133c5f19174ab26443e8020641924336f
+    - hash: 94c57f1133c5f19174ab26443e8020641924336f
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add Inspect source to required checks
+    - subject: Add Inspect source to required checks
 - commits:
-  - body:
+    - ? body
 - version: 0.4.11
 - date: 2022-08-12T20:22:29Z
 - commits:
-  - hash: af4a7a9c0d0cf2c549f762c8f8560160fe263b7a
+    - hash: af4a7a9c0d0cf2c549f762c8f8560160fe263b7a
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Finalize balena releases on merge'
+    - subject: "patch: Finalize balena releases on merge"
 - commits:
-  - body:
+    - ? body
 - version: 0.4.10
 - date: 2022-08-12T20:03:21Z
 - commits:
-  - hash: 2b2fae56a51af8d7bfded43f9d4dfa01417c4ebf
+    - hash: 2b2fae56a51af8d7bfded43f9d4dfa01417c4ebf
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Login to container registries for finalize
+    - subject: Login to container registries for finalize
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 5fd7aa81cb5bae98d4647c50b331dfb492844569
+    - hash: 5fd7aa81cb5bae98d4647c50b331dfb492844569
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Always run sanitize inputs and eval sources
+    - subject: Always run sanitize inputs and eval sources
 - commits:
-  - body:
+    - ? body
 - version: 0.4.9
 - date: 2022-08-12T19:24:56Z
 - commits:
-  - hash: 6eef73c94882b4a761afc3d49767ba33f57d58ba
+    - hash: 6eef73c94882b4a761afc3d49767ba33f57d58ba
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Login to container registries for finalize
+    - subject: Login to container registries for finalize
 - commits:
-  - body:
+    - ? body
 - version: 0.4.8
 - date: 2022-08-12T19:19:26Z
 - commits:
-  - hash: 5793dae1ea2592f0ba55a1875acb22091713fffa
+    - hash: 5793dae1ea2592f0ba55a1875acb22091713fffa
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Finalize docker images on merge events
+    - subject: Finalize docker images on merge events
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 670c2cf4adde4ddba8bfb9aa379b14ef5943d35f
+    - hash: 670c2cf4adde4ddba8bfb9aa379b14ef5943d35f
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove redundant resinCI checks
+    - subject: Remove redundant resinCI checks
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 2bf0b47f9d67c5675da2d50951be0ffc5bb0c437
+    - hash: 2bf0b47f9d67c5675da2d50951be0ffc5bb0c437
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove leftover dependencies from Docker (all) job
+    - subject: Remove leftover dependencies from Docker (all) job
 - commits:
-  - body:
+    - ? body
 - version: 0.4.7
 - date: 2022-08-12T16:33:01Z
 - commits:
-  - hash: 36f8a13d2aab30bb6df43c0f6b81c6a26a4be7c3
+    - hash: 36f8a13d2aab30bb6df43c0f6b81c6a26a4be7c3
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Use last commmit from head of the PR branch for artifact tags
+    - subject: Use last commmit from head of the PR branch for artifact tags
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: e452327ade3f5a489b70680439e454045750428e
+    - hash: e452327ade3f5a489b70680439e454045750428e
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Create a patch from the versioned commit and apply to main
+    - subject: Create a patch from the versioned commit and apply to main
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: f95a8a9dcdf14186b56dcf75ae6b7c301b663c01
+    - hash: f95a8a9dcdf14186b56dcf75ae6b7c301b663c01
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Use base sha when checking out main branch for versioned cherry-pick'
+    - subject: "patch: Use base sha when checking out main branch for versioned
+        cherry-pick"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: f9372dcb9cf1c8bd4548935da8ffd15b56c4f751
+    - hash: f9372dcb9cf1c8bd4548935da8ffd15b56c4f751
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Use tip of pull request branch to name artifacts'
+    - subject: "patch: Use tip of pull request branch to name artifacts"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: e10b01d96141a5dd5dcf10832df321b9fef8c0e6
+    - hash: e10b01d96141a5dd5dcf10832df321b9fef8c0e6
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Re-upload the versioned source artifact under a versioned name'
+    - subject: "patch: Re-upload the versioned source artifact under a versioned name"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 449958684755a509f2400eb92be4174ed14b7eea
+    - hash: 449958684755a509f2400eb92be4174ed14b7eea
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Append git sha to versioned source artifact name
+    - subject: Append git sha to versioned source artifact name
 - commits:
-  - body: |-
-      This should ensure that related jobs always download the
-      correct artifact.
+    - body: |-
+        This should ensure that related jobs always download the
+        correct artifact.
 - commits:
-  - hash: f2126eba602a3b6bae3536876829877a1fc81554
+    - hash: f2126eba602a3b6bae3536876829877a1fc81554
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Parse the version and sha in a separate build step
+    - subject: Parse the version and sha in a separate build step
 - commits:
-  - body:
+    - ? body
 - version: 0.4.6
 - date: 2022-08-11T20:35:24Z
 - commits:
-  - hash: 8babc92c6fb03c443177ca6d002ca3ec0a706c5d
+    - hash: 8babc92c6fb03c443177ca6d002ca3ec0a706c5d
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Push multiple architecture-specific balena releases by default
+    - subject: Push multiple architecture-specific balena releases by default
 - commits:
-  - body:
+    - ? body
 - version: 0.4.5
 - date: 2022-08-11T20:09:11Z
 - commits:
-  - hash: 2cd4eed312f49125ac002a8c05eb1f1e6a367fa2
+    - hash: 2cd4eed312f49125ac002a8c05eb1f1e6a367fa2
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Create docker manifest after individual platforms
+    - subject: Create docker manifest after individual platforms
 - commits:
-  - body:
+    - ? body
 - version: 0.4.4
 - date: 2022-08-11T13:34:28Z
 - commits:
-  - hash: 3f6cddc9554c2ee2c051b184524761396bde572c
+    - hash: 3f6cddc9554c2ee2c051b184524761396bde572c
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Avoid applying updated branch protections until all the jobs have passed
+    - subject: Avoid applying updated branch protections until all the jobs have passed
 - commits:
-  - body: |-
-      This should prevent repos getting stuck when migrating to Flowzone from
-      resinCI and new tests might not be passing yet.
+    - body: |-
+        This should prevent repos getting stuck when migrating to Flowzone from
+        resinCI and new tests might not be passing yet.
 - commits:
-  - hash: 1b10b817c3991b66d6be3f77f08672d3f453d6ea
+    - hash: 1b10b817c3991b66d6be3f77f08672d3f453d6ea
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Update migration steps in readme
+    - subject: Update migration steps in readme
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 8dc890c2a7e8d3e3ec85eac92af0581a245eec05
+    - hash: 8dc890c2a7e8d3e3ec85eac92af0581a245eec05
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Run protect branch even if required jobs are skipped
+    - subject: Run protect branch even if required jobs are skipped
 - commits:
-  - body:
+    - ? body
 - version: 0.4.3
 - date: 2022-08-11T13:01:24Z
 - commits:
-  - hash: 79fbd0e9ae3ab9ff811891192b27699794190a05
+    - hash: 79fbd0e9ae3ab9ff811891192b27699794190a05
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Split versioned source job into 3 smaller jobs
+    - subject: Split versioned source job into 3 smaller jobs
 - commits:
-  - body:
+    - ? body
 - version: 0.4.2
 - date: 2022-08-10T23:46:52Z
 - commits:
-  - hash: d8eb7bdb3d9f0c26c9190bf711c0134e50e189c3
+    - hash: d8eb7bdb3d9f0c26c9190bf711c0134e50e189c3
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Update examples in readme'
+    - subject: "patch: Update examples in readme"
 - commits:
-  - body:
+    - ? body
 - version: 0.4.1
 - date: 2022-08-10T23:42:15Z
 - commits:
-  - hash: 1b3072e5a18247b38362925c34f7b814ec2d13e0
+    - hash: 1b3072e5a18247b38362925c34f7b814ec2d13e0
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Split node and docker jobs into matrices
+    - subject: Split node and docker jobs into matrices
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: a9b26751eb41eb92433c5ffcddd6a075d9b4b37c
+    - hash: a9b26751eb41eb92433c5ffcddd6a075d9b4b37c
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Cherry-pick the versioned commit to main so we can gpg-sign
+    - subject: Cherry-pick the versioned commit to main so we can gpg-sign
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 1910ed02683872987dce31efd967c3118a329e1f
+    - hash: 1910ed02683872987dce31efd967c3118a329e1f
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Rebase versioned source before pushing to main
+    - subject: Rebase versioned source before pushing to main
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: aee2fa135baef1c16c2825eede5ad9d657ba08e9
+    - hash: aee2fa135baef1c16c2825eede5ad9d657ba08e9
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix versioned source extraction on merge
+    - subject: Fix versioned source extraction on merge
 - commits:
-  - body:
+    - ? body
 - version: 0.4.0
 - date: 2022-08-10T20:01:36Z
 - commits:
-  - hash: 41fafaf7d939d04da9ac39eaeb98c6cc0e84c2d8
+    - hash: 41fafaf7d939d04da9ac39eaeb98c6cc0e84c2d8
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add versioned source flow to merge versionbot commit to main
+    - subject: Add versioned source flow to merge versionbot commit to main
 - commits:
-  - body: |-
-      This allows maintaining the versioned commit hash between the tested PR
-      and merge to main.
+    - body: |-
+        This allows maintaining the versioned commit hash between the tested PR
+        and merge to main.
 - commits:
-  - hash: b6f268f8cf54890b93354b8110ebc91ffac8fda7
+    - hash: b6f268f8cf54890b93354b8110ebc91ffac8fda7
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove versionist flow in favour of versioned source flow
+    - subject: Remove versionist flow in favour of versioned source flow
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: b430d1245b635130231016867a4c9435df909819
+    - hash: b430d1245b635130231016867a4c9435df909819
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Use versioned source artifacts downstream jobs
+    - subject: Use versioned source artifacts downstream jobs
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 28ed06deeacffb5b0085f83c1a545de8042c026b
+    - hash: 28ed06deeacffb5b0085f83c1a545de8042c026b
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Tar versioned source before upload to maintain permissions
+    - subject: Tar versioned source before upload to maintain permissions
 - commits:
-  - body: https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
+    - body: https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
 - version: 0.3.0
 - date: 2022-08-10T16:36:10Z
 - commits:
-  - hash: 75032728921d20da4da4f5664bda3416dbd74af6
+    - hash: 75032728921d20da4da4f5664bda3416dbd74af6
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Merge versionist composite steps into flowzone workflow
+    - subject: Merge versionist composite steps into flowzone workflow
 - commits:
-  - body: Local composite steps are not available to external calling repos
+    - body: Local composite steps are not available to external calling repos
 - commits:
-  - hash: cf0968b6d86045bba6f57003c58eb319ee02b5cf
+    - hash: cf0968b6d86045bba6f57003c58eb319ee02b5cf
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Merge branch protection composite steps into flowzone workflow
+    - subject: Merge branch protection composite steps into flowzone workflow
 - commits:
-  - body: Local composite steps are not available to external calling repos
+    - body: Local composite steps are not available to external calling repos
 - commits:
-  - hash: 1f102c1bf7e46e085c2d7f41f261e594a1acd336
+    - hash: 1f102c1bf7e46e085c2d7f41f261e594a1acd336
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Merge NPM composite steps into flowzone workflow
+    - subject: Merge NPM composite steps into flowzone workflow
 - commits:
-  - body: Local composite steps are not available to external calling repos
+    - body: Local composite steps are not available to external calling repos
 - commits:
-  - hash: 2fccae45779479ff57a7d0455d7482b17300fe02
+    - hash: 2fccae45779479ff57a7d0455d7482b17300fe02
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Merge docker composite steps into flowzone workflow
+    - subject: Merge docker composite steps into flowzone workflow
 - commits:
-  - body: Local composite steps are not available to external calling repos
+    - body: Local composite steps are not available to external calling repos
 - commits:
-  - hash: 3e24c2aa315f2c9d3eba7d01e493cd66940f757d
+    - hash: 3e24c2aa315f2c9d3eba7d01e493cd66940f757d
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Lint flowzone workflow
+    - subject: Lint flowzone workflow
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: b9020544d09e57fad618b36bd76f9cd9f614a18b
+    - hash: b9020544d09e57fad618b36bd76f9cd9f614a18b
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix default docker context directory
+    - subject: Fix default docker context directory
 - commits:
-  - body:
+    - ? body
 - version: 0.2.0
 - date: 2022-08-10T14:42:50Z
 - commits:
-  - hash: f06d734656c3a8ef8b7d92d7e7170c1ccceb5064
+    - hash: f06d734656c3a8ef8b7d92d7e7170c1ccceb5064
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add deploy to balena flow
+    - subject: Add deploy to balena flow
 - commits:
-  - body:
+    - ? body
 - version: 0.1.6
 - date: 2022-08-10T14:28:49Z
 - commits:
-  - hash: e46d46868cca35739dc441f19f17dce2bc17cdbc
+    - hash: e46d46868cca35739dc441f19f17dce2bc17cdbc
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Remove branch protection rules from migration workflow
+    - subject: Remove branch protection rules from migration workflow
 - commits:
-  - body: |-
-      This is done automatically now when a PR is opened that
-      includes Flowzone, and should not need to be done manually.
+    - body: |-
+        This is done automatically now when a PR is opened that
+        includes Flowzone, and should not need to be done manually.
 - commits:
-  - hash: d07c4d85a099f0a69eabcc2715957f17ce5687cb
+    - hash: d07c4d85a099f0a69eabcc2715957f17ce5687cb
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Fix typo in protection rules
+    - subject: Fix typo in protection rules
 - commits:
-  - body:
+    - ? body
 - version: 0.1.5
 - date: 2022-08-10T14:11:28Z
 - commits:
-  - hash: 4f2d7a6e9ba2baf7c76de3cc7383dbde076adcf4
+    - hash: 4f2d7a6e9ba2baf7c76de3cc7383dbde076adcf4
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Apply branch protection rules on PR events
+    - subject: Apply branch protection rules on PR events
 - commits:
-  - body: |-
-      Otherwise removed or renamed Flowzone rules would effectively
-      block all PRs on repos that consume Flowzone.
+    - body: |-
+        Otherwise removed or renamed Flowzone rules would effectively
+        block all PRs on repos that consume Flowzone.
 - version: 0.1.4
 - date: 2022-08-09T23:00:05Z
 - commits:
-  - hash: 5766d1bc28c44597aa02bd630655d429ae8bd6fd
+    - hash: 5766d1bc28c44597aa02bd630655d429ae8bd6fd
 - commits:
-  - author: ab77
+    - author: ab77
 - commits:
-  - subject: 'patch: generate new GPG key (balena-ci)'
+    - subject: "patch: generate new GPG key (balena-ci)"
 - commits:
-  - body:
+    - ? body
 - version: 0.1.3
 - date: 2022-08-09T21:30:52Z
 - commits:
-  - hash: aadd18034d6a034a83af8ca7e567673af3c11f81
+    - hash: aadd18034d6a034a83af8ca7e567673af3c11f81
 - commits:
-  - author: ab77
+    - author: ab77
 - commits:
-  - subject: 'patch: correct secrets/inputs'
+    - subject: "patch: correct secrets/inputs"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 56ea553bebfdbbd42072a7d89809c4e8a716e480
+    - hash: 56ea553bebfdbbd42072a7d89809c4e8a716e480
 - commits:
-  - author: ab77
+    - author: ab77
 - commits:
-  - subject: 'patch: correct inputs'
+    - subject: "patch: correct inputs"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: f327a2f03bdead0df78cf234da54ccb00af89070
+    - hash: f327a2f03bdead0df78cf234da54ccb00af89070
 - commits:
-  - author: ab77
+    - author: ab77
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - subject: Checkout prior to running actions
+    - subject: Checkout prior to running actions
 - commits:
-  - body: |-
-      * remove redundant quotes
-      * begin comments with lowercase
-      * correct branding /nomenclature
+    - body: |-
+        * remove redundant quotes
+        * begin comments with lowercase
+        * correct branding /nomenclature
 - commits:
-  - hash: 112ccc597b6757e3a7740264f44f2d358dfcb1f6
+    - hash: 112ccc597b6757e3a7740264f44f2d358dfcb1f6
 - commits:
-  - author: ab77
+    - author: ab77
 - commits:
-  - subject: 'patch: configurable required_approving_review_count'
+    - subject: "patch: configurable required_approving_review_count"
 - commits:
-  - body:
+    - ? body
 - version: 0.1.2
 - date: 2022-08-09T19:55:27Z
 - commits:
-  - hash: d6a944958188be95a1344d980a4dfb4238d81455
+    - hash: d6a944958188be95a1344d980a4dfb4238d81455
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Rename versionist action'
+    - subject: "patch: Rename versionist action"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: e3235afcb7aa991837c029fb2bdf9f85e90cf7a8
+    - hash: e3235afcb7aa991837c029fb2bdf9f85e90cf7a8
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Remove references to versionbot'
+    - subject: "patch: Remove references to versionbot"
 - commits:
-  - body:
+    - ? body
 - version: 0.1.1
 - date: 2022-08-09T19:42:26Z
 - commits:
-  - hash: b69987648bc1daf77aecd53eb10f2d1eee3f8a72
+    - hash: b69987648bc1daf77aecd53eb10f2d1eee3f8a72
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Change the versionbot author to Flowzone'
+    - subject: "patch: Change the versionbot author to Flowzone"
 - commits:
-  - body:
+    - ? body
 - version: 0.1.0
 - date: 2022-08-09T19:30:25Z
 - commits:
-  - hash: 25420384368604a0386d142cfd1e09af51db9080
+    - hash: 25420384368604a0386d142cfd1e09af51db9080
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Update branch protection rules
+    - subject: Update branch protection rules
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 0fa5c3612124684bbf1e7ffdae5ba759bb2014c2
+    - hash: 0fa5c3612124684bbf1e7ffdae5ba759bb2014c2
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Extend docker flow to support multiarch and pushing to registries
+    - subject: Extend docker flow to support multiarch and pushing to registries
 - commits:
-  - body:
+    - ? body
 - version: 0.0.5
 - date: 2022-08-09T18:50:50Z
 - commits:
-  - hash: 68a1cf746a026c34298ae93a1e67b7b9acf26896
+    - hash: 68a1cf746a026c34298ae93a1e67b7b9acf26896
 - commits:
-  - author: ab77
+    - author: ab77
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - subject: Require Flowzone tests
+    - subject: Require Flowzone tests
 - commits:
-  - body: |-
-      * protect branch on merge
-      * update docs
+    - body: |-
+        * protect branch on merge
+        * update docs
 - version: 0.0.4
 - date: 2022-08-09T17:09:15Z
 - commits:
-  - hash: e310cdf32046baa63934a1eec222016af3f453da
+    - hash: e310cdf32046baa63934a1eec222016af3f453da
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Update example workflows
+    - subject: Update example workflows
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 9e5ec84d87d2ebd26c3a8e5334bc21be8a63fafe
+    - hash: 9e5ec84d87d2ebd26c3a8e5334bc21be8a63fafe
 - commits:
-  - author: Anton Belodedenko
+    - author: Anton Belodedenko
 - commits:
-  - subject: Merge branch 'master' into kyle/examples
+    - subject: Merge branch 'master' into kyle/examples
 - commits:
-  - body:
+    - ? body
 - version: 0.0.3
 - date: 2022-08-09T17:08:10Z
 - commits:
-  - hash: 4d5ea4f3d6fb7c1ddcc0a3f6a535e2d378df4bda
+    - hash: 4d5ea4f3d6fb7c1ddcc0a3f6a535e2d378df4bda
 - commits:
-  - author: ab77
+    - author: ab77
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - subject: Add resinCI migration instructions
+    - subject: Add resinCI migration instructions
 - commits:
-  - body:
+    - ? body
 - version: 0.0.2
 - date: 2022-08-09T16:19:46Z
 - commits:
-  - hash: bcf2a32fed5c735b3b325b02b723e2ecb89951f0
+    - hash: bcf2a32fed5c735b3b325b02b723e2ecb89951f0
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: patch
+    - footers:
+        change-type: patch
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Run versionist steps manually
+    - subject: Run versionist steps manually
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 9907800c927ed72be7df42a128e0ee5f2b9df518
+    - hash: 9907800c927ed72be7df42a128e0ee5f2b9df518
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Use flowzone token for checkout and push
+    - subject: Use flowzone token for checkout and push
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 4c5db84d5f8b4e6237e8521b335b39c07ad080f1
+    - hash: 4c5db84d5f8b4e6237e8521b335b39c07ad080f1
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Flatten test structure to emulate a single repo
+    - subject: Flatten test structure to emulate a single repo
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 6d33657cce8243e81671c9292701930ce5f13454
+    - hash: 6d33657cce8243e81671c9292701930ce5f13454
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Checkout source before calling local composite actions'
+    - subject: "patch: Checkout source before calling local composite actions"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: be12d61df32ce095ce394aeb67a5e4018eb9de8f
+    - hash: be12d61df32ce095ce394aeb67a5e4018eb9de8f
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Fix conditions for running versionbot'
+    - subject: "patch: Fix conditions for running versionbot"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: b221defda9afe8b779eabdbe11e057a24e795fb1
+    - hash: b221defda9afe8b779eabdbe11e057a24e795fb1
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Run versionbot on push to main branch'
+    - subject: "patch: Run versionbot on push to main branch"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 0d4f6ee6f7e9d6cbe00248910256f316dccc4821
+    - hash: 0d4f6ee6f7e9d6cbe00248910256f316dccc4821
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Set versionbot to checkout the base_ref'
+    - subject: "patch: Set versionbot to checkout the base_ref"
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 610125e22c6801c279cdd3941141547b3fbefc28
+    - hash: 610125e22c6801c279cdd3941141547b3fbefc28
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: 'patch: Set versionbot to checkout the base_ref'
+    - subject: "patch: Set versionbot to checkout the base_ref"
 - commits:
-  - body:
+    - ? body
 - version: 0.0.1
 - date: 2022-08-08T20:48:03Z
 - commits:
-  - hash: dd31c5063935b8f7821f20335dfee40ed5f88914
+    - hash: dd31c5063935b8f7821f20335dfee40ed5f88914
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add repo.yml for the versionbot GH app
+    - subject: Add repo.yml for the versionbot GH app
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 8861231aa21a040980ba6d928ca13593f0f1b3be
+    - hash: 8861231aa21a040980ba6d928ca13593f0f1b3be
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Disable resinCI entirely
+    - subject: Disable resinCI entirely
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 88065ac6a66761a58a84e3ee176ddae3a1fadf62
+    - hash: 88065ac6a66761a58a84e3ee176ddae3a1fadf62
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Add versionbot workflow
+    - subject: Add versionbot workflow
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 314ef9e5941651d9a6086a4aad5fcd34d0fb43e7
+    - hash: 314ef9e5941651d9a6086a4aad5fcd34d0fb43e7
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: Move NPM and Docker tests to composite workflows
+    - subject: Move NPM and Docker tests to composite workflows
 - commits:
-  - body: Functionality should not have changed, just moving the logic.
+    - body: Functionality should not have changed, just moving the logic.
 - commits:
-  - hash: 2194a294e6baf24f4840d7152b22d082651724cd
+    - hash: 2194a294e6baf24f4840d7152b22d082651724cd
 - commits:
-  - author: Kyle Harding
+    - author: Kyle Harding
 - commits:
-  - footers:
-      signed-off-by: Kyle Harding <kyle@balena.io>
+    - footers:
+        signed-off-by: Kyle Harding <kyle@balena.io>
 - commits:
-  - subject: User versioned source if possible
+    - subject: User versioned source if possible
 - commits:
-  - body:
+    - ? body
 - commits:
-  - hash: 30fb5de3bfda22ae7ad34e230958a32f69670720
+    - hash: 30fb5de3bfda22ae7ad34e230958a32f69670720
 - commits:
-  - author: Lucian Buzzo
+    - author: Lucian Buzzo
 - commits:
-  - footers:
-      change-type: minor
+    - footers:
+        change-type: minor
 - commits:
-  - footers:
-      signed-off-by: Lucian Buzzo <lucian.buzzo@gmail.com>
+    - footers:
+        signed-off-by: Lucian Buzzo <lucian.buzzo@gmail.com>
 - commits:
-  - subject: Add integration testing for CI flows
+    - subject: Add integration testing for CI flows
 - commits:
-  - body:
+    - ? body
