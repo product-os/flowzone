@@ -55,11 +55,6 @@ on:
         type: string
         required: false
         default: ${{ github.repository }}
-      npm_registry:
-        description: "Registry for publishing npm projects (skipped if empty)"
-        type: string
-        required: false
-        default: registry.npmjs.org
       docker_platforms:
         description: "Comma-delimited string of Docker target platforms"
         type: string
@@ -68,18 +63,6 @@ on:
           linux/amd64,
           linux/arm64,
           linux/arm/v7
-      docker_context:
-        description: "Docker build context directory"
-        type: string
-        required: false
-      docker_file:
-        description: "Path to the Dockerfile relative to the context"
-        type: string
-        required: false
-      docker_target:
-        description: "Sets the target stage to build"
-        type: string
-        required: false
       node_versions:
         description: "Comma-delimited string of Node.js versions to test"
         type: string
@@ -88,11 +71,6 @@ on:
           14.x,
           16.x,
           18.x
-      skip_versioning:
-        description: "Set to true to skip adding a version commit on top of the original source"
-        type: boolean
-        required: false
-        default: false
       protect_branch:
         description: "Set to false to disable updating branch protection rules after a successful run"
         type: boolean
@@ -112,6 +90,7 @@ on:
 env:
   GHCR_USER: "flowzone" # does not seem to matter what is used here
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
+  NPM_REGISTRY: registry.npmjs.org
 
 jobs:
   ###################################################
@@ -185,7 +164,7 @@ jobs:
   project_types:
     name: Project types
     runs-on: ubuntu-latest
-    needs: [context_check, package_source]
+    needs: [context_check]
 
     defaults:
       run:
@@ -197,20 +176,18 @@ jobs:
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
+      repo_type: ${{ steps.repo.outputs.type }} # can be null or unset
 
       custom_publish: ${{ steps.custom.outputs.draft }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_test: ${{ steps.custom.outputs.test }}
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
+      - name: Checkout source
+        uses: actions/checkout@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
-
-      - name: Extract source artifact
-        working-directory: .
-        run: tar -xvf source.tar
+          fetch-depth: 1
+          token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Check for package.json
         id: npm
@@ -262,6 +239,15 @@ jobs:
             echo "::set-output name=test::true"
           fi
 
+      - name: Check for repo.yml
+        id: repo
+        working-directory: .
+        run: |
+          if [ -f repo.yml ]
+          then
+            echo "::set-output name=type::$(yq e .type repo.yml)"
+          fi
+
   # this job will always run so it can be used as a branch rule
   # and other stages can depend on it to control job order
   all_published:
@@ -271,7 +257,7 @@ jobs:
       [
         context_check,
         project_types,
-        package_source,
+        versioned_source,
         docker_publish,
         npm_publish,
         custom_publish,
@@ -304,7 +290,7 @@ jobs:
       [
         context_check,
         project_types,
-        package_source,
+        versioned_source,
         docker_test,
         npm_test,
         custom_test,
@@ -358,7 +344,7 @@ jobs:
               "strict": true,
               "contexts": [
                 "Flowzone / Check context",
-                "Flowzone / Package source",
+                "Flowzone / Versioned source",
                 "Flowzone / Project types",
                 "Flowzone / All tests",
                 "Flowzone / All published",
@@ -393,10 +379,10 @@ jobs:
   ## source
   ###################################################
 
-  package_source:
-    name: Package source
+  versioned_source:
+    name: Versioned source
     runs-on: ubuntu-latest
-    needs: [context_check]
+    needs: [context_check, project_types]
 
     defaults:
       run:
@@ -404,8 +390,8 @@ jobs:
         shell: ${{ needs.context_check.outputs.shell }}
 
     outputs:
-      new_tag: ${{ steps.version_check.outputs.new_tag }}
-      version: ${{ steps.version_check.outputs.version }}
+      new_tag: ${{ steps.versionist.outputs.new_tag }}
+      version: ${{ steps.versionist.outputs.version }}
 
     steps:
       - name: Checkout source
@@ -415,7 +401,7 @@ jobs:
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Import GPG key for signing commits
-        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
+        if: needs.project_types.outputs.repo_type != '' && github.event_name == 'pull_request'
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@v4
         with:
@@ -425,45 +411,56 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
-      # install and run versionist and balena-versionist
-      # extract the latest version from the changelog
+      # install and run versionist via balena-versionist
+      # create changelog yaml if it does not exist (TODO: versionist should handle this automatically)
+      # exit if versionist didn't change anything
       - name: Run versionist
-        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
+        if: needs.project_types.outputs.repo_type != '' && github.event_name == 'pull_request'
         id: versionist
         run: |
           npm install -g balena-versionist versionist
           balena-versionist
           git status --porcelain
 
-      # exit if versionist didn't change anything or the changelog could not be parsed
-      - name: Check versionist results
-        if: inputs.skip_versioning == false && github.event_name == 'pull_request'
-        id: version_check
-        run: |
           test -n "$(git status --porcelain)" || { echo "Failed to version any files, did you include a Change-type?" ; exit 1 ; }
-          version="$(grep -E '^# v[0-9]+\.[0-9]+\.[0-9]+|^## [0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | head -n1 | awk '{print $2}' | tr -d 'v')"
-          test -n "${version}" || { echo "Failed to parse version from changelog!" ; exit 1 ; }
+
+          if [ ! -f .versionbot/CHANGELOG.yml ]
+          then
+            wget https://raw.githubusercontent.com/product-os/versionist/master/scripts/generate-changelog.sh
+            echo "c1d25c8d5dc40e08a13c43ac93582661  generate-changelog.sh" | md5sum -c -
+            chmod +x generate-changelog.sh
+
+            wget https://github.com/mikefarah/yq/releases/download/3.0.1/yq_linux_amd64 -O yq
+            echo "a1097c74b81a2ef255583d9718bf4be6  yq" | md5sum -c -
+            chmod +x yq
+
+            PATH="${PWD}:${PATH}" GH_TOKEN=${{ secrets.FLOWZONE_TOKEN }} ./generate-changelog.sh .
+            rm yq generate-changelog.sh
+          fi
+
+          version="$(yq e '.[0].version' -r .versionbot/CHANGELOG.yml)"
+          test -n "${version}" || { echo "Failed to get version from changelog!" ; exit 1 ; }
           echo "::set-output name=version::${version}"
           echo "::set-output name=new_tag::v${version}"
 
-      # create a versioned commit only if the the version has changed
+      # create a versioned commit
       - name: Create versioned commit
-        if: steps.version_check.outputs.new_tag != ''
+        if: steps.versionist.outputs.new_tag != ''
         env:
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          TAG: ${{ steps.version_check.outputs.new_tag }}
+          TAG: ${{ steps.versionist.outputs.new_tag }}
         run: |
           git add --all
-          git commit -m "${TAG}" --allow-empty
+          git commit -m "${TAG}"
           git tag -a "${TAG}" -m "${TAG}" -f
           git log -n 2
 
       # push the versioned commit only if the PR is merged
       - name: Push versioned commit
-        if: github.event.pull_request.merged == true && steps.version_check.outputs.new_tag != ''
+        if: github.event.pull_request.merged == true && steps.versionist.outputs.new_tag != ''
         run: |
           git push origin HEAD:${{ github.base_ref }} --follow-tags
 
@@ -484,7 +481,7 @@ jobs:
   npm_test:
     name: Test npm
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source]
+    needs: [context_check, project_types, versioned_source]
     if: |
       needs.project_types.outputs.npm == 'true' &&
       github.event.pull_request.merged == false &&
@@ -532,9 +529,8 @@ jobs:
   npm_publish:
     name: Publish npm
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source, all_tests]
+    needs: [context_check, project_types, versioned_source, all_tests]
     if: |
-      inputs.npm_registry != '' &&
       needs.project_types.outputs.npm_private != 'true'
 
     defaults:
@@ -569,7 +565,7 @@ jobs:
 
       - name: Login to registry
         run: |
-          echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+          echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
           npm whoami
 
       - name: Publish draft release
@@ -581,9 +577,8 @@ jobs:
   npm_finalize:
     name: Finalize npm
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source]
+    needs: [context_check, project_types, versioned_source]
     if: |
-      inputs.npm_registry != '' &&
       needs.project_types.outputs.npm == 'true' &&
       needs.project_types.outputs.npm_private != 'true' &&
       (github.event_name != 'pull_request' || github.event.pull_request.merged == true )
@@ -605,7 +600,7 @@ jobs:
 
       - name: Login to registry
         run: |
-          echo '//${{ inputs.npm_registry }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+          echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
           npm whoami
 
       - name: Publish final release
@@ -619,7 +614,7 @@ jobs:
   docker_test:
     name: Test docker
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source]
+    needs: [context_check, project_types, versioned_source]
     if: |
       needs.project_types.outputs.docker == 'true' &&
       github.event_name == 'pull_request' &&
@@ -688,14 +683,11 @@ jobs:
           cache-from: |
             type=gha
             ${{ steps.meta.outputs.tags }}
-          context: ${{ inputs.docker_context || inputs.working_directory }}
-          file: ${{ inputs.docker_file }}
-          target: ${{ inputs.docker_target }}
+          context: ${{ inputs.working_directory }}
           tags: |
             ${{ steps.meta.outputs.tags }}
           load: true
           push: false
-          # outputs: type=docker,dest=/tmp/docker.tar
 
       - name: Run docker-compose tests
         run: |
@@ -718,7 +710,7 @@ jobs:
   docker_publish:
     name: Publish docker
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source, all_tests]
+    needs: [context_check, project_types, versioned_source, all_tests]
     if: |
       needs.project_types.outputs.docker == 'true' &&
       inputs.docker_images != ''
@@ -801,7 +793,7 @@ jobs:
   docker_finalize:
     name: Finalize docker
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source]
+    needs: [context_check, project_types, versioned_source]
     if: |
       inputs.docker_images != '' &&
       needs.project_types.outputs.docker == 'true' &&
@@ -910,7 +902,7 @@ jobs:
   balena_publish:
     name: Publish balena
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source, all_tests]
+    needs: [context_check, project_types, versioned_source, all_tests]
     if: |
       needs.project_types.outputs.balena == 'true'
 
@@ -944,7 +936,7 @@ jobs:
   balena_finalize:
     name: Finalize balena
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source]
+    needs: [context_check, project_types, versioned_source]
     if: |
       needs.project_types.outputs.balena == 'true' &&
       (github.event_name != 'pull_request' || github.event.pull_request.merged == true)
@@ -983,7 +975,7 @@ jobs:
   custom_test:
     name: Test custom
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source]
+    needs: [context_check, project_types, versioned_source]
     if: |
       needs.project_types.outputs.custom_test == 'true' &&
       github.event_name == 'pull_request' &&
@@ -1013,7 +1005,7 @@ jobs:
   custom_publish:
     name: Publish custom
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source, all_tests]
+    needs: [context_check, project_types, versioned_source, all_tests]
     if: |
       needs.project_types.outputs.custom_publish == 'true' &&
       github.event_name == 'pull_request' &&
@@ -1043,7 +1035,7 @@ jobs:
   custom_finalize:
     name: Finalize custom
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, package_source]
+    needs: [context_check, project_types, versioned_source]
     if: |
       needs.project_types.outputs.custom_finalize == 'true' &&
       (github.event_name != 'pull_request' || github.event.pull_request.merged == true)

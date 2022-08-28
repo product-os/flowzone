@@ -12,7 +12,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [npm](#npm)
   - [Docker](#docker)
   - [balena](#balena)
-  - [Versionbot](#versionbot)
+  - [Versioning](#versioning)
 - [Customization](#customization)
   - [Secrets](#secrets)
     - [`FLOWZONE_TOKEN`](#flowzone_token)
@@ -28,13 +28,8 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`working_directory`](#working_directory)
     - [`docker_images`](#docker_images)
     - [`balena_slugs`](#balena_slugs)
-    - [`npm_registry`](#npm_registry)
     - [`docker_platforms`](#docker_platforms)
-    - [`docker_context`](#docker_context)
-    - [`docker_file`](#docker_file)
-    - [`docker_target`](#docker_target)
     - [`node_versions`](#node_versions)
-    - [`skip_versioning`](#skip_versioning)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
     - [`verbose`](#-verbose-)
@@ -115,7 +110,7 @@ If a build script is present in `package.json` it will be called before the test
 
 The [`node_versions`](#node_versions) will determine the Node.js versions used for testing.
 
-To disable publishing of artifacts set [`npm_registry`](#npm_registry) to `""` or set `"private": true` in `package.json`.
+To disable publishing of artifacts set `"private": true` in `package.json`.
 
 ### Docker
 
@@ -135,9 +130,11 @@ If a `balena.yml` file is found in the root of the repository Flowzone will atte
 
 To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
 
-### Versionbot
+### Versioning
 
-Flowzone ignores [versionbot](https://github.com/apps/versionbot3) and will run [balena-versionist](https://github.com/product-os/balena-versionist) directly on the PR's branch.
+If a `repo.yml` file is found in the root of the repository Flowzone will attempt run [balena-versionist](https://github.com/product-os/balena-versionist) directly on the PR's source.
+
+If you have [VersionBot3](https://github.com/apps/versionbot3) installed it will be ignored as far as versioning is concerned, so no need to disable it.
 
 ## Customization
 
@@ -158,13 +155,13 @@ Always required.
 
 GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits.
 
-Required if [versioning is enabled](#skip_versioning).
+Required for [versioned](#versioning) projects.
 
 #### `GPG_PASSPHRASE`
 
 Passphrase to decrypt GPG private key.
 
-Required if [versioning is enabled](#skip_versioning).
+Required for [versioned](#versioning) projects.
 
 #### `NPM_TOKEN`
 
@@ -229,14 +226,6 @@ Type: _string_
 
 Default: `${{ github.repository }}`
 
-#### `npm_registry`
-
-Registry for publishing npm projects (skipped if empty).
-
-Type: _string_
-
-Default: `registry.npmjs.org`
-
 #### `docker_platforms`
 
 Comma-delimited string of Docker target platforms.
@@ -245,30 +234,6 @@ Type: _string_
 
 Default: `linux/amd64,linux/arm64,linux/arm/v7`
 
-#### `docker_context`
-
-Docker build context directory relative to [`working_directory`](#working_directory).
-
-Type: _string_
-
-Default: `.`
-
-#### `docker_file`
-
-Path to the Dockerfile relative to the context.
-
-Type: _string_
-
-Default: `Dockerfile`
-
-#### `docker_target`
-
-Sets the target stage to build.
-
-Type: _string_
-
-Default: all stages
-
 #### `node_versions`
 
 Comma-delimited string of Node.js versions to test.
@@ -276,14 +241,6 @@ Comma-delimited string of Node.js versions to test.
 Type: _string_
 
 Default: `14.x,16.x,18.x`
-
-#### `skip_versioning`
-
-Set to `true` to skip adding a version commit on top of the original source.
-
-Type: _boolean_
-
-Default: `false`
 
 #### `protect_branch`
 
