@@ -29,7 +29,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`docker_images`](#docker_images)
     - [`balena_slugs`](#balena_slugs)
     - [`docker_platforms`](#docker_platforms)
-    - [`node_versions`](#node_versions)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
     - [`verbose`](#-verbose-)
@@ -107,8 +106,6 @@ Note that these project types are _not_ mutually exclusive, and your project may
 
 These tests will be run if a `package.json` file is found in the root of the repository. If a `package-lock.json` file is found in the root of the repository, dependencies will be install with `npm ci`, otherwise `npm i` will be used.
 If a build script is present in `package.json` it will be called before the tests are run. Testing is done by calling `npm test`.
-
-The [`node_versions`](#node_versions) will determine the Node.js versions used for testing.
 
 To disable publishing of artifacts set `"private": true` in `package.json`.
 
@@ -233,14 +230,6 @@ Comma-delimited string of Docker target platforms.
 Type: _string_
 
 Default: `linux/amd64,linux/arm64,linux/arm/v7`
-
-#### `node_versions`
-
-Comma-delimited string of Node.js versions to test.
-
-Type: _string_
-
-Default: `14.x,16.x,18.x`
 
 #### `protect_branch`
 

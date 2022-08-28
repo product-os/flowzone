@@ -63,14 +63,6 @@ on:
           linux/amd64,
           linux/arm64,
           linux/arm/v7
-      node_versions:
-        description: "Comma-delimited string of Node.js versions to test"
-        type: string
-        required: false
-        default: |
-          14.x,
-          16.x,
-          18.x
       protect_branch:
         description: "Set to false to disable updating branch protection rules after a successful run"
         type: boolean
@@ -91,6 +83,9 @@ env:
   GHCR_USER: "flowzone" # does not seem to matter what is used here
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
   NPM_REGISTRY: registry.npmjs.org
+  # TODO: Use engines field of package.json to limit LTS node versions for testing
+  # https://github.com/product-os/flowzone/issues/149
+  NODE_VERSIONS: 16.x
 
 jobs:
   ###################################################
@@ -142,7 +137,7 @@ jobs:
         id: node_versions
         uses: kanga333/json-array-builder@v0.1.0
         env:
-          INPUT: ${{ inputs.node_versions }}
+          INPUT: ${{ env.NODE_VERSIONS }}
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
@@ -174,6 +169,7 @@ jobs:
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
+      npm_engines: ${{ steps.npm.outputs.engines }} # can be null or unset
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
       repo_type: ${{ steps.repo.outputs.type }} # can be null or unset
@@ -197,6 +193,7 @@ jobs:
             echo "found package.json"
             echo "::set-output name=enabled::true"
             echo "::set-output name=private::$(jq -r '.private' package.json)"
+            echo "::set-output name=engines::$(jq -r '.engines' package.json)"
           else
             echo ::set-output name=enabled::"false"
           fi
