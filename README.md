@@ -28,7 +28,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`working_directory`](#working_directory)
     - [`docker_images`](#docker_images)
     - [`balena_slugs`](#balena_slugs)
-    - [`docker_platforms`](#docker_platforms)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
     - [`verbose`](#-verbose-)
@@ -222,14 +221,6 @@ Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped
 Type: _string_
 
 Default: `${{ github.repository }}`
-
-#### `docker_platforms`
-
-Comma-delimited string of Docker target platforms.
-
-Type: _string_
-
-Default: `linux/amd64,linux/arm64,linux/arm/v7`
 
 #### `protect_branch`
 

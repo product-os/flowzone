@@ -55,14 +55,6 @@ on:
         type: string
         required: false
         default: ${{ github.repository }}
-      docker_platforms:
-        description: "Comma-delimited string of Docker target platforms"
-        type: string
-        required: false
-        default: |
-          linux/amd64,
-          linux/arm64,
-          linux/arm/v7
       protect_branch:
         description: "Set to false to disable updating branch protection rules after a successful run"
         type: boolean
@@ -86,6 +78,9 @@ env:
   # TODO: Use engines field of package.json to limit LTS node versions for testing
   # https://github.com/product-os/flowzone/issues/149
   NODE_VERSIONS: 16.x
+  # TODO: Support advanced docker build configuration via docker-compose or bake files
+  # https://github.com/product-os/flowzone/issues/146
+  DOCKER_PLATFORMS: linux/amd64
 
 jobs:
   ###################################################
@@ -128,7 +123,7 @@ jobs:
         id: docker_platforms
         uses: kanga333/json-array-builder@v0.1.0
         env:
-          INPUT: ${{ inputs.docker_platforms }}
+          INPUT: ${{ env.DOCKER_PLATFORMS }}
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
