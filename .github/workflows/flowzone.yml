@@ -63,18 +63,6 @@ on:
           linux/amd64,
           linux/arm64,
           linux/arm/v7
-      docker_context:
-        description: "Docker build context directory"
-        type: string
-        required: false
-      docker_file:
-        description: "Path to the Dockerfile relative to the context"
-        type: string
-        required: false
-      docker_target:
-        description: "Sets the target stage to build"
-        type: string
-        required: false
       node_versions:
         description: "Comma-delimited string of Node.js versions to test"
         type: string
@@ -695,14 +683,11 @@ jobs:
           cache-from: |
             type=gha
             ${{ steps.meta.outputs.tags }}
-          context: ${{ inputs.docker_context || inputs.working_directory }}
-          file: ${{ inputs.docker_file }}
-          target: ${{ inputs.docker_target }}
+          context: ${{ inputs.working_directory }}
           tags: |
             ${{ steps.meta.outputs.tags }}
           load: true
           push: false
-          # outputs: type=docker,dest=/tmp/docker.tar
 
       - name: Run docker-compose tests
         run: |

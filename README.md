@@ -29,9 +29,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`docker_images`](#docker_images)
     - [`balena_slugs`](#balena_slugs)
     - [`docker_platforms`](#docker_platforms)
-    - [`docker_context`](#docker_context)
-    - [`docker_file`](#docker_file)
-    - [`docker_target`](#docker_target)
     - [`node_versions`](#node_versions)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
@@ -236,30 +233,6 @@ Comma-delimited string of Docker target platforms.
 Type: _string_
 
 Default: `linux/amd64,linux/arm64,linux/arm/v7`
-
-#### `docker_context`
-
-Docker build context directory relative to [`working_directory`](#working_directory).
-
-Type: _string_
-
-Default: `.`
-
-#### `docker_file`
-
-Path to the Dockerfile relative to the context.
-
-Type: _string_
-
-Default: `Dockerfile`
-
-#### `docker_target`
-
-Sets the target stage to build.
-
-Type: _string_
-
-Default: all stages
 
 #### `node_versions`
 
