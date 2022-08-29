@@ -1,4 +1,20 @@
 - commits:
+    - subject: Fix filtering of supported engines
+      hash: 5fbcdacf0d1428ec2e7515655329c5fcc7253f4a
+      body: |
+        There must be a more efficient way to do this but this seems
+        reliable enough for now.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.21.1
+  title: ""
+  date: 2022-08-29T22:40:52.448Z
+- commits:
     - subject: Fix typo when detecting custom publish steps
       hash: 65ec50d48a71b8989bbcc8f00fede38459511c8b
       body: ""
