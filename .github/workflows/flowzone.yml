@@ -149,7 +149,7 @@ jobs:
       docker_bake: ${{ steps.docker_bake.outputs.enabled }}
       docker_platforms: ${{ steps.docker_bake.outputs.platforms }}
 
-      custom_publish: ${{ steps.custom.outputs.draft }}
+      custom_publish: ${{ steps.custom.outputs.publish }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_test: ${{ steps.custom.outputs.test }}
 
@@ -244,9 +244,9 @@ jobs:
         id: custom
         working-directory: .
         run: |
-          if [ -d .github/flowzone/draft ]
+          if [ -d .github/flowzone/publish ]
           then
-            echo "::set-output name=draft::true"
+            echo "::set-output name=publish::true"
           fi
           if [ -d .github/flowzone/finalize ]
           then
