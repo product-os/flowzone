@@ -75,9 +75,6 @@ env:
   GHCR_USER: "flowzone" # does not seem to matter what is used here
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
   NPM_REGISTRY: registry.npmjs.org
-  # TODO: Use engines field of package.json to limit LTS node versions for testing
-  # https://github.com/product-os/flowzone/issues/149
-  NODE_VERSIONS: 16.x
   # TODO: Support advanced docker build configuration via docker-compose or bake files
   # https://github.com/product-os/flowzone/issues/146
   DOCKER_PLATFORMS: linux/amd64
@@ -100,7 +97,6 @@ jobs:
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       docker_platforms: ${{ steps.docker_platforms.outputs.build }}
-      node_versions: ${{ steps.node_versions.outputs.build }}
       docker_images: ${{ steps.docker_images.outputs.build }}
       shell: ${{ steps.shell.outputs.value || 'bash' }}
 
@@ -124,15 +120,6 @@ jobs:
         uses: kanga333/json-array-builder@v0.1.0
         env:
           INPUT: ${{ env.DOCKER_PLATFORMS }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
-
-      - name: Convert node_versions to a JSON array
-        id: node_versions
-        uses: kanga333/json-array-builder@v0.1.0
-        env:
-          INPUT: ${{ env.NODE_VERSIONS }}
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
@@ -164,7 +151,7 @@ jobs:
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
-      npm_engines: ${{ steps.npm.outputs.engines }} # can be null or unset
+      node_versions_json: ${{ steps.node_versions_json.outputs.build }}
       docker: ${{ steps.docker.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
       repo_type: ${{ steps.repo.outputs.type }} # can be null or unset
@@ -188,10 +175,39 @@ jobs:
             echo "found package.json"
             echo "::set-output name=enabled::true"
             echo "::set-output name=private::$(jq -r '.private' package.json)"
-            echo "::set-output name=engines::$(jq -r '.engines' package.json)"
+            echo "::set-output name=node_engines::$(jq -r '.engines.node' package.json)"
           else
             echo ::set-output name=enabled::"false"
           fi
+
+      - name: Filter node versions
+        id: node_versions
+        if: steps.npm.outputs.node_engines != '' && steps.npm.outputs.node_engines != 'null'
+        run: |
+          lts_versions=()
+          for tag in 12.x 14.x 16.x 18.x
+          do
+            semver="$(npm show node@${tag} version --json | jq -r '.[-1]')"
+            lts_versions+=(${semver})
+          done
+
+          filtered=($(npx -q -y -- semver $(echo "${lts_versions[@]}") -r ${{ steps.npm.outputs.node_engines }} ))
+
+          if [ ${#filtered[@]} -lt 1 ]
+          then
+            filtered=("v16-lts")
+          fi
+
+          echo "${filtered[@]}"
+          echo "::set-output name=filtered::${filtered[@]}"
+
+      - name: Convert node versions to a JSON array
+        if: steps.node_versions.outputs.filtered != ''
+        id: node_versions_json
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          str: "${{ steps.node_versions.outputs.filtered }}"
+          separator: "space"
 
       - name: Check for docker-compose.test.yml
         id: docker
@@ -496,7 +512,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node_version: ${{ fromJSON(needs.context_check.outputs.node_versions) }}
+        node_version: ${{ fromJSON(needs.project_types.outputs.node_versions_json) }}
 
     steps:
       - name: Download source artifact
