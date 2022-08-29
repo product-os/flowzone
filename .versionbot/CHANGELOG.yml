@@ -1,4 +1,20 @@
 - commits:
+    - subject: Use docker-bake action if a docker-bake.hcl file is found
+      hash: 14d0da73ec06bf3726f99b4678cd12cfad0ecc02
+      body: |
+        This allows the use of advanced build options like context, dockerfile,
+        build args, etc.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.20.0
+  title: ""
+  date: 2022-08-29T18:14:27.313Z
+- commits:
     - subject: Find the intersection of the node engines and recent LTS releases
       hash: 0db58fa3aa863f183b527c9c38ee3f25ed6eee6e
       body: ""
