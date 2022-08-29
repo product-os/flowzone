@@ -1,4 +1,30 @@
 - commits:
+    - subject: Fix typo when detecting custom publish steps
+      hash: 65ec50d48a71b8989bbcc8f00fede38459511c8b
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Replace context check with event types parser
+      hash: 383ee2c8c300f3ce8cd969c4771cf321eaa02fde
+      body: |
+        This moves the custom project logic into Project Types and
+        allows a single job to determine the types of events to support.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.21.0
+  title: ""
+  date: 2022-08-29T19:54:37.586Z
+- commits:
     - subject: Use docker-bake action if a docker-bake.hcl file is found
       hash: 14d0da73ec06bf3726f99b4678cd12cfad0ecc02
       body: |
