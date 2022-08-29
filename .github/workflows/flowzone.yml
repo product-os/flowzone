@@ -75,9 +75,6 @@ env:
   GHCR_USER: "flowzone" # does not seem to matter what is used here
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
   NPM_REGISTRY: registry.npmjs.org
-  # TODO: Support advanced docker build configuration via docker-compose or bake files
-  # https://github.com/product-os/flowzone/issues/146
-  DOCKER_PLATFORMS: linux/amd64
 
 jobs:
   ###################################################
@@ -96,7 +93,6 @@ jobs:
 
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
-      docker_platforms: ${{ steps.docker_platforms.outputs.build }}
       docker_images: ${{ steps.docker_images.outputs.build }}
       shell: ${{ steps.shell.outputs.value || 'bash' }}
 
@@ -111,15 +107,6 @@ jobs:
         uses: kanga333/json-array-builder@v0.1.0
         env:
           INPUT: ${{ inputs.balena_slugs }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
-
-      - name: Convert docker_platforms to a JSON array
-        id: docker_platforms
-        uses: kanga333/json-array-builder@v0.1.0
-        env:
-          INPUT: ${{ env.DOCKER_PLATFORMS }}
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
@@ -152,9 +139,11 @@ jobs:
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       node_versions_json: ${{ steps.node_versions_json.outputs.build }}
-      docker: ${{ steps.docker.outputs.enabled }}
+      docker_compose: ${{ steps.docker_compose.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
       repo_type: ${{ steps.repo.outputs.type }} # can be null or unset
+      docker_bake: ${{ steps.docker_bake.outputs.enabled }}
+      docker_platforms: ${{ steps.docker_bake.outputs.platforms }}
 
       custom_publish: ${{ steps.custom.outputs.draft }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
@@ -210,7 +199,7 @@ jobs:
           separator: "space"
 
       - name: Check for docker-compose.test.yml
-        id: docker
+        id: docker_compose
         run: |
           if [ -f docker-compose.test.yml ] && [ -f docker-compose.yml ]; then
             echo "found docker-compose.test.yml"
@@ -254,6 +243,26 @@ jobs:
           if [ -f repo.yml ]
           then
             echo "::set-output name=type::$(yq e .type repo.yml)"
+          fi
+
+      - name: Check for docker-bake.hcl
+        id: docker_bake
+        run: |
+          echo "::set-output name=enabled::false"
+          echo "::set-output name=platforms::[\"linux/amd64\"]"
+          if [ -f docker-bake.hcl ]
+          then
+            echo "::set-output name=enabled::true"
+            curl -fsSL https://github.com/teamon/hclq/releases/download/v0.1.1/hclq_0.1.1_Linux_x86_64.gz -O
+            echo "cc05154fd66e5a0c4185a95712980a5f  hclq_0.1.1_Linux_x86_64.gz" | md5sum -c -
+            gzip -d hclq_0.1.1_Linux_x86_64.gz
+            chmod +x ./hclq_0.1.1_Linux_x86_64
+            platforms_json="$(./hclq_0.1.1_Linux_x86_64 < docker-bake.hcl | jq -rc .target.build.platforms)"
+            if [ -n "${platforms_json}" ] && [ "${platforms_json}" != "null" ] && [ "${platforms_json}" != "[]" ]
+            then
+              echo "::set-output name=platforms::${platforms_json}"
+            fi
+            rm hclq_0.1.1_Linux_x86_64
           fi
 
   # this job will always run so it can be used as a branch rule
@@ -546,7 +555,7 @@ jobs:
   npm_publish:
     name: Publish npm
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, versioned_source, all_tests]
+    needs: [context_check, project_types, versioned_source, npm_test]
     if: |
       needs.project_types.outputs.npm_private != 'true'
 
@@ -633,7 +642,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [context_check, project_types, versioned_source]
     if: |
-      needs.project_types.outputs.docker == 'true' &&
+      needs.project_types.outputs.docker_compose == 'true' &&
       github.event_name == 'pull_request' &&
       github.event.pull_request.merged == false
 
@@ -648,7 +657,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: ${{ fromJSON(needs.context_check.outputs.docker_platforms) }}
+        platform: ${{ fromJSON(needs.project_types.outputs.docker_platforms) }}
 
     steps:
       - name: Download source artifact
@@ -674,24 +683,40 @@ jobs:
         run: |
           echo "::set-output name=string::$(echo ${{ matrix.platform }} | sed -e 's|linux/||' -e 's|/||')"
 
-      - name: Generate Docker labels and tags
+      - name: Image metadata
         id: meta
         uses: docker/metadata-action@v4
         with:
-          # even though this build is not published directly, extra image tags
-          # can be used in docker-compose.test.yml and for pulling cache
+          # even though this build is not published externally, extra image tags
+          # can be used in docker-compose.test.yml and for pulling existing images for cache
           images: |
             ${{ needs.context_check.outputs.docker_images }}
             ${{ github.repository }}
             sut
           tags: |
+            type=raw,value=${{ needs.versioned_source.outputs.version }}
             type=raw,value=${{ steps.suffix.outputs.string }}
             type=raw,value=edge
           flavor: |
             latest=true
 
-      - name: Build and load
-        id: build
+      # https://github.com/docker/bake-action
+      - name: Docker bake and load
+        if: needs.project_types.outputs.docker_bake == 'true'
+        uses: docker/bake-action@v2
+        with:
+          workdir: ${{ inputs.working_directory }}
+          files: |
+            ./docker-bake.hcl
+            ${{ steps.meta.outputs.bake-file }}
+          targets: build
+          set: |
+            *.platform=${{ matrix.platform }}
+          load: true
+          push: false
+
+      - name: Docker build and load
+        if: needs.project_types.outputs.docker_bake != 'true'
         uses: docker/build-push-action@v3
         with:
           platforms: ${{ matrix.platform }}
@@ -706,14 +731,14 @@ jobs:
           load: true
           push: false
 
-      - name: Run docker-compose tests
+      - name: Run docker compose tests
         run: |
           if [[ ! -z "${COMPOSE_VARS}" ]]; then
             echo ${COMPOSE_VARS} | base64 --decode > .env
           fi
-          docker compose -f docker-compose.yml -f docker-compose.test.yml up --no-build --exit-code-from sut
+          docker compose -f docker-compose.yml -f docker-compose.test.yml up --build --exit-code-from sut
 
-      - name: Docker save to file
+      - name: Save image to file
         run: |
           docker save ${{ github.repository }}:${{ steps.suffix.outputs.string }} > /tmp/docker.tar
 
@@ -727,9 +752,9 @@ jobs:
   docker_publish:
     name: Publish docker
     runs-on: ubuntu-latest
-    needs: [context_check, project_types, versioned_source, all_tests]
+    needs: [context_check, project_types, versioned_source, docker_test]
     if: |
-      needs.project_types.outputs.docker == 'true' &&
+      needs.project_types.outputs.docker_compose == 'true' &&
       inputs.docker_images != ''
 
     defaults:
@@ -783,7 +808,7 @@ jobs:
         id: manifest
         run: |
           docker run --rm --network=host mplatform/manifest-tool:alpine-v2.0.5 push from-args \
-            --platforms ${{ join(fromJSON(needs.context_check.outputs.docker_platforms)) }} \
+            --platforms ${{ join(fromJSON(needs.project_types.outputs.docker_platforms)) }} \
             --template ${{ env.LOCAL_IMAGE }}:ARCHVARIANT \
             --target ${{ env.LOCAL_IMAGE }}:latest
 
@@ -813,7 +838,7 @@ jobs:
     needs: [context_check, project_types, versioned_source]
     if: |
       inputs.docker_images != '' &&
-      needs.project_types.outputs.docker == 'true' &&
+      needs.project_types.outputs.docker_compose == 'true' &&
       (github.event_name != 'pull_request' || github.event.pull_request.merged == true)
 
     defaults:
