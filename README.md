@@ -108,7 +108,7 @@ These tests will be run if a `package.json` file is found in the root of the rep
 If a `package-lock.json` file is found in the root of the repository, dependencies will be installed with `npm ci`, otherwise `npm i` will be used.
 If a build script is present in `package.json` it will be called before the tests are run. Testing is done by calling `npm test`.
 
-Multiple LTS versions of Node.js will be tested as long as they meet the [range](https://github.com/npm/node-semver#ranges) defined in `engines.node` in `package.json`.
+Multiple LTS versions of Node.js will be tested as long as they meet the [range](https://github.com/npm/node-semver#ranges) defined in [engines](https://docs.npmjs.com/cli/v8/configuring-npm/package-json#engines) in `package.json`.
 Node.js 16.x will be used for testing if engines are not defined.
 
 To disable publishing of artifacts set `"private": true` in `package.json`.
@@ -124,6 +124,27 @@ If you need to provide environment variables to the compose environment you can 
 This will be decoded and written to a `.env` file inside the test worker at runtime.
 
 To disable publishing of Docker artifacts set [`docker_images`](#docker_images) to `""`.
+
+For advanced Docker build options, including multi-arch, add a [docker-bake.hcl](https://github.com/docker/metadata-action#bake-definition) file to your project.
+
+```hcl
+// docker-bake.hcl
+target "docker-metadata-action" {}
+
+target "build" {
+  inherits = ["docker-metadata-action"]
+  context = "./"
+  dockerfile = "Dockerfile"
+  args = {
+    foo = "bar"
+  }
+  platforms = [
+    "linux/amd64",
+    "linux/arm/v7",
+    "linux/arm64",
+  ]
+}
+```
 
 ### balena
 
