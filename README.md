@@ -12,6 +12,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [npm](#npm)
   - [Docker](#docker)
   - [balena](#balena)
+  - [Custom](#custom)
   - [Versioning](#versioning)
 - [Customization](#customization)
   - [Secrets](#secrets)
@@ -125,6 +126,32 @@ To disable publishing of Docker artifacts set [`docker_images`](#docker_images) 
 If a `balena.yml` file is found in the root of the repository Flowzone will attempt to push draft releases to your application slug(s) and finalize on merge.
 
 To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
+
+## Custom
+
+If any [composite actions](https://docs.github.com/en/actions/creating-actions/creating-a-composite-action) are found at the following locations,
+they will be executed automatically at the described stages of the workflow.
+
+```bash
+.github
+├── flowzone
+│   ├── finalize
+│   │   └── action.yml
+│   ├── publish
+│   │   └── action.yml
+│   └── test
+│       └── action.yml
+└── workflows
+    ├── flowzone.yml
+```
+
+An action in a `test` directory will run in parallel to any other supported project tests. See [test/action.yml](.github/flowzone/test/action.yml) for an example.
+
+An action in a `publish` directory will run after all the supported tests have completed. See [publish/action.yml](.github/flowzone/publish/action.yml) for an example.
+
+An action in a `finalize` directory will run after a pull request is merged. See [finalize/action.yml](.github/flowzone/finalize/action.yml) for an example.
+
+More interfaces may be added in the future. Open an issue if you have a use case that is not covered!
 
 ### Versioning
 
