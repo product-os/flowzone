@@ -1,4 +1,20 @@
 - commits:
+    - subject: Set artifact retention days to 1
+      hash: a9e745147d56331b32bf4426374c6e530dd4e51a
+      body: |
+        We only need artifacts for the lifetime of this workflow
+        so there is no need for them to live longer than a few minutes.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.19.1
+  title: ""
+  date: 2022-08-29T13:40:44.560Z
+- commits:
     - subject: Remove docker platforms input and limit to amd64 for now
       hash: 26faddb6bd11bae3e61faa3104eac224333d10b6
       body: |
