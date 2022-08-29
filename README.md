@@ -31,7 +31,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`balena_slugs`](#balena_slugs)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
-    - [`verbose`](#-verbose-)
 - [Maintenance](#maintenance)
   - [Generate GPG keys](#generate-gpg-keys)
 - [Help](#help)
@@ -289,14 +288,6 @@ Setting this value to zero effectively means merge==deploy without approval(s).
 Type: _string_
 
 Default: `1`
-
-#### `verbose`
-
-Enable shell command tracing.
-
-Type: _boolean_
-
-Default: `false`
 
 ## Maintenance
 
