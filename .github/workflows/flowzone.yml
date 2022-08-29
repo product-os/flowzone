@@ -142,12 +142,12 @@ jobs:
 
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
-      node_versions_json: ${{ steps.node_versions_json.outputs.build }}
       docker_compose: ${{ steps.docker_compose.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
       repo_type: ${{ steps.repo.outputs.type }} # can be null or unset
       docker_bake: ${{ steps.docker_bake.outputs.enabled }}
       docker_platforms: ${{ steps.docker_bake.outputs.platforms }}
+      node_versions: ${{ steps.node_18.outputs.json }}
 
       custom_publish: ${{ steps.custom.outputs.publish }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
@@ -185,39 +185,78 @@ jobs:
             echo "found package.json"
             echo "::set-output name=enabled::true"
             echo "::set-output name=private::$(jq -r '.private' package.json)"
-            echo "::set-output name=node_engines::$(jq -r '.engines.node' package.json)"
           else
             echo ::set-output name=enabled::"false"
           fi
 
-      - name: Filter node versions
-        id: node_versions
-        if: steps.npm.outputs.node_engines != '' && steps.npm.outputs.node_engines != 'null'
-        run: |
-          lts_versions=()
-          for tag in 12.x 14.x 16.x 18.x
-          do
-            semver="$(npm show node@${tag} version --json | jq -r '.[-1]')"
-            lts_versions+=(${semver})
-          done
-
-          filtered=($(npx -q -y -- semver $(echo "${lts_versions[@]}") -r ${{ steps.npm.outputs.node_engines }} ))
-
-          if [ ${#filtered[@]} -lt 1 ]
-          then
-            filtered=("v16-lts")
-          fi
-
-          echo "${filtered[@]}"
-          echo "::set-output name=filtered::${filtered[@]}"
-
-      - name: Convert node versions to a JSON array
-        if: steps.node_versions.outputs.filtered != ''
-        id: node_versions_json
-        uses: kanga333/json-array-builder@v0.1.0
+      - name: Setup Node.js 12.x
+        uses: actions/setup-node@v3
         with:
-          str: "${{ steps.node_versions.outputs.filtered }}"
-          separator: "space"
+          node-version: 12.x
+
+      - name: Check engine
+        id: node_12
+        env:
+          JSON: "[]" 
+        run: |
+          if npx -q -y -- check-engine
+          then
+            JSON="$(echo "${JSON}" | jq -c '. + ["12.x"]')"
+          fi
+          echo "::set-output name=json::${JSON}"
+
+      - name: Setup Node.js 14.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
+
+      - name: Check engine
+        id: node_14
+        env:
+          JSON: ${{ steps.node_12.outputs.json }}
+        run: |
+          if npx -q -y -- check-engine
+          then
+            JSON="$(echo "${JSON}" | jq -c '. + ["14.x"]')"
+          fi
+          echo "::set-output name=json::${JSON}"
+
+      - name: Setup Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - name: Check engine
+        id: node_16
+        env:
+          JSON: ${{ steps.node_14.outputs.json }}
+        run: |
+          if npx -q -y -- check-engine
+          then
+            JSON="$(echo "${JSON}" | jq -c '. + ["16.x"]')"
+          fi
+          echo "::set-output name=json::${JSON}"
+
+      - name: Setup Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+
+      # force 16.x if no engines are matched after this check
+      - name: Check engine
+        id: node_18
+        env:
+          JSON: ${{ steps.node_16.outputs.json }}
+        run: |
+          if npx -q -y -- check-engine
+          then
+            JSON="$(echo "${JSON}" | jq -c '. + ["18.x"]')"
+          fi
+          if [ "${JSON}" = "[]" ]
+          then
+            JSON="[\"16.x\"]"
+          fi
+          echo "::set-output name=json::${JSON}"
 
       - name: Check for docker-compose.test.yml
         id: docker_compose
@@ -414,7 +453,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node_version: ${{ fromJSON(needs.project_types.outputs.node_versions_json) }}
+        node_version: ${{ fromJSON(needs.project_types.outputs.node_versions) }}
 
     steps:
       - name: Download source artifact
