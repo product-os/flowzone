@@ -104,8 +104,12 @@ Note that these project types are _not_ mutually exclusive, and your project may
 
 ### npm
 
-These tests will be run if a `package.json` file is found in the root of the repository. If a `package-lock.json` file is found in the root of the repository, dependencies will be install with `npm ci`, otherwise `npm i` will be used.
+These tests will be run if a `package.json` file is found in the root of the repository.
+If a `package-lock.json` file is found in the root of the repository, dependencies will be installed with `npm ci`, otherwise `npm i` will be used.
 If a build script is present in `package.json` it will be called before the tests are run. Testing is done by calling `npm test`.
+
+Multiple LTS versions of Node.js will be tested as long as they meet the [range](https://github.com/npm/node-semver#ranges) defined in `engines.node` in `package.json`.
+Node.js 16.x will be used for testing if engines are not defined.
 
 To disable publishing of artifacts set `"private": true` in `package.json`.
 
