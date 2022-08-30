@@ -494,6 +494,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [project_types, versioned_source, all_tests, npm_test]
     if: |
+      !failure() && !cancelled() &&
+      needs.npm_test.result == 'success' &&
+      needs.event_types.outputs.do_draft == 'true' &&
       needs.project_types.outputs.npm_private != 'true'
 
     defaults:
@@ -690,6 +693,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [project_types, versioned_source, all_tests, docker_test]
     if: |
+      !failure() && !cancelled() &&
+      needs.docker_test.result == 'success' &&
+      needs.event_types.outputs.do_draft == 'true' &&
       needs.project_types.outputs.docker_images != ''
 
     defaults:
@@ -881,6 +887,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [event_types, project_types, versioned_source, all_tests]
     if: |
+      !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
       needs.project_types.outputs.balena == 'true'
 
@@ -984,6 +991,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [event_types, project_types, versioned_source, all_tests]
     if: |
+      !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
       needs.project_types.outputs.custom_publish == 'true'
 
