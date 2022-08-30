@@ -137,7 +137,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
-      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
+      balena_slugs: ${{ steps.balena_slugs_json.outputs.build }}
       docker_images: ${{ steps.docker_images.outputs.build }}
 
       npm: ${{ steps.npm.outputs.enabled }}
@@ -161,7 +161,7 @@ jobs:
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Convert balena_slugs to a JSON array
-        id: balena_slugs
+        id: balena_slugs_json
         uses: kanga333/json-array-builder@v0.1.0
         env:
           INPUT: ${{ inputs.balena_slugs }}
@@ -169,13 +169,19 @@ jobs:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
 
-      - name: Convert docker_images to a newline list
-        id: docker_images
+      - name: Convert docker_images to a JSON array
+        id: docker_images_json
+        uses: kanga333/json-array-builder@v0.1.0
         env:
           INPUT: ${{ inputs.docker_images }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+
+      - name: Convert docker_images to a newline list
+        id: docker_images
         run: |
-          string="${INPUT//','/'%0A'}"
-          echo "::set-output name=build::${string}"
+          echo "::set-output name=build::$(echo '${{ steps.docker_images_json.outputs.build }}' | jq -rc '.[]')"
 
       - name: Check for package.json
         id: npm
