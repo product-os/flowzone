@@ -124,10 +124,11 @@ This will be decoded and written to a `.env` file inside the test worker at runt
 
 To disable publishing of Docker artifacts set [`docker_images`](#docker_images) to `""`.
 
-For advanced Docker build options, including multi-arch, add a [docker-bake.hcl](https://github.com/docker/metadata-action#bake-definition) file to your project.
+For advanced Docker build options, including multi-arch, add a [docker-bake.hcl](https://docs.docker.com/engine/reference/commandline/buildx_bake/) file to your project.
 
 ```hcl
 // docker-bake.hcl
+// https://github.com/docker/metadata-action#bake-definition
 target "docker-metadata-action" {}
 
 target "build" {
