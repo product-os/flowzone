@@ -1,4 +1,18 @@
 - commits:
+    - subject: Use a matrix for publishing docker images to multiple repositories
+      hash: b3d24151fcc20f0f5c7e7dcbbddd4ea969ab7efe
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.22.2
+  title: ""
+  date: 2022-08-30T19:18:32.568Z
+- commits:
     - subject: Set the buildkit env var so compose can use existing cache
       hash: b8dd9845c3fb28bba41f2997e6c4c9ff591a488e
       body: ""
