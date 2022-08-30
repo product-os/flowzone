@@ -1,4 +1,39 @@
 - commits:
+    - subject: Fix job conditions when ancestors of all_tests are skipped
+      hash: ab2eb0c62f64729363548c4e7825f0d7ef0bd965
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Save docker image to file before running compose tests
+      hash: f1d668fb2de98de47b2bb36d6558c476ee6d18f9
+      body: |
+        Avoid the risk of a compose build changing the image
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Do not force build during docker-compose tests
+      hash: 2544667a4a49377b941d2749c570ef4d7c5afa8f
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.21.5
+  title: ""
+  date: 2022-08-30T16:19:37.931Z
+- commits:
     - subject: Standardize on GitHub cache for docker builds
       hash: 83ab5fcbc606fb6f0354fb8a40fa1cd98d8b16a1
       body: ""
