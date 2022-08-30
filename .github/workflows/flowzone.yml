@@ -667,16 +667,16 @@ jobs:
           load: true
           push: false
 
+      - name: Save image to file
+        run: |
+          docker save ${{ github.repository }}:${{ env.ARCHVARIANT }} > /tmp/docker.tar
+
       - name: Run docker compose tests
         run: |
           if [[ ! -z "${COMPOSE_VARS}" ]]; then
             echo ${COMPOSE_VARS} | base64 --decode > .env
           fi
           docker compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from sut
-
-      - name: Save image to file
-        run: |
-          docker save ${{ github.repository }}:${{ env.ARCHVARIANT }} > /tmp/docker.tar
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
