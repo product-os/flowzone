@@ -97,30 +97,33 @@ jobs:
         working-directory: .
         shell: bash
 
+    env:
+      JSON: ${{ toJSON(github) }}
+
     steps:
       - name: Pull Request opened
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
         id: pr_open
         run: |
-          echo '${{ toJSON(github) }}'
+          echo "${JSON}" || true
 
       - name: Pull Request synchronize
         if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
         id: pr_sync
         run: |
-          echo '${{ toJSON(github) }}'
+          echo "${JSON}" || true
 
       - name: Pull Request merged
         if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
         id: pr_merge
         run: |
-          echo '${{ toJSON(github) }}'
+          echo "${JSON}" || true
 
       - name: Tag event
         if: github.event_name == 'push'
         id: tagged
         run: |
-          echo '${{ toJSON(github) }}'
+          echo "${JSON}" || true
 
   ###################################################
   ## project types
