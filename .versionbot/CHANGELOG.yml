@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix parsing of docker_images with newlines
+      hash: 090b8bd0d2bc9f2e1d1f1399a1fb5035fe928213
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.21.3
+  title: ""
+  date: 2022-08-30T14:18:29.393Z
+- commits:
     - subject: Clean up the steps required to match node engine versions
       hash: 19e6620a93699d4a98f06d230db12bcf14c6af88
       body: |
