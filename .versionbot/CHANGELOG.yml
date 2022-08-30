@@ -1,4 +1,18 @@
 - commits:
+    - subject: Set the buildkit env var so compose can use existing cache
+      hash: b8dd9845c3fb28bba41f2997e6c4c9ff591a488e
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.22.1
+  title: ""
+  date: 2022-08-30T18:41:34.872Z
+- commits:
     - subject: Remove All Tests and All Published jobs
       hash: 343a4d9198b48b3d3805dc0be87da27c36bf03a8
       body: |
