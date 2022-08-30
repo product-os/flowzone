@@ -1,4 +1,20 @@
 - commits:
+    - subject: Avoid failure if event object cannot be parsed as JSON
+      hash: d594a24af587265b01e54c5cd781b0f8ceea82c2
+      body: |
+        Special characters, especially those used by Renovate, will
+        fail the toJSON command.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.21.6
+  title: ""
+  date: 2022-08-30T16:53:51.642Z
+- commits:
     - subject: Fix job conditions when ancestors of all_tests are skipped
       hash: ab2eb0c62f64729363548c4e7825f0d7ef0bd965
       body: ""
