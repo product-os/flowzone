@@ -614,24 +614,23 @@ jobs:
           driver-opts: network=host
           install: true
 
-      - name: Sanitize suffix
-        id: suffix
+      - name: Set ARCHVARIANT
         run: |
-          echo "::set-output name=string::$(echo ${{ matrix.platform }} | sed -e 's|linux/||' -e 's|/||')"
+          echo "ARCHVARIANT=$(echo "${{ matrix.platform }}" | sed -e 's|linux/||' -e 's|/||')" >> $GITHUB_ENV
 
       - name: Image metadata
         id: meta
         uses: docker/metadata-action@v4
         with:
-          # even though this build is not published externally, extra image tags
-          # can be used in docker-compose.test.yml and for pulling existing images for cache
+          # even though this build is not published externally, the provided image tags
+          # can be used in docker-compose.test.yml to avoid rebuilds
           images: |
             ${{ needs.project_types.outputs.docker_images }}
             ${{ github.repository }}
             sut
           tags: |
             type=raw,value=${{ needs.versioned_source.outputs.version }}
-            type=raw,value=${{ steps.suffix.outputs.string }}
+            type=raw,value=${{ env.ARCHVARIANT }}
             type=raw,value=edge
           flavor: |
             latest=true
@@ -648,19 +647,20 @@ jobs:
           targets: build
           set: |
             *.platform=${{ matrix.platform }}
+            *.cache-to=type=gha,scope=test-${{ env.ARCHVARIANT }},mode=max
+            *.cache-from=type=gha,scope=test-${{ env.ARCHVARIANT }}
           load: true
           push: false
 
+      # https://github.com/docker/build-push-action
       - name: Docker build and load
         if: needs.project_types.outputs.docker_bake != 'true'
         uses: docker/build-push-action@v3
         with:
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-to: type=gha,mode=max
-          cache-from: |
-            type=gha
-            ${{ steps.meta.outputs.tags }}
+          cache-to: type=gha,scope=test-${{ env.ARCHVARIANT }},mode=max
+          cache-from: type=gha,scope=test-${{ env.ARCHVARIANT }}
           context: ${{ inputs.working_directory }}
           tags: |
             ${{ steps.meta.outputs.tags }}
@@ -676,12 +676,12 @@ jobs:
 
       - name: Save image to file
         run: |
-          docker save ${{ github.repository }}:${{ steps.suffix.outputs.string }} > /tmp/docker.tar
+          docker save ${{ github.repository }}:${{ env.ARCHVARIANT }} > /tmp/docker.tar
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: docker-${{ steps.suffix.outputs.string }}
+          name: docker-${{ env.ARCHVARIANT }}
           path: /tmp/docker.tar
           retention-days: 1
 
@@ -690,7 +690,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [project_types, versioned_source, all_tests, docker_test]
     if: |
-      inputs.docker_images != ''
+      needs.project_types.outputs.docker_images != ''
 
     defaults:
       run:
@@ -773,7 +773,7 @@ jobs:
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_final == 'true' &&
-      inputs.docker_images != '' &&
+      needs.project_types.outputs.docker_images != '' &&
       needs.project_types.outputs.docker_compose == 'true'
 
     defaults:
