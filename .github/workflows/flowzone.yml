@@ -140,7 +140,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
-      balena_slugs: ${{ steps.balena_slugs_json.outputs.build }}
+      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       docker_images: ${{ steps.docker_images.outputs.build }}
 
       npm: ${{ steps.npm.outputs.enabled }}
@@ -164,7 +164,7 @@ jobs:
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
       - name: Convert balena_slugs to a JSON array
-        id: balena_slugs_json
+        id: balena_slugs
         uses: kanga333/json-array-builder@v0.1.0
         env:
           INPUT: ${{ inputs.balena_slugs }}
@@ -173,18 +173,13 @@ jobs:
           separator: ","
 
       - name: Convert docker_images to a JSON array
-        id: docker_images_json
+        id: docker_images
         uses: kanga333/json-array-builder@v0.1.0
         env:
           INPUT: ${{ inputs.docker_images }}
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
-
-      - name: Convert docker_images to a newline list
-        id: docker_images
-        run: |
-          echo "::set-output name=build::$(echo '${{ steps.docker_images_json.outputs.build }}' | jq -rc '.[]')"
 
       - name: Check for package.json
         id: npm
@@ -629,10 +624,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          # even though this build is not published externally, the provided image tags
-          # can be used in docker-compose.test.yml to avoid rebuilds
+          # add extra image names here that could be referenced from docker-compose.test.yml
           images: |
-            ${{ needs.project_types.outputs.docker_images }}
             ${{ github.repository }}
             sut
           tags: |
@@ -699,13 +692,17 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
-      needs.event_types.outputs.do_draft == 'true' &&
-      needs.project_types.outputs.docker_images != ''
+      needs.event_types.outputs.do_draft == 'true'
 
     defaults:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.project_types.outputs.docker_images) }}
 
     env:
       LOCAL_IMAGE: localhost:5000/${{ github.repository }}
@@ -744,8 +741,8 @@ jobs:
           do
             ARCHVARIANT="$(dirname "${image}" | awk -F- '{print $NF}')"
             docker load -i "${image}" | tee /dev/stderr | awk '{print $NF}' |
-              xargs -i docker tag {} "${{ env.LOCAL_IMAGE }}:${ARCHVARIANT}"
-            docker push "${{ env.LOCAL_IMAGE }}:${ARCHVARIANT}"
+              xargs -i docker tag {} "${LOCAL_IMAGE}:${ARCHVARIANT}"
+            docker push "${LOCAL_IMAGE}:${ARCHVARIANT}"
           done
 
       # see https://github.com/estesp/manifest-tool to understand template
@@ -754,15 +751,15 @@ jobs:
         run: |
           docker run --rm --network=host mplatform/manifest-tool:alpine-v2.0.5 push from-args \
             --platforms ${{ join(fromJSON(needs.project_types.outputs.docker_platforms)) }} \
-            --template ${{ env.LOCAL_IMAGE }}:ARCHVARIANT \
-            --target ${{ env.LOCAL_IMAGE }}:latest
+            --template ${LOCAL_IMAGE}:ARCHVARIANT \
+            --target ${LOCAL_IMAGE}:latest
 
       - name: Generate draft labels and tags
         id: meta
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.project_types.outputs.docker_images }}
+            ${{ matrix.image }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.sha }}
             type=raw,value=${{ github.event.pull_request.head.ref }}
@@ -783,13 +780,17 @@ jobs:
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_final == 'true' &&
-      needs.project_types.outputs.docker_images != '' &&
       needs.project_types.outputs.docker_compose == 'true'
 
     defaults:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.project_types.outputs.docker_images) }}
 
     env:
       LOCAL_IMAGE: localhost:5000/${{ github.repository }}
@@ -824,7 +825,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.project_types.outputs.docker_images }}
+            ${{ matrix.image }}
           tags: |
             type=raw,value=${{ needs.versioned_source.outputs.version }}
           flavor: |
@@ -837,7 +838,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.project_types.outputs.docker_images }}
+            ${{ matrix.image }}
           tags: |
             type=raw,value=edge
           flavor: |
@@ -850,27 +851,21 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ needs.project_types.outputs.docker_images }}
+            ${{ matrix.image }}
           tags: |
             type=ref,event=tag
             type=semver,pattern={{version}}
           flavor: |
             latest=auto
 
-      # try to pull existing draft releases that we can republish as final
-      - name: Pull draft images
+      # try to pull existing draft image that we can republish as final
+      - name: Pull draft image
         env:
-          IMAGES: ${{ needs.project_types.outputs.docker_images }}
+          DRAFT_IMAGE: ${{ matrix.image }}:${{ github.event.pull_request.head.sha }}
         run: |
-          for image in ${IMAGES}
-          do
-            docker pull ${image}:${{ github.event.pull_request.head.sha }} || continue
-            docker tag ${image}:${{ github.event.pull_request.head.sha }} ${{ env.LOCAL_IMAGE }}:latest
-            docker push ${{ env.LOCAL_IMAGE }}:latest
-            success=1
-            break
-          done
-          test -n "${success}"
+          docker pull ${DRAFT_IMAGE}
+          docker tag ${DRAFT_IMAGE} ${LOCAL_IMAGE}:latest
+          docker push ${LOCAL_IMAGE}:latest
 
       # only one of the destination lines should have values based on the meta restrictions above
       - name: Publish final tags
