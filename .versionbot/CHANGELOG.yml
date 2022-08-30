@@ -1,4 +1,20 @@
 - commits:
+    - subject: Remove All Tests and All Published jobs
+      hash: 343a4d9198b48b3d3805dc0be87da27c36bf03a8
+      body: |
+        Instead make sure that Protect Branch always runs so branch
+        protection rules can depend on it being pass/fail and not skipped.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.22.0
+  title: ""
+  date: 2022-08-30T18:22:13.246Z
+- commits:
     - subject: Avoid failure if event object cannot be parsed as JSON
       hash: d594a24af587265b01e54c5cd781b0f8ceea82c2
       body: |
