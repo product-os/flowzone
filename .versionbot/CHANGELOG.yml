@@ -1,4 +1,28 @@
 - commits:
+    - subject: Standardize on GitHub cache for docker builds
+      hash: 83ab5fcbc606fb6f0354fb8a40fa1cd98d8b16a1
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Use formatted docker images list in publish checks
+      hash: e61a691daba966d077d5decc0af046914a1d18fb
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.21.4
+  title: ""
+  date: 2022-08-30T15:18:15.514Z
+- commits:
     - subject: Fix parsing of docker_images with newlines
       hash: 090b8bd0d2bc9f2e1d1f1399a1fb5035fe928213
       body: ""
