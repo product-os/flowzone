@@ -147,7 +147,7 @@ jobs:
       repo_type: ${{ steps.repo.outputs.type }} # can be null or unset
       docker_bake: ${{ steps.docker_bake.outputs.enabled }}
       docker_platforms: ${{ steps.docker_bake.outputs.platforms }}
-      node_versions: ${{ steps.node_18.outputs.json }}
+      node_versions: ${{ steps.node_versions.outputs.json }}
 
       custom_publish: ${{ steps.custom.outputs.publish }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
@@ -185,86 +185,77 @@ jobs:
             echo "found package.json"
             echo "::set-output name=enabled::true"
             echo "::set-output name=private::$(jq -r '.private' package.json)"
+            echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
           else
             echo ::set-output name=enabled::"false"
           fi
+
+      # check which past and current and future Node.js LTS releases meet the engine requirements
+      # if there are no engine requirements then the current LTS will be used
 
       - name: Setup Node.js 12.x
         if: steps.npm.outputs.enabled == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: 12.x
-
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
-        id: node_12
-        env:
-          JSON: "[]" 
         run: |
           if npx -q -y -- check-engine
           then
-            JSON="$(echo "${JSON}" | jq -c '. + ["12.x"]')"
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["12.x"]')" >> $GITHUB_ENV
           fi
-          echo "::set-output name=json::${JSON}"
 
       - name: Setup Node.js 14.x
         if: steps.npm.outputs.enabled == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: 14.x
-
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
-        id: node_14
-        env:
-          JSON: ${{ steps.node_12.outputs.json }}
         run: |
           if npx -q -y -- check-engine
           then
-            JSON="$(echo "${JSON}" | jq -c '. + ["14.x"]')"
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["14.x"]')" >> $GITHUB_ENV
           fi
-          echo "::set-output name=json::${JSON}"
 
       - name: Setup Node.js 16.x
         if: steps.npm.outputs.enabled == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: 16.x
-
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
-        id: node_16
-        env:
-          JSON: ${{ steps.node_14.outputs.json }}
         run: |
           if npx -q -y -- check-engine
           then
-            JSON="$(echo "${JSON}" | jq -c '. + ["16.x"]')"
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["16.x"]')" >> $GITHUB_ENV
           fi
-          echo "::set-output name=json::${JSON}"
 
       - name: Setup Node.js 18.x
         if: steps.npm.outputs.enabled == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
-
-      # force 16.x if no engines are matched after this check
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
-        id: node_18
-        env:
-          JSON: ${{ steps.node_16.outputs.json }}
         run: |
           if npx -q -y -- check-engine
           then
-            JSON="$(echo "${JSON}" | jq -c '. + ["18.x"]')"
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> $GITHUB_ENV
           fi
-          if [ "${JSON}" = "[]" ]
+
+      # default to the current LTS version if none were matched
+      # by the engine checks above
+      - name: Set Node.js versions
+        if: steps.npm.outputs.enabled == 'true'
+        id: node_versions
+        run: |
+          echo "::set-output name=json::[\"16.x\"]"
+          if [ "${NODE_VERSIONS}" != "[]" ]
           then
-            JSON="[\"16.x\"]"
+            echo "::set-output name=json::${NODE_VERSIONS}"
           fi
-          echo "::set-output name=json::${JSON}"
 
       - name: Check for docker-compose.test.yml
         id: docker_compose
