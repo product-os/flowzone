@@ -690,7 +690,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [project_types, versioned_source, all_tests, docker_test]
     if: |
-      inputs.docker_images != ''
+      needs.project_types.outputs.docker_images != ''
 
     defaults:
       run:
@@ -773,7 +773,7 @@ jobs:
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_final == 'true' &&
-      inputs.docker_images != '' &&
+      needs.project_types.outputs.docker_images != '' &&
       needs.project_types.outputs.docker_compose == 'true'
 
     defaults:
