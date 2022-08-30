@@ -595,6 +595,7 @@ jobs:
 
     env:
       COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
+      DOCKER_BUILDKIT: "1"
 
     strategy:
       fail-fast: false
