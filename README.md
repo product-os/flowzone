@@ -170,11 +170,11 @@ they will be executed automatically at the described stages of the workflow.
     ├── flowzone.yml
 ```
 
-An action in a `test` directory will run in parallel to any other supported project tests. See [test/action.yml](.github/flowzone/test/action.yml) for an example.
+A `test` action will run in parallel to any other supported project tests. See [test/action.yml](.github/actions/test/action.yml) for an example.
 
-An action in a `publish` directory will run after all the supported tests have completed. See [publish/action.yml](.github/flowzone/publish/action.yml) for an example.
+A `publish` action will run after all the supported tests have completed. See [publish/action.yml](.github/actions/publish/action.yml) for an example.
 
-An action in a `finalize` directory will run after a pull request is merged. See [finalize/action.yml](.github/flowzone/finalize/action.yml) for an example.
+A `finalize` action will run after a pull request is merged. See [finalize/action.yml](.github/actions/finalize/action.yml) for an example.
 
 More interfaces may be added in the future. Open an issue if you have a use case that is not covered!
 
