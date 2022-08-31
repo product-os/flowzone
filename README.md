@@ -154,12 +154,12 @@ To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_sl
 
 ## Custom
 
-If any [composite actions](https://docs.github.com/en/actions/creating-actions/creating-a-composite-action) are found at the following locations,
+If any [composite actions](https://docs.github.com/en/actions/creating-actions/creating-a-composite-action) are found at the following paths
 they will be executed automatically at the described stages of the workflow.
 
 ```bash
 .github
-├── flowzone
+├── actions
 │   ├── finalize
 │   │   └── action.yml
 │   ├── publish
