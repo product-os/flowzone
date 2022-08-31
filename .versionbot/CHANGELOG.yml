@@ -1,4 +1,18 @@
 - commits:
+    - subject: Rename docker archvariant artifacts to include the sha256
+      hash: 231972221f78d1cda94c928fc6770d4f7c8c7a51
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.23.1
+  title: ""
+  date: 2022-08-31T17:30:28.760Z
+- commits:
     - subject: Provide all secrets and inputs to the composite action via json
       hash: 3c09054458f46d7c6a7299ad0fa38a1cfdd8af9d
       body: ""
