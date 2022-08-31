@@ -792,15 +792,6 @@ jobs:
       matrix:
         image: ${{ fromJSON(needs.project_types.outputs.docker_images) }}
 
-    env:
-      LOCAL_IMAGE: localhost:5000/${{ github.repository }}
-
-    services:
-      registry:
-        image: registry:2.8.1
-        ports:
-          - 5000:5000
-
     steps:
       - name: Login to GitHub Container Registry
         continue-on-error: true
@@ -858,20 +849,11 @@ jobs:
           flavor: |
             latest=auto
 
-      # try to pull existing draft image that we can republish as final
-      - name: Pull draft image
-        env:
-          DRAFT_IMAGE: ${{ matrix.image }}:${{ github.event.pull_request.head.sha }}
-        run: |
-          docker pull ${DRAFT_IMAGE}
-          docker tag ${DRAFT_IMAGE} ${LOCAL_IMAGE}:latest
-          docker push ${LOCAL_IMAGE}:latest
-
       # only one of the destination lines should have values based on the meta restrictions above
       - name: Publish final tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ env.LOCAL_IMAGE }}:latest
+          src: ${{ matrix.image }}:${{ github.event.pull_request.head.sha }}
           dst: |
             ${{ steps.versioned_meta.outputs.tags }}
             ${{ steps.edge_meta.outputs.tags }}
