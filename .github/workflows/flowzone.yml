@@ -954,11 +954,6 @@ jobs:
       needs.event_types.outputs.do_draft == 'true' &&
       needs.project_types.outputs.custom_test == 'true'
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@v3
@@ -967,13 +962,14 @@ jobs:
 
       - name: Extract source artifact
         working-directory: .
+        shell: bash
         run: tar -xvf source.tar
 
       - name: Call custom action
         uses: ./.github/actions/test
         with:
-          flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
-          shell: bash --noprofile --norc -eo pipefail -x {0}
+          json: ${{ toJSON(inputs) }}
+          secrets: ${{ toJSON(secrets) }}
 
   custom_publish:
     name: Publish custom
@@ -992,11 +988,6 @@ jobs:
       needs.event_types.outputs.do_draft == 'true' &&
       needs.project_types.outputs.custom_publish == 'true'
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@v3
@@ -1005,13 +996,14 @@ jobs:
 
       - name: Extract source artifact
         working-directory: .
+        shell: bash
         run: tar -xvf source.tar
 
       - name: Call custom action
         uses: ./.github/actions/publish
         with:
-          flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
-          shell: bash --noprofile --norc -eo pipefail -x {0}
+          json: ${{ toJSON(inputs) }}
+          secrets: ${{ toJSON(secrets) }}
 
   custom_finalize:
     name: Finalize custom
@@ -1021,11 +1013,6 @@ jobs:
       needs.event_types.outputs.do_final == 'true' &&
       needs.project_types.outputs.custom_finalize == 'true'
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@v3
@@ -1034,13 +1021,14 @@ jobs:
 
       - name: Extract source artifact
         working-directory: .
+        shell: bash
         run: tar -xvf source.tar
 
       - name: Call custom action
         uses: ./.github/actions/finalize
         with:
-          flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
-          shell: bash --noprofile --norc -eo pipefail -x {0}
+          json: ${{ toJSON(inputs) }}
+          secrets: ${{ toJSON(secrets) }}
 
   ###################################################
   ## protect branch
