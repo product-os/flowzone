@@ -678,10 +678,12 @@ jobs:
           fi
           docker compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from sut
 
+      # give the artifact a unique name that includes the ARCHVARIANT since the docker_publish job
+      # will download all docker artifacts and combine them into a multiarch manifest
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: docker-${{ env.ARCHVARIANT }}
+          name: docker-${{ github.event.pull_request.head.sha }}-${{ env.ARCHVARIANT }}
           path: /tmp/docker.tar
           retention-days: 1
 
