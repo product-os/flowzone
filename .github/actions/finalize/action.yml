@@ -1,6 +1,6 @@
 # https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
-name: "Draft custom"
-description: "Custom draft step to run after all tests have passed"
+name: "Finalize custom"
+description: "Custom finalize step to run after a merge or tag"
 inputs:
   flowzone_token:
     description: "Flowzone token"

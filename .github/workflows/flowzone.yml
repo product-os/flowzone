@@ -286,17 +286,17 @@ jobs:
         id: custom
         working-directory: .
         run: |
-          if [ -d .github/flowzone/publish ]
+          if [ -d .github/actions/test ]
+          then
+            echo "::set-output name=test::true"
+          fi
+          if [ -d .github/actions/publish ]
           then
             echo "::set-output name=publish::true"
           fi
-          if [ -d .github/flowzone/finalize ]
+          if [ -d .github/actions/finalize ]
           then
             echo "::set-output name=finalize::true"
-          fi
-          if [ -d .github/flowzone/test ]
-          then
-            echo "::set-output name=test::true"
           fi
 
       - name: Check for repo.yml
@@ -970,7 +970,7 @@ jobs:
         run: tar -xvf source.tar
 
       - name: Call custom action
-        uses: ./.github/flowzone/finalize
+        uses: ./.github/actions/test
         with:
           flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
           shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1008,7 +1008,7 @@ jobs:
         run: tar -xvf source.tar
 
       - name: Call custom action
-        uses: ./.github/flowzone/finalize
+        uses: ./.github/actions/publish
         with:
           flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
           shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1037,7 +1037,7 @@ jobs:
         run: tar -xvf source.tar
 
       - name: Call custom action
-        uses: ./.github/flowzone/finalize
+        uses: ./.github/actions/finalize
         with:
           flowzone_token: ${{ secrets.FLOWZONE_TOKEN }}
           shell: bash --noprofile --norc -eo pipefail -x {0}
