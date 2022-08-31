@@ -1,4 +1,28 @@
 - commits:
+    - subject: Provide all secrets and inputs to the composite action via json
+      hash: 3c09054458f46d7c6a7299ad0fa38a1cfdd8af9d
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Rename path for composite actions to .github/actions/
+      hash: 3cdd238848c4a66602f32071b2ea70fad877ca1c
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.23.0
+  title: ""
+  date: 2022-08-31T15:24:46.141Z
+- commits:
     - subject: Copy directly between remote tags on docker finalize
       hash: bc1a6ca5ba4668b11f0dba6541e79f8a50f8d0c0
       body: |
