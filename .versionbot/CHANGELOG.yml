@@ -1,4 +1,21 @@
 - commits:
+    - subject: Copy directly between remote tags on docker finalize
+      hash: bc1a6ca5ba4668b11f0dba6541e79f8a50f8d0c0
+      body: |
+        The steps to download draft images, load them locally,
+        and push them again became redundant when the finalize step
+        became a matrix for each image.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.22.3
+  title: ""
+  date: 2022-08-31T13:55:49.943Z
+- commits:
     - subject: Use a matrix for publishing docker images to multiple repositories
       hash: b3d24151fcc20f0f5c7e7dcbbddd4ea969ab7efe
       body: ""
