@@ -8,6 +8,8 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 
 - [Getting Started](#getting-started)
 - [Usage](#usage)
+  - [Commit Message Commands](#commit-message-commands)
+    - [Skipping Workflow Runs](#skipping-workflow-runs)
 - [Supported project types](#supported-project-types)
   - [npm](#npm)
   - [Docker](#docker)
@@ -96,6 +98,31 @@ jobs:
 ```
 
 Flowzone will automatically select an appropriate runner based on your project's code.
+
+### Commit Message Commands
+
+#### Skipping Workflow Runs
+
+Workflows that would otherwise be triggered using on: push or on: pull_request won't be triggered if you add any of the following strings to the commit message in a push, or the HEAD commit of a pull request:
+
+```
+[skip ci]
+[ci skip]
+[no ci]
+[skip actions]
+[actions skip]
+```
+
+Alternatively, you can end the commit message with two empty lines followed by either:
+
+```
+skip-checks:true
+skip-checks: true
+```
+
+You won't be able to merge the pull request if your repository is configured to require specific checks to pass first. To allow the pull request to be merged you can push a new commit to the pull request without the skip instruction in the commit message.
+
+For further reading please check [Github Skipping Workflow Documentation](https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs).
 
 ## Supported project types
 
