@@ -364,12 +364,12 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
-      # create changelog yaml if it does not exist (TODO: versionist should handle this automatically)
+      # create changelog yaml if it does not exist
+      # TODO: versionist should do this automatically!
       # this step can fail if there has never been a versioned PR merged
       # https://github.com/product-os/flowzone/issues/172
       - name: Generate changelog
         continue-on-error: true
-        id: changelog
         if: needs.project_types.outputs.repo_type != '' && github.event_name == 'pull_request'
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
@@ -386,19 +386,16 @@ jobs:
             rm yq generate-changelog.sh
           fi
 
-      # parse current (old) version from various files
-      - name: Parse version
+      # parse last versioned commit from tags so we can check for changes
+      # this step can fail if there has never been a versioned PR merged
+      - name: Get latest tag
+        continue-on-error: true
         id: old_version
         if: needs.project_types.outputs.repo_type != '' && github.event_name == 'pull_request'
         run: |
-          versions=()
-          [ -f .versionbot/CHANGELOG.yml ] && versions+=($(yq e '.[0].version' .versionbot/CHANGELOG.yml))
-          [ -f package.json ] && versions+=($(jq -r .version package.json))
-          [ -f balena.yml ] && versions+=($(yq e '.version' balena.yml))
-          [ -f VERSION ] && versions+=($(head -n1 VERSION))
-          semver="$(npx -q -y -- semver "${versions[@]}" | tail -n1)"
-          echo "::set-output name=semver::${semver}"
-          echo "::set-output name=tag::v${semver}"
+          tag="$(git tag -l --sort=-version:refname "v*.*.*" | head -n1)"
+          echo "::set-output name=semver::${tag/v/}"
+          echo "::set-output name=tag::${tag}"
 
       # install and run versionist via balena-versionist
       - name: Run versionist
@@ -407,8 +404,9 @@ jobs:
           npm install -g balena-versionist versionist
           balena-versionist
 
-      # parse versions the exact same way again to get the new version
-      - name: Parse version
+      # inspect all known versioned files to extract the new version
+      # TODO: versionist should provide the new version via stdout!
+      - name: Inspect versioned files
         id: new_version
         if: needs.project_types.outputs.repo_type != '' && github.event_name == 'pull_request'
         run: |
@@ -422,7 +420,7 @@ jobs:
 
           if [ -z "${semver}" ] || [ "${semver}" = "${{ steps.old_version.outputs.semver }}" ]
           then
-            echo "Failed to detect any versioned files! Did you include a Change-type?"
+            echo "::error::Failed to detect any versioned files! Did you include a Change-type?"
             exit 1
           fi
 
@@ -447,7 +445,7 @@ jobs:
 
       # push the versioned commit only if the PR is merged
       - name: Push versioned commit
-        if: github.event.pull_request.merged == true && steps.new_version.outputs.tag != 'v'
+        if: needs.event_types.outputs.pr_merged == 'true' && steps.new_version.outputs.tag != 'v'
         run: |
           git push origin HEAD:${{ github.base_ref }} --follow-tags
 
@@ -840,7 +838,7 @@ jobs:
       # merged pull requests
       - name: Generate versioned labels and tags
         id: versioned_meta
-        if: github.event.pull_request.merged == true && needs.versioned_source.outputs.version != ''
+        if: needs.event_types.outputs.pr_merged == 'true' && needs.versioned_source.outputs.version != ''
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -853,7 +851,7 @@ jobs:
       # merged pull requests with versioning disabled
       - name: Generate edge labels and tags
         id: edge_meta
-        if: github.event.pull_request.merged == true && needs.versioned_source.outputs.version == ''
+        if: needs.event_types.outputs.pr_merged == 'true' && needs.versioned_source.outputs.version == ''
         uses: docker/metadata-action@v4
         with:
           images: |
