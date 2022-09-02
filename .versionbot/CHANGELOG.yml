@@ -1,4 +1,49 @@
 - commits:
+    - subject: Fix typo when checking for merge events
+      hash: 9dbda8bfe5a1f91408da9af108cd17e941eab81c
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Fix typo in the protect_branch example
+      hash: d9fbca5c22f6e45e9a03ce2b3be0e5327c1678b1
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Micah Halter <micah@balena.io>
+        signed-off-by: Micah Halter <micah@balena.io>
+      author: Micah Halter
+      nested: []
+    - subject: Use the event type helper to verify that the pr is merged
+      hash: 4ea529532e2d5da466fbbfe68b4e1dbb7c3211d5
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Continue when the changelog cannot be generated
+      hash: b5002e979ddf13118be770a8019cfb2ad1dd3d3b
+      body: |
+        This can happen if the repo has never have a versioned PR merged.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.23.4
+  title: ""
+  date: 2022-09-02T15:13:11.154Z
+- commits:
     - subject: "Document how to skip CI on the README #154"
       hash: d2fdf7199f29f31a298272d4fd20a7a88d77b3c2
       body: ""
