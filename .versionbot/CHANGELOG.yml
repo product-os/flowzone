@@ -1,4 +1,19 @@
 - commits:
+    - subject: Use tmp directory when generating changelog
+      hash: b830013914fe95d119ad02ba8fd9ed9058922d44
+      body: |
+        This should avoid accidentally leaving files behind.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.23.5
+  title: ""
+  date: 2022-09-02T18:01:05.244Z
+- commits:
     - subject: Fix typo when checking for merge events
       hash: 9dbda8bfe5a1f91408da9af108cd17e941eab81c
       body: ""
