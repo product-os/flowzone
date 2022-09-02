@@ -445,7 +445,7 @@ jobs:
 
       # push the versioned commit only if the PR is merged
       - name: Push versioned commit
-        if: needs.event_types.outputs.pr_merged == 'true' && steps.new_version.outputs.tag != 'v'
+        if: needs.event_types.outputs.pr_merge == 'true' && steps.new_version.outputs.tag != 'v'
         run: |
           git push origin HEAD:${{ github.base_ref }} --follow-tags
 
@@ -838,7 +838,7 @@ jobs:
       # merged pull requests
       - name: Generate versioned labels and tags
         id: versioned_meta
-        if: needs.event_types.outputs.pr_merged == 'true' && needs.versioned_source.outputs.version != ''
+        if: needs.event_types.outputs.pr_merge == 'true' && needs.versioned_source.outputs.version != ''
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -851,7 +851,7 @@ jobs:
       # merged pull requests with versioning disabled
       - name: Generate edge labels and tags
         id: edge_meta
-        if: needs.event_types.outputs.pr_merged == 'true' && needs.versioned_source.outputs.version == ''
+        if: needs.event_types.outputs.pr_merge == 'true' && needs.versioned_source.outputs.version == ''
         uses: docker/metadata-action@v4
         with:
           images: |
