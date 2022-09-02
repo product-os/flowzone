@@ -374,6 +374,7 @@ jobs:
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
           then
+            (cd /tmp
             wget https://raw.githubusercontent.com/product-os/versionist/master/scripts/generate-changelog.sh
             echo "c1d25c8d5dc40e08a13c43ac93582661  generate-changelog.sh" | md5sum -c -
             chmod +x generate-changelog.sh
@@ -382,8 +383,8 @@ jobs:
             echo "a1097c74b81a2ef255583d9718bf4be6  yq" | md5sum -c -
             chmod +x yq
 
-            PATH="${PWD}:${PATH}" GH_TOKEN=${{ secrets.FLOWZONE_TOKEN }} ./generate-changelog.sh .
-            rm yq generate-changelog.sh
+            PATH="${PWD}:${PATH}" GH_TOKEN=${{ secrets.FLOWZONE_TOKEN }} ./generate-changelog.sh "${GITHUB_WORKSPACE}"
+            )
           fi
 
       # parse last versioned commit from tags so we can check for changes
