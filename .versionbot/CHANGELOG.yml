@@ -1,4 +1,20 @@
 - commits:
+    - subject: Cancel in progress jobs of the same ref
+      hash: d025251966ac2531a6878b46f6b129ac3ea6d37d
+      body: |
+        Cancel parallel flowzone runs from the same ref that may
+        cause conflicts.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.24.0
+  title: ""
+  date: 2022-09-05T17:41:45.275Z
+- commits:
     - subject: Allow clean jobs to run when a PR is merged
       hash: 9a17225d1d6dfd06995c4eccc976364edfa63a55
       body: |
