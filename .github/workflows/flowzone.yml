@@ -66,6 +66,11 @@ on:
         required: false
         default: "1"
 
+# https://docs.github.com/en/actions/using-jobs/using-concurrency
+concurrency: 
+  group: flowzone-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   GHCR_USER: "flowzone" # does not seem to matter what is used here
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
