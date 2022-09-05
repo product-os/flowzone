@@ -1,4 +1,20 @@
 - commits:
+    - subject: Allow clean jobs to run when a PR is merged
+      hash: 9a17225d1d6dfd06995c4eccc976364edfa63a55
+      body: |
+        Composite jobs can check additional conditions like whether
+        or not the PR was merged.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.23.7
+  title: ""
+  date: 2022-09-05T17:35:18.763Z
+- commits:
     - subject: Add support for custom clean actions
       hash: 3ee65b5a230b1f8c823230a8159e6fb97b2899b6
       body: |
