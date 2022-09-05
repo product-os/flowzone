@@ -85,12 +85,14 @@ jobs:
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
 
     outputs:
-      pr_open: ${{ steps.pr_open.outcome == 'success' }}
-      pr_sync: ${{ steps.pr_sync.outcome == 'success' }}
-      pr_merge: ${{ steps.pr_merge.outcome == 'success' }}
+      pr_opened: ${{ steps.pr_opened.outcome == 'success' }}
+      pr_synchronize: ${{ steps.pr_synchronize.outcome == 'success' }}
+      pr_merged: ${{ steps.pr_merged.outcome == 'success' }}
+      pr_closed: ${{ steps.pr_closed.outcome == 'success' }}
       tagged: ${{ steps.tagged.outcome == 'success' }}
-      do_draft: ${{ steps.pr_open.outcome == 'success' || steps.pr_sync.outcome == 'success' }}
-      do_final: ${{ steps.pr_merge.outcome == 'success' || steps.tagged.outcome == 'success' }}
+      do_draft: ${{ steps.pr_opened.outcome == 'success' || steps.pr_synchronize.outcome == 'success' }}
+      do_final: ${{ steps.pr_merged.outcome == 'success' || steps.tagged.outcome == 'success' }}
+      do_clean: ${{ steps.pr_closed.outcome == 'success' && steps.pr_merged.outcome != 'success' }}
 
     defaults:
       run:
@@ -103,19 +105,25 @@ jobs:
     steps:
       - name: Pull Request opened
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
-        id: pr_open
+        id: pr_opened
         run: |
           echo "${JSON}" || true
 
       - name: Pull Request synchronize
         if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
-        id: pr_sync
+        id: pr_synchronize
         run: |
           echo "${JSON}" || true
 
       - name: Pull Request merged
         if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
-        id: pr_merge
+        id: pr_merged
+        run: |
+          echo "${JSON}" || true
+
+      - name: Pull Request closed
+        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        id: pr_closed
         run: |
           echo "${JSON}" || true
 
@@ -152,9 +160,10 @@ jobs:
       docker_platforms: ${{ steps.docker_bake.outputs.platforms }}
       node_versions: ${{ steps.node_versions.outputs.json }}
 
+      custom_test: ${{ steps.custom.outputs.test }}
       custom_publish: ${{ steps.custom.outputs.publish }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
-      custom_test: ${{ steps.custom.outputs.test }}
+      custom_clean: ${{ steps.custom.outputs.clean }}
 
     steps:
       - name: Checkout source
@@ -297,6 +306,10 @@ jobs:
           if [ -d .github/actions/finalize ]
           then
             echo "::set-output name=finalize::true"
+          fi
+          if [ -d .github/actions/clean ]
+          then
+            echo "::set-output name=clean::true"
           fi
 
       - name: Check for repo.yml
@@ -446,7 +459,7 @@ jobs:
 
       # push the versioned commit only if the PR is merged
       - name: Push versioned commit
-        if: needs.event_types.outputs.pr_merge == 'true' && steps.new_version.outputs.tag != 'v'
+        if: needs.event_types.outputs.pr_merged == 'true' && steps.new_version.outputs.tag != 'v'
         run: |
           git push origin HEAD:${{ github.base_ref }} --follow-tags
 
@@ -839,7 +852,7 @@ jobs:
       # merged pull requests
       - name: Generate versioned labels and tags
         id: versioned_meta
-        if: needs.event_types.outputs.pr_merge == 'true' && needs.versioned_source.outputs.version != ''
+        if: needs.event_types.outputs.pr_merged == 'true' && needs.versioned_source.outputs.version != ''
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -852,7 +865,7 @@ jobs:
       # merged pull requests with versioning disabled
       - name: Generate edge labels and tags
         id: edge_meta
-        if: needs.event_types.outputs.pr_merge == 'true' && needs.versioned_source.outputs.version == ''
+        if: needs.event_types.outputs.pr_merged == 'true' && needs.versioned_source.outputs.version == ''
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -992,8 +1005,7 @@ jobs:
         shell: bash
         run: tar -xvf source.tar
 
-      - name: Call custom action
-        uses: ./.github/actions/test
+      - uses: ./.github/actions/test
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
@@ -1026,8 +1038,7 @@ jobs:
         shell: bash
         run: tar -xvf source.tar
 
-      - name: Call custom action
-        uses: ./.github/actions/publish
+      - uses: ./.github/actions/publish
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
@@ -1051,8 +1062,31 @@ jobs:
         shell: bash
         run: tar -xvf source.tar
 
-      - name: Call custom action
-        uses: ./.github/actions/finalize
+      - uses: ./.github/actions/finalize
+        with:
+          json: ${{ toJSON(inputs) }}
+          secrets: ${{ toJSON(secrets) }}
+
+  custom_clean:
+    name: Clean custom
+    runs-on: ubuntu-latest
+    needs: [event_types, project_types, versioned_source]
+    if: |
+      needs.event_types.outputs.do_clean == 'true' &&
+      needs.project_types.outputs.custom_clean == 'true'
+
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha }}
+
+      - name: Extract source artifact
+        working-directory: .
+        shell: bash
+        run: tar -xvf source.tar
+
+      - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
