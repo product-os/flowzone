@@ -1,4 +1,19 @@
 - commits:
+    - subject: Add support for custom clean actions
+      hash: 3ee65b5a230b1f8c823230a8159e6fb97b2899b6
+      body: |
+        These composite actions will run when a PR is closed without merging.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.23.6
+  title: ""
+  date: 2022-09-05T16:10:43.601Z
+- commits:
     - subject: Use tmp directory when generating changelog
       hash: b830013914fe95d119ad02ba8fd9ed9058922d44
       body: |
