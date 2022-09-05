@@ -1,6 +1,6 @@
 # https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
 name: "Clean custom"
-description: "Custom clean step to run after PR is closed and unmerged"
+description: "Custom clean step to run after PR is closed"
 # this inputs are always provided by flowzone, so they must always be defined on the composite action
 inputs:
   json:
