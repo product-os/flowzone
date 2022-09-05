@@ -92,7 +92,7 @@ jobs:
       tagged: ${{ steps.tagged.outcome == 'success' }}
       do_draft: ${{ steps.pr_opened.outcome == 'success' || steps.pr_synchronize.outcome == 'success' }}
       do_final: ${{ steps.pr_merged.outcome == 'success' || steps.tagged.outcome == 'success' }}
-      do_clean: ${{ steps.pr_closed.outcome == 'success' && steps.pr_merged.outcome != 'success' }}
+      do_clean: ${{ steps.pr_closed.outcome == 'success' }}
 
     defaults:
       run:
