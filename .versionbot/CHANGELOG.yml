@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix requirements for versioned commits
+      hash: 0237b88d86a3ad9e0e1d8daf91d2c55db5ae1152
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.24.1
+  title: ""
+  date: 2022-09-06T23:26:11.270Z
+- commits:
     - subject: Cancel in progress jobs of the same ref
       hash: d025251966ac2531a6878b46f6b129ac3ea6d37d
       body: |
