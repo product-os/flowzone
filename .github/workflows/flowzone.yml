@@ -448,7 +448,7 @@ jobs:
 
       # create a versioned commit
       - name: Create versioned commit
-        if: steps.new_version.outputs.tag != 'v'
+        if: needs.project_types.outputs.repo_type != ''
         env:
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
@@ -464,7 +464,7 @@ jobs:
 
       # push the versioned commit only if the PR is merged
       - name: Push versioned commit
-        if: needs.event_types.outputs.pr_merged == 'true' && steps.new_version.outputs.tag != 'v'
+        if: needs.project_types.outputs.repo_type != '' && needs.event_types.outputs.pr_merged == 'true'
         run: |
           git push origin HEAD:${{ github.base_ref }} --follow-tags
 
