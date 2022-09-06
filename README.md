@@ -181,6 +181,8 @@ To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_sl
 
 ## Custom
 
+_Note: Custom Flowzone actions are not a guaranteed stable interface and should be merged to Flowzone core when possible._
+
 If any [composite actions](https://docs.github.com/en/actions/creating-actions/creating-a-composite-action) are found at the following paths
 they will be executed automatically at the described stages of the workflow.
 
