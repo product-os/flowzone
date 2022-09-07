@@ -99,13 +99,22 @@ jobs:
 
 Flowzone will automatically select an appropriate runner based on your project's code.
 
-### Commit Message Commands
+### Merging
+
+Flowzone only supports merging with a merge commit. This option is shown as **Merge pull request** on an in-progress PR.
+
+Avoid using **Squash and merge** or **Rebase and merge** as these methods will result in a new commit SHA not matching anything from the original PR.
+This would prevent Flowzone from finding and finalizing existing draft artifacts.
+
+You can read more about the available merge methods [here](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/about-merge-methods-on-github).
+
+### Commit Message
 
 #### Skipping Workflow Runs
 
-Workflows that would otherwise be triggered using on: push or on: pull_request won't be triggered if you add any of the following strings to the commit message in a push, or the HEAD commit of a pull request:
+Workflows that would otherwise be triggered using `on: push` or `on: pull_request` won't be triggered if you add any of the following strings to the commit message in a push, or the HEAD commit of a pull request:
 
-```
+```text
 [skip ci]
 [ci skip]
 [no ci]
@@ -115,7 +124,7 @@ Workflows that would otherwise be triggered using on: push or on: pull_request w
 
 Alternatively, you can end the commit message with two empty lines followed by either:
 
-```
+```text
 skip-checks:true
 skip-checks: true
 ```
@@ -180,6 +189,8 @@ If a `balena.yml` file is found in the root of the repository Flowzone will atte
 To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
 
 ## Custom
+
+_Note: Custom Flowzone actions are not a guaranteed stable interface and should be merged to Flowzone core when possible._
 
 If any [composite actions](https://docs.github.com/en/actions/creating-actions/creating-a-composite-action) are found at the following paths
 they will be executed automatically at the described stages of the workflow.
