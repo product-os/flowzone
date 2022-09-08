@@ -158,7 +158,7 @@ Typically, the `sut` container will execute your e2e or integration tests and wi
 If you need to provide environment variables to the compose environment you can add a repository secret called [`COMPOSE_VARS`](#compose_vars) that should be a base64 encoded `.env` file.
 This will be decoded and written to a `.env` file inside the test worker at runtime.
 
-To disable publishing of Docker artifacts set [`docker_images`](#docker_images) to `""`.
+To enable publishing of Docker artifacts set [`docker_images`](#docker_images) input to correct value of docker image repositories without tags eg  - eg `ghcr.io/${{ github.repository }}`.
 
 For advanced Docker build options, including multi-arch, add a [docker-bake.hcl](https://docs.docker.com/engine/reference/commandline/buildx_bake/) file to your project.
 
@@ -306,7 +306,7 @@ Comma-delimited string of Docker images (without tags) to publish (skipped if em
 
 Type: _string_
 
-Default: `ghcr.io/${{ github.repository }}`
+Default: `''`
 
 #### `balena_slugs`
 
