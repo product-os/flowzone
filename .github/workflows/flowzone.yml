@@ -49,7 +49,7 @@ on:
         description: "Comma-delimited string of Docker images (without tags) to publish (skipped if empty)"
         type: string
         required: false
-        default: ''
+        default: ""
       balena_slugs:
         description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty)"
         type: string
@@ -759,7 +759,8 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
-      needs.event_types.outputs.do_draft == 'true'
+      needs.event_types.outputs.do_draft == 'true' &&
+      join(fromJSON(needs.project_types.outputs.docker_images)) != ''
 
     defaults:
       run:
