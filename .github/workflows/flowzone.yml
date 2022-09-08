@@ -67,7 +67,7 @@ on:
         default: "1"
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
-concurrency: 
+concurrency:
   group: flowzone-${{ github.ref }}
   cancel-in-progress: true
 
@@ -575,6 +575,17 @@ jobs:
           echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
           npm whoami
 
+      - name: Install dependencies, if necessary
+        run: |
+          if grep -E '(preversion|postversion|prepare|prepack|postpack|prepublishOnly|publish)' package.json; then
+            # If a relevant publish script exists then install dependencies before publishing
+            if [ -e package-lock.json ]; then
+              npm ci
+            else
+              npm i
+            fi
+          fi
+
       - name: Publish draft release
         run: |
           npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ steps.meta.outputs.version_tag }}
@@ -609,6 +620,17 @@ jobs:
         run: |
           echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
           npm whoami
+
+      - name: Install dependencies, if necessary
+        run: |
+          if grep -E '(preversion|postversion|prepare|prepack|postpack|prepublishOnly|publish)' package.json; then
+            # If a relevant publish script exists then install dependencies before publishing
+            if [ -e package-lock.json ]; then
+              npm ci
+            else
+              npm i
+            fi
+          fi
 
       - name: Publish final release
         run: |
