@@ -1,4 +1,22 @@
 - commits:
+    - subject: Separate branch protection job into steps 1. fetch existing branch
+        protection object 2. parse and remove resinCI and existing flowzone
+        checks 3. prepare new branch protection update object. 4. check result
+        containing `required_approving_review_count`
+      hash: 755eeb07cd2a3305fc1aa4b51ec0eebe73dee8c8
+      body: |
+        resolves: #111 #141 #140
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: fisehara <harald@balena.io>
+        signed-off-by: fisehara <harald@balena.io>
+      author: fisehara
+      nested: []
+  version: 0.25.0
+  title: ""
+  date: 2022-09-08T18:39:28.550Z
+- commits:
     - subject: Install dependencies before npm publish if there are relevant scripts
       hash: d3cb8e66525ddf4c20de74976ef426d8ce4905e9
       body: ""
