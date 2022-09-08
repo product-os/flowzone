@@ -1,4 +1,20 @@
 - commits:
+    - subject: Default docker_images inputs to ''
+      hash: dfc08da52b9d445a56c754afdacee1085bfb7313
+      body: |
+        Skip docker publish by default, when not explicitly set.
+        resolves: #188
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: fisehara <harald@balena.io>
+        signed-off-by: fisehara <harald@balena.io>
+      author: fisehara
+      nested: []
+  version: 0.25.1
+  title: ""
+  date: 2022-09-08T19:00:52.559Z
+- commits:
     - subject: Separate branch protection job into steps 1. fetch existing branch
         protection object 2. parse and remove resinCI and existing flowzone
         checks 3. prepare new branch protection update object. 4. check result
