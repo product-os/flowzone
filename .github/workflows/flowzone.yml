@@ -1152,9 +1152,10 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
-
+    env:
+      BRANCH_PROTECTION_URL: ${{ github.api_url }}/repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
     steps:
-      # loop over all needed jobs and fail this job if any of them failed
+      #loop over all needed jobs and fail this job if any of them failed
       - name: Check needed jobs
         run: |
           for result in $(echo '${{ toJSON(needs.*.result) }}' | jq -cr '.[]')
@@ -1164,45 +1165,106 @@ jobs:
             echo "Needed job returned result: ${result}"
             exit 1
           done
+      - name: Get protection rules
+        id: get_protection_rules
+        run: |
+          status_code=$(curl -o body.json --silent -w "%{http_code}\n" -X GET "${{ env.BRANCH_PROTECTION_URL }}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.FLOWZONE_TOKEN }}")
+          result=$(cat body.json | jq '. | @json' )
+          if [[ "$status_code" -ne 200 ]] ; then
+            echo ::error title={url}::"get_protection_rules failed with ${status_code} ${result} "
+            exit 1
+          else
+            echo "::set-output name=result::${result}"
+          fi
+      - name: Parse and prepare protection rules
+        id: parse_prepare_protection_rules
+        if: ${{ steps.get_protection_rules.conclusion == 'success' }}
+        run: |
+          jsondata=${{ steps.get_protection_rules.outputs.result }}
 
+          required_status_checks__strict=$(echo $jsondata | jq ".required_status_checks.strict")
+
+          # Filter all Flowzone or ResinCI checks
+          # leave other checks (eg jenkins)
+          # add hard coded flowzone checks back
+          required_status_checks__contexts=$(echo $jsondata | \
+          jq ".required_status_checks.contexts | del(.[] | \
+          select(ascii_downcase | startswith(\"flowzone\") or startswith(\"resinci\"))) |\
+          . + [ \
+            \"Flowzone / Protect branch\", \
+            \"Flowzone / Project types\", \
+            \"Flowzone / Versioned source\", \
+            \"Flowzone / Event types\" \
+          ]")
+
+          required_pull_request_reviews__dismiss_stale_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.dismiss_stale_reviews")
+          required_pull_request_reviews__require_code_owner_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.require_code_owner_reviews")
+          required_pull_request_reviews__dismissal_restrictions__users=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.users")
+          required_pull_request_reviews__dismissal_restrictions__teams=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.teams")
+          required_pull_request_reviews__dismissal_restrictions__apps=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.apps")
+          allow_force_pushes=$(echo $jsondata | jq ".allow_force_pushes.enabled")
+          required_signatures=$(echo $jsondata | jq ".required_signatures.enabled")
+          allow_deletions=$(echo $jsondata | jq ".allow_deletions.enabled")
+          required_linear_history=$(echo $jsondata | jq ".required_linear_history.enabled")
+          enforce_admins=$(echo $jsondata | jq ".enforce_admins.enabled")
+          block_creations=$(echo $jsondata | jq ".block_creations.enabled")
+          required_conversation_resolution=$(echo $jsondata | jq ".required_conversation_resolution.enabled")
+
+
+          newjson=$(cat <<-END
+            {
+              "required_status_checks": {
+                  "strict": ${required_status_checks__strict},
+                  "contexts": ${required_status_checks__contexts}
+              },
+              "required_pull_request_reviews": {
+                  "dismissal_restrictions": {
+                      "users": ${required_pull_request_reviews__dismissal_restrictions__users},
+                      "teams": ${required_pull_request_reviews__dismissal_restrictions__teams},
+                      "apps": ${required_pull_request_reviews__dismissal_restrictions__apps}
+                  },
+                  "dismiss_stale_reviews": ${required_pull_request_reviews__dismiss_stale_reviews},
+                  "require_code_owner_reviews": ${required_pull_request_reviews__require_code_owner_reviews},
+                  "required_approving_review_count": ${{ inputs.required_approving_review_count }},
+                  "bypass_pull_request_allowances": {
+                      "users": [],
+                      "teams": []
+                  }
+              },
+              "enforce_admins": ${enforce_admins},
+              "required_signatures": ${required_signatures},
+              "restrictions": null,
+              "required_linear_history": ${required_linear_history},
+              "allow_force_pushes": ${allow_force_pushes},
+              "allow_deletions": ${allow_deletions},
+              "block_creations": ${block_creations},
+              "required_conversation_resolution": ${required_conversation_resolution}
+            }
+          END
+          )
+
+          result=$(echo "$newjson" | jq '. | @json' )
+          echo "::set-output name=result::${result}"
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
+        if: ${{ steps.parse_prepare_protection_rules.conclusion == 'success' }}
         run: |
-          url='${{ github.api_url }}/repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection'
-
-          result="$(curl --silent -X PUT "${url}" \
+          status_code="$(curl -o body.json --silent -w "%{http_code}\n" -X PUT "${{ env.BRANCH_PROTECTION_URL }}" \
             -H 'Accept: application/vnd.github+json' \
             -H 'Authorization: Bearer ${{ secrets.FLOWZONE_TOKEN }}' \
-            -d '{
-            "required_status_checks": {
-              "strict": true,
-              "contexts": [
-                "Flowzone / Event types",
-                "Flowzone / Project types",
-                "Flowzone / Versioned source",
-                "Flowzone / Protect branch"
-              ]
-            },
-            "enforce_admins": false,
-            "required_pull_request_reviews": {
-              "dismissal_restrictions": {
-                "users": [],
-                "teams": []
-              },
-              "dismiss_stale_reviews": false,
-              "require_code_owner_reviews": false,
-              "required_approving_review_count": ${{ inputs.required_approving_review_count }},
-              "bypass_pull_request_allowances": {
-                "users": [],
-                "teams": []
-              }
-            },
-            "restrictions": null,
-            "required_linear_history": false,
-            "allow_force_pushes": false,
-            "allow_deletions": false,
-            "block_creations": false,
-            "required_conversation_resolution": false
-          }')"
+            -d '${{ fromJSON(steps.parse_prepare_protection_rules.outputs.result) }}')"
+
+          result=$(cat body.json | jq '.' )
+          if [[ "$status_code" -ne 200 ]] ; then
+            echo ::error title={url}::"apply_branch_protection_rules failed with ${status_code} ${result} "
+            exit 1
+          fi
+
+          if [[  $(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count') -ne ${{ inputs.required_approving_review_count }} ]]; then
+            echo ::error title={url}::"branch protection required_pull_request_reviews.required_approving_review_count not set to ${{ inputs.required_approving_review_count }}"
+            exit 1
+          fi
 
           echo ::set-output name=result::"${result}"
