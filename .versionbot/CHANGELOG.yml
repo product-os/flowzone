@@ -1,4 +1,22 @@
 - commits:
+    - subject: Use prepacked artifacts for npm publish and finalize
+      hash: 4d19a949adf2d1f5b8d766ec3efdc9a017645be7
+      body: |
+        This will prevent the publish and finalize steps from
+        installing dependencies with secrets access, and ensure that
+        projects without a package-lock won't end up with different
+        dependency versions when publishing.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.25.2
+  title: ""
+  date: 2022-09-08T21:04:33.800Z
+- commits:
     - subject: Default docker_images inputs to ''
       hash: dfc08da52b9d445a56c754afdacee1085bfb7313
       body: |
