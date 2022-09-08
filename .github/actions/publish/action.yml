@@ -12,17 +12,13 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Dump inputs and secrets
+    - name: Dump context
       shell: bash
       env:
         INPUTS: ${{ inputs.json }}
         SECRETS: ${{ inputs.secrets }}
+        GITHUB: ${{ toJSON(github) }}
       run: |
         echo "${INPUTS}"
         echo "${SECRETS}"
-
-    - name: Dump github context
-      shell: bash
-      continue-on-error: true
-      run: |
-        echo '${{ toJSON(github) }}'
+        echo "${GITHUB}"

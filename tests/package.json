@@ -3,7 +3,7 @@
   "version": "0.25.1",
   "description": "Sample NPM package for testing the build process",
   "main": "index.js",
-  "private": true,
+  "private": false,
   "scripts": {
     "test": "jest"
   },
@@ -11,6 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "jest": "^28.1.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   },
   "versionist": {
     "publishedAt": "2022-09-08T19:00:52.854Z"
