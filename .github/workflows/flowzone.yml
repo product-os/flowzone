@@ -49,7 +49,7 @@ on:
         description: "Comma-delimited string of Docker images (without tags) to publish (skipped if empty)"
         type: string
         required: false
-        default: ghcr.io/${{ github.repository }}
+        default: ''
       balena_slugs:
         description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty)"
         type: string
