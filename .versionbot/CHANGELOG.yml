@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fixing docker_images string and add empty check
+      hash: ae59da01322191dc650d7ec8ed3e4d1d9dc0a0cd
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: fisehara <harald@balena.io>
+        signed-off-by: fisehara <harald@balena.io>
+      author: fisehara
+      nested: []
+  version: 0.25.3
+  title: ""
+  date: 2022-09-08T22:07:56.393Z
+- commits:
     - subject: Use prepacked artifacts for npm publish and finalize
       hash: 4d19a949adf2d1f5b8d766ec3efdc9a017645be7
       body: |
