@@ -501,6 +501,13 @@ jobs:
       matrix:
         node_version: ${{ fromJSON(needs.project_types.outputs.node_versions) }}
 
+    outputs:
+      package: ${{ steps.meta.outputs.package }}
+      version: ${{ steps.meta.outputs.version }}
+      branch_tag: ${{ steps.meta.outputs.branch_tag }}
+      sha_tag: ${{ steps.meta.outputs.sha_tag }}
+      version_tag: ${{ steps.meta.outputs.version_tag }}
+
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@v3
@@ -516,46 +523,7 @@ jobs:
         with:
           node-version: "${{ matrix.node_version }}"
 
-      - name: Install dependencies
-        run: |
-          if [ -e package-lock.json ]; then
-            npm ci
-          else
-            npm i
-          fi
-
-      - name: Run build
-        run: npm run build --if-present
-
-      - name: Run tests
-        run: npm test
-
-  npm_publish:
-    name: Publish npm
-    runs-on: ubuntu-latest
-    needs: [project_types, versioned_source, npm_test, custom_test]
-    if: |
-      !failure() && !cancelled() &&
-      needs.npm_test.result == 'success' &&
-      needs.event_types.outputs.do_draft == 'true' &&
-      needs.project_types.outputs.npm_private != 'true'
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-
-    steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha }}
-
-      - name: Extract source artifact
-        working-directory: .
-        run: tar -xvf source.tar
-
-      - name: Generate tags
+      - name: Generate metadata
         id: meta
         run: |
           package="$(jq -r '.name' package.json)"
@@ -570,27 +538,68 @@ jobs:
           echo "::set-output name=sha_tag::${sha_tag}"
           echo "::set-output name=version_tag::${version_tag}"
 
+      - name: Install dependencies
+        run: |
+          if [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+
+      - name: Run build
+        run: npm run build --if-present
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run pack
+        run: npm pack --pack-destination=/tmp
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
+          path: /tmp/*.tgz
+          retention-days: 90
+
+  npm_publish:
+    name: Publish npm
+    runs-on: ubuntu-latest
+    needs: [project_types, versioned_source, npm_test, custom_test]
+    if: |
+      !failure() && !cancelled() &&
+      needs.npm_test.result == 'success' &&
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.npm_private != 'true'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: /tmp
+
       - name: Login to registry
         run: |
           echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
           npm whoami
 
-      - name: Install dependencies, if necessary
-        run: |
-          if grep -E '(preversion|postversion|prepare|prepack|postpack|prepublishOnly|publish)' package.json; then
-            # If a relevant publish script exists then install dependencies before publishing
-            if [ -e package-lock.json ]; then
-              npm ci
-            else
-              npm i
-            fi
-          fi
-
+      # unpack the tarball provided by the tests so we can apply the draft version to package.json
+      # before publishing
       - name: Publish draft release
         run: |
-          npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ steps.meta.outputs.version_tag }}
-          npm --loglevel=verbose --logs-max=0 publish --tag=${{ steps.meta.outputs.sha_tag }}
-          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ steps.meta.outputs.package }}@${{ steps.meta.outputs.version_tag }} ${{ steps.meta.outputs.branch_tag }}
+          pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          tar xvf "${pack}"
+          (cd package
+          npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }} --allow-same-version
+          npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }} || true
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }}
+          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }} ${{ needs.npm_test.outputs.branch_tag }}
+          )
 
   npm_finalize:
     name: Finalize npm
@@ -603,38 +612,29 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ inputs.working_directory }}
+        working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
+      # https://github.com/dawidd6/action-download-artifact
+      # TODO: what if this is a tag event and PR artifacts do not exist?
+      - name: Download artifacts from PR
+        uses: dawidd6/action-download-artifact@v2
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
-
-      - name: Extract source artifact
-        working-directory: .
-        run: tar -xvf source.tar
+          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          commit: ${{ github.event.pull_request.head.sha }}
+          path: /tmp
+          workflow_conclusion: success
 
       - name: Login to registry
         run: |
           echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
           npm whoami
 
-      - name: Install dependencies, if necessary
-        run: |
-          if grep -E '(preversion|postversion|prepare|prepack|postpack|prepublishOnly|publish)' package.json; then
-            # If a relevant publish script exists then install dependencies before publishing
-            if [ -e package-lock.json ]; then
-              npm ci
-            else
-              npm i
-            fi
-          fi
-
       - name: Publish final release
         run: |
-          npm --loglevel=verbose --logs-max=0 publish --tag "latest"
+          pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}"
 
   ###################################################
   ## docker
