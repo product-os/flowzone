@@ -543,6 +543,12 @@ jobs:
           echo "::set-output name=sha_tag::${sha_tag}"
           echo "::set-output name=version_tag::${version_tag}"
 
+      - name: Install system dependencies
+        run: |
+          if [[ -s packages.txt ]]; then
+              sudo xargs -a packages.txt apt-get -y install
+          fi
+
       - name: Install dependencies
         run: |
           if [ -e package-lock.json ]; then
