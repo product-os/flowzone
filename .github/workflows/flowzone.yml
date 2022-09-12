@@ -45,6 +45,11 @@ on:
         type: string
         required: false
         default: "."
+      dockerfile:
+        description: "Default Dockerfile to look for."
+        type: string
+        required: false
+        default: "Dockerfile"
       docker_images:
         description: "Comma-delimited string of Docker images (without tags) to publish (skipped if empty)"
         type: string
@@ -733,6 +738,7 @@ jobs:
           cache-to: type=gha,scope=test-${{ env.ARCHVARIANT }},mode=max
           cache-from: type=gha,scope=test-${{ env.ARCHVARIANT }}
           context: ${{ inputs.working_directory }}
+          file: ${{ inputs.dockerfile }}
           tags: |
             ${{ steps.meta.outputs.tags }}
           load: true
@@ -1136,16 +1142,16 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       [
-        event_types,
-        project_types,
-        versioned_source,
-        docker_test,
-        npm_test,
+        balena_publish,
+        custom_publish,
         custom_test,
         docker_publish,
+        docker_test,
+        event_types,
         npm_publish,
-        custom_publish,
-        balena_publish,
+        npm_test,
+        project_types,
+        versioned_source,
       ]
     # avoid being skipped when dependencies are skipped
     # this job must always run so branch protection rules can depend on it
@@ -1164,7 +1170,7 @@ jobs:
     env:
       BRANCH_PROTECTION_URL: ${{ github.api_url }}/repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
     steps:
-      #loop over all needed jobs and fail this job if any of them failed
+      # loop over all needed jobs and fail this job if any of them failed
       - name: Check needed jobs
         run: |
           for result in $(echo '${{ toJSON(needs.*.result) }}' | jq -cr '.[]')
