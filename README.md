@@ -30,6 +30,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [Inputs](#inputs)
     - [`working_directory`](#working_directory)
     - [`docker_images`](#docker_images)
+    - [`balena_environment`](#balena_environment)
     - [`balena_slugs`](#balena_slugs)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
@@ -307,6 +308,14 @@ Comma-delimited string of Docker images (without tags) to publish (skipped if em
 Type: _string_
 
 Default: `''`
+
+#### `balena_environment`
+
+Alternative balenaCloud environment (e.g. balena-staging.com)
+
+Type: _string_
+
+Default: `balena-cloud.com`
 
 #### `balena_slugs`
 
