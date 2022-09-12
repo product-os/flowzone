@@ -50,6 +50,11 @@ on:
         type: string
         required: false
         default: ""
+      balena_environment:
+        description: "balenaCloud environment"
+        type: string
+        required: false
+        default: balena-cloud.com
       balena_slugs:
         description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty)"
         type: string
@@ -972,6 +977,7 @@ jobs:
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
+          environment: ${{ inputs.balena_environment }}
           fleet: ${{ matrix.slug }}
           versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
@@ -1007,6 +1013,7 @@ jobs:
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
+          environment: ${{ inputs.balena_environment }}
           fleet: ${{ matrix.slug }}
           versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
