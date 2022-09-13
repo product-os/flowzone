@@ -1,4 +1,21 @@
 - commits:
+    - subject: Test only from docker-compose.test.yml Run single service sut so that
+        exit code is derived from this service
+      hash: 2f1ce78b1ba382a8003692b20dd992b9b52fb2e6
+      body: >
+        resolves: Consider using only docker-compose.test.yml for docker tests
+        #94
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: fisehara <harald@balena.io>
+        signed-off-by: fisehara <harald@balena.io>
+      author: fisehara
+      nested: []
+  version: 0.25.9
+  title: ""
+  date: 2022-09-13T15:02:26.926Z
+- commits:
     - subject: Revert Dockerfile parameter
       hash: 1359eca047f56805666bcafb45dd78c2fd38c83c
       body: |
