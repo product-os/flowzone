@@ -29,7 +29,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`COMPOSE_VARS`](#compose_vars)
   - [Inputs](#inputs)
     - [`working_directory`](#working_directory)
-    - [`dockerfile`](#dockerfile)
     - [`docker_images`](#docker_images)
     - [`balena_environment`](#balena_environment)
     - [`balena_slugs`](#balena_slugs)
@@ -301,14 +300,6 @@ GitHub actions working directory.
 Type: _string_
 
 Default: `.`
-
-#### `dockerfile`
-
-Dockerfile to look for and build in the build context.
-
-Type: _string_
-
-Default: `Dockerfile`
 
 #### `docker_images`
 
