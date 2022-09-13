@@ -1,4 +1,17 @@
 - commits:
+    - subject: Revert Dockerfile parameter
+      hash: 1359eca047f56805666bcafb45dd78c2fd38c83c
+      body: |
+        * use advanced Docker build flow (.hcl) instead
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: ab77
+      nested: []
+  version: 0.25.8
+  title: ""
+  date: 2022-09-13T01:46:06.090Z
+- commits:
     - subject: Add Dockerfile parameter
       hash: d404366d7c5aef8227d9576b106c6b2b90bac421
       body: ""
