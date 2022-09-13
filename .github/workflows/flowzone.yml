@@ -283,7 +283,7 @@ jobs:
       - name: Check for docker-compose.test.yml
         id: docker_compose
         run: |
-          if [ -f docker-compose.test.yml ] && [ -f docker-compose.yml ]; then
+          if [ -f docker-compose.test.yml ]; then
             echo "found docker-compose.test.yml"
             echo ::set-output name=enabled::"true"
           else
@@ -747,7 +747,12 @@ jobs:
           if [[ ! -z "${COMPOSE_VARS}" ]]; then
             echo ${COMPOSE_VARS} | base64 --decode > .env
           fi
-          docker compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from sut
+
+          if [ -f docker-compose.test.yml ] && [ -f docker-compose.yml ]; then
+            docker compose -f docker-compose.yml -f docker-compose.test.yml up sut --exit-code-from sut
+          else
+            docker compose -f docker-compose.test.yml up sut --exit-code-from sut
+          fi
 
       # give the artifact a unique name that includes the ARCHVARIANT since the docker_publish job
       # will download all docker artifacts and combine them into a multiarch manifest
