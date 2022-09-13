@@ -40,6 +40,16 @@ on:
         description: "Optional base64 encoded docker-compose `.env` file for testing Docker images"
         required: false
     inputs:
+      runs_on:
+        description: "GitHub Actions runner type."
+        type: string
+        required: false
+        default: "[\"ubuntu-latest\"]"
+      jobs_timeout_minutes:
+        description: "Timeout for the job(s)."
+        type: number
+        required: false
+        default: 360
       working_directory:
         description: "GitHub actions working directory"
         type: string
@@ -88,7 +98,8 @@ jobs:
 
   event_types:
     name: Event types
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     # all jobs depend on this one in some way so add global trigger rules here
     if: |
       (github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch) ||
@@ -149,7 +160,8 @@ jobs:
 
   project_types:
     name: Project types
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [event_types]
 
     defaults:
@@ -357,7 +369,8 @@ jobs:
 
   versioned_source:
     name: Versioned source
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [event_types, project_types]
 
     defaults:
@@ -490,7 +503,8 @@ jobs:
 
   npm_test:
     name: Test npm
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_draft == 'true' &&
@@ -569,7 +583,8 @@ jobs:
 
   npm_publish:
     name: Publish npm
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [project_types, versioned_source, npm_test, custom_test]
     if: |
       !failure() && !cancelled() &&
@@ -609,7 +624,8 @@ jobs:
 
   npm_finalize:
     name: Finalize npm
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_final == 'true' &&
@@ -648,7 +664,8 @@ jobs:
 
   docker_test:
     name: Test docker
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_draft == 'true' &&
@@ -765,7 +782,8 @@ jobs:
 
   docker_publish:
     name: Publish docker
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [project_types, versioned_source, npm_test, docker_test, custom_test]
     if: |
       !failure() && !cancelled() &&
@@ -855,7 +873,8 @@ jobs:
 
   docker_finalize:
     name: Finalize docker
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_final == 'true' &&
@@ -944,7 +963,8 @@ jobs:
 
   balena_publish:
     name: Publish balena
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs:
       [
         event_types,
@@ -989,7 +1009,8 @@ jobs:
 
   balena_finalize:
     name: Finalize balena
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_final == 'true' &&
@@ -1029,7 +1050,8 @@ jobs:
 
   custom_test:
     name: Test custom
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_draft == 'true' &&
@@ -1053,7 +1075,8 @@ jobs:
 
   custom_publish:
     name: Publish custom
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs:
       [
         event_types,
@@ -1086,7 +1109,8 @@ jobs:
 
   custom_finalize:
     name: Finalize custom
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_final == 'true' &&
@@ -1110,7 +1134,8 @@ jobs:
 
   custom_clean:
     name: Clean custom
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_clean == 'true' &&
@@ -1138,7 +1163,8 @@ jobs:
 
   protect_branch:
     name: Protect branch
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
     needs:
       [
         balena_publish,

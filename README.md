@@ -28,6 +28,8 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`BALENA_API_KEY`](#balena_api_key)
     - [`COMPOSE_VARS`](#compose_vars)
   - [Inputs](#inputs)
+    - [`runs_on`](#runs_on)
+    - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
     - [`working_directory`](#working_directory)
     - [`docker_images`](#docker_images)
     - [`balena_environment`](#balena_environment)
@@ -292,6 +294,22 @@ Optional base64 encoded docker-compose `.env` file for testing [Docker](#docker)
 
 These inputs are all optional and include some opinionated defaults.
 They can also be found at the top of [flowzone.yml](./.github/workflows/flowzone.yml).
+
+#### `runs_on`
+
+GitHub actions runner (e.g. `[\"self-hosted\",\"linux\",\"x64\"]` for self-hosted runners.)
+
+Type: _string_
+
+Default: `[\"ubuntu-latest\"]`
+
+#### `jobs_timeout_minutes`
+
+Job(s) timeout.
+
+Type: _number_
+
+Default: `360`
 
 #### `working_directory`
 
