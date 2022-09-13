@@ -45,11 +45,6 @@ on:
         type: string
         required: false
         default: "."
-      dockerfile:
-        description: "Default Dockerfile to look for."
-        type: string
-        required: false
-        default: "Dockerfile"
       docker_images:
         description: "Comma-delimited string of Docker images (without tags) to publish (skipped if empty)"
         type: string
@@ -738,7 +733,6 @@ jobs:
           cache-to: type=gha,scope=test-${{ env.ARCHVARIANT }},mode=max
           cache-from: type=gha,scope=test-${{ env.ARCHVARIANT }}
           context: ${{ inputs.working_directory }}
-          file: ${{ inputs.dockerfile }}
           tags: |
             ${{ steps.meta.outputs.tags }}
           load: true
