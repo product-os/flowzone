@@ -61,7 +61,7 @@ on:
         required: false
         default: ""
       balena_environment:
-        description: "balenaCloud environment"
+        description: "Comma-delimited string of balenaCloud environments"
         type: string
         required: false
         default: balena-cloud.com
@@ -213,6 +213,15 @@ jobs:
         uses: kanga333/json-array-builder@v0.1.0
         env:
           INPUT: ${{ inputs.docker_images }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+
+      - name: Convert balena_environment to a JSON array
+        id: balena_environment
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.balena_environment }}
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
@@ -982,11 +991,13 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
-      needs.project_types.outputs.balena == 'true'
+      needs.project_types.outputs.balena == 'true' &&
+      join(fromJSON(needs.project_types.outputs.balena_environment)) != ''
 
     strategy:
       fail-fast: false
       matrix:
+        balena_env: ${{ fromJSON(needs.project_types.outputs.balena_environment) }}
         slug: ${{ fromJSON(needs.project_types.outputs.balena_slugs) }}
 
     defaults:
@@ -1007,7 +1018,7 @@ jobs:
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
-          environment: ${{ inputs.balena_environment }}
+          environment: ${{ matrix.balena_env }}
           fleet: ${{ matrix.slug }}
           versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
@@ -1024,6 +1035,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        balena_env: ${{ fromJSON(needs.project_types.outputs.balena_environment) }}
         slug: ${{ fromJSON(needs.project_types.outputs.balena_slugs) }}
 
     defaults:
@@ -1044,7 +1056,7 @@ jobs:
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
-          environment: ${{ inputs.balena_environment }}
+          environment: ${{ matrix.balena_env }}
           fleet: ${{ matrix.slug }}
           versionbot: false # disable the included versionbot branch checkout
           source: ${{ inputs.working_directory }}
