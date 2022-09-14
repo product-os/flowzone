@@ -80,6 +80,11 @@ on:
         type: string
         required: false
         default: "1"
+      job_name:
+        description: "The name of the job, necessary for branch protection if not using the default of 'Flowzone'"
+        type: string
+        required: false
+        default: "Flowzone"
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -1230,14 +1235,14 @@ jobs:
           # leave other checks (eg jenkins)
           # add hard coded flowzone checks back
           required_status_checks__contexts=$(echo $jsondata | \
-          jq ".required_status_checks.contexts | del(.[] | \
-          select(ascii_downcase | startswith(\"flowzone\") or startswith(\"resinci\"))) |\
-          . + [ \
-            \"Flowzone / Protect branch\", \
-            \"Flowzone / Project types\", \
-            \"Flowzone / Versioned source\", \
-            \"Flowzone / Event types\" \
-          ]")
+            jq ".required_status_checks.contexts | del(.[] | \
+            select(ascii_downcase | startswith(\"${{ inputs.job_name }}\") or startswith(\"resinci\"))) |\
+            . + [ \
+              \"${{ inputs.job_name }} / Protect branch\", \
+              \"${{ inputs.job_name }} / Project types\", \
+              \"${{ inputs.job_name }} / Versioned source\", \
+              \"${{ inputs.job_name }} / Event types\" \
+            ]")
 
           required_pull_request_reviews__dismiss_stale_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.dismiss_stale_reviews")
           required_pull_request_reviews__require_code_owner_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.require_code_owner_reviews")
