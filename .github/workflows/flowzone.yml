@@ -181,6 +181,7 @@ jobs:
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       docker_compose: ${{ steps.docker_compose.outputs.enabled }}
+      dockerfile: ${{ steps.dockerfile.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
       repo_type: ${{ steps.repo.outputs.type }} # can be null or unset
       docker_bake: ${{ steps.docker_bake.outputs.enabled }}
@@ -302,6 +303,16 @@ jobs:
         run: |
           if [ -f docker-compose.test.yml ]; then
             echo "found docker-compose.test.yml"
+            echo ::set-output name=enabled::"true"
+          else
+            echo ::set-output name=enabled::"false"
+          fi
+
+      - name: Check for Dockerfile
+        id: dockerfile
+        run: |
+          if [ -f Dockerfile ]; then
+            echo "found Dockerfile"
             echo ::set-output name=enabled::"true"
           else
             echo ::set-output name=enabled::"false"
@@ -674,7 +685,7 @@ jobs:
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_draft == 'true' &&
-      needs.project_types.outputs.docker_compose == 'true'
+      needs.project_types.outputs.dockerfile == 'true'
 
     defaults:
       run:
@@ -766,6 +777,10 @@ jobs:
 
       - name: Run docker compose tests
         run: |
+          if [[ '${{ needs.project_types.outputs.docker_compose }}' != 'true' ]]; then
+            echo "::warning::Missing docker-compose tests whilst using docker building/publishing"
+            exit 0
+          fi
           if [[ ! -z "${COMPOSE_VARS}" ]]; then
             echo ${COMPOSE_VARS} | base64 --decode > .env
           fi
@@ -883,7 +898,7 @@ jobs:
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_final == 'true' &&
-      needs.project_types.outputs.docker_compose == 'true' &&
+      needs.project_types.outputs.dockerfile == 'true' &&
       join(fromJSON(needs.project_types.outputs.docker_images)) != ''
 
     defaults:
