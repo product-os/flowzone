@@ -359,6 +359,15 @@ Type: _string_
 
 Default: `1`
 
+#### `npm_test_command`
+
+Setting this value to specify a different command when initiating the npm tests.
+
+Type: _string_
+
+Default: `npm test`
+
+
 ## Maintenance
 
 ### Generate GPG keys

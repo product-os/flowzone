@@ -85,6 +85,11 @@ on:
         type: string
         required: false
         default: "Flowzone"
+      npm_test_command:
+        description: "The command that should be used to start the npm tests"
+        type: string
+        required: false
+        default: "npm test"
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -574,7 +579,7 @@ jobs:
         run: npm run build --if-present
 
       - name: Run tests
-        run: npm test
+        run: ${{ inputs.npm_test_command }}
 
       - name: Run pack
         run: npm pack --pack-destination=/tmp
