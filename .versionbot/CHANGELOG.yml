@@ -1,4 +1,16 @@
 - commits:
+    - subject: Publish docker images with `v1.2.3` as well as `1.2.3`
+      hash: bbbc86d679a8aa94b02806789734efe4ef766dfc
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Pagan Gazzard
+      nested: []
+  version: 0.29.0
+  title: ""
+  date: 2022-09-19T15:27:43.865Z
+- commits:
     - subject: Add support for a `flowzone-preinstall` npm script
       hash: 2d3f94d3911c27aa852d13512dd5a76ce28a7622
       body: |
