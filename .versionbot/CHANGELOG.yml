@@ -1,4 +1,18 @@
 - commits:
+    - subject: Add support for a `flowzone-preinstall` npm script
+      hash: 2d3f94d3911c27aa852d13512dd5a76ce28a7622
+      body: |
+        This can be used for installing native dependencies that are required
+        for installing npm dependencies
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Pagan Gazzard
+      nested: []
+  version: 0.28.0
+  title: ""
+  date: 2022-09-19T14:23:07.263Z
+- commits:
     - subject: Enable publishing/finalizing docker images without docker-compose tests
       hash: 027f5a36c9958334e60b35db7de58979c8273739
       body: ""
