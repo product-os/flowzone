@@ -1,4 +1,16 @@
 - commits:
+    - subject: Enable publishing/finalizing docker images without docker-compose tests
+      hash: 027f5a36c9958334e60b35db7de58979c8273739
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Pagan Gazzard
+      nested: []
+  version: 0.27.0
+  title: ""
+  date: 2022-09-19T13:26:57.877Z
+- commits:
     - subject: Skip docker finalize if no docker images are specified
       hash: f522292f9cd07a6930d25e52ff76ce99864b0639
       body: ""
