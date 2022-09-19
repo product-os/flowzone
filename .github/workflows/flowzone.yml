@@ -737,6 +737,7 @@ jobs:
             ${{ github.repository }}
             sut
           tags: |
+            type=raw,value=${{ needs.versioned_source.outputs.new_tag }}
             type=raw,value=${{ needs.versioned_source.outputs.version }}
             type=raw,value=${{ env.ARCHVARIANT }}
             type=raw,value=edge
@@ -941,6 +942,7 @@ jobs:
           images: |
             ${{ matrix.image }}
           tags: |
+            type=raw,value=${{ needs.versioned_source.outputs.new_tag }}
             type=raw,value=${{ needs.versioned_source.outputs.version }}
           flavor: |
             latest=true
