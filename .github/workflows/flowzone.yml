@@ -573,6 +573,10 @@ jobs:
           echo "::set-output name=sha_tag::${sha_tag}"
           echo "::set-output name=version_tag::${version_tag}"
 
+      - name: Install native dependencies (if necessary)
+        run: |
+          npm run flowzone-preinstall --if-present
+
       - name: Install dependencies
         run: |
           if [ -e package-lock.json ]; then
