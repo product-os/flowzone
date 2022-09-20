@@ -191,7 +191,7 @@ If a `balena.yml` file is found in the root of the repository Flowzone will atte
 
 To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
 
-## Custom
+### Custom
 
 _Note: Custom Flowzone actions are not a guaranteed stable interface and should be merged to Flowzone core when possible._
 
