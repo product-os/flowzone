@@ -189,6 +189,7 @@ jobs:
       node_versions: ${{ steps.node_versions.outputs.json }}
 
       custom_test: ${{ steps.custom.outputs.test }}
+      custom_test_job: ${{ steps.custom.outputs.test_job }}
       custom_publish: ${{ steps.custom.outputs.publish }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_clean: ${{ steps.custom.outputs.clean }}
@@ -337,6 +338,10 @@ jobs:
           if [ -d .github/actions/test ]
           then
             echo "::set-output name=test::true"
+          fi
+          if [ -f .github/workflows/custom-test.yml ]
+          then
+            echo "::set-output name=test_job::true"
           fi
           if [ -d .github/actions/publish ]
           then
@@ -607,7 +612,7 @@ jobs:
     name: Publish npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
-    needs: [project_types, versioned_source, npm_test, custom_test]
+    needs: [project_types, versioned_source, npm_test, custom_test, custom_test_job]
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
@@ -811,7 +816,7 @@ jobs:
     name: Publish docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
-    needs: [project_types, versioned_source, npm_test, docker_test, custom_test]
+    needs: [project_types, versioned_source, npm_test, docker_test, custom_test, custom_test_job]
     if: |
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
@@ -1002,6 +1007,7 @@ jobs:
         npm_test,
         docker_test,
         custom_test,
+        custom_test_job,
       ]
     if: |
       !failure() && !cancelled() &&
@@ -1101,6 +1107,16 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+
+  custom_test_job:
+    uses: ./.github/workflows/custom-test.yml
+    needs: [event_types, project_types, versioned_source]
+    if: |
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.custom_test_job == 'true'
+    with:
+      json: ${{ toJSON(inputs) }}
+      secrets: ${{ toJSON(secrets) }}
 
   custom_publish:
     name: Publish custom
