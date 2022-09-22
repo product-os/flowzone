@@ -191,6 +191,7 @@ jobs:
       custom_test: ${{ steps.custom.outputs.test }}
       custom_test_job: ${{ steps.custom.outputs.test_job }}
       custom_publish: ${{ steps.custom.outputs.publish }}
+      custom_publish_job: ${{ steps.custom.outputs.publish_job }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_clean: ${{ steps.custom.outputs.clean }}
 
@@ -346,6 +347,10 @@ jobs:
           if [ -d .github/actions/publish ]
           then
             echo "::set-output name=publish::true"
+          fi
+          if [ -f .github/workflows/custom-publish.yml ]
+          then
+            echo "::set-output name=publish_job::true"
           fi
           if [ -d .github/actions/finalize ]
           then
@@ -1152,6 +1157,16 @@ jobs:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
 
+  custom_publish_job:
+    uses: ./.github/workflows/custom-publish.yml
+    needs: [event_types, project_types, versioned_source]
+    if: |
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.custom_publish_job == 'true'
+    with:
+      json: ${{ toJSON(inputs) }}
+      secrets: ${{ toJSON(secrets) }}
+
   custom_finalize:
     name: Finalize custom
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1214,7 +1229,9 @@ jobs:
       [
         balena_publish,
         custom_publish,
+        custom_publish_job,
         custom_test,
+        custom_test_job,
         docker_publish,
         docker_test,
         event_types,
