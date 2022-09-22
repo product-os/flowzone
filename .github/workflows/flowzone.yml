@@ -39,6 +39,15 @@ on:
       COMPOSE_VARS:
         description: "Optional base64 encoded docker-compose `.env` file for testing Docker images"
         required: false
+      CUSTOM_JOB_SECRET_1:
+        description: "Optional secret for using with custom jobs"
+        required: false
+      CUSTOM_JOB_SECRET_2:
+        description: "Optional secret for using with custom jobs"
+        required: false
+      CUSTOM_JOB_SECRET_3:
+        description: "Optional secret for using with custom jobs"
+        required: false
     inputs:
       runs_on:
         description: "GitHub Actions runner type."
