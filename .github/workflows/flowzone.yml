@@ -39,6 +39,15 @@ on:
       COMPOSE_VARS:
         description: "Optional base64 encoded docker-compose `.env` file for testing Docker images"
         required: false
+      CUSTOM_JOB_SECRET_1:
+        description: "Optional secret for using with custom jobs"
+        required: false
+      CUSTOM_JOB_SECRET_2:
+        description: "Optional secret for using with custom jobs"
+        required: false
+      CUSTOM_JOB_SECRET_3:
+        description: "Optional secret for using with custom jobs"
+        required: false
     inputs:
       runs_on:
         description: "GitHub Actions runner type."
@@ -85,6 +94,16 @@ on:
         type: string
         required: false
         default: "Flowzone"
+      custom_test_matrix:
+        description: "Comma-delimited string of values that will be passed to the custom test action"
+        type: string
+        required: false
+        default: ""
+      custom_publish_matrix:
+        description: "Comma-delimited string of values that will be passed to the custom publish action"
+        type: string
+        required: false
+        default: ""
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -189,7 +208,9 @@ jobs:
       node_versions: ${{ steps.node_versions.outputs.json }}
 
       custom_test: ${{ steps.custom.outputs.test }}
+      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
       custom_publish: ${{ steps.custom.outputs.publish }}
+      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_clean: ${{ steps.custom.outputs.clean }}
 
@@ -350,6 +371,24 @@ jobs:
           then
             echo "::set-output name=clean::true"
           fi
+
+      - name: Convert custom_test_matrix to a JSON array
+        id: custom_test_matrix
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.custom_test_matrix }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+
+      - name: Convert custom_publish_matrix to a JSON array
+        id: custom_publish_matrix
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.custom_publish_matrix }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
 
       - name: Check for repo.yml
         id: repo
@@ -1086,6 +1125,11 @@ jobs:
       needs.event_types.outputs.do_draft == 'true' &&
       needs.project_types.outputs.custom_test == 'true'
 
+    strategy:
+      fail-fast: false
+      matrix:
+        value: ${{ fromJSON(needs.project_types.outputs.custom_test_matrix) }}
+
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@v3
@@ -1096,6 +1140,10 @@ jobs:
         working-directory: .
         shell: bash
         run: tar -xvf source.tar
+
+      - name: Set the matrix value env var
+        run: |
+          echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
 
       - uses: ./.github/actions/test
         with:
@@ -1120,6 +1168,11 @@ jobs:
       needs.event_types.outputs.do_draft == 'true' &&
       needs.project_types.outputs.custom_publish == 'true'
 
+    strategy:
+      fail-fast: false
+      matrix:
+        value: ${{ fromJSON(needs.project_types.outputs.custom_publish_matrix) }}
+
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@v3
@@ -1130,6 +1183,10 @@ jobs:
         working-directory: .
         shell: bash
         run: tar -xvf source.tar
+
+      - name: Set the matrix value env var
+        run: |
+          echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
 
       - uses: ./.github/actions/publish
         with:
