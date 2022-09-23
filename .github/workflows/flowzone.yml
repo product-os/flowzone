@@ -104,6 +104,12 @@ on:
         type: string
         required: false
         default: ""
+      custom_finalize_matrix:
+        description: "Comma-delimited string of values that will be passed to the custom finalize action"
+        type: string
+        required: false
+        default: ""
+
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -212,6 +218,7 @@ jobs:
       custom_publish: ${{ steps.custom.outputs.publish }}
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
+      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
       custom_clean: ${{ steps.custom.outputs.clean }}
 
     steps:
@@ -386,6 +393,15 @@ jobs:
         uses: kanga333/json-array-builder@v0.1.0
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+
+      - name: Convert custom_finalize_matrix to a JSON array
+        id: custom_finalize_matrix
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.custom_finalize_matrix }}
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
@@ -1204,6 +1220,11 @@ jobs:
       needs.event_types.outputs.do_final == 'true' &&
       needs.project_types.outputs.custom_finalize == 'true'
 
+    strategy:
+      fail-fast: false
+      matrix:
+        value: ${{ fromJSON(needs.project_types.outputs.custom_finalize_matrix) }}
+
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@v3
@@ -1214,6 +1235,10 @@ jobs:
         working-directory: .
         shell: bash
         run: tar -xvf source.tar
+
+      - name: Set the matrix value env var
+        run: |
+          echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
 
       - uses: ./.github/actions/finalize
         with:
