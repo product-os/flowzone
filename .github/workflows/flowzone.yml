@@ -730,7 +730,7 @@ jobs:
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_draft == 'true' &&
-      needs.project_types.outputs.dockerfile == 'true'
+      needs.project_types.outputs.docker_compose == 'true'
 
     defaults:
       run:
