@@ -1,4 +1,16 @@
 - commits:
+    - subject: Don't try to publish to balena if `balena_slugs` is empty
+      hash: 20aa697371b4da7b765edae9b14b44a28d88347c
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.32.1
+  title: ""
+  date: 2022-09-26T16:59:39.765Z
+- commits:
     - subject: Add support for custom job secrets
       hash: 3c46284335ee0eb2188ff31625b255e82b0f682b
       body: ""
