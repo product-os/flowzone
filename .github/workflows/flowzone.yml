@@ -1045,7 +1045,8 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
-      needs.project_types.outputs.balena == 'true'
+      needs.project_types.outputs.balena == 'true' &&
+      join(fromJSON(needs.project_types.outputs.balena_slugs)) != ''
 
     strategy:
       fail-fast: false
@@ -1082,7 +1083,8 @@ jobs:
     needs: [event_types, project_types, versioned_source]
     if: |
       needs.event_types.outputs.do_final == 'true' &&
-      needs.project_types.outputs.balena == 'true'
+      needs.project_types.outputs.balena == 'true' &&
+      join(fromJSON(needs.project_types.outputs.balena_slugs)) != ''
 
     strategy:
       fail-fast: false
