@@ -210,6 +210,7 @@ jobs:
 
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
+      npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
       docker_compose: ${{ steps.docker_compose.outputs.enabled }}
       dockerfile: ${{ steps.dockerfile.outputs.enabled }}
       balena: ${{ steps.balena.outputs.enabled }}
@@ -259,6 +260,7 @@ jobs:
             echo "found package.json"
             echo "::set-output name=enabled::true"
             echo "::set-output name=private::$(jq -r '.private' package.json)"
+            echo "::set-output name=docs::$(jq -r '.scripts | has("doc")' package.json)"
             echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
           else
             echo ::set-output name=enabled::"false"
@@ -653,6 +655,24 @@ jobs:
           path: /tmp/*.tgz
           retention-days: 90
 
+      - name: Generate docs (if present)
+        if: needs.project_types.outputs.npm_docs == 'true'
+        shell: bash
+        run: npm run doc
+
+      - name: Compress docs
+        if: needs.project_types.outputs.npm_docs == 'true'
+        run: tar -acvf /tmp/docs.tgz ./docs
+
+      - name: Upload artifact
+        if: needs.project_types.outputs.npm_docs == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
+          path: /tmp/docs.tgz
+          retention-days: 90
+
+
   npm_publish:
     name: Publish npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -729,6 +749,43 @@ jobs:
         run: |
           pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
           npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}"
+
+  npm_docs_finalize:
+    name: Finalize npm docs
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ inputs.jobs_timeout_minutes }}
+    needs: [event_types, project_types, versioned_source]
+    if: |
+      needs.event_types.outputs.do_final == 'true' &&
+      needs.project_types.outputs.npm_docs == 'true'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+
+    steps:
+      # https://github.com/dawidd6/action-download-artifact
+      # TODO: what if this is a tag event and PR artifacts do not exist?
+      - name: Download artifacts from PR
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          commit: ${{ github.event.pull_request.head.sha }}
+          path: /tmp
+          workflow_conclusion: success
+
+      - name: Extract docs artifact
+        run: |
+          docs="$(ls /tmp/docs-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          tar -xvf "${docs}"
+
+      - name: Publish generated docs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs
+          publish_branch: docs
 
   ###################################################
   ## docker
