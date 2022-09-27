@@ -887,7 +887,7 @@ jobs:
 
       - name: Save image to file
         run: |
-          docker save ${{ github.repository }}:${{ env.ARCHVARIANT }} > /tmp/docker.tar
+          docker save ${{ github.repository }}:${{ env.ARCHVARIANT }} | gzip > /tmp/docker.tgz
 
       - name: Run docker compose tests
         run: |
@@ -911,7 +911,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: docker-${{ github.event.pull_request.head.sha }}-${{ env.ARCHVARIANT }}
-          path: /tmp/docker.tar
+          path: /tmp/docker.tgz
           retention-days: 1
 
   docker_publish:
@@ -968,7 +968,7 @@ jobs:
 
       - name: Load images
         run: |
-          for image in /tmp/docker-*/*.tar
+          for image in /tmp/docker-*/*.tgz
           do
             ARCHVARIANT="$(dirname "${image}" | awk -F- '{print $NF}')"
             docker load -i "${image}" | tee /dev/stderr | awk '{print $NF}' |
