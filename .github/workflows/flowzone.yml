@@ -556,13 +556,13 @@ jobs:
 
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress source
-        run: tar -cvf /tmp/source.tar .
+        run: tar -acvf /tmp/source.tgz .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha }}
-          path: /tmp/source.tar
+          path: /tmp/source.tgz
           retention-days: 1
 
   ###################################################
@@ -603,7 +603,7 @@ jobs:
 
       - name: Extract source artifact
         working-directory: .
-        run: tar -xvf source.tar
+        run: tar -xvf source.tgz
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -765,7 +765,7 @@ jobs:
 
       - name: Extract source artifact
         working-directory: .
-        run: tar -xvf source.tar
+        run: tar -xvf source.tgz
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -1077,7 +1077,7 @@ jobs:
 
       - name: Extract source artifact
         working-directory: .
-        run: tar -xvf source.tar
+        run: tar -xvf source.tgz
 
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
@@ -1115,7 +1115,7 @@ jobs:
 
       - name: Extract source artifact
         working-directory: .
-        run: tar -xvf source.tar
+        run: tar -xvf source.tgz
 
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
@@ -1152,7 +1152,7 @@ jobs:
       - name: Extract source artifact
         working-directory: .
         shell: bash
-        run: tar -xvf source.tar
+        run: tar -xvf source.tgz
 
       - name: Set the matrix value env var
         run: |
@@ -1195,7 +1195,7 @@ jobs:
       - name: Extract source artifact
         working-directory: .
         shell: bash
-        run: tar -xvf source.tar
+        run: tar -xvf source.tgz
 
       - name: Set the matrix value env var
         run: |
@@ -1229,7 +1229,7 @@ jobs:
       - name: Extract source artifact
         working-directory: .
         shell: bash
-        run: tar -xvf source.tar
+        run: tar -xvf source.tgz
 
       - name: Set the matrix value env var
         run: |
@@ -1258,7 +1258,7 @@ jobs:
       - name: Extract source artifact
         working-directory: .
         shell: bash
-        run: tar -xvf source.tar
+        run: tar -xvf source.tgz
 
       - uses: ./.github/actions/clean
         with:
