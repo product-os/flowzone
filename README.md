@@ -16,6 +16,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [balena](#balena)
   - [Custom](#custom)
   - [Versioning](#versioning)
+  - [Docs](#docs)
 - [Customization](#customization)
   - [Secrets](#secrets)
     - [`FLOWZONE_TOKEN`](#flowzone_token)
@@ -235,6 +236,10 @@ More interfaces may be added in the future. Open an issue if you have a use case
 As long as versioning is not explicitly disabled via `disable_versioning` then Flowzone will attempt run [balena-versionist](https://github.com/product-os/balena-versionist) directly on the PR's source.
 
 If you have [VersionBot3](https://github.com/apps/versionbot3) installed it will be ignored as far as versioning is concerned, so no need to disable it.
+
+### Docs
+
+If you have an `npm run doc` script then it will automatically be run and the generated `docs` folder will be published to a `docs` branch for github pages use.
 
 ## Customization
 
