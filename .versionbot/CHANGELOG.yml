@@ -1,4 +1,16 @@
 - commits:
+    - subject: Use the `FLOWZONE_TOKEN` not `GITHUB_TOKEN` for publish docs
+      hash: 4cdb39a9d847c2dc213d76065c3c1ffdaab763f0
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.35.1
+  title: ""
+  date: 2022-09-27T14:28:01.124Z
+- commits:
     - subject: Add support for publishing an npm `doc` script to github pages
       hash: a616f5d05c278c0234d1470de6e2a416a5f20adb
       body: ""
