@@ -1,4 +1,16 @@
 - commits:
+    - subject: Use gzip compression for the docker image artifact
+      hash: 2a4b86b1c6e92c6378e9bcc1e6921b932505b05a
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.35.2
+  title: ""
+  date: 2022-09-27T16:07:09.148Z
+- commits:
     - subject: Use the `FLOWZONE_TOKEN` not `GITHUB_TOKEN` for publish docs
       hash: 4cdb39a9d847c2dc213d76065c3c1ffdaab763f0
       body: ""
