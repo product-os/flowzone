@@ -38,6 +38,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`balena_environment`](#balena_environment)
     - [`balena_slugs`](#balena_slugs)
     - [`protect_branch`](#protect_branch)
+    - [`disable_versioning`](#disable_versioning)
     - [`required_approving_review_count`](#required_approving_review_count)
     - [`custom_test_matrix`](#custom_test_matrix)
     - [`custom_publish_matrix`](#custom_publish_matrix)
@@ -231,7 +232,7 @@ More interfaces may be added in the future. Open an issue if you have a use case
 
 ### Versioning
 
-If a `repo.yml` file is found in the root of the repository Flowzone will attempt run [balena-versionist](https://github.com/product-os/balena-versionist) directly on the PR's source.
+As long as versioning is not explicitly disabled via `disable_versioning` then Flowzone will attempt run [balena-versionist](https://github.com/product-os/balena-versionist) directly on the PR's source.
 
 If you have [VersionBot3](https://github.com/apps/versionbot3) installed it will be ignored as far as versioning is concerned, so no need to disable it.
 
@@ -379,6 +380,14 @@ Set to false to disable updating branch protection rules after a successful run.
 Type: _boolean_
 
 Default: `true`
+
+#### `disable_versioning`
+
+Set to true to disable automatic versioning.
+
+Type: _boolean_
+
+Default: `false`
 
 #### `required_approving_review_count`
 
