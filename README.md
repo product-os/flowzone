@@ -27,6 +27,9 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`DOCKERHUB_TOKEN`](#dockerhub_token)
     - [`BALENA_API_KEY`](#balena_api_key)
     - [`COMPOSE_VARS`](#compose_vars)
+    - [`CUSTOM_JOB_SECRET_1`](#custom_job_secret_1)
+    - [`CUSTOM_JOB_SECRET_2`](#custom_job_secret_2)
+    - [`CUSTOM_JOB_SECRET_3`](#custom_job_secret_3)
   - [Inputs](#inputs)
     - [`runs_on`](#runs_on)
     - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
@@ -36,6 +39,9 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`balena_slugs`](#balena_slugs)
     - [`protect_branch`](#protect_branch)
     - [`required_approving_review_count`](#required_approving_review_count)
+    - [`custom_test_matrix`](#custom_test_matrix)
+    - [`custom_publish_matrix`](#custom_publish_matrix)
+    - [`custom_finalize_matrix`](#custom_finalize_matrix)
 - [Maintenance](#maintenance)
   - [Generate GPG keys](#generate-gpg-keys)
 - [Help](#help)
@@ -290,6 +296,18 @@ Required for [balena](#balena) projects.
 
 Optional base64 encoded docker-compose `.env` file for testing [Docker](#docker) projects.
 
+#### `CUSTOM_JOB_SECRET_1`
+
+Optional secret for use with [Custom](#custom) jobs.
+
+#### `CUSTOM_JOB_SECRET_2`
+
+Optional secret for use with [Custom](#custom) jobs.
+
+#### `CUSTOM_JOB_SECRET_3`
+
+Optional secret for use with [Custom](#custom) jobs.
+
 #### `CF_API_TOKEN`
 
 Required for generating and publishing a website using Docusaurus, or similar tools.
@@ -368,7 +386,31 @@ Setting this value to zero effectively means merge==deploy without approval(s).
 
 Type: _string_
 
-Default: `1`
+Default: `''`
+
+#### `custom_test_matrix`
+
+Comma-delimited string of values that will be passed to the custom test action.
+
+Type: _string_
+
+Default: `''`
+
+#### `custom_publish_matrix`
+
+Comma-delimited string of values that will be passed to the custom publish action.
+
+Type: _string_
+
+Default: `''`
+
+#### `custom_finalize_matrix`
+
+Comma-delimited string of values that will be passed to the custom finalize action.
+
+Type: _string_
+
+Default: `''`
 
 ## Maintenance
 
