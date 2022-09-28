@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix sha lookup when tagging main branch to finalize docker
+      hash: 481c5926c6355a54fa44c62025625b283f4f2bb5
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.35.6
+  title: ""
+  date: 2022-09-28T17:52:51.048Z
+- commits:
     - subject: Avoid polluting the working directory with the source.tgz by using /tmp
       hash: b8bd653c0744fd16c3dc1fe581ecb2d1c286d7bc
       body: ""
