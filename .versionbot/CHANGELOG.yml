@@ -1,4 +1,20 @@
 - commits:
+    - subject: Ensure finalize events always have a sha
+      hash: 6584550eca5af9407994106e970f09a0b4087f46
+      body: |
+        Some events like pushing a tag are valid but will not have a
+        pull_request event body.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.35.7
+  title: ""
+  date: 2022-09-28T18:28:12.423Z
+- commits:
     - subject: Fix sha lookup when tagging main branch to finalize docker
       hash: 481c5926c6355a54fa44c62025625b283f4f2bb5
       body: ""
