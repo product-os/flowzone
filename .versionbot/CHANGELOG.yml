@@ -1,4 +1,17 @@
 - commits:
+    - subject: Revert "Add tokens required for cloudflare pages to the README"
+      hash: 777cac88a6b1e44fdcb4a88e82e245a94f8ec0d9
+      body: |
+        This reverts commit 3ef70c9f6a5e48a5e450a58fc5a8c5313c1f8931.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Anuj Deshpande
+      nested: []
+  version: 0.35.3
+  title: ""
+  date: 2022-09-28T05:58:26.726Z
+- commits:
     - subject: Use gzip compression for the docker image artifact
       hash: 2a4b86b1c6e92c6378e9bcc1e6921b932505b05a
       body: ""
