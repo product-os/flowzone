@@ -602,10 +602,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
 
       - name: Extract source artifact
         working-directory: .
-        run: tar -xvf source.tgz
+        run: tar -xvf /tmp/source.tgz
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -646,13 +647,13 @@ jobs:
         run: npm test
 
       - name: Run pack
-        run: npm pack --pack-destination=/tmp
+        run: mkdir /tmp/npm-pack && npm pack --pack-destination=/tmp/npm-pack
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
-          path: /tmp/*.tgz
+          path: /tmp/npm-pack/*.tgz
           retention-days: 90
 
       - name: Generate docs (if present)
@@ -819,10 +820,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
 
       - name: Extract source artifact
         working-directory: .
-        run: tar -xvf source.tgz
+        run: tar -xvf /tmp/source.tgz
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -1131,10 +1133,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
 
       - name: Extract source artifact
         working-directory: .
-        run: tar -xvf source.tgz
+        run: tar -xvf /tmp/source.tgz
 
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
@@ -1169,10 +1172,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
 
       - name: Extract source artifact
         working-directory: .
-        run: tar -xvf source.tgz
+        run: tar -xvf /tmp/source.tgz
 
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
@@ -1205,11 +1209,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
 
       - name: Extract source artifact
         working-directory: .
         shell: bash
-        run: tar -xvf source.tgz
+        run: tar -xvf /tmp/source.tgz
 
       - name: Set the matrix value env var
         run: |
@@ -1248,11 +1253,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
 
       - name: Extract source artifact
         working-directory: .
         shell: bash
-        run: tar -xvf source.tgz
+        run: tar -xvf /tmp/source.tgz
 
       - name: Set the matrix value env var
         run: |
@@ -1282,11 +1288,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
 
       - name: Extract source artifact
         working-directory: .
         shell: bash
-        run: tar -xvf source.tgz
+        run: tar -xvf /tmp/source.tgz
 
       - name: Set the matrix value env var
         run: |
@@ -1311,11 +1318,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
 
       - name: Extract source artifact
         working-directory: .
         shell: bash
-        run: tar -xvf source.tgz
+        run: tar -xvf /tmp/source.tgz
 
       - uses: ./.github/actions/clean
         with:
