@@ -314,16 +314,6 @@ Optional secret for use with [Custom](#custom) jobs.
 
 Optional secret for use with [Custom](#custom) jobs.
 
-#### `CF_API_TOKEN`
-
-Required for generating and publishing a website using Docusaurus, or similar tools.
-A new scoped token can be created from the account settings on Cloudflare.
-
-#### `CF_ACCOUNT_ID`
-
-Required for generating and publishing a website using Docusaurus, or similar tools.
-The account ID is usually part of the URL after logging in to Cloudflare.
-
 
 ### Inputs
 
