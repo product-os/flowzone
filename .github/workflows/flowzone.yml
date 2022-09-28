@@ -1089,7 +1089,7 @@ jobs:
       - name: Publish final tags
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ matrix.image }}:${{ github.event.pull_request.head.sha }}
+          src: ${{ matrix.image }}:${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           dst: |
             ${{ steps.versioned_meta.outputs.tags }}
             ${{ steps.edge_meta.outputs.tags }}
