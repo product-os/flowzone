@@ -82,8 +82,8 @@ jobs:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      DOCKERHUB_USER: ${{ secrets.DOCKER_REGISTRY_USER }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKER_REGISTRY_PASS }}
+      DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       BALENA_API_KEY: ${{ secrets.BALENA_API_KEY }}
     with:
       protect_branch: false
