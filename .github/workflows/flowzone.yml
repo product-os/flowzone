@@ -709,6 +709,9 @@ jobs:
           tar xvf "${pack}"
           (cd package
           npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }} --allow-same-version
+          if [ "$(cat package.json | jq '.files')" == "null" ] && [ ! -f .npmignore ]; then
+            echo "::warning::Missing specification what to publish to npm. Consider adding a .npmignore or a 'files' property in your package.json"
+          fi
           )
           tar czvf "${pack}" package
           npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }} || true
@@ -749,6 +752,12 @@ jobs:
       - name: Publish final release
         run: |
           pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          tar xvf "${pack}"
+          (cd package
+          if [ "$(cat package.json | jq '.files')" == "null" ] && [ ! -f .npmignore ]; then
+            echo "::warning::Missing specification what to publish to npm. Consider adding a .npmignore or a 'files' property in your package.json"
+          fi
+          )
           npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}"
 
   npm_docs_finalize:
