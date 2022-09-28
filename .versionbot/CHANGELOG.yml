@@ -1,4 +1,23 @@
 - commits:
+    - subject: Only allow tag events if versioning is disabled
+      hash: 461c139c9d3cd5b0522819b944a8963dbaa2a3b1
+      body: |
+        Manual tagging of the main branch is effectively manual versioning,
+        and would conflict with automatic Flowzone versioning.
+
+        This way Flowzone cannot be triggered by previous Flowzone versioned
+        commits.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.35.8
+  title: ""
+  date: 2022-09-28T23:49:26.125Z
+- commits:
     - subject: Ensure finalize events always have a sha
       hash: 6584550eca5af9407994106e970f09a0b4087f46
       body: |
