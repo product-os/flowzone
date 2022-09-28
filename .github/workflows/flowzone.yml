@@ -563,7 +563,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp/source.tgz
           retention-days: 1
 
@@ -737,7 +737,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
-          commit: ${{ github.event.pull_request.head.sha }}
+          commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
           workflow_conclusion: success
 
@@ -772,7 +772,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
-          commit: ${{ github.event.pull_request.head.sha }}
+          commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
           workflow_conclusion: success
 
@@ -1171,7 +1171,7 @@ jobs:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
 
       - name: Extract source artifact
@@ -1287,7 +1287,7 @@ jobs:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
 
       - name: Extract source artifact
@@ -1317,7 +1317,7 @@ jobs:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
 
       - name: Extract source artifact
