@@ -1,4 +1,19 @@
 - commits:
+    - subject: Support pull requests against any branch rather than only the default
+      hash: f8d934d9d7a9d5c12717aba6fa4367a819193fc5
+      body: |
+        Specifically this allows working with ESR branches on meta-balena.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Alex Gonzalez <alexg@balena.io>
+        signed-off-by: Alex Gonzalez <alexg@balena.io>
+      author: Alex Gonzalez
+      nested: []
+  version: 0.35.9
+  title: ""
+  date: 2022-09-30T15:32:24.576Z
+- commits:
     - subject: Only allow tag events if versioning is disabled
       hash: 461c139c9d3cd5b0522819b944a8963dbaa2a3b1
       body: |
