@@ -1,4 +1,42 @@
 - commits:
+    - subject: Fix versioning race condition if others also update master directly
+      hash: f3d0d4fbb69849b8f626cfdd810045b25d9063a2
+      body: >
+        The race condition looks like
+
+        ```
+
+        + git push origin HEAD:master --follow-tags
+
+        warning: not sending a push certificate since the receiving end does not support --signed push
+
+        To ...
+         * [new tag]         v1.4.23 -> v1.4.23
+         ! [rejected]        HEAD -> master (fetch first)
+        error: failed to push some refs to 'https://github.com/product-os/environment-production'
+
+        hint: Updates were rejected because the remote contains work that you do
+
+        hint: not have locally. This is usually caused by another repository pushing
+
+        hint: to the same ref. You may want to first integrate the remote changes
+
+        hint: (e.g., 'git pull ...') before pushing again.
+
+        hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+
+        ```
+
+        and causes future versioning to fail because the tag already exists
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.35.11
+  title: ""
+  date: 2022-10-04T17:56:23.686Z
+- commits:
     - subject: Convert timeout input to a number
       hash: 7e9a149982c5cc4f311f5a0f8a8df69266bda037
       body: ""
