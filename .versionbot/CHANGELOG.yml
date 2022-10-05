@@ -1,4 +1,20 @@
 - commits:
+    - subject: Remove default value for balena_slugs input
+      hash: f232d385eddd6295085950458877e7cf096f7c74
+      body: |
+        It's rare that GH repo slugs align with balenaCloud
+        application slugs so default to an empty list.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.35.12
+  title: ""
+  date: 2022-10-05T00:34:05.291Z
+- commits:
     - subject: Fix versioning race condition if others also update master directly
       hash: f3d0d4fbb69849b8f626cfdd810045b25d9063a2
       body: >
