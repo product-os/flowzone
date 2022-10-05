@@ -366,7 +366,7 @@ Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped
 
 Type: _string_
 
-Default: `${{ github.repository }}`
+Default: `''`
 
 #### `protect_branch`
 

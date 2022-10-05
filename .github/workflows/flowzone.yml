@@ -78,7 +78,7 @@ on:
         description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty)"
         type: string
         required: false
-        default: ${{ github.repository }}
+        default: ""
       protect_branch:
         description: "Set to false to disable updating branch protection rules after a successful run"
         type: boolean
