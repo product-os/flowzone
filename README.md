@@ -6,48 +6,52 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 
 ## Contents
 
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-  - [Commit Message Commands](#commit-message-commands)
-    - [Skipping Workflow Runs](#skipping-workflow-runs)
-- [Supported project types](#supported-project-types)
-  - [npm](#npm)
-  - [Docker](#docker)
-  - [balena](#balena)
-  - [Custom](#custom)
-  - [Versioning](#versioning)
-  - [Docs](#docs)
-- [Customization](#customization)
-  - [Secrets](#secrets)
-    - [`FLOWZONE_TOKEN`](#flowzone_token)
-    - [`GPG_PRIVATE_KEY`](#gpg_private_key)
-    - [`GPG_PASSPHRASE`](#gpg_passphrase)
-    - [`NPM_TOKEN`](#npm_token)
-    - [`GHCR_TOKEN`](#ghcr_token)
-    - [`DOCKERHUB_USER`](#dockerhub_user)
-    - [`DOCKERHUB_TOKEN`](#dockerhub_token)
-    - [`BALENA_API_KEY`](#balena_api_key)
-    - [`COMPOSE_VARS`](#compose_vars)
-    - [`CUSTOM_JOB_SECRET_1`](#custom_job_secret_1)
-    - [`CUSTOM_JOB_SECRET_2`](#custom_job_secret_2)
-    - [`CUSTOM_JOB_SECRET_3`](#custom_job_secret_3)
-  - [Inputs](#inputs)
-    - [`runs_on`](#runs_on)
-    - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
-    - [`working_directory`](#working_directory)
-    - [`docker_images`](#docker_images)
-    - [`balena_environment`](#balena_environment)
-    - [`balena_slugs`](#balena_slugs)
-    - [`protect_branch`](#protect_branch)
-    - [`disable_versioning`](#disable_versioning)
-    - [`required_approving_review_count`](#required_approving_review_count)
-    - [`custom_test_matrix`](#custom_test_matrix)
-    - [`custom_publish_matrix`](#custom_publish_matrix)
-    - [`custom_finalize_matrix`](#custom_finalize_matrix)
-- [Maintenance](#maintenance)
-  - [Generate GPG keys](#generate-gpg-keys)
-- [Help](#help)
-- [Contributing](#contributing)
+- [Flowzone](#flowzone)
+  - [Contents](#contents)
+  - [Getting Started](#getting-started)
+  - [Usage](#usage)
+    - [Merging](#merging)
+    - [Commit Message](#commit-message)
+      - [Skipping Workflow Runs](#skipping-workflow-runs)
+  - [Supported project types](#supported-project-types)
+    - [npm](#npm)
+    - [Docker](#docker)
+    - [balena](#balena)
+    - [Custom](#custom)
+    - [Versioning](#versioning)
+    - [Docs](#docs)
+  - [Customization](#customization)
+    - [Secrets](#secrets)
+      - [`FLOWZONE_TOKEN`](#flowzone_token)
+      - [`GPG_PRIVATE_KEY`](#gpg_private_key)
+      - [`GPG_PASSPHRASE`](#gpg_passphrase)
+      - [`NPM_TOKEN`](#npm_token)
+      - [`GHCR_TOKEN`](#ghcr_token)
+      - [`DOCKERHUB_USER`](#dockerhub_user)
+      - [`DOCKERHUB_TOKEN`](#dockerhub_token)
+      - [`BALENA_API_KEY`](#balena_api_key)
+      - [`BALENA_TOKEN`](#balena_token)
+      - [`COMPOSE_VARS`](#compose_vars)
+      - [`CUSTOM_JOB_SECRET_1`](#custom_job_secret_1)
+      - [`CUSTOM_JOB_SECRET_2`](#custom_job_secret_2)
+      - [`CUSTOM_JOB_SECRET_3`](#custom_job_secret_3)
+    - [Inputs](#inputs)
+      - [`runs_on`](#runs_on)
+      - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
+      - [`working_directory`](#working_directory)
+      - [`docker_images`](#docker_images)
+      - [`balena_environment`](#balena_environment)
+      - [`balena_slugs`](#balena_slugs)
+      - [`protect_branch`](#protect_branch)
+      - [`disable_versioning`](#disable_versioning)
+      - [`required_approving_review_count`](#required_approving_review_count)
+      - [`custom_test_matrix`](#custom_test_matrix)
+      - [`custom_publish_matrix`](#custom_publish_matrix)
+      - [`custom_finalize_matrix`](#custom_finalize_matrix)
+  - [Maintenance](#maintenance)
+    - [Generate GPG keys](#generate-gpg-keys)
+  - [Help](#help)
+  - [Contributing](#contributing)
 
 ## Getting Started
 
@@ -169,7 +173,7 @@ Typically, the `sut` container will execute your e2e or integration tests and wi
 If you need to provide environment variables to the compose environment you can add a repository secret called [`COMPOSE_VARS`](#compose_vars) that should be a base64 encoded `.env` file.
 This will be decoded and written to a `.env` file inside the test worker at runtime.
 
-To enable publishing of Docker artifacts set [`docker_images`](#docker_images) input to correct value of docker image repositories without tags eg  - eg `ghcr.io/${{ github.repository }}`.
+To enable publishing of Docker artifacts set [`docker_images`](#docker_images) input to correct value of docker image repositories without tags eg - eg `ghcr.io/${{ github.repository }}`.
 
 For advanced Docker build options, including multi-arch, add a [docker-bake.hcl](https://docs.docker.com/engine/reference/commandline/buildx_bake/) file to your project.
 
@@ -302,6 +306,12 @@ Required for [Docker](#docker) projects.
 
 Required for [balena](#balena) projects.
 
+#### `BALENA_TOKEN`
+
+[API key](https://www.balena.io/docs/learn/manage/account/#api-keys) for pushing releases to balena applications. May be used interchangeably with `BALENA_API_KEY`. It is recommended to use this secret instead when specifying `secrets: inherit`, for convenience.
+
+Required for [balena](#balena) projects.
+
 #### `COMPOSE_VARS`
 
 Optional base64 encoded docker-compose `.env` file for testing [Docker](#docker) projects.
@@ -317,7 +327,6 @@ Optional secret for use with [Custom](#custom) jobs.
 #### `CUSTOM_JOB_SECRET_3`
 
 Optional secret for use with [Custom](#custom) jobs.
-
 
 ### Inputs
 

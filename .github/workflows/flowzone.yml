@@ -33,6 +33,9 @@ on:
       BALENA_API_KEY:
         description: "API key for pushing releases to balena applications"
         required: false
+      BALENA_TOKEN:
+        description: "API key for pushing releases to balena applications, interchangeable with BALENA_API_KEY"
+        required: false
       BALENA_API_KEY_PUSH:
         description: "Deprecated, use BALENA_API_KEY instead"
         required: false
@@ -1150,7 +1153,7 @@ jobs:
 
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
-          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
+          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_TOKEN || secrets.BALENA_API_KEY_PUSH }}
           environment: ${{ inputs.balena_environment }}
           fleet: ${{ matrix.slug }}
           versionbot: false # disable the included versionbot branch checkout
@@ -1189,7 +1192,7 @@ jobs:
 
       - uses: balena-io/deploy-to-balena-action@v0.13.0
         with:
-          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
+          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_TOKEN || secrets.BALENA_API_KEY_PUSH }}
           environment: ${{ inputs.balena_environment }}
           fleet: ${{ matrix.slug }}
           versionbot: false # disable the included versionbot branch checkout
