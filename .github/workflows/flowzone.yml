@@ -225,6 +225,7 @@ jobs:
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
       custom_clean: ${{ steps.custom.outputs.clean }}
+      custom_always: ${{ steps.custom.outputs.always }}
 
     steps:
       - name: Checkout source
@@ -383,6 +384,10 @@ jobs:
           if [ -d .github/actions/clean ]
           then
             echo "::set-output name=clean::true"
+          fi
+          if [ -d .github/actions/always ]
+          then
+            echo "::set-output name=always::true"
           fi
 
       - name: Convert custom_test_matrix to a JSON array
@@ -1333,6 +1338,39 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+
+  custom_always:
+    name: Always custom
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - custom_test
+      - custom_publish
+      - custom_finalize
+      - custom_clean
+    if: |
+      !failure() &&
+      needs.event_types.result == 'success' &&
+      needs.project_types.outputs.custom_always == 'true'
+
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: /tmp
+
+      - name: Extract source artifact
+        working-directory: .
+        shell: bash
+        run: tar -xvf /tmp/source.tgz
+
+      - uses: ./.github/actions/always
+        with:
+          json: ${{ toJSON(inputs) }}
+          secrets: ${{ toJSON(secrets) }}
+
 
   ###################################################
   ## protect branch

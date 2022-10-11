@@ -216,6 +216,8 @@ they will be executed automatically at the described stages of the workflow.
 │   ├── publish
 │   │   └── action.yml
 │   └── test
+│   │   └── action.yml
+│   └── always
 │       └── action.yml
 └── workflows
     ├── flowzone.yml
@@ -228,6 +230,8 @@ A `publish` action will run after all the supported tests have completed. See [p
 A `finalize` action will run after a pull request is merged. See [finalize/action.yml](.github/actions/finalize/action.yml) for an example.
 
 A `clean` action will run after a pull request is closed (including merged). See [clean/action.yml](.github/actions/clean/action.yml) for an example.
+
+An `always` action will run (always), even if the workflow is cancelled.
 
 More interfaces may be added in the future. Open an issue if you have a use case that is not covered!
 
