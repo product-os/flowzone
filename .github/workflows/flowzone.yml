@@ -898,7 +898,9 @@ jobs:
 
       - name: Save image to file
         run: |
-          docker save ${{ github.repository }}:${{ env.ARCHVARIANT }} | gzip > /tmp/docker.tgz
+          # (e.g.) Error response from daemon: invalid reference format: repository name must be lowercase
+          github_repository='${{ github.repository }}'
+          docker save ${github_repository,,}:${{ env.ARCHVARIANT }} | gzip > /tmp/docker.tgz
 
       - name: Run docker compose tests
         run: |
@@ -983,8 +985,8 @@ jobs:
           do
             ARCHVARIANT="$(dirname "${image}" | awk -F- '{print $NF}')"
             docker load -i "${image}" | tee /dev/stderr | awk '{print $NF}' |
-              xargs -i docker tag {} "${LOCAL_IMAGE}:${ARCHVARIANT}"
-            docker push "${LOCAL_IMAGE}:${ARCHVARIANT}"
+              xargs -i docker tag {} "${LOCAL_IMAGE,,}:${ARCHVARIANT}"
+            docker push "${LOCAL_IMAGE,,}:${ARCHVARIANT}"
           done
 
       # see https://github.com/estesp/manifest-tool to understand template
@@ -993,8 +995,8 @@ jobs:
         run: |
           docker run --rm --network=host mplatform/manifest-tool:alpine-v2.0.5 push from-args \
             --platforms ${{ join(fromJSON(needs.project_types.outputs.docker_platforms)) }} \
-            --template ${LOCAL_IMAGE}:ARCHVARIANT \
-            --target ${LOCAL_IMAGE}:latest
+            --template ${LOCAL_IMAGE,,}:ARCHVARIANT \
+            --target ${LOCAL_IMAGE,,}:latest
 
       - name: Generate draft labels and tags
         id: meta
@@ -1148,7 +1150,7 @@ jobs:
         working-directory: .
         run: tar -xvf /tmp/source.tgz
 
-      - uses: balena-io/deploy-to-balena-action@v0.13.0
+      - uses: balena-io/deploy-to-balena-action@master
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
           environment: ${{ inputs.balena_environment }}
@@ -1187,7 +1189,7 @@ jobs:
         working-directory: .
         run: tar -xvf /tmp/source.tgz
 
-      - uses: balena-io/deploy-to-balena-action@v0.13.0
+      - uses: balena-io/deploy-to-balena-action@master
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
           environment: ${{ inputs.balena_environment }}
