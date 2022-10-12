@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update set-output commands to use the new out environment file
+      hash: 5f72741f669376862daf5d614224640451593125
+      body: >
+        https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.35.16
+  title: ""
+  date: 2022-10-12T15:59:28.697Z
+- commits:
     - subject: Pin balena-versionist/versionist versions
       hash: 0f0e5ec862c568761454193dde750d0d574f081e
       body: ""
