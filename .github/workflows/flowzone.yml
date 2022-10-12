@@ -259,12 +259,12 @@ jobs:
           if test -f "package.json"
           then
             echo "found package.json"
-            echo "::set-output name=enabled::true"
-            echo "::set-output name=private::$(jq -r '.private' package.json)"
-            echo "::set-output name=docs::$(jq -r '.scripts | has("doc")' package.json)"
+            echo "enabled=true" >> $GITHUB_OUTPUT
+            echo "private=$(jq -r '.private' package.json)" >> $GITHUB_OUTPUT
+            echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> $GITHUB_OUTPUT
             echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
           else
-            echo ::set-output name=enabled::"false"
+            echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
       # check which past and current and future Node.js LTS releases meet the engine requirements
@@ -328,10 +328,10 @@ jobs:
         if: steps.npm.outputs.enabled == 'true'
         id: node_versions
         run: |
-          echo "::set-output name=json::[\"16.x\"]"
+          echo "json=[\"16.x\"]" >> $GITHUB_OUTPUT
           if [ "${NODE_VERSIONS}" != "[]" ]
           then
-            echo "::set-output name=json::${NODE_VERSIONS}"
+            echo "json=${NODE_VERSIONS}" >> $GITHUB_OUTPUT
           fi
 
       - name: Check for docker-compose.test.yml
@@ -339,9 +339,9 @@ jobs:
         run: |
           if [ -f docker-compose.test.yml ]; then
             echo "found docker-compose.test.yml"
-            echo ::set-output name=enabled::"true"
+            echo "enabled=true" >> $GITHUB_OUTPUT
           else
-            echo ::set-output name=enabled::"false"
+            echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check for Dockerfile
@@ -349,9 +349,9 @@ jobs:
         run: |
           if [ -f Dockerfile ]; then
             echo "found Dockerfile"
-            echo ::set-output name=enabled::"true"
+            echo "enabled=true" >> $GITHUB_OUTPUT
           else
-            echo ::set-output name=enabled::"false"
+            echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check for balena.yml
@@ -360,9 +360,9 @@ jobs:
           if test -f balena.yml
           then
             echo "found balena.yml"
-            echo ::set-output name=enabled::"true"
+            echo "enabled=true" >> $GITHUB_OUTPUT
           else
-            echo ::set-output name=enabled::"false"
+            echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check for custom jobs
@@ -371,23 +371,23 @@ jobs:
         run: |
           if [ -d .github/actions/test ]
           then
-            echo "::set-output name=test::true"
+            echo "test=true" >> $GITHUB_OUTPUT
           fi
           if [ -d .github/actions/publish ]
           then
-            echo "::set-output name=publish::true"
+            echo "publish=true" >> $GITHUB_OUTPUT
           fi
           if [ -d .github/actions/finalize ]
           then
-            echo "::set-output name=finalize::true"
+            echo "finalize=true" >> $GITHUB_OUTPUT
           fi
           if [ -d .github/actions/clean ]
           then
-            echo "::set-output name=clean::true"
+            echo "clean=true" >> $GITHUB_OUTPUT
           fi
           if [ -d .github/actions/always ]
           then
-            echo "::set-output name=always::true"
+            echo "always=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Convert custom_test_matrix to a JSON array
@@ -420,11 +420,11 @@ jobs:
       - name: Check for docker-bake.hcl
         id: docker_bake
         run: |
-          echo "::set-output name=enabled::false"
-          echo "::set-output name=platforms::[\"linux/amd64\"]"
+          echo "enabled=false" >> $GITHUB_OUTPUT
+          echo "platforms=[\"linux/amd64\"]" >> $GITHUB_OUTPUT
           if [ -f docker-bake.hcl ]
           then
-            echo "::set-output name=enabled::true"
+            echo "enabled=true" >> $GITHUB_OUTPUT
             curl -fsSL https://github.com/teamon/hclq/releases/download/v0.1.1/hclq_0.1.1_Linux_x86_64.gz -O
             echo "cc05154fd66e5a0c4185a95712980a5f  hclq_0.1.1_Linux_x86_64.gz" | md5sum -c -
             gzip -d hclq_0.1.1_Linux_x86_64.gz
@@ -432,7 +432,7 @@ jobs:
             platforms_json="$(./hclq_0.1.1_Linux_x86_64 < docker-bake.hcl | jq -rc .target.build.platforms)"
             if [ -n "${platforms_json}" ] && [ "${platforms_json}" != "null" ] && [ "${platforms_json}" != "[]" ]
             then
-              echo "::set-output name=platforms::${platforms_json}"
+              echo "platforms=${platforms_json}" >> $GITHUB_OUTPUT
             fi
             rm hclq_0.1.1_Linux_x86_64
           fi
@@ -506,8 +506,8 @@ jobs:
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'
         run: |
           tag="$(git tag -l --sort=-version:refname "v*.*.*" | head -n1)"
-          echo "::set-output name=semver::${tag/v/}"
-          echo "::set-output name=tag::${tag}"
+          echo "semver=${tag/v/}" >> $GITHUB_OUTPUT
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
 
       # install and run versionist via balena-versionist
       - name: Run versionist
@@ -536,8 +536,8 @@ jobs:
             exit 1
           fi
 
-          echo "::set-output name=semver::${semver}"
-          echo "::set-output name=tag::v${semver}"
+          echo "semver=${semver}" >> $GITHUB_OUTPUT
+          echo "tag=v${semver}" >> $GITHUB_OUTPUT
 
       # create a versioned commit
       - name: Create versioned commit
@@ -631,11 +631,11 @@ jobs:
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
-          echo "::set-output name=package::${package}"
-          echo "::set-output name=version::${version}"
-          echo "::set-output name=branch_tag::${branch_tag}"
-          echo "::set-output name=sha_tag::${sha_tag}"
-          echo "::set-output name=version_tag::${version_tag}"
+          echo "package=${package}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
+          echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
+          echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
 
       - name: Install native dependencies (if necessary)
         run: |
@@ -1433,7 +1433,7 @@ jobs:
             echo ::error title={url}::"get_protection_rules failed with ${status_code} ${result} "
             exit 1
           else
-            echo "::set-output name=result::${result}"
+            echo "result=${result}" >> $GITHUB_OUTPUT
           fi
       - name: Parse and prepare protection rules
         id: parse_prepare_protection_rules
@@ -1503,7 +1503,7 @@ jobs:
           )
 
           result=$(echo "$newjson" | jq '. | @json' )
-          echo "::set-output name=result::${result}"
+          echo "result=${result}" >> $GITHUB_OUTPUT
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
         if: ${{ steps.parse_prepare_protection_rules.conclusion == 'success' }}
@@ -1524,4 +1524,7 @@ jobs:
             exit 1
           fi
 
-          echo ::set-output name=result::"${result}"
+          DELIMITER=$(echo $RANDOM | md5sum | head -c 32)
+          echo "result<<${DELIMITER}" >> $GITHUB_OUTPUT
+          echo "${result}" >> $GITHUB_OUTPUT
+          echo "${DELIMITER}" >> $GITHUB_OUTPUT
