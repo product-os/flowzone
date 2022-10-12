@@ -656,7 +656,11 @@ jobs:
         run: npm test
 
       - name: Run pack
-        run: mkdir /tmp/npm-pack && npm pack --pack-destination=/tmp/npm-pack
+        run: |
+          mkdir /tmp/npm-pack && npm pack --pack-destination=/tmp/npm-pack
+
+          # FIXME: workaround when npm pack dumps tarball into the current directory
+          find . -name '*.tgz' -exec mv {} /tmp/npm-pack \;
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
