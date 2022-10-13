@@ -1356,8 +1356,7 @@ jobs:
       - custom_finalize
       - custom_clean
     if: |
-      !failure() &&
-      needs.event_types.result == 'success' &&
+      always() &&
       needs.project_types.outputs.custom_always == 'true'
 
     steps:
