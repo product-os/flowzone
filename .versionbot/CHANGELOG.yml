@@ -1,4 +1,16 @@
 - commits:
+    - subject: Update balena-versionist/versionist
+      hash: 22f9cbf47ac43b810e123ebcfb0139d558a82a45
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.35.17
+  title: ""
+  date: 2022-10-13T14:48:32.742Z
+- commits:
     - subject: Update set-output commands to use the new out environment file
       hash: 5f72741f669376862daf5d614224640451593125
       body: >
@@ -455,8 +467,7 @@
         exit code is derived from this service
       hash: 2f1ce78b1ba382a8003692b20dd992b9b52fb2e6
       body: >
-        resolves: Consider using only docker-compose.test.yml for docker tests
-        #94
+        resolves: Consider using only docker-compose.test.yml for docker tests #94
       footer:
         Change-type: patch
         change-type: patch
@@ -1198,7 +1209,7 @@
 - commits:
     - subject: Add package source and project types to branch rules
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 59da52f1128e028c017f6a12da3222b15220064a
 - commits:
@@ -1212,7 +1223,7 @@
 - commits:
     - subject: Fix markdown warnings in README
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 7fe0c0506608e3ed56ac14311f26eb9e7d91cdb2
 - commits:
@@ -1226,7 +1237,7 @@
 - commits:
     - subject: Only run protect branch on unmerged pull requests
 - commits:
-    - ? body
+    - body: null
 - version: 0.17.2
 - date: 2022-08-27T15:33:48Z
 - commits:
@@ -1242,7 +1253,7 @@
 - commits:
     - subject: Fix typo in branch rules
 - commits:
-    - ? body
+    - body: null
 - version: 0.17.1
 - date: 2022-08-27T13:11:47Z
 - commits:
@@ -1277,7 +1288,7 @@
 - commits:
     - subject: Remove resinCI config
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: ff64dc07f9cb92284090c086cc7845ffa53c8aac
 - commits:
@@ -1291,7 +1302,7 @@
 - commits:
     - subject: Only run docker publish if project type includes docker
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: cbec8c79c3e109dcf392cdda139a3cd9f6acdc6b
 - commits:
@@ -1305,7 +1316,7 @@
 - commits:
     - subject: Rename draft jobs to publish
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 6c644d598f4103f11f50f7385837ce9f22a8feb3
 - commits:
@@ -1338,7 +1349,7 @@
 - commits:
     - subject: Rename push balena to publish balena to align with other types
 - commits:
-    - ? body
+    - body: null
 - version: 0.16.5
 - date: 2022-08-26T18:34:46Z
 - commits:
@@ -1351,7 +1362,7 @@
 - commits:
     - subject: "patch: Fix typo in custom action detection"
 - commits:
-    - ? body
+    - body: null
 - version: 0.16.4
 - date: 2022-08-26T18:22:06Z
 - commits:
@@ -1367,7 +1378,7 @@
 - commits:
     - subject: Add cool logo
 - commits:
-    - ? body
+    - body: null
 - version: 0.16.3
 - date: 2022-08-26T17:48:10Z
 - commits:
@@ -1383,7 +1394,7 @@
 - commits:
     - subject: Add required inputs to custom composite actions
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: e919e0bcd923a403ff8b90798526961f29e90361
 - commits:
@@ -1397,7 +1408,7 @@
 - commits:
     - subject: Catch errors when custom actions are not found
 - commits:
-    - ? body
+    - body: null
 - version: 0.16.2
 - date: 2022-08-26T16:29:57Z
 - commits:
@@ -1413,7 +1424,7 @@
 - commits:
     - subject: Add composite workflow support
 - commits:
-    - ? body
+    - body: null
 - version: 0.16.1
 - date: 2022-08-26T03:10:30Z
 - commits:
@@ -1429,7 +1440,7 @@
 - commits:
     - subject: Fix tagging of draft docker images
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: b72e17c390bf431dc7bc046b11497249b5443bf3
 - commits:
@@ -1440,7 +1451,7 @@
 - commits:
     - subject: Rename jobs to use verb first
 - commits:
-    - ? body
+    - body: null
 - version: 0.16.0
 - date: 2022-08-26T02:56:01Z
 - commits:
@@ -1456,7 +1467,7 @@
 - commits:
     - subject: Add a check results job to check the results of all other jobs
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 9bdbc035f67713cd5bbc1e6e419f8da326ad9756
 - commits:
@@ -1470,7 +1481,7 @@
 - commits:
     - subject: Remove balena all job and just check on balena push
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 9637d764c413b30cdd506193cf732fde1fb1fcc0
 - commits:
@@ -1481,7 +1492,7 @@
 - commits:
     - subject: Rename docker and npm test jobs
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: a008090769450138728ea62b14b141cd66ee7982
 - commits:
@@ -1495,7 +1506,7 @@
 - commits:
     - subject: Separate npm draft and finalize steps
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: e62a06499459f4ee2ee446371b9d97d8957dab5d
 - commits:
@@ -1509,7 +1520,7 @@
 - commits:
     - subject: Fix protect branch conditions to always run
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 83df4b131d500b940e58876367b4563872c2448c
 - commits:
@@ -1523,7 +1534,7 @@
 - commits:
     - subject: Split docker publish steps into draft and finalize
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 9dd98893c81e9d083a1875e4aaa523263247b823
 - commits:
@@ -1534,7 +1545,7 @@
 - commits:
     - subject: Rename some jobs and remove context requirement from source check
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 16c7855775c5baa5b6c9685df88e4ba8e9b97ec5
 - commits:
@@ -1548,7 +1559,7 @@
 - commits:
     - subject: Rename versioned source to package source
 - commits:
-    - ? body
+    - body: null
 - version: 0.15.4
 - date: 2022-08-26T00:59:44Z
 - commits:
@@ -1564,7 +1575,7 @@
 - commits:
     - subject: Always run protect branch job and check for overall failure
 - commits:
-    - ? body
+    - body: null
 - version: 0.15.3
 - date: 2022-08-25T18:38:24Z
 - commits:
@@ -1580,7 +1591,7 @@
 - commits:
     - subject: Require a change-type for pull requests
 - commits:
-    - ? body
+    - body: null
 - version: 0.15.2
 - date: 2022-08-25T17:57:54Z
 - commits:
@@ -1596,7 +1607,7 @@
 - commits:
     - subject: Fix parsing of the changelog when repo type is not node
 - commits:
-    - ? body
+    - body: null
 - version: 0.15.1
 - date: 2022-08-25T16:22:13Z
 - commits:
@@ -1609,7 +1620,7 @@
 - commits:
     - subject: Test with multiple docker images input
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 7df85267740d2465da109f86fc459d63fd594944
 - commits:
@@ -1623,7 +1634,7 @@
 - commits:
     - subject: Fix input parsing when multiple docker images are provided
 - commits:
-    - ? body
+    - body: null
 - version: 0.15.0
 - date: 2022-08-25T14:40:40Z
 - commits:
@@ -1658,7 +1669,7 @@
 - commits:
     - subject: Set required approvals back to 1 for flowzone
 - commits:
-    - ? body
+    - body: null
 - version: 0.14.1
 - date: 2022-08-25T09:57:43Z
 - commits:
@@ -1671,7 +1682,7 @@
 - commits:
     - subject: Add example of configuring input to usage
 - commits:
-    - ? body
+    - body: null
 - version: 0.14.0
 - date: 2022-08-24T23:44:17Z
 - commits:
@@ -1687,7 +1698,7 @@
 - commits:
     - subject: Enable dockerhub artifacts by default
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 0e4accc226ecfad86d88a34e0c1564228ad14c09
 - commits:
@@ -1701,7 +1712,7 @@
 - commits:
     - subject: Only push one balenaCloud release by default
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 157d3c3e4ee55c1e7c2cb8d4519921b80fbde486
 - commits:
@@ -1715,7 +1726,7 @@
 - commits:
     - subject: Rename docker credential secrets to be specific to DockerHub
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: c2ccd93822eefcb3fc2974cc27a8bd1867f595fc
 - commits:
@@ -1726,7 +1737,7 @@
 - commits:
     - subject: Update deploy-to-balena action to 0.13.0
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 6cc97807f8c0b42927383ace80ea4823e94bb5e9
 - commits:
@@ -1737,7 +1748,7 @@
 - commits:
     - subject: Remove YAML from inputs section of readme
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: f2097a3a2c947f54adeac650fea2e5542b5a5500
 - commits:
@@ -1748,7 +1759,7 @@
 - commits:
     - subject: Set test npm project to private
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 84c45f165445098854244efb2f548b4ed5adf868
 - commits:
@@ -1773,7 +1784,7 @@
 - commits:
     - subject: Apply formatting to workflow
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 7afecfff082faa570c4dc91a378d66342b86c4cd
 - commits:
@@ -1787,7 +1798,7 @@
 - commits:
     - subject: Fix behaviour of the npm private flag
 - commits:
-    - ? body
+    - body: null
 - version: 0.13.4
 - date: 2022-08-24T20:01:48Z
 - commits:
@@ -1803,7 +1814,7 @@
 - commits:
     - subject: Force tagging because the previous commit must not have merged
 - commits:
-    - ? body
+    - body: null
 - version: 0.13.3
 - date: 2022-08-24T18:42:22Z
 - commits:
@@ -1819,7 +1830,7 @@
 - commits:
     - subject: Replace BALENA_API_KEY_PUSH secret with BALENA_API_KEY
 - commits:
-    - ? body
+    - body: null
 - version: 0.13.2
 - date: 2022-08-24T18:03:07Z
 - commits:
@@ -1846,7 +1857,7 @@
 - commits:
     - subject: Clean up the detail for inputs
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 8c5808b3725a09b26185d8df42b69bf50c3a578e
 - commits:
@@ -1857,7 +1868,7 @@
 - commits:
     - subject: Skip versioned commit if no changes were made by versionist
 - commits:
-    - ? body
+    - body: null
 - version: 0.13.1
 - date: 2022-08-24T17:17:04Z
 - commits:
@@ -1873,7 +1884,7 @@
 - commits:
     - subject: Describe secrets and inputs with headings instead of a table
 - commits:
-    - ? body
+    - body: null
 - version: 0.13.0
 - date: 2022-08-24T16:07:38Z
 - commits:
@@ -1889,7 +1900,7 @@
 - commits:
     - subject: Allow configuring of additional required status checks
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: d6d37e7d8733d9516d1b06f1b834c86d13141e7d
 - commits:
@@ -1900,7 +1911,7 @@
 - commits:
     - subject: Update readme to include npm_registry input
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: c4d67aafb1c5b2ee1fc24d1f19f07b4ee06eaafc
 - commits:
@@ -1911,7 +1922,7 @@
 - commits:
     - subject: Clarify in getting started that branch protection rules can be disabled
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 107af59ec4b92a139155c5d88881102082565ffb
 - commits:
@@ -1925,7 +1936,7 @@
 - commits:
     - subject: "BREAKING: Switch to comma-delimited strings for inputs"
 - commits:
-    - ? body
+    - body: null
 - version: 0.12.8
 - date: 2022-08-24T01:46:25Z
 - commits:
@@ -1941,7 +1952,7 @@
 - commits:
     - subject: Create a symlink to balena.yml so it can be versioned
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 217fe740d3bff85ac5cea9400b4e49ce25c973e2
 - commits:
@@ -1952,7 +1963,7 @@
 - commits:
     - subject: Remove stale version file as the repo type is node
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 2a7e363f261d639f5d83e929b18cadab153ad213
 - commits:
@@ -1981,7 +1992,7 @@
 - commits:
     - subject: Extract the new version from the changelog
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: c554e0f37e61a907a9610df91417d6467053f2ac
 - commits:
@@ -2008,7 +2019,7 @@
 - commits:
     - subject: Do not include the v prefix on versioned docker tags
 - commits:
-    - ? body
+    - body: null
 - version: 0.12.5
 - date: 2022-08-24T00:08:28Z
 - commits:
@@ -2024,7 +2035,7 @@
 - commits:
     - subject: Remove docker cache from input and use latest and edge tags
 - commits:
-    - ? body
+    - body: null
 - version: 0.12.4
 - date: 2022-08-24T00:03:44Z
 - commits:
@@ -2040,7 +2051,7 @@
 - commits:
     - subject: Only run protect branch on pull request events
 - commits:
-    - ? body
+    - body: null
 - version: 0.12.3
 - date: 2022-08-23T21:53:09Z
 - commits:
@@ -2056,7 +2067,7 @@
 - commits:
     - subject: Restore protect branch input that was removed by mistake
 - commits:
-    - ? body
+    - body: null
 - version: 0.12.2
 - date: 2022-08-23T20:04:06Z
 - commits:
@@ -2072,7 +2083,7 @@
 - commits:
     - subject: Protect branch depends on all other jobs but allows skipped jobs
 - commits:
-    - ? body
+    - body: null
 - version: 0.12.1
 - date: 2022-08-23T19:58:29Z
 - commits:
@@ -2088,7 +2099,7 @@
 - commits:
     - subject: Fix missing dependency on versioned source for docker publish
 - commits:
-    - ? body
+    - body: null
 - version: 0.12.0
 - date: 2022-08-23T19:52:07Z
 - commits:
@@ -2104,7 +2115,7 @@
 - commits:
     - subject: Merge docker draft and docker finalize jobs
 - commits:
-    - ? body
+    - body: null
 - version: 0.11.0
 - date: 2022-08-23T19:23:40Z
 - commits:
@@ -2120,7 +2131,7 @@
 - commits:
     - subject: Increase logging of npm publish commands
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: f394373b24c4ae9f943c6340f77625ca4f428cb6
 - commits:
@@ -2134,7 +2145,7 @@
 - commits:
     - subject: Combine npm draft and npm final steps
 - commits:
-    - ? body
+    - body: null
 - version: 0.10.1
 - date: 2022-08-23T17:59:56Z
 - commits:
@@ -2150,7 +2161,7 @@
 - commits:
     - subject: Combine docker merge and tagged steps
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 282d1c0056080fc456bf49603983690c0661ac87
 - commits:
@@ -2161,7 +2172,7 @@
 - commits:
     - subject: Remove tagged source job
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 9aaff985949bacf3d26ba2e5631f916223d9e2d5
 - commits:
@@ -2172,7 +2183,7 @@
 - commits:
     - subject: Clean up job dependencies
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 928891deed027a2edb685a6bb79b277241d0b24e
 - commits:
@@ -2186,7 +2197,7 @@
 - commits:
     - subject: Enable shell tracing across all jobs
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 488348a766f83d1b1a22191e4138b2546e5c1be0
 - commits:
@@ -2197,7 +2208,7 @@
 - commits:
     - subject: Skip triggers on tags for this repo
 - commits:
-    - ? body
+    - body: null
 - version: 0.10.0
 - date: 2022-08-23T16:56:54Z
 - commits:
@@ -2210,7 +2221,7 @@
 - commits:
     - subject: "patch: Require full fetch depth for versionist"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 34e3cc739af282d24081efb25dcbba85e60d81a3
 - commits:
@@ -2238,7 +2249,7 @@
 - commits:
     - subject: Fix typo in versioned source outputs
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 4e657171864d718e730008e6fe7ddcd826b2358e
 - commits:
@@ -2252,7 +2263,7 @@
 - commits:
     - subject: Automatically determine max version applied by versionist
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: f178e1fe0794cbfb9edb7673eb1a164a4a40c451
 - commits:
@@ -2266,7 +2277,7 @@
 - commits:
     - subject: Combine version draft and tag jobs
 - commits:
-    - ? body
+    - body: null
 - version: 0.9.1
 - date: 2022-08-23T15:44:09Z
 - commits:
@@ -2282,7 +2293,7 @@
 - commits:
     - subject: Determine the highest version in all versioned files
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 89a641b3ac1c5bf071807317086037eba2177dbc
 - commits:
@@ -2296,7 +2307,7 @@
 - commits:
     - subject: Use skip_versioning flag to determine whether source is versioned
 - commits:
-    - ? body
+    - body: null
 - version: 0.9.0
 - date: 2022-08-23T15:33:35Z
 - commits:
@@ -2331,7 +2342,7 @@
 - commits:
     - subject: Rename NPM to npm to match the official product name
 - commits:
-    - ? body
+    - body: null
 - version: 0.8.2
 - date: 2022-08-23T00:06:35Z
 - commits:
@@ -2361,7 +2372,7 @@
 - commits:
     - subject: "npm_merge: Get version from version_merge job"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 765012d03d3d176c33895ac8dde07256af2b80ae
 - commits:
@@ -2388,7 +2399,7 @@
 - commits:
     - subject: Node npm package publishing
 - commits:
-    - ? body
+    - body: null
 - version: 0.7.0
 - date: 2022-08-19T10:49:26Z
 - commits:
@@ -2404,7 +2415,7 @@
 - commits:
     - subject: Run versionist if versiobot branch for PR does not exist.
 - commits:
-    - ? body
+    - body: null
 - version: 0.6.12
 - date: 2022-08-15T16:18:00Z
 - commits:
@@ -2420,7 +2431,7 @@
 - commits:
     - subject: Ensure NPM merge and tag only runs when npm sources are found
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 1be10b248a64305bea05f60a3d8fb546ba3095fa
 - commits:
@@ -2447,7 +2458,7 @@
 - commits:
     - subject: "patch: Only extract version info if author is versionbot"
 - commits:
-    - ? body
+    - body: null
 - version: 0.6.10
 - date: 2022-08-15T15:55:20Z
 - commits:
@@ -2479,7 +2490,7 @@
 - commits:
     - subject: Add optional secret for the ghcr.io token
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: b526ecc0de927dd55167249948bdd6c976c0f2a8
 - commits:
@@ -2490,7 +2501,7 @@
 - commits:
     - subject: Disable github context debugging
 - commits:
-    - ? body
+    - body: null
 - version: 0.6.9
 - date: 2022-08-15T15:20:35Z
 - commits:
@@ -2506,7 +2517,7 @@
 - commits:
     - subject: Demonstrate that secrets can only be inherited in some cases
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 66f8b13a5423853cca7b551fe27e1b7682e2dab8
 - commits:
@@ -2517,7 +2528,7 @@
 - commits:
     - subject: Add versionbot section to the readme
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: cfbf6a3e61589dc5966b61f3d8c01788e9036ca4
 - commits:
@@ -2544,7 +2555,7 @@
 - commits:
     - subject: "patch: Remove prefix restrictions from tags trigger"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 6b89ec3b1ef802372c5459dedf21de7eb2a0bc43
 - commits:
@@ -2555,7 +2566,7 @@
 - commits:
     - subject: "patch: Remove unecessary versionbot check from balena_merge"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 9879ac9bb2090cebceafcec52eb82fa8b170edef
 - commits:
@@ -2569,7 +2580,7 @@
 - commits:
     - subject: Generate Docker edge tags for merges without versionbot
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 50feb95291319ad486cf0ed27194488375ad5aed
 - commits:
@@ -2580,7 +2591,7 @@
 - commits:
     - subject: Only apply platform suffix to image tags, not labels
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: c0cc231d13ad751b0e2a6c61a6229d6550b03c82
 - commits:
@@ -2591,7 +2602,7 @@
 - commits:
     - subject: Add placeholder for npm edge tag publish
 - commits:
-    - ? body
+    - body: null
 - version: 0.6.7
 - date: 2022-08-15T01:42:10Z
 - commits:
@@ -2604,7 +2615,7 @@
 - commits:
     - subject: "patch: Fix inputs example in readme"
 - commits:
-    - ? body
+    - body: null
 - version: 0.6.6
 - date: 2022-08-15T01:33:26Z
 - commits:
@@ -2620,7 +2631,7 @@
 - commits:
     - subject: Assert that versioned source is up-to-date
 - commits:
-    - ? body
+    - body: null
 - version: 0.6.5
 - date: 2022-08-15T01:16:31Z
 - commits:
@@ -2636,7 +2647,7 @@
 - commits:
     - subject: Fix protect branch run conditions
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 848a81f718f4d7c232ad71d5c03b9d1edb87c441
 - commits:
@@ -2647,7 +2658,7 @@
 - commits:
     - subject: Add new input to optionally disable setting of branch protections
 - commits:
-    - ? body
+    - body: null
 - version: 0.6.4
 - date: 2022-08-15T00:50:43Z
 - commits:
@@ -2663,7 +2674,7 @@
 - commits:
     - subject: Rename source and context checks
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 18030b148f042c00a4556adb1c018f0b93408473
 - commits:
@@ -2677,7 +2688,7 @@
 - commits:
     - subject: Refactor job dependencies
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: d3d551d6428e670c3de4cb7a069dd5c236d89f45
 - commits:
@@ -2688,7 +2699,7 @@
 - commits:
     - subject: Fix npm private check
 - commits:
-    - ? body
+    - body: null
 - version: 0.6.3
 - date: 2022-08-14T17:39:29Z
 - commits:
@@ -2701,7 +2712,7 @@
 - commits:
     - subject: "patch: Fix check for tag events"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 9732704a3313c51b18763a9f1b30c6dc2eca8a84
 - commits:
@@ -2741,7 +2752,7 @@
 - commits:
     - subject: "patch: Fix check for versionbot author"
 - commits:
-    - ? body
+    - body: null
 - version: 0.6.0
 - date: 2022-08-14T17:00:56Z
 - commits:
@@ -2754,7 +2765,7 @@
 - commits:
     - subject: "patch: Group jobs by project type, not events"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 9c7eedc3a8961fc4ce5c4aa7f5a61239b0ac7751
 - commits:
@@ -2765,7 +2776,7 @@
 - commits:
     - subject: "patch: Rename jobs with project type prefix"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: bd9048f5f0b2e3fe253567622797ab67bc21d3c4
 - commits:
@@ -2779,7 +2790,7 @@
 - commits:
     - subject: Finalize balena releases on non-versionbot tags
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: ae02f28ae1d64c1271ef2d62fe1060b647f3c8d9
 - commits:
@@ -2793,7 +2804,7 @@
 - commits:
     - subject: Refactor the ghcr.io and docker.io deploy steps
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: f022d556fca0d65633ddb114cb97376af3a2ae26
 - commits:
@@ -2804,7 +2815,7 @@
 - commits:
     - subject: Create version tag event to extract tag info
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 4435634d9fae384e7125d3fad878a416e3900048
 - commits:
@@ -2815,7 +2826,7 @@
 - commits:
     - subject: Split the multi-arch manifest creation as it requires registry auth
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 400611ffcf4f74c4391c728b0ee638706a6c4e87
 - commits:
@@ -2826,7 +2837,7 @@
 - commits:
     - subject: Add docker job for tagged commits
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 4955c6f7ca869d98a721b703e8e356fddc6ae3b6
 - commits:
@@ -2837,7 +2848,7 @@
 - commits:
     - subject: Add npm tag job
 - commits:
-    - ? body
+    - body: null
 - version: 0.5.5
 - date: 2022-08-14T14:08:12Z
 - commits:
@@ -2853,7 +2864,7 @@
 - commits:
     - subject: Make some project-specific secrets optional
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 174d2d7e3550a68d0cdccf1e04abc33e914c27a5
 - commits:
@@ -2867,7 +2878,7 @@
 - commits:
     - subject: Only finalize artifacts on merge if versionbot is in use
 - commits:
-    - ? body
+    - body: null
 - version: 0.5.4
 - date: 2022-08-14T13:48:11Z
 - commits:
@@ -2883,7 +2894,7 @@
 - commits:
     - subject: Update documentation for the supported project types
 - commits:
-    - ? body
+    - body: null
 - version: 0.5.3
 - date: 2022-08-13T17:25:29Z
 - commits:
@@ -2896,7 +2907,7 @@
 - commits:
     - subject: "patch: Update maintenance section of readme"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 756346f0f5cbce85f48d6f1f6f2895e106053a5e
 - commits:
@@ -2910,7 +2921,7 @@
 - commits:
     - subject: Add placeholder for NPM finalize
 - commits:
-    - ? body
+    - body: null
 - version: 0.5.2
 - date: 2022-08-13T17:19:26Z
 - commits:
@@ -2923,7 +2934,7 @@
 - commits:
     - subject: Create LICENSE
 - commits:
-    - ? body
+    - body: null
 - version: 0.5.1
 - date: 2022-08-13T17:12:07Z
 - commits:
@@ -2939,7 +2950,7 @@
 - commits:
     - subject: Document required secrets in readme
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 9e6439f4c826dbf87d16c1a7d6b5e478c3b42e25
 - commits:
@@ -2950,7 +2961,7 @@
 - commits:
     - subject: Document inputs and defaults in the readme
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 5a87c2aa74d454df8afbd0aa1d664abf696ac1f9
 - commits:
@@ -2961,7 +2972,7 @@
 - commits:
     - subject: Remove old resinCI check
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: d899467794f8c31cebc4559a16f6e3ea2ade525f
 - commits:
@@ -2972,7 +2983,7 @@
 - commits:
     - subject: Add contributing and help to the readme
 - commits:
-    - ? body
+    - body: null
 - version: 0.5.0
 - date: 2022-08-13T00:18:21Z
 - commits:
@@ -2988,7 +2999,7 @@
 - commits:
     - subject: Rename some jobs to reflect draft vs final
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 5d888417b942fe84b5d68320842111ddf24d4c0b
 - commits:
@@ -2999,7 +3010,7 @@
 - commits:
     - subject: Remove unused artifact upload from finalize version job
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 321de3d3e4c097bf6a9f290281c797abed159a5f
 - commits:
@@ -3026,7 +3037,7 @@
 - commits:
     - subject: Rename eval_source job to inspect_source
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 94c57f1133c5f19174ab26443e8020641924336f
 - commits:
@@ -3037,7 +3048,7 @@
 - commits:
     - subject: Add Inspect source to required checks
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.11
 - date: 2022-08-12T20:22:29Z
 - commits:
@@ -3050,7 +3061,7 @@
 - commits:
     - subject: "patch: Finalize balena releases on merge"
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.10
 - date: 2022-08-12T20:03:21Z
 - commits:
@@ -3066,7 +3077,7 @@
 - commits:
     - subject: Login to container registries for finalize
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 5fd7aa81cb5bae98d4647c50b331dfb492844569
 - commits:
@@ -3080,7 +3091,7 @@
 - commits:
     - subject: Always run sanitize inputs and eval sources
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.9
 - date: 2022-08-12T19:24:56Z
 - commits:
@@ -3096,7 +3107,7 @@
 - commits:
     - subject: Login to container registries for finalize
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.8
 - date: 2022-08-12T19:19:26Z
 - commits:
@@ -3112,7 +3123,7 @@
 - commits:
     - subject: Finalize docker images on merge events
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 670c2cf4adde4ddba8bfb9aa379b14ef5943d35f
 - commits:
@@ -3123,7 +3134,7 @@
 - commits:
     - subject: Remove redundant resinCI checks
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 2bf0b47f9d67c5675da2d50951be0ffc5bb0c437
 - commits:
@@ -3134,7 +3145,7 @@
 - commits:
     - subject: Remove leftover dependencies from Docker (all) job
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.7
 - date: 2022-08-12T16:33:01Z
 - commits:
@@ -3150,7 +3161,7 @@
 - commits:
     - subject: Use last commmit from head of the PR branch for artifact tags
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: e452327ade3f5a489b70680439e454045750428e
 - commits:
@@ -3164,7 +3175,7 @@
 - commits:
     - subject: Create a patch from the versioned commit and apply to main
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: f95a8a9dcdf14186b56dcf75ae6b7c301b663c01
 - commits:
@@ -3176,7 +3187,7 @@
     - subject: "patch: Use base sha when checking out main branch for versioned
         cherry-pick"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: f9372dcb9cf1c8bd4548935da8ffd15b56c4f751
 - commits:
@@ -3187,7 +3198,7 @@
 - commits:
     - subject: "patch: Use tip of pull request branch to name artifacts"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: e10b01d96141a5dd5dcf10832df321b9fef8c0e6
 - commits:
@@ -3198,7 +3209,7 @@
 - commits:
     - subject: "patch: Re-upload the versioned source artifact under a versioned name"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 449958684755a509f2400eb92be4174ed14b7eea
 - commits:
@@ -3225,7 +3236,7 @@
 - commits:
     - subject: Parse the version and sha in a separate build step
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.6
 - date: 2022-08-11T20:35:24Z
 - commits:
@@ -3241,7 +3252,7 @@
 - commits:
     - subject: Push multiple architecture-specific balena releases by default
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.5
 - date: 2022-08-11T20:09:11Z
 - commits:
@@ -3257,7 +3268,7 @@
 - commits:
     - subject: Create docker manifest after individual platforms
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.4
 - date: 2022-08-11T13:34:28Z
 - commits:
@@ -3286,7 +3297,7 @@
 - commits:
     - subject: Update migration steps in readme
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 8dc890c2a7e8d3e3ec85eac92af0581a245eec05
 - commits:
@@ -3297,7 +3308,7 @@
 - commits:
     - subject: Run protect branch even if required jobs are skipped
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.3
 - date: 2022-08-11T13:01:24Z
 - commits:
@@ -3313,7 +3324,7 @@
 - commits:
     - subject: Split versioned source job into 3 smaller jobs
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.2
 - date: 2022-08-10T23:46:52Z
 - commits:
@@ -3326,7 +3337,7 @@
 - commits:
     - subject: "patch: Update examples in readme"
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.1
 - date: 2022-08-10T23:42:15Z
 - commits:
@@ -3342,7 +3353,7 @@
 - commits:
     - subject: Split node and docker jobs into matrices
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: a9b26751eb41eb92433c5ffcddd6a075d9b4b37c
 - commits:
@@ -3356,7 +3367,7 @@
 - commits:
     - subject: Cherry-pick the versioned commit to main so we can gpg-sign
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 1910ed02683872987dce31efd967c3118a329e1f
 - commits:
@@ -3370,7 +3381,7 @@
 - commits:
     - subject: Rebase versioned source before pushing to main
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: aee2fa135baef1c16c2825eede5ad9d657ba08e9
 - commits:
@@ -3384,7 +3395,7 @@
 - commits:
     - subject: Fix versioned source extraction on merge
 - commits:
-    - ? body
+    - body: null
 - version: 0.4.0
 - date: 2022-08-10T20:01:36Z
 - commits:
@@ -3413,7 +3424,7 @@
 - commits:
     - subject: Remove versionist flow in favour of versioned source flow
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: b430d1245b635130231016867a4c9435df909819
 - commits:
@@ -3427,7 +3438,7 @@
 - commits:
     - subject: Use versioned source artifacts downstream jobs
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 28ed06deeacffb5b0085f83c1a545de8042c026b
 - commits:
@@ -3510,7 +3521,7 @@
 - commits:
     - subject: Lint flowzone workflow
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: b9020544d09e57fad618b36bd76f9cd9f614a18b
 - commits:
@@ -3521,7 +3532,7 @@
 - commits:
     - subject: Fix default docker context directory
 - commits:
-    - ? body
+    - body: null
 - version: 0.2.0
 - date: 2022-08-10T14:42:50Z
 - commits:
@@ -3537,7 +3548,7 @@
 - commits:
     - subject: Add deploy to balena flow
 - commits:
-    - ? body
+    - body: null
 - version: 0.1.6
 - date: 2022-08-10T14:28:49Z
 - commits:
@@ -3566,7 +3577,7 @@
 - commits:
     - subject: Fix typo in protection rules
 - commits:
-    - ? body
+    - body: null
 - version: 0.1.5
 - date: 2022-08-10T14:11:28Z
 - commits:
@@ -3594,7 +3605,7 @@
 - commits:
     - subject: "patch: generate new GPG key (balena-ci)"
 - commits:
-    - ? body
+    - body: null
 - version: 0.1.3
 - date: 2022-08-09T21:30:52Z
 - commits:
@@ -3604,7 +3615,7 @@
 - commits:
     - subject: "patch: correct secrets/inputs"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 56ea553bebfdbbd42072a7d89809c4e8a716e480
 - commits:
@@ -3612,7 +3623,7 @@
 - commits:
     - subject: "patch: correct inputs"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: f327a2f03bdead0df78cf234da54ccb00af89070
 - commits:
@@ -3634,7 +3645,7 @@
 - commits:
     - subject: "patch: configurable required_approving_review_count"
 - commits:
-    - ? body
+    - body: null
 - version: 0.1.2
 - date: 2022-08-09T19:55:27Z
 - commits:
@@ -3647,7 +3658,7 @@
 - commits:
     - subject: "patch: Rename versionist action"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: e3235afcb7aa991837c029fb2bdf9f85e90cf7a8
 - commits:
@@ -3658,7 +3669,7 @@
 - commits:
     - subject: "patch: Remove references to versionbot"
 - commits:
-    - ? body
+    - body: null
 - version: 0.1.1
 - date: 2022-08-09T19:42:26Z
 - commits:
@@ -3671,7 +3682,7 @@
 - commits:
     - subject: "patch: Change the versionbot author to Flowzone"
 - commits:
-    - ? body
+    - body: null
 - version: 0.1.0
 - date: 2022-08-09T19:30:25Z
 - commits:
@@ -3684,7 +3695,7 @@
 - commits:
     - subject: Update branch protection rules
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 0fa5c3612124684bbf1e7ffdae5ba759bb2014c2
 - commits:
@@ -3698,7 +3709,7 @@
 - commits:
     - subject: Extend docker flow to support multiarch and pushing to registries
 - commits:
-    - ? body
+    - body: null
 - version: 0.0.5
 - date: 2022-08-09T18:50:50Z
 - commits:
@@ -3729,7 +3740,7 @@
 - commits:
     - subject: Update example workflows
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 9e5ec84d87d2ebd26c3a8e5334bc21be8a63fafe
 - commits:
@@ -3737,7 +3748,7 @@
 - commits:
     - subject: Merge branch 'master' into kyle/examples
 - commits:
-    - ? body
+    - body: null
 - version: 0.0.3
 - date: 2022-08-09T17:08:10Z
 - commits:
@@ -3750,7 +3761,7 @@
 - commits:
     - subject: Add resinCI migration instructions
 - commits:
-    - ? body
+    - body: null
 - version: 0.0.2
 - date: 2022-08-09T16:19:46Z
 - commits:
@@ -3766,7 +3777,7 @@
 - commits:
     - subject: Run versionist steps manually
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 9907800c927ed72be7df42a128e0ee5f2b9df518
 - commits:
@@ -3777,7 +3788,7 @@
 - commits:
     - subject: Use flowzone token for checkout and push
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 4c5db84d5f8b4e6237e8521b335b39c07ad080f1
 - commits:
@@ -3788,7 +3799,7 @@
 - commits:
     - subject: Flatten test structure to emulate a single repo
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 6d33657cce8243e81671c9292701930ce5f13454
 - commits:
@@ -3799,7 +3810,7 @@
 - commits:
     - subject: "patch: Checkout source before calling local composite actions"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: be12d61df32ce095ce394aeb67a5e4018eb9de8f
 - commits:
@@ -3810,7 +3821,7 @@
 - commits:
     - subject: "patch: Fix conditions for running versionbot"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: b221defda9afe8b779eabdbe11e057a24e795fb1
 - commits:
@@ -3821,7 +3832,7 @@
 - commits:
     - subject: "patch: Run versionbot on push to main branch"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 0d4f6ee6f7e9d6cbe00248910256f316dccc4821
 - commits:
@@ -3832,7 +3843,7 @@
 - commits:
     - subject: "patch: Set versionbot to checkout the base_ref"
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 610125e22c6801c279cdd3941141547b3fbefc28
 - commits:
@@ -3843,7 +3854,7 @@
 - commits:
     - subject: "patch: Set versionbot to checkout the base_ref"
 - commits:
-    - ? body
+    - body: null
 - version: 0.0.1
 - date: 2022-08-08T20:48:03Z
 - commits:
@@ -3856,7 +3867,7 @@
 - commits:
     - subject: Add repo.yml for the versionbot GH app
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 8861231aa21a040980ba6d928ca13593f0f1b3be
 - commits:
@@ -3867,7 +3878,7 @@
 - commits:
     - subject: Disable resinCI entirely
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 88065ac6a66761a58a84e3ee176ddae3a1fadf62
 - commits:
@@ -3881,7 +3892,7 @@
 - commits:
     - subject: Add versionbot workflow
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 314ef9e5941651d9a6086a4aad5fcd34d0fb43e7
 - commits:
@@ -3903,7 +3914,7 @@
 - commits:
     - subject: User versioned source if possible
 - commits:
-    - ? body
+    - body: null
 - commits:
     - hash: 30fb5de3bfda22ae7ad34e230958a32f69670720
 - commits:
@@ -3917,4 +3928,4 @@
 - commits:
     - subject: Add integration testing for CI flows
 - commits:
-    - ? body
+    - body: null
