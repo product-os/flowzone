@@ -1,4 +1,17 @@
 - commits:
+    - subject: Always run `custom_always` step
+      hash: f01dcadb4893ba31b84d71feb18f892a44443547
+      body: |
+        * if action.yml is present regadless of status of other jobs
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: ab77
+      nested: []
+  version: 0.35.19
+  title: ""
+  date: 2022-10-13T17:05:28.190Z
+- commits:
     - subject: Debug npm pack
       hash: 94f8c607d3991be16852befd685954b7d2f6c038
       body: ""
