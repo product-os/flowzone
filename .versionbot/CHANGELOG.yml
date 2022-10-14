@@ -1,4 +1,17 @@
 - commits:
+    - subject: Remove incorrect path character for `flowzone.yml`
+      hash: 59728357c3036fa134f9eac8afcdee12512ec47f
+      body: |
+        Slashed it.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Heath Raftery
+      nested: []
+  version: 0.36.4
+  title: ""
+  date: 2022-10-14T19:21:34.803Z
+- commits:
     - subject: Only look for an npm pack in the working dir for node 6.x
       hash: 664c51c81d4d83db4a980391d6d3e104b0cb5b48
       body: ""
