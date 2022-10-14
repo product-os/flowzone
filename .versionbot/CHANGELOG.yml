@@ -1,4 +1,23 @@
 - commits:
+    - subject: Support build metadata in semvers for device repositories
+      hash: f018a41e4792c5c05ece4bb5b1541c59661cd433
+      body: |
+        Device repositories use build meta-data so let's not remove it from
+        the version used in versioning.
+
+        Also, as `.versionbot/CHANGELOG` is always generated there is no need
+        to use alternative version sources.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Alex Gonzalez <alexg@balena.io>
+        signed-off-by: Alex Gonzalez <alexg@balena.io>
+      author: Alex Gonzalez
+      nested: []
+  version: 0.36.1
+  title: ""
+  date: 2022-10-14T15:26:00.206Z
+- commits:
     - subject: Support multiple Docker bake targets
       hash: e5e823e753b1ca5620d565c1525ec7e2f70c4a25
       body: |
