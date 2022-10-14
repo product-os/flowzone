@@ -1,4 +1,29 @@
 - commits:
+    - subject: Support multiple Docker bake targets
+      hash: e5e823e753b1ca5620d565c1525ec7e2f70c4a25
+      body: |
+        This commit replaces the Docker platform build/test matrix
+        with a single docker-compose test. It also allows multiple bake
+        targets for publishing image variants with unique tags.
+
+        Currently only the linux/amd64 platform image will be tested
+        with compose tests but any targets defined in the bake file(s)
+        will be published as defined.
+
+        The same cache scope is used for the compose tests as the publish
+        steps so targets with long build times should need to build once.
+        Additional cache sources can be added to the bake file(s).
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.36.0
+  title: ""
+  date: 2022-10-14T02:01:53.146Z
+- commits:
     - subject: Always run `custom_always` step
       hash: f01dcadb4893ba31b84d71feb18f892a44443547
       body: |
