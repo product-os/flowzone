@@ -527,11 +527,7 @@ jobs:
           git status --porcelain
           versions=()
           [ -f .versionbot/CHANGELOG.yml ] && versions+=($(yq e '.[0].version' .versionbot/CHANGELOG.yml))
-          [ -f package.json ] && versions+=($(jq -r .version package.json))
-          [ -f balena.yml ] && versions+=($(yq e '.version' balena.yml))
-          [ -f VERSION ] && versions+=($(head -n1 VERSION))
-          semver="$(npx -q -y -- semver "${versions[@]}" | tail -n1)"
-
+          semver="${versions[0]}"
           if [ -z "${semver}" ] || [ "${semver}" = "${{ steps.old_version.outputs.semver }}" ]
           then
             echo "::error::Failed to detect any versioned files! Did you include a Change-type?"
