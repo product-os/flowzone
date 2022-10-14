@@ -455,7 +455,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
-      new_tag: ${{ steps.new_version.outputs.tag }}
+      new_tag: ${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
       version: ${{ steps.new_version.outputs.semver }}
 
     steps:
@@ -517,6 +517,12 @@ jobs:
         run: |
           npm install -g balena-versionist@0.14.9 versionist@6.8.3
           balena-versionist
+
+      # set a tag to be used as a fallback if versioning is disabled
+      - name: Git describe
+        id: git_describe
+        run:
+          echo "tag=$(git describe --tags --always --dirty)" >> $GITHUB_OUTPUT
 
       # inspect all known versioned files to extract the new version
       # TODO: versionist should provide the new version via stdout!
@@ -996,6 +1002,8 @@ jobs:
           tags: |
             type=raw,value=${{ github.event.pull_request.head.sha }}
             type=raw,value=${{ github.event.pull_request.head.ref }}
+          labels:
+            org.opencontainers.image.version=${{ needs.versioned_source.outputs.tag }}
           flavor: |
             latest=false
             prefix=${{ env.PREFIX }}
