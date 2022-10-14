@@ -144,3 +144,9 @@ dist
 # End of https://www.toptal.com/developers/gitignore/api/node
 
 package-lock.json
+
+# Python cache files and Poetry lock file.
+poetry.lock
+.pytest_cache
+python_test/__pycache__
+tests/__pycache__
