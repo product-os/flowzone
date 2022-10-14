@@ -62,7 +62,7 @@ Open a PR with the following changes to test and enable Flowzone:
 
 ## Usage
 
-Simply add the following to `./github/workflows/flowzone.yml`:
+Simply add the following to `.github/workflows/flowzone.yml`:
 
 ```yml
 name: Flowzone
