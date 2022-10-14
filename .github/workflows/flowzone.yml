@@ -872,7 +872,7 @@ jobs:
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
       - name: Create bake override
         run: |
-          jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
+          jq -n '{target:{"${{ matrix.target }}":{}}}' > ${BAKE_EMPTY}
           docker buildx bake --print ${{ matrix.target }} \
             -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
             -f ${{ needs.project_types.outputs.docker_compose_test }} \
@@ -935,6 +935,9 @@ jobs:
       - name: Check test result
         if: needs.docker_test.result != 'success'
         run: echo "::warning::Missing docker-compose tests whilst using docker building/publishing"
+
+      - name: Free Disk Space
+        uses: ShubhamTatvamasi/free-disk-space-action@1.0.0
 
       - name: Login to GitHub Container Registry
         continue-on-error: true
@@ -1001,7 +1004,7 @@ jobs:
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
       - name: Create bake override
         run: |
-          jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
+          jq -n '{target:{"${{ matrix.target }}":{}}}' > ${BAKE_EMPTY}
           docker buildx bake --print ${{ matrix.target }} \
             -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
             | jq '.target |= map_values(."inherits" += ["docker-metadata-action"])' \
@@ -1020,6 +1023,7 @@ jobs:
             ${{ env.BAKE_OVERRIDE }}
             ${{ steps.meta.outputs.bake-file }}
           targets: ${{ matrix.target }}
+          # load must be false to support multiple platforms
           load: false
           push: true
 
