@@ -469,6 +469,7 @@ jobs:
       - name: Import GPG key for signing commits
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'
         id: import-gpg
+        continue-on-error: true
         uses: crazy-max/ghaction-import-gpg@v4
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -476,6 +477,13 @@ jobs:
           git_config_global: true
           git_user_signingkey: true
           git_commit_gpgsign: true
+
+      # external contributors likely don't have the required GPG secrets configured
+      # so just set local git user based on the flowzone token
+      - uses: oleksiyrudenko/gha-git-credentials@v2.1.0
+        if: steps.import-gpg.outcome != 'success'
+        with:
+          token: '${{ secrets.FLOWZONE_TOKEN }}'
 
       # create changelog yaml if it does not exist
       # TODO: versionist should do this automatically!
