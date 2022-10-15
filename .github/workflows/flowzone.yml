@@ -912,7 +912,7 @@ jobs:
           docker buildx bake --print ${{ matrix.target }} \
             -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
             | jq '.target |= map_values(."inherits" += ["docker-metadata-action"])' \
-            | jq '.target |= map_values(."cache-to" += ["type=gha,mode=max"])' \
+            | jq '.target |= map_values(."cache-to" += ["type=gha"])' \
             | jq '.target |= map_values(."cache-from" += ["type=gha"])' \
             | jq '.target |= map_values(."cache-from" += ${{ toJSON(fromJSON(steps.meta.outputs.json).tags) }})' \
             > "${BAKE_OVERRIDE}"
