@@ -455,7 +455,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
-      new_tag: ${{ steps.new_version.outputs.tag }}
+      new_tag: ${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
       version: ${{ steps.new_version.outputs.semver }}
 
     steps:
@@ -517,6 +517,11 @@ jobs:
         run: |
           npm install -g balena-versionist@0.14.9 versionist@6.8.3
           balena-versionist
+
+      # set a tag to be used as a fallback if versioning is disabled
+      - name: Git describe
+        id: git_describe
+        run: echo "tag=$(git describe --tags --always --dirty)" >> $GITHUB_OUTPUT
 
       # inspect all known versioned files to extract the new version
       # TODO: versionist should provide the new version via stdout!
@@ -802,124 +807,19 @@ jobs:
   ## docker
   ###################################################
 
-  docker_test:
-    name: Test docker
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [event_types, project_types, versioned_source]
-    if: |
-      needs.event_types.outputs.do_draft == 'true' &&
-      needs.project_types.outputs.docker_compose_test != ''
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        target: ["default"]
-        # platform is limited to one for now to avoid parsing all target/platform pairs from the bake files for testing
-        platform: ["linux/amd64"]
-
-    env:
-      COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
-      DOCKER_BUILDKIT: "1"
-      COMPOSE_FILE: "${{ needs.project_types.outputs.docker_compose }}:${{ needs.project_types.outputs.docker_compose_test }}"
-      BAKE_OVERRIDE: /tmp/docker-bake.override.json
-      BAKE_EMPTY: /tmp/docker-bake.empty.json
-
-    steps:
-      # attempt login for to pull private images for caching
-      - name: Login to GitHub Container Registry
-        continue-on-error: true
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
-          password: ${{ env.GHCR_TOKEN }}
-
-      # attempt login for to pull private images for caching
-      - name: Login to Docker Hub
-        continue-on-error: true
-        uses: docker/login-action@v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha }}
-          path: /tmp
-
-      - name: Extract source artifact
-        working-directory: .
-        run: tar -xvf /tmp/source.tgz
-
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Setup buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver-opts: network=host
-          install: true
-
-      # this override file will add additional cache sources
-      # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
-      - name: Create bake override
-        run: |
-          jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
-          docker buildx bake --print ${{ matrix.target }} \
-            -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
-            -f ${{ needs.project_types.outputs.docker_compose_test }} \
-            | jq '.target |= map_values(."cache-to" += ["type=gha,scope=buildkit,mode=max"])' \
-            | jq '.target |= map_values(."cache-from" += ["type=gha,scope=buildkit"])' \
-            > "${BAKE_OVERRIDE}"
-            jq . "${BAKE_OVERRIDE}"
-
-      # build all docker compose test targets with buildx bake and use the same cache scope as the publish job
-      # these images are not pushed and are only used for testing, but can save build time of the publish job
-      # https://github.com/docker/bake-action
-      - name: Docker bake and load
-        uses: docker/bake-action@v2
-        with:
-          workdir: ${{ inputs.working_directory }}
-          files: |
-            ${{ env.BAKE_OVERRIDE }}
-          # force a single platform as multi-platform images cannot be loaded to local context
-          set: |
-            *.platform=${{ matrix.platform }}
-          load: true
-          push: false
-
-      # run docker compose tests and print the logs from all services
-      - name: Run docker compose tests
-        run: |
-          if [ -n "${COMPOSE_VARS}" ]
-          then
-            echo "${COMPOSE_VARS}" | base64 --decode > .env
-          fi
-
-          docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
-          docker compose logs
-
   docker_publish:
     name: Publish docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [project_types, versioned_source, npm_test, docker_test, custom_test]
+    needs: [project_types, versioned_source, npm_test, custom_test]
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
-      join(fromJSON(needs.project_types.outputs.docker_images)) != ''
+      (join(fromJSON(needs.project_types.outputs.docker_images)) != '' || needs.project_types.outputs.docker_compose_test != '')
 
     defaults:
       run:
-        working-directory: .
+        working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     strategy:
@@ -930,11 +830,17 @@ jobs:
     env:
       BAKE_OVERRIDE: /tmp/docker-bake.override.json
       BAKE_EMPTY: /tmp/docker-bake.empty.json
+      SUT_IMAGE: localhost:5000/sut
+
+    services:
+      registry:
+        image: registry:2.8.1
+        ports:
+          - 5000:5000
 
     steps:
-      - name: Check test result
-        if: needs.docker_test.result != 'success'
-        run: echo "::warning::Missing docker-compose tests whilst using docker building/publishing"
+      - name: Free disk space
+        uses: ShubhamTatvamasi/free-disk-space-action@1.0.0
 
       - name: Login to GitHub Container Registry
         continue-on-error: true
@@ -993,26 +899,26 @@ jobs:
           tags: |
             type=raw,value=${{ github.event.pull_request.head.sha }}
             type=raw,value=${{ github.event.pull_request.head.ref }}
+          labels: org.opencontainers.image.version=${{ needs.versioned_source.outputs.tag }}
           flavor: |
             latest=false
             prefix=${{ env.PREFIX }}
 
-      # this override file will add additional cache sources and inherit the docker-metadata-action
+      # this override file will add additional cache sources and inherit the docker-metadata-action target
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
       - name: Create bake override
         run: |
-          jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
+          jq -n '{target:{"${{ matrix.target }}":{}}}' > ${BAKE_EMPTY}
           docker buildx bake --print ${{ matrix.target }} \
             -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
             | jq '.target |= map_values(."inherits" += ["docker-metadata-action"])' \
-            | jq '.target |= map_values(."cache-to" += ["type=gha,scope=buildkit,mode=max"])' \
-            | jq '.target |= map_values(."cache-from" += ["type=gha,scope=buildkit"])' \
-            | jq '.target |= map_values(."cache-from" += ${{ toJSON(fromJSON(steps.meta.outputs.json).tags) }})' \
+            | jq '.target |= map_values(."cache-to" //= ["type=gha"])' \
+            | jq '.target |= map_values(."cache-from" //= ["type=gha"])' \
             > "${BAKE_OVERRIDE}"
-            jq . "${BAKE_OVERRIDE}"
+          jq . "${BAKE_OVERRIDE}"
 
       # https://github.com/docker/bake-action
-      - name: Docker bake and push
+      - name: Docker bake and push to local registry
         uses: docker/bake-action@v2
         with:
           workdir: ${{ inputs.working_directory }}
@@ -1020,8 +926,39 @@ jobs:
             ${{ env.BAKE_OVERRIDE }}
             ${{ steps.meta.outputs.bake-file }}
           targets: ${{ matrix.target }}
+          set: |
+            *.tags=${{ env.SUT_IMAGE }}:${{ env.PREFIX }}latest
+          # load must be false to support multiple platforms
           load: false
           push: true
+
+      # run docker compose tests and print the logs from all services
+      - name: Run docker compose tests
+        if: needs.project_types.outputs.docker_compose_test != ''
+        env:
+          COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
+          DOCKER_BUILDKIT: "1"
+          COMPOSE_FILE: "${{ needs.project_types.outputs.docker_compose }}:${{ needs.project_types.outputs.docker_compose_test }}"
+        run: |
+          if [ -n "${COMPOSE_VARS}" ]
+          then
+            echo "${COMPOSE_VARS}" | base64 --decode > .env
+          fi
+
+          docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
+          docker compose logs
+
+      - name: Warn if tests skipped
+        if: join(fromJSON(needs.project_types.outputs.docker_images)) != '' && needs.project_types.outputs.docker_compose_test == ''
+        run: echo "::warning::Publishing Docker images without docker compose tests!"
+
+      - name: Publish draft tags
+        if: join(fromJSON(needs.project_types.outputs.docker_images)) != ''
+        uses: akhilerm/tag-push-action@v2.0.0
+        with:
+          src: ${{ env.SUT_IMAGE }}:${{ env.PREFIX }}latest
+          dst: |
+            ${{ steps.meta.outputs.tags }}
 
   docker_finalize:
     name: Finalize docker
@@ -1118,15 +1055,7 @@ jobs:
     name: Publish balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      [
-        event_types,
-        project_types,
-        versioned_source,
-        npm_test,
-        docker_test,
-        custom_test,
-      ]
+    needs: [event_types, project_types, versioned_source, npm_test, custom_test]
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
@@ -1244,15 +1173,7 @@ jobs:
     name: Publish custom
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      [
-        event_types,
-        project_types,
-        versioned_source,
-        npm_test,
-        docker_test,
-        custom_test,
-      ]
+    needs: [event_types, project_types, versioned_source, npm_test, custom_test]
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
@@ -1390,7 +1311,6 @@ jobs:
         custom_publish,
         custom_test,
         docker_publish,
-        docker_test,
         event_types,
         npm_publish,
         npm_test,
