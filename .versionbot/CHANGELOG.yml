@@ -1,4 +1,64 @@
 - commits:
+    - subject: Only set cache-to and cache-from if they are unset
+      hash: 831063921fa69ed5d04465324a2805e794bd076e
+      body: |
+        Currently buildx only allows one cache destination
+        and we don't want to override any repo provided values.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Reduce the cache mode from max to min
+      hash: a562bb7430070f729a8d0a36713475a489426cfe
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Combine docker tests and publish steps
+      hash: e4826b23df41ac63f8d7b5352eaaf3d6c82fab37
+      body: |
+        This will allow testing of the same image that is published
+        by using 'image: localhost:5000/sut` in a compose file.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Use git describe to generate a default tag
+      hash: 7f237e9dd6ee0593e23a835b45be9331956d59fa
+      body: |
+        This tag can be used to stamp artifacts when versioning
+        is disabled.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Maximize build space before running Docker bake
+      hash: 6ec012b24d36e2272a0cc8a77de5bca39dce21b0
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.36.5
+  title: ""
+  date: 2022-10-15T17:14:54.235Z
+- commits:
     - subject: Remove incorrect path character for `flowzone.yml`
       hash: 59728357c3036fa134f9eac8afcdee12512ec47f
       body: |
