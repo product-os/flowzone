@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix typo when referencing new tag for Docker labels
+      hash: 29c5682999c35057f2f8420393977b38f6f24196
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.36.6
+  title: ""
+  date: 2022-10-15T17:27:37.581Z
+- commits:
     - subject: Only set cache-to and cache-from if they are unset
       hash: 831063921fa69ed5d04465324a2805e794bd076e
       body: |
