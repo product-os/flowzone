@@ -899,7 +899,7 @@ jobs:
           tags: |
             type=raw,value=${{ github.event.pull_request.head.sha }}
             type=raw,value=${{ github.event.pull_request.head.ref }}
-          labels: org.opencontainers.image.version=${{ needs.versioned_source.outputs.tag }}
+          labels: org.opencontainers.image.version=${{ needs.versioned_source.outputs.new_tag }}
           flavor: |
             latest=false
             prefix=${{ env.PREFIX }}
