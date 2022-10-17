@@ -1,4 +1,18 @@
 - commits:
+    - subject: Revert merging of docker test/publish steps
+      hash: 10444113679ce910b39bb55c3593e9d74c8dd911
+      body: |
+        These changes are causing problems with some repos, likely related ti
+        testing docker images without publishing them
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.36.8
+  title: ""
+  date: 2022-10-17T13:46:07.261Z
+- commits:
     - subject: Fix typo on finalizing Docker tags
       hash: 5a6399064867914e972fc9530919dc8723203986
       body: ""
