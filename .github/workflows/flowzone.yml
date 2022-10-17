@@ -868,6 +868,13 @@ jobs:
           driver-opts: network=host
           install: true
 
+      - name: Setup docker-compose environment
+        run: |
+          if [[ -n $COMPOSE_VARS ]]
+          then
+            echo "${COMPOSE_VARS}" | base64 --decode > .env
+          fi
+
       # this override file will add additional cache sources
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
       - name: Create bake override
@@ -899,11 +906,6 @@ jobs:
       # run docker compose tests and print the logs from all services
       - name: Run docker compose tests
         run: |
-          if [ -n "${COMPOSE_VARS}" ]
-          then
-            echo "${COMPOSE_VARS}" | base64 --decode > .env
-          fi
-
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
           docker compose logs
 
