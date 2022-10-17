@@ -87,6 +87,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       BALENA_API_KEY: ${{ secrets.BALENA_API_KEY }}
     with:
+      # Disable branch protection updates whilst testing flowzone, remove before merging
       protect_branch: false
 ```
 
