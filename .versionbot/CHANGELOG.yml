@@ -1,4 +1,26 @@
 - commits:
+    - subject: Fix finding of npm 6 pack files
+      hash: 80d3ce7e48a4683b182a4235a447574a4931abbd
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+    - subject: Only look for docker-bake/compose files in the root of the working dir
+      hash: db978c9acb7204597c7b16a6d5c4adca78e23e67
+      body: |
+        This avoids issues with ones in the nested dirs that are not expected
+        to be used by default
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.36.12
+  title: ""
+  date: 2022-10-18T16:22:52.018Z
+- commits:
     - subject: Fix for empty COMPOSE_VARS
       hash: a05561abe9ea53bed4e0ef5f1577977d28069219
       body: ""
