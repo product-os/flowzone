@@ -1,4 +1,20 @@
 - commits:
+    - subject: Only check for version tags from the current branch
+      hash: 36e5cffc643f6c41b97fc848094b34084b367525
+      body: |
+        This avoids issues where a PR is 1 version behind master (eg another PR
+        was recently merged) and then the updated version for the PR branch
+        will match the master version and give a false positive about "Failed
+        to detect any versioned files"
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.36.13
+  title: ""
+  date: 2022-10-18T19:54:16.675Z
+- commits:
     - subject: Fix finding of npm 6 pack files
       hash: 80d3ce7e48a4683b182a4235a447574a4931abbd
       body: ""
