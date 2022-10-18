@@ -1,0 +1,22 @@
+name: Test docker bake/compose
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches:
+      - "main"
+      - "master"
+
+jobs:
+  flowzone:
+    name: Flowzone
+    uses: ./.github/workflows/flowzone.yml
+    secrets: inherit
+    with:
+      disable_versioning: true
+      working_directory: ./tests/docker-bake-compose
+      docker_images: |
+        ghcr.io/product-os/flowzone
+      bake_targets: |
+        default,
+        debug

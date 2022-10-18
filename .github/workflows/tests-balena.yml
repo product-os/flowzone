@@ -1,0 +1,16 @@
+name: Test balena push
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches:
+      - "main"
+      - "master"
+
+jobs:
+  flowzone:
+    name: Flowzone
+    uses: ./.github/workflows/flowzone.yml
+    secrets: inherit
+    with:
+      working_directory: ./tests/balena

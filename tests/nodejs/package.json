@@ -1,0 +1,21 @@
+{
+  "name": "flowzone-test",
+  "version": "0.36.12",
+  "description": "Sample NPM package for testing the build process",
+  "main": "index.js",
+  "private": false,
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jest": "^28.1.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "versionist": {
+    "publishedAt": "2022-10-18T16:22:52.503Z"
+  }
+}

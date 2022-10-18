@@ -1,0 +1,17 @@
+name: Test nodejs
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches:
+      - "main"
+      - "master"
+
+jobs:
+  flowzone:
+    name: Flowzone
+    uses: ./.github/workflows/flowzone.yml
+    secrets: inherit
+    with:
+      disable_versioning: true
+      working_directory: ./tests/nodejs
