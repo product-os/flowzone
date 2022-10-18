@@ -658,7 +658,7 @@ jobs:
           mkdir /tmp/npm-pack && npm pack --pack-destination=/tmp/npm-pack
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
-          [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 0 -name '*.tgz' -exec mv {} /tmp/npm-pack \; || true
+          [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} /tmp/npm-pack \; || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
