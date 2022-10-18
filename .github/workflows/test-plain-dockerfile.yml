@@ -1,0 +1,20 @@
+name: Test plain dockerfile
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches:
+      - "main"
+      - "master"
+
+jobs:
+  flowzone:
+    name: Flowzone
+    uses: ./.github/workflows/flowzone.yml
+    secrets: inherit
+    with:
+      disable_versioning: true
+      custom_test_matrix: ''
+      custom_publish_matrix: ''
+      custom_finalize_matrix: ''
+      working_directory: ./test-plain-dockerfile
