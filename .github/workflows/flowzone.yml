@@ -502,12 +502,12 @@ jobs:
 
       # parse last versioned commit from tags so we can check for changes
       # this step can fail if there has never been a versioned PR merged
-      - name: Get latest tag
+      - name: Get latest tag for current branch
         continue-on-error: true
         id: old_version
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'
         run: |
-          tag="$(git tag -l --sort=-version:refname "v*.*.*" | head -n1)"
+          tag="$(git tag --list --sort=-version:refname "v*.*.*" --merged | head -n1)"
           echo "semver=${tag/v/}" >> $GITHUB_OUTPUT
           echo "tag=${tag}" >> $GITHUB_OUTPUT
 
