@@ -870,7 +870,7 @@ jobs:
 
       - name: Setup docker-compose environment
         run: |
-          if [[ -n $COMPOSE_VARS ]]
+          if [[ -n "${COMPOSE_VARS}" ]]
           then
             echo "${COMPOSE_VARS}" | base64 --decode > .env
           fi
