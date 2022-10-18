@@ -373,7 +373,7 @@ jobs:
         id: docker_bake
         uses: kanga333/json-array-builder@v0.1.0
         with:
-          cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -name 'docker-bake*' -o -name 'docker-compose.yml' -o -name 'docker-compose.yaml'" || true
+          cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -name 'docker-bake*' -o -name 'docker-compose.yml' -o -name 'docker-compose.yaml'" || true
           separator: newline
 
       - name: Check for balena.yml
@@ -658,7 +658,7 @@ jobs:
           mkdir /tmp/npm-pack && npm pack --pack-destination=/tmp/npm-pack
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
-          [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 0 -name '*.tgz' -exec mv {} /tmp/npm-pack \; || true
+          [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} /tmp/npm-pack \; || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
