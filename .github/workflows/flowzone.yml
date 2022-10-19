@@ -624,7 +624,7 @@ jobs:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
       - name: Extract source artifact
         working-directory: .
@@ -844,7 +844,7 @@ jobs:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
       - name: Extract source artifact
         working-directory: .
@@ -932,7 +932,7 @@ jobs:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
       - name: Extract source artifact
         working-directory: .
@@ -1092,7 +1092,7 @@ jobs:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
       - name: Extract source artifact
         working-directory: .
@@ -1223,7 +1223,7 @@ jobs:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
       - name: Extract source artifact
         working-directory: .
@@ -1259,7 +1259,7 @@ jobs:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
-          name: source-${{ github.event.pull_request.head.sha }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: /tmp
       - name: Extract source artifact
         working-directory: .

@@ -1,3 +1,11 @@
+.flowzone:
+  - &downloadSourceArtifact
+    name: Download source artifact
+    uses: actions/download-artifact@v3
+    with:
+      name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+      path: /tmp
+
 name: Flowzone
 
 on:
@@ -713,11 +721,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha }}
-          path: /tmp
+      - *downloadSourceArtifact
 
       - name: Extract source artifact
         working-directory: .
@@ -966,11 +970,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha }}
-          path: /tmp
+      - *downloadSourceArtifact
 
       - name: Extract source artifact
         working-directory: .
@@ -1071,11 +1071,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha }}
-          path: /tmp
+      - *downloadSourceArtifact
 
       - name: Extract source artifact
         working-directory: .
@@ -1263,11 +1259,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha }}
-          path: /tmp
+      - *downloadSourceArtifact
 
       - name: Extract source artifact
         working-directory: .
@@ -1302,11 +1294,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+      - *downloadSourceArtifact
 
       - name: Extract source artifact
         working-directory: .
@@ -1410,11 +1398,7 @@ jobs:
         value: ${{ fromJSON(needs.project_types.outputs.custom_test_matrix) }}
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha }}
-          path: /tmp
+      - *downloadSourceArtifact
 
       - name: Extract source artifact
         working-directory: .
@@ -1454,11 +1438,7 @@ jobs:
         value: ${{ fromJSON(needs.project_types.outputs.custom_publish_matrix) }}
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha }}
-          path: /tmp
+      - *downloadSourceArtifact
 
       - name: Extract source artifact
         working-directory: .
@@ -1489,11 +1469,7 @@ jobs:
         value: ${{ fromJSON(needs.project_types.outputs.custom_finalize_matrix) }}
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+      - *downloadSourceArtifact
 
       - name: Extract source artifact
         working-directory: .
@@ -1519,11 +1495,7 @@ jobs:
       needs.project_types.outputs.custom_clean == 'true'
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+      - *downloadSourceArtifact
 
       - name: Extract source artifact
         working-directory: .
@@ -1550,11 +1522,7 @@ jobs:
       needs.project_types.outputs.custom_always == 'true'
 
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+      - *downloadSourceArtifact
 
       - name: Extract source artifact
         working-directory: .
