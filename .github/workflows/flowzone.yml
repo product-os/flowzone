@@ -235,7 +235,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           submodules: "recursive"
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
@@ -459,13 +459,6 @@ jobs:
       version: ${{ steps.new_version.outputs.semver }}
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: "recursive"
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-
       - name: Import GPG key for signing commits
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'
         id: import-gpg
