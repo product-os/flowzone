@@ -480,7 +480,7 @@ jobs:
       - name: Install versionist
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'
         run: |
-          npm install -g balena-versionist@0.14.9 versionist@6.8.3
+          npm install -g balena-versionist@0.14.9 versionist@6.8.4
 
       # create changelog yaml if it does not exist
       # TODO: versionist should do this automatically!
