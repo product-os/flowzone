@@ -1,0 +1,1505 @@
+# DO NOT EDIT MANUALLY - This file is auto-generated from `/flowzone.yml`
+name: Flowzone
+on:
+  workflow_call:
+    secrets:
+      FLOWZONE_TOKEN:
+        description: Personal access token (PAT) for the GitHub service account with admin/owner permissions
+        required: true
+      GPG_PRIVATE_KEY:
+        description: GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits
+        required: false
+      GPG_PASSPHRASE:
+        description: Passphrase to decrypt GPG private key
+        required: false
+      NPM_TOKEN:
+        description: The npm auth token to use for publishing
+        required: false
+      GHCR_TOKEN:
+        description: A personal access token to publish to the GitHub Container Registry, will use FLOWZONE_TOKEN if unset
+        required: false
+      DOCKERHUB_USER:
+        description: Username to publish to the Docker Hub container registry
+        required: false
+      DOCKER_REGISTRY_USER:
+        description: Deprecated, use DOCKERHUB_USER instead
+        required: false
+      DOCKERHUB_TOKEN:
+        description: A personal access token to publish to the Docker Hub container registry
+        required: false
+      DOCKER_REGISTRY_PASS:
+        description: Deprecated, use DOCKERHUB_TOKEN instead
+        required: false
+      BALENA_API_KEY:
+        description: API key for pushing releases to balena applications
+        required: false
+      BALENA_API_KEY_PUSH:
+        description: Deprecated, use BALENA_API_KEY instead
+        required: false
+      COMPOSE_VARS:
+        description: Optional base64 encoded docker-compose `.env` file for testing Docker images
+        required: false
+      CUSTOM_JOB_SECRET_1:
+        description: Optional secret for using with custom jobs
+        required: false
+      CUSTOM_JOB_SECRET_2:
+        description: Optional secret for using with custom jobs
+        required: false
+      CUSTOM_JOB_SECRET_3:
+        description: Optional secret for using with custom jobs
+        required: false
+    inputs:
+      runs_on:
+        description: GitHub Actions runner type.
+        type: string
+        required: false
+        default: '["ubuntu-latest"]'
+      jobs_timeout_minutes:
+        description: Timeout for the job(s).
+        type: number
+        required: false
+        default: 360
+      working_directory:
+        description: GitHub actions working directory
+        type: string
+        required: false
+        default: .
+      docker_images:
+        description: Comma-delimited string of Docker images (without tags) to publish (skipped if empty)
+        type: string
+        required: false
+        default: ""
+      bake_targets:
+        description: Comma-delimited string of Docker buildx bake targets to publish (skipped if empty)
+        type: string
+        required: false
+        default: default
+      balena_environment:
+        description: balenaCloud environment
+        type: string
+        required: false
+        default: balena-cloud.com
+      balena_slugs:
+        description: Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty)
+        type: string
+        required: false
+        default: ""
+      protect_branch:
+        description: Set to false to disable updating branch protection rules after a successful run
+        type: boolean
+        required: false
+        default: true
+      disable_versioning:
+        description: Set to true to disable automatic versioning
+        type: boolean
+        required: false
+        default: false
+      required_approving_review_count:
+        description: Setting this value to zero effectively means merge==deploy without approval(s)
+        type: string
+        required: false
+        default: "1"
+      job_name:
+        description: The name of the job, necessary for branch protection if not using the default of 'Flowzone'
+        type: string
+        required: false
+        default: Flowzone
+      checkout_fetch_depth:
+        description: Configures the depth of the actions/checkout git fetch.
+        type: number
+        required: false
+        default: 1
+      custom_test_matrix:
+        description: Comma-delimited string of values that will be passed to the custom test action
+        type: string
+        required: false
+        default: ""
+      custom_publish_matrix:
+        description: Comma-delimited string of values that will be passed to the custom publish action
+        type: string
+        required: false
+        default: ""
+      custom_finalize_matrix:
+        description: Comma-delimited string of values that will be passed to the custom finalize action
+        type: string
+        required: false
+        default: ""
+concurrency:
+  group: flowzone-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  GHCR_USER: flowzone
+  GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
+  NPM_REGISTRY: registry.npmjs.org
+jobs:
+  event_types:
+    name: Event types
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    if: |
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.disable_versioning == true)
+    outputs:
+      pr_opened: ${{ steps.pr_opened.outcome == 'success' }}
+      pr_synchronize: ${{ steps.pr_synchronize.outcome == 'success' }}
+      pr_merged: ${{ steps.pr_merged.outcome == 'success' }}
+      pr_closed: ${{ steps.pr_closed.outcome == 'success' }}
+      tagged: ${{ steps.tagged.outcome == 'success' }}
+      do_draft: ${{ steps.pr_opened.outcome == 'success' || steps.pr_synchronize.outcome == 'success' }}
+      do_final: ${{ steps.pr_merged.outcome == 'success' || steps.tagged.outcome == 'success' }}
+      do_clean: ${{ steps.pr_closed.outcome == 'success' }}
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+    env:
+      JSON: ${{ toJSON(github) }}
+    steps:
+      - name: Pull Request opened
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        id: pr_opened
+        run: |
+          echo "${JSON}" || true
+      - name: Pull Request synchronize
+        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
+        id: pr_synchronize
+        run: |
+          echo "${JSON}" || true
+      - name: Pull Request merged
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        id: pr_merged
+        run: |
+          echo "${JSON}" || true
+      - name: Pull Request closed
+        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        id: pr_closed
+        run: |
+          echo "${JSON}" || true
+      - name: Tag event
+        if: github.event_name == 'push'
+        id: tagged
+        run: |
+          echo "${JSON}" || true
+  project_types:
+    name: Project types
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    outputs:
+      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
+      docker_images: ${{ steps.docker_images.outputs.build }}
+      bake_targets: ${{ steps.bake_targets.outputs.build }}
+      npm: ${{ steps.npm.outputs.enabled }}
+      npm_private: ${{ steps.npm.outputs.private }}
+      npm_docs: ${{ steps.npm.outputs.docs }}
+      docker_compose: ${{ steps.docker_compose.outputs.file }}
+      docker_compose_test: ${{ steps.docker_compose_test.outputs.file }}
+      docker_bake: ${{ steps.docker_bake.outputs.build }}
+      balena: ${{ steps.balena.outputs.enabled }}
+      node_versions: ${{ steps.node_versions.outputs.json }}
+      python_poetry: ${{ steps.python_poetry.outputs.enabled }}
+      python_versions: ${{ steps.python_versions.outputs.json }}
+      custom_test: ${{ steps.custom.outputs.test }}
+      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
+      custom_publish: ${{ steps.custom.outputs.publish }}
+      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
+      custom_finalize: ${{ steps.custom.outputs.finalize }}
+      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
+      custom_clean: ${{ steps.custom.outputs.clean }}
+      custom_always: ${{ steps.custom.outputs.always }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          submodules: recursive
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+      - name: Convert balena_slugs to a JSON array
+        id: balena_slugs
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.balena_slugs }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+      - name: Convert docker_images to a JSON array
+        id: docker_images
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.docker_images }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+      - name: Convert bake_targets to a JSON array
+        id: bake_targets
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.bake_targets }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+      - name: Check for package.json
+        id: npm
+        run: |
+          if test -f "package.json"
+          then
+            echo "found package.json"
+            echo "enabled=true" >> $GITHUB_OUTPUT
+            echo "private=$(jq -r '.private' package.json)" >> $GITHUB_OUTPUT
+            echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> $GITHUB_OUTPUT
+            echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Setup Node.js 12.x
+        if: steps.npm.outputs.enabled == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 12.x
+      - name: Check engine
+        if: steps.npm.outputs.enabled == 'true'
+        run: |
+          if npx -q -y -- check-engine
+          then
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["12.x"]')" >> $GITHUB_ENV
+          fi
+      - name: Setup Node.js 14.x
+        if: steps.npm.outputs.enabled == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
+      - name: Check engine
+        if: steps.npm.outputs.enabled == 'true'
+        run: |
+          if npx -q -y -- check-engine
+          then
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["14.x"]')" >> $GITHUB_ENV
+          fi
+      - name: Setup Node.js 16.x
+        if: steps.npm.outputs.enabled == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+      - name: Check engine
+        if: steps.npm.outputs.enabled == 'true'
+        run: |
+          if npx -q -y -- check-engine
+          then
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["16.x"]')" >> $GITHUB_ENV
+          fi
+      - name: Setup Node.js 18.x
+        if: steps.npm.outputs.enabled == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - name: Check engine
+        if: steps.npm.outputs.enabled == 'true'
+        run: |
+          if npx -q -y -- check-engine
+          then
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> $GITHUB_ENV
+          fi
+      - name: Set Node.js versions
+        if: steps.npm.outputs.enabled == 'true'
+        id: node_versions
+        run: |
+          echo "json=[\"16.x\"]" >> $GITHUB_OUTPUT
+          if [ "${NODE_VERSIONS}" != "[]" ]
+          then
+            echo "json=${NODE_VERSIONS}" >> $GITHUB_OUTPUT
+          fi
+      - name: Check for Docker compose files
+        id: docker_compose
+        run: |
+          if [ -f docker-compose.yml ]
+          then
+            echo "file=docker-compose.yml" >> $GITHUB_OUTPUT
+          elif [ -f docker-compose.yaml ]
+          then
+            echo "file=docker-compose.yaml" >> $GITHUB_OUTPUT
+          fi
+      - name: Check for Docker compose test files
+        id: docker_compose_test
+        run: |
+          if [ -f docker-compose.test.yml ]
+          then
+            echo "file=docker-compose.test.yml" >> $GITHUB_OUTPUT
+          elif [ -f docker-compose.test.yaml ]
+          then
+            echo "file=docker-compose.test.yaml" >> $GITHUB_OUTPUT
+          fi
+      - name: Check for Docker bake files
+        id: docker_bake
+        uses: kanga333/json-array-builder@v0.1.0
+        with:
+          cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -name 'docker-bake*' -o -name 'docker-compose.yml' -o -name 'docker-compose.yaml'" || true
+          separator: newline
+      - name: Check for balena.yml
+        id: balena
+        run: |
+          if test -f balena.yml
+          then
+            echo "found balena.yml"
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Check for Python Poetry pyproject.toml
+        id: python_poetry
+        run: |
+          if test -f "pyproject.toml"
+          then
+            echo "found pyproject.toml"
+            if grep 'build-backend.*poetry' pyproject.toml
+            then
+              echo "Poetry used"
+              echo "enabled=true" >> $GITHUB_OUTPUT
+              echo "PYTHON_VERSIONS=[]" >> $GITHUB_ENV
+            else
+              echo "Poetry not used"
+              echo "enabled=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Install Poetry
+        if: steps.python_poetry.outputs.enabled == 'true'
+        run: |
+          pipx install poetry
+      - name: Set up Python 3.7
+        if: steps.python_poetry.outputs.enabled == 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.7"
+      - name: Check compatibility
+        if: steps.python_poetry.outputs.enabled == 'true'
+        run: |
+          error_check=`(poetry env use 3.7 2>&1 || true)`
+          if ! grep -q "Please choose a compatible version" <<< $error_check
+          then
+            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.7"]')" >> $GITHUB_ENV
+          else
+            echo "Python 3.7 does not meet project requirements."
+          fi
+      - name: Set up Python 3.8
+        if: steps.python_poetry.outputs.enabled == 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+      - name: Check compatibility
+        if: steps.python_poetry.outputs.enabled == 'true'
+        run: |
+          error_check=`(poetry env use 3.8 2>&1 || true)`
+          if ! grep -q "Please choose a compatible version" <<< $error_check
+          then
+            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.8"]')" >> $GITHUB_ENV
+          else
+            echo "Python 3.8 does not meet project requirements."
+          fi
+      - name: Set up Python 3.9
+        if: steps.python_poetry.outputs.enabled == 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Check compatibility
+        if: steps.python_poetry.outputs.enabled == 'true'
+        run: |
+          error_check=`(poetry env use 3.9 2>&1 || true)`
+          if ! grep -q "Please choose a compatible version" <<< $error_check
+          then
+            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.9"]')" >> $GITHUB_ENV
+          else
+            echo "Python 3.9 does not meet project requirements."
+          fi
+      - name: Set up Python 3.10
+        if: steps.python_poetry.outputs.enabled == 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Check compatibility
+        if: steps.python_poetry.outputs.enabled == 'true'
+        run: |
+          error_check=`(poetry env use 3.10 2>&1 || true)`
+          if ! grep -q "Please choose a compatible version" <<< $error_check
+          then
+            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.10"]')" >> $GITHUB_ENV
+          else
+            echo "Python 3.10 does not meet project requirements."
+          fi
+      - name: Set Python versions
+        if: steps.python_poetry.outputs.enabled == 'true'
+        id: python_versions
+        run: |
+          echo "json=[\"\^3.7\"]" >> $GITHUB_OUTPUT
+          if [ "${PYTHON_VERSIONS}" != "[]" ]
+          then
+            echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
+          fi
+      - name: Check for custom jobs
+        id: custom
+        working-directory: .
+        run: |
+          if [ -d .github/actions/test ]
+          then
+            echo "test=true" >> $GITHUB_OUTPUT
+          fi
+          if [ -d .github/actions/publish ]
+          then
+            echo "publish=true" >> $GITHUB_OUTPUT
+          fi
+          if [ -d .github/actions/finalize ]
+          then
+            echo "finalize=true" >> $GITHUB_OUTPUT
+          fi
+          if [ -d .github/actions/clean ]
+          then
+            echo "clean=true" >> $GITHUB_OUTPUT
+          fi
+          if [ -d .github/actions/always ]
+          then
+            echo "always=true" >> $GITHUB_OUTPUT
+          fi
+      - name: Convert custom_test_matrix to a JSON array
+        id: custom_test_matrix
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.custom_test_matrix }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+      - name: Convert custom_publish_matrix to a JSON array
+        id: custom_publish_matrix
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.custom_publish_matrix }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+      - name: Convert custom_finalize_matrix to a JSON array
+        id: custom_finalize_matrix
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.custom_finalize_matrix }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+  versioned_source:
+    name: Versioned source
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    outputs:
+      new_tag: ${{ steps.new_version.outputs.tag }}
+      version: ${{ steps.new_version.outputs.semver }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+      - name: Import GPG key for signing commits
+        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_config_global: true
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+      - name: Install versionist
+        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        run: |
+          npm install -g balena-versionist@0.14.9 versionist@6.8.4
+      - name: Generate changelog
+        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        run: |
+          if [ ! -f .versionbot/CHANGELOG.yml ]
+          then
+            (cd /tmp
+
+            wget https://github.com/mikefarah/yq/releases/download/3.0.1/yq_linux_amd64 -O yq
+            echo "a1097c74b81a2ef255583d9718bf4be6  yq" | md5sum -c -
+            chmod +x yq
+
+            PATH="${PWD}:${PATH}" GH_TOKEN=${{ secrets.FLOWZONE_TOKEN }} $(npm root -g)/versionist/scripts/generate-changelog.sh "${GITHUB_WORKSPACE}"
+            )
+          fi
+      - name: Get latest tag for current branch
+        continue-on-error: true
+        id: old_version
+        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        run: |
+          tag="$(git tag --list --sort=-version:refname "v*.*.*" --merged | head -n1)"
+          echo "semver=${tag/v/}" >> $GITHUB_OUTPUT
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+      - name: Run versionist
+        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        run: |
+          balena-versionist
+      - name: Inspect versioned files
+        id: new_version
+        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        run: |
+          git status --porcelain
+          versions=()
+          [ -f .versionbot/CHANGELOG.yml ] && versions+=($(yq e '.[0].version' .versionbot/CHANGELOG.yml))
+          semver="${versions[0]}"
+          if [ -z "${semver}" ] || [ "${semver}" = "${{ steps.old_version.outputs.semver }}" ]
+          then
+            echo "::error::Failed to detect any versioned files! Did you include a Change-type?"
+            exit 1
+          fi
+
+          echo "semver=${semver}" >> $GITHUB_OUTPUT
+          echo "tag=v${semver}" >> $GITHUB_OUTPUT
+      - name: Create versioned commit
+        if: inputs.disable_versioning != true
+        env:
+          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
+          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
+          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          TAG: ${{ steps.new_version.outputs.tag }}
+        run: |
+          git add --all
+          git commit -m "${TAG}"
+          git tag -a "${TAG}" -m "${TAG}" -f
+          git show -1
+          git log -n 2
+      - name: Push versioned commit
+        if: inputs.disable_versioning != true && needs.event_types.outputs.pr_merged == 'true'
+        run: |
+          git push origin HEAD:${{ github.base_ref }}
+          # We push the tag separately so that it is only pushed if the commit push succeed, this avoids
+          # issues if something else updates the main branch whilst we're running and causes us to push
+          # the tag successfully but not the main branch and breaks future versioning attempts
+          git push origin "refs/tags/${{ steps.new_version.outputs.tag }}"
+      - name: Compress source
+        run: tar -acvf /tmp/source.tgz .
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: /tmp/source.tgz
+          retention-days: 1
+  npm_test:
+    name: Test npm
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.npm == 'true'
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        node_version: ${{ fromJSON(needs.project_types.outputs.node_versions) }}
+    outputs:
+      package: ${{ steps.meta.outputs.package }}
+      version: ${{ steps.meta.outputs.version }}
+      branch_tag: ${{ steps.meta.outputs.branch_tag }}
+      sha_tag: ${{ steps.meta.outputs.sha_tag }}
+      version_tag: ${{ steps.meta.outputs.version_tag }}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        run: tar -xvf /tmp/source.tgz
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node_version }}
+      - name: Generate metadata
+        id: meta
+        run: |
+          package="$(jq -r '.name' package.json)"
+          version="$(jq -r '.version' package.json)"
+          branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+
+          echo "package=${package}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
+          echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
+          echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+      - name: Login to registry
+        run: |
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+            npm whoami
+          fi
+      - name: Install native dependencies (if necessary)
+        run: |
+          npm run flowzone-preinstall --if-present
+      - name: Install dependencies
+        run: |
+          if [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+      - name: Run build
+        run: npm run build --if-present
+      - name: Run tests
+        run: npm test
+      - name: Run pack
+        run: |
+          mkdir /tmp/npm-pack && npm pack --pack-destination=/tmp/npm-pack
+
+          # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
+          [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} /tmp/npm-pack \; || true
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
+          path: /tmp/npm-pack/*.tgz
+          retention-days: 90
+      - name: Generate docs (if present)
+        if: needs.project_types.outputs.npm_docs == 'true'
+        shell: bash
+        run: npm run doc
+      - name: Compress docs
+        if: needs.project_types.outputs.npm_docs == 'true'
+        run: tar -acvf /tmp/docs.tgz ./docs
+      - name: Upload artifact
+        if: needs.project_types.outputs.npm_docs == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
+          path: /tmp/docs.tgz
+          retention-days: 90
+  npm_publish:
+    name: Publish npm
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - project_types
+      - versioned_source
+      - npm_test
+      - custom_test
+    if: |
+      !failure() && !cancelled() &&
+      needs.npm_test.result == 'success' &&
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.npm_private != 'true'
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: /tmp
+      - name: Login to registry
+        run: |
+          echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+          npm whoami
+      - name: Publish draft release
+        run: |
+          pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          tar xvf "${pack}"
+          (cd package
+          npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }} --allow-same-version
+          )
+          tar czvf "${pack}" package
+          npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }} || true
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}"
+          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }} ${{ needs.npm_test.outputs.branch_tag }}
+  npm_finalize:
+    name: Finalize npm
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_final == 'true' &&
+      needs.project_types.outputs.npm == 'true' &&
+      needs.project_types.outputs.npm_private != 'true'
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Download artifacts from PR
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: /tmp
+          workflow_conclusion: success
+      - name: Login to registry
+        run: |
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+            npm whoami
+          fi
+      - name: Publish final release
+        run: |
+          pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}"
+  npm_docs_finalize:
+    name: Finalize npm docs
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_final == 'true' &&
+      needs.project_types.outputs.npm_docs == 'true'
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Download artifacts from PR
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: /tmp
+          workflow_conclusion: success
+      - name: Extract docs artifact
+        run: |
+          docs="$(ls /tmp/docs-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          tar -xvf "${docs}"
+      - name: Publish generated docs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          publish_dir: docs
+          publish_branch: docs
+  docker_test:
+    name: Test docker
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.docker_compose_test != ''
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - default
+        platform:
+          - linux/amd64
+    env:
+      COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
+      DOCKER_BUILDKIT: "1"
+      COMPOSE_FILE: ${{ needs.project_types.outputs.docker_compose }}:${{ needs.project_types.outputs.docker_compose_test }}
+      BAKE_OVERRIDE: /tmp/docker-bake.override.json
+      BAKE_EMPTY: /tmp/docker-bake.empty.json
+    steps:
+      - name: Login to GitHub Container Registry
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USER }}
+          password: ${{ env.GHCR_TOKEN }}
+      - name: Login to Docker Hub
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        run: tar -xvf /tmp/source.tgz
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver-opts: network=host
+          install: true
+      - name: Setup docker-compose environment
+        run: |
+          if [[ -n "${COMPOSE_VARS}" ]]
+          then
+            echo "${COMPOSE_VARS}" | base64 --decode > .env
+          fi
+      - name: Create bake override
+        run: |
+          jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
+          docker buildx bake --print ${{ matrix.target }} \
+            -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
+            -f ${{ needs.project_types.outputs.docker_compose_test }} \
+            | jq '.target |= map_values(."cache-to" += ["type=gha,scope=buildkit,mode=max"])' \
+            | jq '.target |= map_values(."cache-from" += ["type=gha,scope=buildkit"])' \
+            > "${BAKE_OVERRIDE}"
+            jq . "${BAKE_OVERRIDE}"
+      - name: Docker bake and load
+        uses: docker/bake-action@v2
+        with:
+          workdir: ${{ inputs.working_directory }}
+          files: |
+            ${{ env.BAKE_OVERRIDE }}
+          set: |
+            *.platform=${{ matrix.platform }}
+          load: true
+          push: false
+      - name: Run docker compose tests
+        run: |
+          docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
+          docker compose logs
+  docker_publish:
+    name: Publish docker
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - project_types
+      - versioned_source
+      - npm_test
+      - docker_test
+      - custom_test
+    if: |
+      !failure() && !cancelled() &&
+      needs.event_types.outputs.do_draft == 'true' &&
+      join(fromJSON(needs.project_types.outputs.docker_images)) != ''
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.project_types.outputs.bake_targets) }}
+    env:
+      BAKE_OVERRIDE: /tmp/docker-bake.override.json
+      BAKE_EMPTY: /tmp/docker-bake.empty.json
+    steps:
+      - name: Check test result
+        if: needs.docker_test.result != 'success'
+        run: echo "::warning::Missing docker-compose tests whilst using docker building/publishing"
+      - name: Login to GitHub Container Registry
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USER }}
+          password: ${{ env.GHCR_TOKEN }}
+      - name: Login to Docker Hub
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        run: tar -xvf /tmp/source.tgz
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver-opts: network=host
+          install: true
+      - name: Set env vars
+        run: |
+          DOCKER_IMAGES="$(echo "${{ join(fromJSON(needs.project_types.outputs.docker_images),' ') }}" | tr " " "\n")"
+          echo "DOCKER_IMAGES<<EOF" >> $GITHUB_ENV
+          echo "${DOCKER_IMAGES}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          if [ ${{ matrix.target }} != 'default' ]
+          then
+            echo "PREFIX=${{ matrix.target }}-" >> $GITHUB_ENV
+          fi
+      - name: Generate draft labels and tags
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.DOCKER_IMAGES }}
+          tags: |
+            type=raw,value=${{ github.event.pull_request.head.sha }}
+            type=raw,value=${{ github.event.pull_request.head.ref }}
+          flavor: |
+            latest=false
+            prefix=${{ env.PREFIX }}
+      - name: Create bake override
+        run: |
+          jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
+          docker buildx bake --print ${{ matrix.target }} \
+            -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
+            | jq '.target |= map_values(."inherits" += ["docker-metadata-action"])' \
+            | jq '.target |= map_values(."cache-to" += ["type=gha,scope=buildkit,mode=max"])' \
+            | jq '.target |= map_values(."cache-from" += ["type=gha,scope=buildkit"])' \
+            | jq '.target |= map_values(."cache-from" += ${{ toJSON(fromJSON(steps.meta.outputs.json).tags) }})' \
+            > "${BAKE_OVERRIDE}"
+            jq . "${BAKE_OVERRIDE}"
+      - name: Docker bake and push
+        uses: docker/bake-action@v2
+        with:
+          workdir: ${{ inputs.working_directory }}
+          files: |
+            ${{ env.BAKE_OVERRIDE }}
+            ${{ steps.meta.outputs.bake-file }}
+          targets: ${{ matrix.target }}
+          load: false
+          push: true
+  docker_finalize:
+    name: Finalize docker
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_final == 'true' &&
+      join(fromJSON(needs.project_types.outputs.docker_images)) != ''
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.project_types.outputs.docker_images) }}
+        target: ${{ fromJSON(needs.project_types.outputs.bake_targets) }}
+    steps:
+      - name: Login to GitHub Container Registry
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USER }}
+          password: ${{ env.GHCR_TOKEN }}
+      - name: Login to Docker Hub
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+      - name: Set env vars
+        run: |
+          if [ ${{ matrix.target }} != 'default' ]
+          then
+            echo "PREFIX=${{ matrix.target }}-" >> $GITHUB_ENV
+          fi
+      - name: Generate versioned labels and tags
+        id: meta1
+        if: needs.versioned_source.outputs.version != ''
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ matrix.image }}
+          tags: |
+            type=raw,value=${{ github.event.base_ref || github.event.ref_name }}
+            type=raw,value=${{ needs.versioned_source.outputs.new_tag }}
+            type=raw,value=${{ needs.versioned_source.outputs.version }}
+          flavor: |
+            latest=true
+            prefix=${{ env.PREFIX }},onlatest=true
+      - name: Generate labels and tags
+        id: meta2
+        if: needs.versioned_source.outputs.version == ''
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ matrix.image }}
+          tags: |
+            type=raw,value=${{ github.event.base_ref || github.event.ref_name }}
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+          flavor: |
+            latest=auto
+            prefix=${{ env.PREFIX }},onlatest=true
+      - name: Publish final tags
+        uses: akhilerm/tag-push-action@v2.0.0
+        with:
+          src: ${{ matrix.image }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          dst: |
+            ${{ steps.meta1.outputs.tags }}
+            ${{ steps.meta2.outputs.tags }}
+  balena_publish:
+    name: Publish balena
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+      - npm_test
+      - docker_test
+      - custom_test
+    if: |
+      !failure() && !cancelled() &&
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.balena == 'true' &&
+      join(fromJSON(needs.project_types.outputs.balena_slugs)) != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        slug: ${{ fromJSON(needs.project_types.outputs.balena_slugs) }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        run: tar -xvf /tmp/source.tgz
+      - uses: balena-io/deploy-to-balena-action@master
+        with:
+          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
+          environment: ${{ inputs.balena_environment }}
+          fleet: ${{ matrix.slug }}
+          versionbot: false
+          source: ${{ inputs.working_directory }}
+  balena_finalize:
+    name: Finalize balena
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_final == 'true' &&
+      needs.project_types.outputs.balena == 'true' &&
+      join(fromJSON(needs.project_types.outputs.balena_slugs)) != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        slug: ${{ fromJSON(needs.project_types.outputs.balena_slugs) }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        run: tar -xvf /tmp/source.tgz
+      - uses: balena-io/deploy-to-balena-action@master
+        with:
+          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
+          environment: ${{ inputs.balena_environment }}
+          fleet: ${{ matrix.slug }}
+          versionbot: false
+          source: ${{ inputs.working_directory }}
+  python_test:
+    name: Test python poetry
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.python_poetry == 'true'
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{ fromJSON(needs.project_types.outputs.python_versions) }}
+    outputs:
+      package: ${{ steps.meta.outputs.package }}
+      version: ${{ steps.meta.outputs.version }}
+      branch_tag: ${{ steps.meta.outputs.branch_tag }}
+      sha_tag: ${{ steps.meta.outputs.sha_tag }}
+      version_tag: ${{ steps.meta.outputs.version_tag }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+      - name: Run poetry install
+        run: |
+          poetry install
+      - name: Add linters and pytest to poetry
+        run: |
+          poetry add --group dev flake8@latest pydocstyle@latest pytest@latest
+      - name: Lint with flake8
+        run: |
+          poetry run flake8 --max-line-length=120 --benchmark --extend-ignore=E203
+      - name: Lint with pydocstyle
+        run: |
+          poetry run pydocstyle
+      - name: Test with pytest
+        run: |
+          poetry run pytest tests/
+      - name: Generate metadata
+        id: meta
+        run: |
+          package="$(grep '^name = \"' pyproject.toml | awk -F[\"\"] '{print $2}')"
+          version="${{ needs.versioned_source.outputs.version }}"
+          branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+
+          echo "package=${package}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
+          echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
+          echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+  custom_test:
+    name: Test custom
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.custom_test == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        value: ${{ fromJSON(needs.project_types.outputs.custom_test_matrix) }}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        shell: bash
+        run: tar -xvf /tmp/source.tgz
+      - name: Set the matrix value env var
+        run: |
+          echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
+      - uses: ./.github/actions/test
+        with:
+          json: ${{ toJSON(inputs) }}
+          secrets: ${{ toJSON(secrets) }}
+  custom_publish:
+    name: Publish custom
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+      - npm_test
+      - docker_test
+      - custom_test
+    if: |
+      !failure() && !cancelled() &&
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.custom_publish == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        value: ${{ fromJSON(needs.project_types.outputs.custom_publish_matrix) }}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        shell: bash
+        run: tar -xvf /tmp/source.tgz
+      - name: Set the matrix value env var
+        run: |
+          echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
+      - uses: ./.github/actions/publish
+        with:
+          json: ${{ toJSON(inputs) }}
+          secrets: ${{ toJSON(secrets) }}
+  custom_finalize:
+    name: Finalize custom
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_final == 'true' &&
+      needs.project_types.outputs.custom_finalize == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        value: ${{ fromJSON(needs.project_types.outputs.custom_finalize_matrix) }}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        shell: bash
+        run: tar -xvf /tmp/source.tgz
+      - name: Set the matrix value env var
+        run: |
+          echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
+      - uses: ./.github/actions/finalize
+        with:
+          json: ${{ toJSON(inputs) }}
+          secrets: ${{ toJSON(secrets) }}
+  custom_clean:
+    name: Clean custom
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_clean == 'true' &&
+      needs.project_types.outputs.custom_clean == 'true'
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        shell: bash
+        run: tar -xvf /tmp/source.tgz
+      - uses: ./.github/actions/clean
+        with:
+          json: ${{ toJSON(inputs) }}
+          secrets: ${{ toJSON(secrets) }}
+  custom_always:
+    name: Always custom
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - custom_test
+      - custom_publish
+      - custom_finalize
+      - custom_clean
+    if: |
+      always() &&
+      needs.project_types.outputs.custom_always == 'true'
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        shell: bash
+        run: tar -xvf /tmp/source.tgz
+      - uses: ./.github/actions/always
+        with:
+          json: ${{ toJSON(inputs) }}
+          secrets: ${{ toJSON(secrets) }}
+  protect_branch:
+    name: Protect branch
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - balena_publish
+      - custom_publish
+      - custom_test
+      - python_test
+      - docker_publish
+      - docker_test
+      - event_types
+      - npm_publish
+      - npm_test
+      - project_types
+      - versioned_source
+    if: |
+      always() &&
+      needs.event_types.outputs.do_draft == 'true' &&
+      inputs.protect_branch == true
+    outputs:
+      result: ${{ steps.apply_branch_protection_rules.outputs.result }}
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      BRANCH_PROTECTION_URL: ${{ github.api_url }}/repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
+    steps:
+      - name: Check needed jobs
+        run: |
+          for result in $(echo '${{ toJSON(needs.*.result) }}' | jq -cr '.[]')
+          do
+            test "${result}" = "success" && continue
+            test "${result}" = "skipped" && continue
+            echo "Needed job returned result: ${result}"
+            exit 1
+          done
+      - name: Get protection rules
+        id: get_protection_rules
+        run: |
+          status_code=$(curl -o body.json --silent -w "%{http_code}\n" -X GET "${{ env.BRANCH_PROTECTION_URL }}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.FLOWZONE_TOKEN }}")
+          result=$(cat body.json | jq '. | @json' )
+          if [[ "$status_code" -eq 200 ]] ; then
+            echo "result=${result}" >> $GITHUB_OUTPUT
+          elif [[ "$status_code" -eq 404 && "$(cat body.json | jq --raw-output '.message' )" = 'Branch not protected' ]] ; then
+            # If there are no existing protections then use an empty object
+            echo 'result={}' >> $GITHUB_OUTPUT
+          else
+            echo ::error title={url}::"get_protection_rules failed with ${status_code} ${result} "
+            exit 1
+          fi
+      - name: Parse and prepare protection rules
+        id: parse_prepare_protection_rules
+        if: ${{ steps.get_protection_rules.conclusion == 'success' }}
+        run: |
+          jsondata=${{ steps.get_protection_rules.outputs.result }}
+
+          required_status_checks__strict=$(echo $jsondata | jq ".required_status_checks.strict // true")
+
+          # Filter all Flowzone or ResinCI checks
+          # leave other checks (eg jenkins)
+          # add hard coded flowzone checks back
+          required_status_checks__contexts=$(echo $jsondata | \
+            jq ".required_status_checks.contexts // [] | del(.[] | \
+            select(ascii_downcase | startswith(\"${{ inputs.job_name }}\") or startswith(\"resinci\"))) |\
+            . + [ \
+              \"${{ inputs.job_name }} / Protect branch\", \
+              \"${{ inputs.job_name }} / Project types\", \
+              \"${{ inputs.job_name }} / Versioned source\", \
+              \"${{ inputs.job_name }} / Event types\" \
+            ]")
+
+          required_pull_request_reviews__dismiss_stale_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.dismiss_stale_reviews // false")
+          required_pull_request_reviews__require_code_owner_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.require_code_owner_reviews // false")
+          required_pull_request_reviews__dismissal_restrictions__users=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.users // []")
+          required_pull_request_reviews__dismissal_restrictions__teams=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.teams // []")
+          required_pull_request_reviews__dismissal_restrictions__apps=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.apps // []")
+          allow_force_pushes=$(echo $jsondata | jq ".allow_force_pushes.enabled // false")
+          required_signatures=$(echo $jsondata | jq ".required_signatures.enabled // false")
+          allow_deletions=$(echo $jsondata | jq ".allow_deletions.enabled // false")
+          required_linear_history=$(echo $jsondata | jq ".required_linear_history.enabled // false")
+          enforce_admins=$(echo $jsondata | jq ".enforce_admins.enabled // false")
+          block_creations=$(echo $jsondata | jq ".block_creations.enabled // false")
+          required_conversation_resolution=$(echo $jsondata | jq ".required_conversation_resolution.enabled // false")
+
+
+          newjson=$(cat <<-END
+            {
+              "required_status_checks": {
+                  "strict": ${required_status_checks__strict},
+                  "contexts": ${required_status_checks__contexts}
+              },
+              "required_pull_request_reviews": {
+                  "dismissal_restrictions": {
+                      "users": ${required_pull_request_reviews__dismissal_restrictions__users},
+                      "teams": ${required_pull_request_reviews__dismissal_restrictions__teams},
+                      "apps": ${required_pull_request_reviews__dismissal_restrictions__apps}
+                  },
+                  "dismiss_stale_reviews": ${required_pull_request_reviews__dismiss_stale_reviews},
+                  "require_code_owner_reviews": ${required_pull_request_reviews__require_code_owner_reviews},
+                  "required_approving_review_count": ${{ inputs.required_approving_review_count }},
+                  "bypass_pull_request_allowances": {
+                      "users": [],
+                      "teams": []
+                  }
+              },
+              "enforce_admins": ${enforce_admins},
+              "required_signatures": ${required_signatures},
+              "restrictions": null,
+              "required_linear_history": ${required_linear_history},
+              "allow_force_pushes": ${allow_force_pushes},
+              "allow_deletions": ${allow_deletions},
+              "block_creations": ${block_creations},
+              "required_conversation_resolution": ${required_conversation_resolution}
+            }
+          END
+          )
+
+          result=$(echo "$newjson" | jq '. | @json' )
+          echo "result=${result}" >> $GITHUB_OUTPUT
+      - name: Apply branch protection rules
+        id: apply_branch_protection_rules
+        if: ${{ steps.parse_prepare_protection_rules.conclusion == 'success' }}
+        run: |
+          status_code="$(curl -o body.json --silent -w "%{http_code}\n" -X PUT "${{ env.BRANCH_PROTECTION_URL }}" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'Authorization: Bearer ${{ secrets.FLOWZONE_TOKEN }}' \
+            -d '${{ fromJSON(steps.parse_prepare_protection_rules.outputs.result) }}')"
+
+          result=$(cat body.json | jq '.' )
+          if [[ "$status_code" -ne 200 ]] ; then
+            echo ::error title={url}::"apply_branch_protection_rules failed with ${status_code} ${result} "
+            exit 1
+          fi
+
+          if [[  $(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count') -ne ${{ inputs.required_approving_review_count }} ]]; then
+            echo ::error title={url}::"branch protection required_pull_request_reviews.required_approving_review_count not set to ${{ inputs.required_approving_review_count }}"
+            exit 1
+          fi
+
+          DELIMITER=$(echo $RANDOM | md5sum | head -c 32)
+          echo "result<<${DELIMITER}" >> $GITHUB_OUTPUT
+          echo "${result}" >> $GITHUB_OUTPUT
+          echo "${DELIMITER}" >> $GITHUB_OUTPUT
