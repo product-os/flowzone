@@ -1,4 +1,24 @@
 - commits:
+    - subject: Update versionist to 6.8.4 to fix CHANGELOG.yml generation for new repos
+      hash: 772839a80e203051ccb783e21480c01b22879e4f
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+    - subject: Use generate-changelog.yml from the npm installed versionist
+      hash: 16a2615b5ea268919a402c4471281135239fecd6
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.36.14
+  title: ""
+  date: 2022-10-19T14:13:46.436Z
+- commits:
     - subject: Only check for version tags from the current branch
       hash: 36e5cffc643f6c41b97fc848094b34084b367525
       body: |
