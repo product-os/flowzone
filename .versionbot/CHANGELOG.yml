@@ -1,4 +1,16 @@
 - commits:
+    - subject: Fail if generating CHANGELOG.yml fails since the bug was fixed
+      hash: b575c07646b5f2f3949cee633f9360b7b7b1e58e
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.36.15
+  title: ""
+  date: 2022-10-19T14:23:50.641Z
+- commits:
     - subject: Update versionist to 6.8.4 to fix CHANGELOG.yml generation for new repos
       hash: 772839a80e203051ccb783e21480c01b22879e4f
       body: ""
