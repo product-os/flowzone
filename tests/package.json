@@ -5,7 +5,8 @@
   "main": "index.js",
   "private": false,
   "scripts": {
-    "test": "jest"
+    "root-tests": "cd .. && npm ci --production && npm test",
+    "test": "jest && npm run root-tests"
   },
   "author": "",
   "license": "ISC",
