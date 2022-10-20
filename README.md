@@ -14,6 +14,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [npm](#npm)
   - [Docker](#docker)
   - [balena](#balena)
+  - [Python (with Poetry)](#python-with-poetry)
   - [Custom](#custom)
   - [Versioning](#versioning)
   - [Docs](#docs)
@@ -184,6 +185,12 @@ All targets except `default` will have the target name prefixed to the tags - eg
 If a `balena.yml` file is found in the root of the repository Flowzone will attempt to push draft releases to your application slug(s) and finalize on merge.
 
 To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
+
+### Python (with Poetry)
+
+Python tests will be run if a `pyproject.toml` file is found in the root of the repository and Poetry is used as a package manager.
+
+Multiple versions (>=3.7, <3.11) of Python  will be tested as long as they meet the range in the `pyproject.toml` file.
 
 ### Custom
 
