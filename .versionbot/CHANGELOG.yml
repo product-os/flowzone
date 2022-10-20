@@ -1,4 +1,16 @@
 - commits:
+    - subject: Only login to registry if the NPM_TOKEN is present
+      hash: 78fcb9700f182e186e99289e810641e2891f17f5
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.37.2
+  title: ""
+  date: 2022-10-20T16:03:36.095Z
+- commits:
     - subject: Login to registry to enable installing private dependencies
       hash: e576bd04b0693450bb0b8ee81d96386f057f3534
       body: ""
