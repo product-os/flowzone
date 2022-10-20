@@ -861,8 +861,10 @@ jobs:
 
       - name: Login to registry
         run: |
-          echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-          npm whoami
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+            npm whoami
+          fi
 
       - name: Publish final release
         run: |
