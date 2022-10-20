@@ -396,7 +396,7 @@ jobs:
           then
             echo "found pyproject.toml"
             if grep 'build-backend.*poetry' pyproject.toml
-            then 
+            then
               echo "Poetry used"
               echo "enabled=true" >> $GITHUB_OUTPUT
               echo "PYTHON_VERSIONS=[]" >> $GITHUB_ENV
@@ -482,7 +482,7 @@ jobs:
             echo "Python 3.10 does not meet project requirements."
           fi
 
-      # default to the latest version (^3.7) on the runner 
+      # default to the latest version (^3.7) on the runner
       # if none were matched by the checks above
       - name: Set Python versions
         if: steps.python_poetry.outputs.enabled == 'true'
@@ -737,6 +737,11 @@ jobs:
           echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
           echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+
+      - name: Login to registry
+        run: |
+          echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+          npm whoami
 
       - name: Install native dependencies (if necessary)
         run: |
@@ -1348,7 +1353,7 @@ jobs:
           pipx install poetry
       - name: Run poetry install
         run: |
-          poetry install 
+          poetry install
       - name: Add linters and pytest to poetry
         run : |
           poetry add --group dev flake8@latest pydocstyle@latest pytest@latest
