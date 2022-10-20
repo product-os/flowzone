@@ -1,4 +1,16 @@
 - commits:
+    - subject: Login to registry to enable installing private dependencies
+      hash: e576bd04b0693450bb0b8ee81d96386f057f3534
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.37.1
+  title: ""
+  date: 2022-10-20T14:14:04.241Z
+- commits:
     - subject: Add Python Poetry test to flowzone. Deduce suitable Python versions.
         Add Python (Poetry) test project to tests. Update the README.md
         accordingly.
