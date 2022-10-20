@@ -1,4 +1,20 @@
 - commits:
+    - subject: Add Python Poetry test to flowzone. Deduce suitable Python versions.
+        Add Python (Poetry) test project to tests. Update the README.md
+        accordingly.
+      hash: bf77dceb730b25a55c91d138abbdc18af30eae20
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Genadi Naydenov <genadi@balena.io>
+        signed-off-by: Genadi Naydenov <genadi@balena.io>
+      author: Genadi Naydenov
+      nested: []
+  version: 0.37.0
+  title: ""
+  date: 2022-10-20T10:07:26.828Z
+- commits:
     - subject: Fail if generating CHANGELOG.yml fails since the bug was fixed
       hash: b575c07646b5f2f3949cee633f9360b7b7b1e58e
       body: ""
