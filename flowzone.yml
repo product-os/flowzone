@@ -1390,11 +1390,7 @@ jobs:
 
     steps:
       - *downloadSourceArtifact
-
-      - name: Extract source artifact
-        working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+      - *extractSourceArtifact
 
       - name: Set the matrix value env var
         run: |
@@ -1430,11 +1426,7 @@ jobs:
 
     steps:
       - *downloadSourceArtifact
-
-      - name: Extract source artifact
-        working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+      - *extractSourceArtifact
 
       - name: Set the matrix value env var
         run: |
@@ -1461,11 +1453,7 @@ jobs:
 
     steps:
       - *downloadSourceArtifact
-
-      - name: Extract source artifact
-        working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+      - *extractSourceArtifact
 
       - name: Set the matrix value env var
         run: |
@@ -1487,11 +1475,7 @@ jobs:
 
     steps:
       - *downloadSourceArtifact
-
-      - name: Extract source artifact
-        working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+      - *extractSourceArtifact
 
       - uses: ./.github/actions/clean
         with:
@@ -1514,11 +1498,7 @@ jobs:
 
     steps:
       - *downloadSourceArtifact
-
-      - name: Extract source artifact
-        working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+      - *extractSourceArtifact
 
       - uses: ./.github/actions/always
         with:
