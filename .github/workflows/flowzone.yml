@@ -104,6 +104,11 @@ on:
         type: string
         required: false
         default: "Flowzone"
+      checkout_fetch_depth:
+        description: "Configures the depth of the actions/checkout git fetch."
+        type: number
+        required: false
+        default: 1
       custom_test_matrix:
         description: "Comma-delimited string of values that will be passed to the custom test action"
         type: string
@@ -237,7 +242,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
           submodules: "recursive"
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
