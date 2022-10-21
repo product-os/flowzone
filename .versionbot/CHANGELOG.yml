@@ -1,4 +1,24 @@
 - commits:
+    - subject: Use the versioned source for the python pipeline
+      hash: ce034d3742dd916f569d98ab7ee3ee4f14180e16
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+    - subject: Deduplicate extracting the source artifact
+      hash: 0ad0ae2b28e57871a139aa5790e3ebcbd9f5ae26
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.37.7
+  title: ""
+  date: 2022-10-21T16:06:17.232Z
+- commits:
     - subject: Use anchors/aliases to deduplicate the `Download source artifact` steps
       hash: 2436a4f20d0b388c3415a79796062575ee0be2ef
       body: ""
