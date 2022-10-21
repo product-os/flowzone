@@ -1,4 +1,26 @@
 - commits:
+    - subject: Use anchors/aliases to deduplicate the `Download source artifact` steps
+      hash: 2436a4f20d0b388c3415a79796062575ee0be2ef
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+    - subject: Use a build step for flowzone.yml to support yaml features like anchors
+      hash: 1f6345e36fde8f8cda63947b54ba0639cd608e4f
+      body: |
+        This will happen automatically on commit as long as you have run
+        `npm install` to set up the git hooks/dependencies
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.37.6
+  title: ""
+  date: 2022-10-21T15:55:42.761Z
+- commits:
     - subject: Fix adding protections to a branch that has no existing protections
       hash: bb0cb1cef8e1aa8f95e9dbd819b5b2a81cb50798
       body: ""
