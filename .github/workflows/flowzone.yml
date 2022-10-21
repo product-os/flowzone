@@ -628,6 +628,7 @@ jobs:
           path: /tmp
       - name: Extract source artifact
         working-directory: .
+        shell: bash
         run: tar -xvf /tmp/source.tgz
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -848,6 +849,7 @@ jobs:
           path: /tmp
       - name: Extract source artifact
         working-directory: .
+        shell: bash
         run: tar -xvf /tmp/source.tgz
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -936,6 +938,7 @@ jobs:
           path: /tmp
       - name: Extract source artifact
         working-directory: .
+        shell: bash
         run: tar -xvf /tmp/source.tgz
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -1096,6 +1099,7 @@ jobs:
           path: /tmp
       - name: Extract source artifact
         working-directory: .
+        shell: bash
         run: tar -xvf /tmp/source.tgz
       - uses: balena-io/deploy-to-balena-action@master
         with:
@@ -1132,6 +1136,7 @@ jobs:
           path: /tmp
       - name: Extract source artifact
         working-directory: .
+        shell: bash
         run: tar -xvf /tmp/source.tgz
       - uses: balena-io/deploy-to-balena-action@master
         with:
@@ -1166,8 +1171,15 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: /tmp
+      - name: Extract source artifact
+        working-directory: .
+        shell: bash
+        run: tar -xvf /tmp/source.tgz
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
