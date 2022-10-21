@@ -1,4 +1,16 @@
 - commits:
+    - subject: Fix adding protections to a branch that has no existing protections
+      hash: bb0cb1cef8e1aa8f95e9dbd819b5b2a81cb50798
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.37.5
+  title: ""
+  date: 2022-10-21T11:50:36.242Z
+- commits:
     - subject: Support fetching submodule commits not in the repository HEAD
       hash: dbcb478555130db4ee770abe7c8b05f42b14ea3b
       body: |
