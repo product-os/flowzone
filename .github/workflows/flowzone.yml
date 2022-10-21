@@ -1622,11 +1622,14 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.FLOWZONE_TOKEN }}")
           result=$(cat body.json | jq '. | @json' )
-          if [[ "$status_code" -ne 200 ]] ; then
+          if [[ "$status_code" -eq 200 ]] ; then
+            echo "result=${result}" >> $GITHUB_OUTPUT
+          elif [[ "$status_code" -eq 404 && "$(cat body.json | jq --raw-output '.message' )" = 'Branch not protected' ]] ; then
+            # If there are no existing protections then use an empty object
+            echo 'result={}' >> $GITHUB_OUTPUT
+          else
             echo ::error title={url}::"get_protection_rules failed with ${status_code} ${result} "
             exit 1
-          else
-            echo "result=${result}" >> $GITHUB_OUTPUT
           fi
       - name: Parse and prepare protection rules
         id: parse_prepare_protection_rules
@@ -1634,13 +1637,13 @@ jobs:
         run: |
           jsondata=${{ steps.get_protection_rules.outputs.result }}
 
-          required_status_checks__strict=$(echo $jsondata | jq ".required_status_checks.strict")
+          required_status_checks__strict=$(echo $jsondata | jq ".required_status_checks.strict // true")
 
           # Filter all Flowzone or ResinCI checks
           # leave other checks (eg jenkins)
           # add hard coded flowzone checks back
           required_status_checks__contexts=$(echo $jsondata | \
-            jq ".required_status_checks.contexts | del(.[] | \
+            jq ".required_status_checks.contexts // [] | del(.[] | \
             select(ascii_downcase | startswith(\"${{ inputs.job_name }}\") or startswith(\"resinci\"))) |\
             . + [ \
               \"${{ inputs.job_name }} / Protect branch\", \
@@ -1649,18 +1652,18 @@ jobs:
               \"${{ inputs.job_name }} / Event types\" \
             ]")
 
-          required_pull_request_reviews__dismiss_stale_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.dismiss_stale_reviews")
-          required_pull_request_reviews__require_code_owner_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.require_code_owner_reviews")
-          required_pull_request_reviews__dismissal_restrictions__users=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.users")
-          required_pull_request_reviews__dismissal_restrictions__teams=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.teams")
-          required_pull_request_reviews__dismissal_restrictions__apps=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.apps")
-          allow_force_pushes=$(echo $jsondata | jq ".allow_force_pushes.enabled")
-          required_signatures=$(echo $jsondata | jq ".required_signatures.enabled")
-          allow_deletions=$(echo $jsondata | jq ".allow_deletions.enabled")
-          required_linear_history=$(echo $jsondata | jq ".required_linear_history.enabled")
-          enforce_admins=$(echo $jsondata | jq ".enforce_admins.enabled")
-          block_creations=$(echo $jsondata | jq ".block_creations.enabled")
-          required_conversation_resolution=$(echo $jsondata | jq ".required_conversation_resolution.enabled")
+          required_pull_request_reviews__dismiss_stale_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.dismiss_stale_reviews // false")
+          required_pull_request_reviews__require_code_owner_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.require_code_owner_reviews // false")
+          required_pull_request_reviews__dismissal_restrictions__users=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.users // []")
+          required_pull_request_reviews__dismissal_restrictions__teams=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.teams // []")
+          required_pull_request_reviews__dismissal_restrictions__apps=$(echo $jsondata | jq ".required_pull_request_reviews.dismissal_restrictions.apps // []")
+          allow_force_pushes=$(echo $jsondata | jq ".allow_force_pushes.enabled // false")
+          required_signatures=$(echo $jsondata | jq ".required_signatures.enabled // false")
+          allow_deletions=$(echo $jsondata | jq ".allow_deletions.enabled // false")
+          required_linear_history=$(echo $jsondata | jq ".required_linear_history.enabled // false")
+          enforce_admins=$(echo $jsondata | jq ".enforce_admins.enabled // false")
+          block_creations=$(echo $jsondata | jq ".block_creations.enabled // false")
+          required_conversation_resolution=$(echo $jsondata | jq ".required_conversation_resolution.enabled // false")
 
 
           newjson=$(cat <<-END
