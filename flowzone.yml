@@ -1330,8 +1330,8 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
