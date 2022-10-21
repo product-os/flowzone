@@ -6,6 +6,12 @@
       name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
       path: /tmp
 
+  - &extractSourceArtifact
+    name: Extract source artifact
+    working-directory: .
+    shell: bash
+    run: tar -xvf /tmp/source.tgz
+
 name: Flowzone
 
 on:
@@ -722,10 +728,7 @@ jobs:
 
     steps:
       - *downloadSourceArtifact
-
-      - name: Extract source artifact
-        working-directory: .
-        run: tar -xvf /tmp/source.tgz
+      - *extractSourceArtifact
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -971,10 +974,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
       - *downloadSourceArtifact
-
-      - name: Extract source artifact
-        working-directory: .
-        run: tar -xvf /tmp/source.tgz
+      - *extractSourceArtifact
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -1072,10 +1072,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
       - *downloadSourceArtifact
-
-      - name: Extract source artifact
-        working-directory: .
-        run: tar -xvf /tmp/source.tgz
+      - *extractSourceArtifact
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -1260,10 +1257,7 @@ jobs:
 
     steps:
       - *downloadSourceArtifact
-
-      - name: Extract source artifact
-        working-directory: .
-        run: tar -xvf /tmp/source.tgz
+      - *extractSourceArtifact
 
       - uses: balena-io/deploy-to-balena-action@master
         with:
@@ -1295,10 +1289,7 @@ jobs:
 
     steps:
       - *downloadSourceArtifact
-
-      - name: Extract source artifact
-        working-directory: .
-        run: tar -xvf /tmp/source.tgz
+      - *extractSourceArtifact
 
       - uses: balena-io/deploy-to-balena-action@master
         with:
