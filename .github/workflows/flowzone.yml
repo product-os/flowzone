@@ -858,12 +858,6 @@ jobs:
         with:
           driver-opts: network=host
           install: true
-      - name: Setup docker-compose environment
-        run: |
-          if [[ -n "${COMPOSE_VARS}" ]]
-          then
-            echo "${COMPOSE_VARS}" | base64 --decode > .env
-          fi
       - name: Create bake override
         run: |
           jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
@@ -884,6 +878,12 @@ jobs:
             *.platform=${{ matrix.platform }}
           load: true
           push: false
+      - name: Setup docker-compose environment
+        run: |
+          if [[ -n "${COMPOSE_VARS}" ]]
+          then
+            echo "${COMPOSE_VARS}" | base64 --decode > .env
+          fi
       - name: Run docker compose tests
         run: |
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
