@@ -848,7 +848,7 @@ jobs:
             npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$((${{ github.run_attempt }} - 1)) || true
           fi
           npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}"
-          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }} ${{ needs.npm_test.outputs.branch_tag }}
+          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} ${{ needs.npm_test.outputs.branch_tag }}
 
   npm_finalize:
     name: Finalize npm
