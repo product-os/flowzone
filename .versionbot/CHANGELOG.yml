@@ -1,4 +1,22 @@
 - commits:
+    - subject: Don't publish to npmjs if already published
+      hash: a03fd744fa4e9d90bb4e31e98f7380e91e19fe27
+      body: >-
+        If published package has been downloaded,
+
+        npm doesn't allow to unpublish it.
+
+
+        Prompted by: https://balena.zulipchat.com/#narrow/stream/345890-loop.2Fbalena-io/topic/Test.20docker.20on.20open-balena-api
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: dsevastianov
+      nested: []
+  version: 0.37.10
+  title: ""
+  date: 2022-10-25T20:20:24.823Z
+- commits:
     - subject: Fix docker pipeline when only `docker-compose.test.yml` is provided
       hash: 66fe8f3befece08cb41a14cf731cb103a67dfcfc
       body: ""
