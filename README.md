@@ -37,6 +37,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
     - [`working_directory`](#working_directory)
     - [`docker_images`](#docker_images)
+    - [`bake_targets`](#bake_targets)
     - [`balena_environment`](#balena_environment)
     - [`balena_slugs`](#balena_slugs)
     - [`protect_branch`](#protect_branch)
@@ -163,37 +164,21 @@ To disable publishing of artifacts set `"private": true` in `package.json`.
 
 ### Docker
 
-If a `docker-compose.yml` _and_ a `docker-compose.test.yml` are found in the root of the repository, Flowzone will test your project using Docker compose.
+If `docker-compose.test.yml` is found in the root of the repository, Flowzone will test your project using Docker compose.
+If a `docker-compose.yml` is also found they will be merged.
 
-The compose script will merge the to yaml file together and wait on a container named `sut` to finish. The result of the test is determined by the exit code of the `sut` container.
+The result of the test is determined by the exit code of the `sut` service.
 Typically, the `sut` container will execute your e2e or integration tests and will exit on test completion.
 
 If you need to provide environment variables to the compose environment you can add a repository secret called [`COMPOSE_VARS`](#compose_vars) that should be a base64 encoded `.env` file.
 This will be decoded and written to a `.env` file inside the test worker at runtime.
 
-To enable publishing of Docker artifacts set [`docker_images`](#docker_images) input to correct value of docker image repositories without tags eg  - eg `ghcr.io/${{ github.repository }}`.
+To enable publishing of Docker artifacts set the [`docker_images`](#docker_images) input to correct value of docker image repositories without tags - eg `ghcr.io/product-os/flowzone`.
 
-For advanced Docker build options, including multi-arch, add a [docker-bake.hcl](https://docs.docker.com/engine/reference/commandline/buildx_bake/) file to your project.
+For advanced Docker build options, including multi-arch, add one or more [Docker bake files](https://docs.docker.com/build/customize/bake/file-definition/) to your project.
 
-```hcl
-// docker-bake.hcl
-// https://github.com/docker/metadata-action#bake-definition
-target "docker-metadata-action" {}
-
-target "build" {
-  inherits = ["docker-metadata-action"]
-  context = "./"
-  dockerfile = "Dockerfile"
-  args = {
-    foo = "bar"
-  }
-  platforms = [
-    "linux/amd64",
-    "linux/arm/v7",
-    "linux/arm64",
-  ]
-}
-```
+To publish multiple image variants, set the [`bake_targets`](#bake_targets) input to the name of each target in the Docker bake file(s).
+All targets except `default` will have the target name prefixed to the tags - eg. `v1.2.3`, `debug-v1.2.3`.
 
 ### balena
 
@@ -363,6 +348,14 @@ Comma-delimited string of Docker images (without tags) to publish (skipped if em
 Type: _string_
 
 Default: `''`
+
+#### `bake_targets`
+
+Comma-delimited string of Docker buildx bake targets to publish (skipped if empty).
+
+Type: _string_
+
+Default: `default`
 
 #### `balena_environment`
 
