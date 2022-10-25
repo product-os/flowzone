@@ -1,4 +1,16 @@
 - commits:
+    - subject: Fix docker pipeline when only `docker-compose.test.yml` is provided
+      hash: 66fe8f3befece08cb41a14cf731cb103a67dfcfc
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 0.37.9
+  title: ""
+  date: 2022-10-25T13:39:34.106Z
+- commits:
     - subject: Deduplicate more uses of extractSourceArtifact
       hash: 5ac8f190c9d7fba6879b2dc7f79e656290fc6fb5
       body: ""
