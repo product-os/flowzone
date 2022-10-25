@@ -892,10 +892,10 @@ jobs:
         run: |
           pwd
           ls -alh
-          docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
+          docker compose up sut --exit-code-from sut --verbose || { docker compose logs  --verbose; exit 1 ; }
           pwd
           ls -alh
-          docker compose logs
+          docker compose logs  --verbose
   docker_publish:
     name: Publish docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
