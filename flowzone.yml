@@ -837,19 +837,18 @@ jobs:
       # before publishing
       - name: Publish draft release
         run: |
-          if npm info ${{ needs.npm_test.outputs.package }} | grep -q ${{ needs.npm_test.outputs.version_tag }}; then
-            echo "${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }} already published to npmjs, skipping..."
-          else
-            pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
-            tar xvf "${pack}"
-            (cd package
-            npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }} --allow-same-version
-            )
-            tar czvf "${pack}" package
-            npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }} || true
-            npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}"
-            npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }} ${{ needs.npm_test.outputs.branch_tag }}
+          pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          tar xvf "${pack}"
+          (cd package
+          npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }} --allow-same-version
+          )
+          tar czvf "${pack}" package
+          
+          if [ {{ github.run_attempt }} -gt  1 ] then
+            npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$(({{ github.run_attempt }} - 1)) || true
           fi
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }}-{{ github.run_attempt }} "${pack}"
+          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-{{ github.run_attempt }} ${{ needs.npm_test.outputs.branch_tag }}
 
   npm_finalize:
     name: Finalize npm

@@ -729,7 +729,7 @@ jobs:
           npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }} --allow-same-version
           )
           tar czvf "${pack}" package
-          
+
           if [ {{ github.run_attempt }} -gt  1 ] then
             npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$(({{ github.run_attempt }} - 1)) || true
           fi
