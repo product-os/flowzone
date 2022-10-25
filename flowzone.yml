@@ -1029,10 +1029,11 @@ jobs:
         run: |
           pwd
           ls -alh
-          docker compose up sut --exit-code-from sut --verbose || { docker compose logs  --verbose; exit 1 ; }
+          DC_FILE_ARGS='-f docker-compose.yml -f docker-compose.test.yml'
+          docker compose ${DC_FILE_ARGS} up sut --exit-code-from sut --verbose || { docker compose ${DC_FILE_ARGS} logs  --verbose; exit 1 ; }
           pwd
           ls -alh
-          docker compose logs  --verbose
+          docker compose ${DC_FILE_ARGS} logs  --verbose
 
   docker_publish:
     name: Publish docker
