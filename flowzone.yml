@@ -996,6 +996,7 @@ jobs:
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
       - name: Create bake override
         run: |
+          ls -alh
           jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
           docker buildx bake --print ${{ matrix.target }} \
             -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
@@ -1004,6 +1005,7 @@ jobs:
             | jq '.target |= map_values(."cache-from" += ["type=gha,scope=buildkit"])' \
             > "${BAKE_OVERRIDE}"
             jq . "${BAKE_OVERRIDE}"
+          ls -alh
 
       # build all docker compose test targets with buildx bake and use the same cache scope as the publish job
       # these images are not pushed and are only used for testing, but can save build time of the publish job
@@ -1023,7 +1025,9 @@ jobs:
       # run docker compose tests and print the logs from all services
       - name: Run docker compose tests
         run: |
+          ls -alh
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
+          ls -alh
           docker compose logs
 
   docker_publish:
