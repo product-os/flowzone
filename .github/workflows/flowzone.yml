@@ -730,11 +730,11 @@ jobs:
           )
           tar czvf "${pack}" package
 
-          if [ {{ needs.env.run_attempt }} -gt  1 ]; then
-            npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$(({{ needs.env.run_attempt }} - 1)) || true
+          if [ {{ env.run_attempt }} -gt  1 ]; then
+            npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$(({{ env.run_attempt }} - 1)) || true
           fi
-          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }}-{{ needs.env.run_attempt }} "${pack}"
-          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-{{ needs.env.run_attempt }} ${{ needs.npm_test.outputs.branch_tag }}
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }}-{{ env.run_attempt }} "${pack}"
+          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-{{ env.run_attempt }} ${{ needs.npm_test.outputs.branch_tag }}
   npm_finalize:
     name: Finalize npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
