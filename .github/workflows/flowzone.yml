@@ -866,6 +866,7 @@ jobs:
           fi
       - name: Create bake override
         run: |
+          pwd
           ls -alh
           jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
           docker buildx bake --print ${{ matrix.target }} \
@@ -875,6 +876,7 @@ jobs:
             | jq '.target |= map_values(."cache-from" += ["type=gha,scope=buildkit"])' \
             > "${BAKE_OVERRIDE}"
             jq . "${BAKE_OVERRIDE}"
+          pwd
           ls -alh
       - name: Docker bake and load
         uses: docker/bake-action@v2
@@ -888,8 +890,10 @@ jobs:
           push: false
       - name: Run docker compose tests
         run: |
+          pwd
           ls -alh
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
+          pwd
           ls -alh
           docker compose logs
   docker_publish:

@@ -996,6 +996,7 @@ jobs:
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
       - name: Create bake override
         run: |
+          pwd
           ls -alh
           jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
           docker buildx bake --print ${{ matrix.target }} \
@@ -1005,6 +1006,7 @@ jobs:
             | jq '.target |= map_values(."cache-from" += ["type=gha,scope=buildkit"])' \
             > "${BAKE_OVERRIDE}"
             jq . "${BAKE_OVERRIDE}"
+          pwd
           ls -alh
 
       # build all docker compose test targets with buildx bake and use the same cache scope as the publish job
@@ -1025,8 +1027,10 @@ jobs:
       # run docker compose tests and print the logs from all services
       - name: Run docker compose tests
         run: |
+          pwd
           ls -alh
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
+          pwd
           ls -alh
           docker compose logs
 
