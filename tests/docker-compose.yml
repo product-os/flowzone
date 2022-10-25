@@ -1,7 +1,14 @@
 version: '2.1'
 
 services:
-  main:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  redis:
+    image: redis:7
+    command: redis-server --appendonly yes
+    restart: always
+    networks:
+      - internal
+    ports:
+      - '6379:6379'
+
+networks:
+  internal: {}
