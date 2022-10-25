@@ -1023,8 +1023,15 @@ jobs:
       # run docker compose tests and print the logs from all services
       - name: Run docker compose tests
         run: |
-          docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
-          docker compose logs
+          DC_ARGS=''
+          if [ -f docker-compose.yml ]; then
+            DC_ARGS="${DC_ARGS} -f docker-compose.yml"
+          fi
+          if [ -f docker-compose.test.yml ]; then
+            DC_ARGS="${DC_ARGS} -f docker-compose.test.yml"
+          fi
+          docker compose ${DC_ARGS} up sut --exit-code-from sut || { docker compose ${DC_ARGS} logs ; exit 1 ; }
+          docker compose ${DC_ARGS} logs
 
   docker_publish:
     name: Publish docker
