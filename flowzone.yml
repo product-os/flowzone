@@ -4,13 +4,14 @@
     uses: actions/download-artifact@v3
     with:
       name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-      path: /tmp
+      path: ${{ runner.temp }}
 
   - &extractSourceArtifact
     name: Extract source artifact
+    # tar: Cannot connect to D: resolve failed
+    shell: pwsh
     working-directory: .
-    shell: bash
-    run: tar -xvf /tmp/source.tgz
+    run: tar -xvf ${{ runner.temp }}/source.tgz
 
 name: Flowzone
 
@@ -123,6 +124,11 @@ on:
         type: number
         required: false
         default: 1
+      tests_run_on:
+        description: GitHub Actions runner type for custom jobs.
+        type: string
+        required: false
+        default: '["ubuntu-latest"]'
       custom_test_matrix:
         description: "Comma-delimited string of values that will be passed to the custom test action"
         type: string
@@ -613,7 +619,7 @@ jobs:
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
           then
-            (cd /tmp
+            (cd ${{ runner.temp }}
 
             wget https://github.com/mikefarah/yq/releases/download/3.0.1/yq_linux_amd64 -O yq
             echo "a1097c74b81a2ef255583d9718bf4be6  yq" | md5sum -c -
@@ -692,13 +698,13 @@ jobs:
 
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress source
-        run: tar -acvf /tmp/source.tgz .
+        run: tar -acvf ${{ runner.temp }}/source.tgz .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp/source.tgz
+          path: ${{ runner.temp }}/source.tgz
           retention-days: 1
 
   ###################################################
@@ -782,16 +788,16 @@ jobs:
 
       - name: Run pack
         run: |
-          mkdir /tmp/npm-pack && npm pack --pack-destination=/tmp/npm-pack
+          mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
-          [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} /tmp/npm-pack \; || true
+          [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
-          path: /tmp/npm-pack/*.tgz
+          path: ${{ runner.temp }}/npm-pack/*.tgz
           retention-days: 90
 
       - name: Generate docs (if present)
@@ -801,14 +807,14 @@ jobs:
 
       - name: Compress docs
         if: needs.project_types.outputs.npm_docs == 'true'
-        run: tar -acvf /tmp/docs.tgz ./docs
+        run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
 
       - name: Upload artifact
         if: needs.project_types.outputs.npm_docs == 'true'
         uses: actions/upload-artifact@v3
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
-          path: /tmp/docs.tgz
+          path: ${{ runner.temp }}/docs.tgz
           retention-days: 90
 
   npm_publish:
@@ -831,7 +837,7 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v3
         with:
-          path: /tmp
+          path: ${{ runner.temp }}
 
       - name: Login to registry
         run: |
@@ -842,13 +848,13 @@ jobs:
       # before publishing
       - name: Publish draft release
         run: |
-          pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          pack="$(ls ${{ runner.temp }}/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar xvf "${pack}"
           (cd package
           npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
           )
           tar czvf "${pack}" package
-          
+
           if [ ${{ github.run_attempt }} -gt  1 ]; then
             npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$((${{ github.run_attempt }} - 1)) || true
           fi
@@ -878,7 +884,7 @@ jobs:
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
           workflow_conclusion: success
 
       - name: Login to registry
@@ -890,7 +896,7 @@ jobs:
 
       - name: Publish final release
         run: |
-          pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          pack="$(ls ${{ runner.temp }}/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
           npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}"
 
   npm_docs_finalize:
@@ -915,12 +921,12 @@ jobs:
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
           workflow_conclusion: success
 
       - name: Extract docs artifact
         run: |
-          docs="$(ls /tmp/docs-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          docs="$(ls ${{ runner.temp }}/docs-*/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar -xvf "${docs}"
 
       - name: Publish generated docs to GitHub Pages
@@ -1363,9 +1369,9 @@ jobs:
           if (grep -wq ^flake8 <<< "$dep_list") && \
              (grep -wq ^pydocstyle <<< "$dep_list") && \
              (grep -wq ^pytest <<< "$dep_list")
-          then 
+          then
             echo "Dev dependencies already installed"
-          else 
+          else
             poetry add --group dev flake8@latest pydocstyle@latest pytest@latest
           fi
       - name: Lint with flake8
@@ -1399,7 +1405,7 @@ jobs:
 
   custom_test:
     name: Test custom
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs: [event_types, project_types, versioned_source]
     if: |
@@ -1410,6 +1416,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.project_types.outputs.custom_test_matrix) }}
+        os: ${{ fromJSON(inputs.tests_run_on) }}
 
     steps:
       - *downloadSourceArtifact
@@ -1426,7 +1433,7 @@ jobs:
 
   custom_publish:
     name: Publish custom
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       [
@@ -1446,6 +1453,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.project_types.outputs.custom_publish_matrix) }}
+        os: ${{ fromJSON(inputs.tests_run_on) }}
 
     steps:
       - *downloadSourceArtifact
@@ -1462,7 +1470,7 @@ jobs:
 
   custom_finalize:
     name: Finalize custom
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs: [event_types, project_types, versioned_source]
     if: |
@@ -1473,6 +1481,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.project_types.outputs.custom_finalize_matrix) }}
+        os: ${{ fromJSON(inputs.tests_run_on) }}
 
     steps:
       - *downloadSourceArtifact
@@ -1489,7 +1498,11 @@ jobs:
 
   custom_clean:
     name: Clean custom
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ${{ fromJSON(inputs.tests_run_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs: [event_types, project_types, versioned_source]
     if: |
@@ -1507,7 +1520,11 @@ jobs:
 
   custom_always:
     name: Always custom
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ${{ fromJSON(inputs.tests_run_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - event_types
@@ -1532,6 +1549,8 @@ jobs:
   ## protect branch
   ###################################################
 
+  # ... or use GiHub CLI instead of cURL: https://cli.github.com/manual/gh_release
+  # https://docs.github.com/en/actions/using-github-hosted-runners/customizing-github-hosted-runners
   protect_branch:
     name: Protect branch
     runs-on: ${{ fromJSON(inputs.runs_on) }}

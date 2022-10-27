@@ -109,6 +109,11 @@ on:
         type: number
         required: false
         default: 1
+      tests_run_on:
+        description: GitHub Actions runner type for custom jobs.
+        type: string
+        required: false
+        default: '["ubuntu-latest"]'
       custom_test_matrix:
         description: Comma-delimited string of values that will be passed to the custom test action
         type: string
@@ -528,7 +533,7 @@ jobs:
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
           then
-            (cd /tmp
+            (cd ${{ runner.temp }}
 
             wget https://github.com/mikefarah/yq/releases/download/3.0.1/yq_linux_amd64 -O yq
             echo "a1097c74b81a2ef255583d9718bf4be6  yq" | md5sum -c -
@@ -591,12 +596,12 @@ jobs:
           # the tag successfully but not the main branch and breaks future versioning attempts
           git push origin "refs/tags/${{ steps.new_version.outputs.tag }}"
       - name: Compress source
-        run: tar -acvf /tmp/source.tgz .
+        run: tar -acvf ${{ runner.temp }}/source.tgz .
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp/source.tgz
+          path: ${{ runner.temp }}/source.tgz
           retention-days: 1
   npm_test:
     name: Test npm
@@ -628,11 +633,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -673,15 +678,15 @@ jobs:
         run: npm test
       - name: Run pack
         run: |
-          mkdir /tmp/npm-pack && npm pack --pack-destination=/tmp/npm-pack
+          mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
-          [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} /tmp/npm-pack \; || true
+          [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
-          path: /tmp/npm-pack/*.tgz
+          path: ${{ runner.temp }}/npm-pack/*.tgz
           retention-days: 90
       - name: Generate docs (if present)
         if: needs.project_types.outputs.npm_docs == 'true'
@@ -689,13 +694,13 @@ jobs:
         run: npm run doc
       - name: Compress docs
         if: needs.project_types.outputs.npm_docs == 'true'
-        run: tar -acvf /tmp/docs.tgz ./docs
+        run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
       - name: Upload artifact
         if: needs.project_types.outputs.npm_docs == 'true'
         uses: actions/upload-artifact@v3
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
-          path: /tmp/docs.tgz
+          path: ${{ runner.temp }}/docs.tgz
           retention-days: 90
   npm_publish:
     name: Publish npm
@@ -719,14 +724,14 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v3
         with:
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Login to registry
         run: |
           echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
           npm whoami
       - name: Publish draft release
         run: |
-          pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          pack="$(ls ${{ runner.temp }}/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar xvf "${pack}"
           (cd package
           npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
@@ -760,7 +765,7 @@ jobs:
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
           workflow_conclusion: success
       - name: Login to registry
         run: |
@@ -770,7 +775,7 @@ jobs:
           fi
       - name: Publish final release
         run: |
-          pack="$(ls /tmp/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          pack="$(ls ${{ runner.temp }}/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
           npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}"
   npm_docs_finalize:
     name: Finalize npm docs
@@ -793,11 +798,11 @@ jobs:
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
           workflow_conclusion: success
       - name: Extract docs artifact
         run: |
-          docs="$(ls /tmp/docs-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          docs="$(ls ${{ runner.temp }}/docs-*/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar -xvf "${docs}"
       - name: Publish generated docs to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -852,11 +857,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
       - name: Setup buildx
@@ -948,11 +953,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
       - name: Setup buildx
@@ -1109,11 +1114,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - uses: balena-io/deploy-to-balena-action@master
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
@@ -1146,11 +1151,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - uses: balena-io/deploy-to-balena-action@master
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
@@ -1188,11 +1193,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -1209,9 +1214,9 @@ jobs:
           if (grep -wq ^flake8 <<< "$dep_list") && \
              (grep -wq ^pydocstyle <<< "$dep_list") && \
              (grep -wq ^pytest <<< "$dep_list")
-          then 
+          then
             echo "Dev dependencies already installed"
-          else 
+          else
             poetry add --group dev flake8@latest pydocstyle@latest pytest@latest
           fi
       - name: Lint with flake8
@@ -1239,7 +1244,7 @@ jobs:
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
   custom_test:
     name: Test custom
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - event_types
@@ -1252,16 +1257,17 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.project_types.outputs.custom_test_matrix) }}
+        os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
@@ -1271,7 +1277,7 @@ jobs:
           secrets: ${{ toJSON(secrets) }}
   custom_publish:
     name: Publish custom
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - event_types
@@ -1288,16 +1294,17 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.project_types.outputs.custom_publish_matrix) }}
+        os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
@@ -1307,7 +1314,7 @@ jobs:
           secrets: ${{ toJSON(secrets) }}
   custom_finalize:
     name: Finalize custom
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - event_types
@@ -1320,16 +1327,17 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.project_types.outputs.custom_finalize_matrix) }}
+        os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
@@ -1339,7 +1347,11 @@ jobs:
           secrets: ${{ toJSON(secrets) }}
   custom_clean:
     name: Clean custom
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ${{ fromJSON(inputs.tests_run_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - event_types
@@ -1353,18 +1365,22 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
   custom_always:
     name: Always custom
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ${{ fromJSON(inputs.tests_run_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - event_types
@@ -1380,11 +1396,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: /tmp
+          path: ${{ runner.temp }}
       - name: Extract source artifact
+        shell: pwsh
         working-directory: .
-        shell: bash
-        run: tar -xvf /tmp/source.tgz
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - uses: ./.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}
