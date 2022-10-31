@@ -1354,7 +1354,15 @@ jobs:
           poetry install
       - name: Add linters and pytest to poetry
         run : |
-          poetry add --group dev flake8@latest pydocstyle@latest pytest@latest
+          dep_list=`poetry show`
+          if (grep -wq ^flake8 <<< "$dep_list") && \
+             (grep -wq ^pydocstyle <<< "$dep_list") && \
+             (grep -wq ^pytest <<< "$dep_list")
+          then 
+            echo "Dev dependencies already installed"
+          else 
+            poetry add --group dev flake8@latest pydocstyle@latest pytest@latest
+          fi
       - name: Lint with flake8
         run: |
           poetry run flake8 --max-line-length=120 --benchmark --extend-ignore=E203
