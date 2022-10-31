@@ -500,7 +500,7 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      new_tag: ${{ steps.new_version.outputs.tag }}
+      new_tag: ${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
       version: ${{ steps.new_version.outputs.semver }}
     steps:
       - name: Checkout source
@@ -549,6 +549,9 @@ jobs:
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'
         run: |
           balena-versionist
+      - name: Git describe
+        id: git_describe
+        run: echo "tag=$(git describe --tags --always --dirty)" >> $GITHUB_OUTPUT
       - name: Inspect versioned files
         id: new_version
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'

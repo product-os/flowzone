@@ -581,7 +581,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
-      new_tag: ${{ steps.new_version.outputs.tag }}
+      new_tag: ${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
       version: ${{ steps.new_version.outputs.semver }}
 
     steps:
@@ -639,6 +639,11 @@ jobs:
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'
         run: |
           balena-versionist
+
+      # set a tag to be used as a fallback if versioning is disabled
+      - name: Git describe
+        id: git_describe
+        run: echo "tag=$(git describe --tags --always --dirty)" >> $GITHUB_OUTPUT
 
       # inspect all known versioned files to extract the new version
       # TODO: versionist should provide the new version via stdout!
