@@ -1,4 +1,20 @@
 - commits:
+    - subject: Provide the git describe tag if versioning is disabled
+      hash: 64d2ff14d712d6d65b503643b7c080f99f69beae
+      body: |
+        This allows tagged releases for repos where versionist
+        is disabled.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.37.13
+  title: ""
+  date: 2022-11-01T16:52:10.576Z
+- commits:
     - subject: Check if python dev dependencies are already installed.
       hash: eb4aa3d482c1149e22c6791b89410a95dca50d2f
       body: ""
