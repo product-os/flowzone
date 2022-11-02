@@ -190,9 +190,17 @@ An example of multiple bake targets can be found here: <https://github.com/balen
 
 ### balena
 
-If a `balena.yml` file is found in the root of the repository Flowzone will attempt to push draft releases to your application slug(s) and finalize on merge.
+If a `balena.yml` file is found in the root of the repository Flowzone will attempt to push draft releases to your fleet's slug(s) and finalize on merge.
+
+This will **require** your organization or your repository to have an API key secret named as `BALENA_API_KEY` set in GitHub. If you intend to set an org level secret then make sure the API key is valid for all repositories in that organization. A repository level secret will override an organization level secret. This API key will be used to login into balena and push draft releases to your fleet. 
 
 To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
+
+Examples:
+
+1. Start with something simple, [balena-python-hello-world](https://github.com/balena-io-examples/balena-python-hello-world/blob/master/.github/workflows/flowzone.yml)
+2. Push to multiple fleets, check out [balena-supervisor](https://github.com/balena-os/balena-supervisor/blob/master/.github/workflows/flowzone.yml).
+
 
 ### Python (with Poetry)
 
