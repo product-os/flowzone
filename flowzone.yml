@@ -226,7 +226,14 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [12.x, 14.x, 16.x, 18.x]
+        python-version: [^3.7]
 
+    
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       docker_images: ${{ steps.docker_images.outputs.build }}
@@ -433,73 +440,90 @@ jobs:
         run: |
           pipx install poetry
 
-      - name: Set up Python 3.7
+      - name: Set up Python ${{ matrix.python-version }}
         if: steps.python_poetry.outputs.enabled == 'true'
         uses: actions/setup-python@v4
         with:
-          python-version: "3.7"
+          python-version: ${{ matrix.python-version }}
 
       - name: Check compatibility
         if: steps.python_poetry.outputs.enabled == 'true'
         run: |
-          error_check=`(poetry env use 3.7 2>&1 || true)`
+          error_check=`(poetry env use ${{ matrix.python-version }} 2>&1 || true)`
           if ! grep -q "Please choose a compatible version" <<< $error_check
           then
-            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.7"]')" >> $GITHUB_ENV
+            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["${{ matrix.python-version }}"]')" >> $GITHUB_ENV
           else
-            echo "Python 3.7 does not meet project requirements."
+            echo "Python ${{ matrix.python-version }} does not meet project requirements."
           fi
 
-      - name: Set up Python 3.8
-        if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.8"
+      # - name: Set up Python 3.7
+      #   if: steps.python_poetry.outputs.enabled == 'true'
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.7"
 
-      - name: Check compatibility
-        if: steps.python_poetry.outputs.enabled == 'true'
-        run: |
-          error_check=`(poetry env use 3.8 2>&1 || true)`
-          if ! grep -q "Please choose a compatible version" <<< $error_check
-          then
-            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.8"]')" >> $GITHUB_ENV
-          else
-            echo "Python 3.8 does not meet project requirements."
-          fi
+      # - name: Check compatibility
+      #   if: steps.python_poetry.outputs.enabled == 'true'
+      #   run: |
+      #     error_check=`(poetry env use 3.7 2>&1 || true)`
+      #     if ! grep -q "Please choose a compatible version" <<< $error_check
+      #     then
+      #       echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.7"]')" >> $GITHUB_ENV
+      #     else
+      #       echo "Python 3.7 does not meet project requirements."
+      #     fi
 
-      - name: Set up Python 3.9
-        if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
+      # - name: Set up Python 3.8
+      #   if: steps.python_poetry.outputs.enabled == 'true'
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.8"
 
-      - name: Check compatibility
-        if: steps.python_poetry.outputs.enabled == 'true'
-        run: |
-          error_check=`(poetry env use 3.9 2>&1 || true)`
-          if ! grep -q "Please choose a compatible version" <<< $error_check
-          then
-            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.9"]')" >> $GITHUB_ENV
-          else
-            echo "Python 3.9 does not meet project requirements."
-          fi
+      # - name: Check compatibility
+      #   if: steps.python_poetry.outputs.enabled == 'true'
+      #   run: |
+      #     error_check=`(poetry env use 3.8 2>&1 || true)`
+      #     if ! grep -q "Please choose a compatible version" <<< $error_check
+      #     then
+      #       echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.8"]')" >> $GITHUB_ENV
+      #     else
+      #       echo "Python 3.8 does not meet project requirements."
+      #     fi
 
-      - name: Set up Python 3.10
-        if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+      # - name: Set up Python 3.9
+      #   if: steps.python_poetry.outputs.enabled == 'true'
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.9"
 
-      - name: Check compatibility
-        if: steps.python_poetry.outputs.enabled == 'true'
-        run: |
-          error_check=`(poetry env use 3.10 2>&1 || true)`
-          if ! grep -q "Please choose a compatible version" <<< $error_check
-          then
-            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.10"]')" >> $GITHUB_ENV
-          else
-            echo "Python 3.10 does not meet project requirements."
-          fi
+      # - name: Check compatibility
+      #   if: steps.python_poetry.outputs.enabled == 'true'
+      #   run: |
+      #     error_check=`(poetry env use 3.9 2>&1 || true)`
+      #     if ! grep -q "Please choose a compatible version" <<< $error_check
+      #     then
+      #       echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.9"]')" >> $GITHUB_ENV
+      #     else
+      #       echo "Python 3.9 does not meet project requirements."
+      #     fi
+
+      # - name: Set up Python 3.10
+      #   if: steps.python_poetry.outputs.enabled == 'true'
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.10"
+
+      # - name: Check compatibility
+      #   if: steps.python_poetry.outputs.enabled == 'true'
+      #   run: |
+      #     error_check=`(poetry env use 3.10 2>&1 || true)`
+      #     if ! grep -q "Please choose a compatible version" <<< $error_check
+      #     then
+      #       echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.10"]')" >> $GITHUB_ENV
+      #     else
+      #       echo "Python 3.10 does not meet project requirements."
+      #     fi
 
       # default to the latest version (^3.7) on the runner
       # if none were matched by the checks above
