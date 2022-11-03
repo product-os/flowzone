@@ -1,4 +1,18 @@
 - commits:
+    - subject: Enable the execute bit for the pre-commit script
+      hash: 55451bf0c96f141b94654a23bee51c411bf0b233
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.37.14
+  title: ""
+  date: 2022-11-03T15:20:58.517Z
+- commits:
     - subject: Provide the git describe tag if versioning is disabled
       hash: 64d2ff14d712d6d65b503643b7c080f99f69beae
       body: |
