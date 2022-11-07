@@ -34,6 +34,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`CUSTOM_JOB_SECRET_3`](#custom_job_secret_3)
   - [Inputs](#inputs)
     - [`runs_on`](#runs_on)
+    - [`tests_run_on`](#tests_run_on)
     - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
     - [`working_directory`](#working_directory)
     - [`docker_images`](#docker_images)
