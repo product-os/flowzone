@@ -319,11 +319,19 @@ They can also be found at the top of [flowzone.yml](./.github/workflows/flowzone
 
 #### `runs_on`
 
-GitHub actions runner (e.g. `[\"self-hosted\",\"linux\",\"x64\"]` for self-hosted runners.)
+GitHub actions runner for core jobs (e.g. `["self-hosted"]` for self-hosted runners.)
 
 Type: _string_
 
-Default: `[\"ubuntu-latest\"]`
+Default: `["ubuntu-latest"]`
+
+#### `tests_run_on`
+
+GitHub Actions runner type for tests (e.g. multiple OS platforms, multiple Linux versions, etc.)
+
+Type: _string_
+
+Default: `["ubuntu-latest"]`
 
 #### `jobs_timeout_minutes`
 
