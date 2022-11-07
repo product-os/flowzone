@@ -1,4 +1,17 @@
 - commits:
+    - subject: Custom OS matrix
+      hash: bed2355d3e7613f6c6f4da598851a79ebd93bc81
+      body: |
+        * alows running custom jobs on multiple runner operating systems
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: ab77
+      nested: []
+  version: 0.37.15
+  title: ""
+  date: 2022-11-07T15:11:23.900Z
+- commits:
     - subject: Enable the execute bit for the pre-commit script
       hash: 55451bf0c96f141b94654a23bee51c411bf0b233
       body: ""
