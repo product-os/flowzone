@@ -1013,7 +1013,6 @@ jobs:
           jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
           docker buildx bake --print ${{ matrix.target }} \
             -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
-            -f ${{ needs.project_types.outputs.docker_compose_test }} \
             | jq '.target |= map_values(."cache-to" += ["type=gha,scope=buildkit,mode=max"])' \
             | jq '.target |= map_values(."cache-from" += ["type=gha,scope=buildkit"])' \
             > "${BAKE_OVERRIDE}"
