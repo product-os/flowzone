@@ -1210,7 +1210,7 @@ jobs:
           images: |
             ${{ matrix.image }}
           tags: |
-            type=raw,value=${{ github.event.base_ref || github.event.ref_name }}
+            type=raw,value=${{ github.base_ref || github.ref_name }}
             type=raw,value=${{ needs.versioned_source.outputs.new_tag }}
             type=raw,value=${{ needs.versioned_source.outputs.version }}
           flavor: |
@@ -1227,7 +1227,7 @@ jobs:
           images: |
             ${{ matrix.image }}
           tags: |
-            type=raw,value=${{ github.event.base_ref || github.event.ref_name }}
+            type=raw,value=${{ github.base_ref || github.ref_name }}
             type=ref,event=tag
             type=semver,pattern={{version}}
           flavor: |
