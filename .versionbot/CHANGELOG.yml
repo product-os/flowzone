@@ -1,4 +1,27 @@
 - commits:
+    - subject: Remove docker-compose.yml from parsed bake files
+      hash: 1721872a342646d636916530709a4f2dd8bef61e
+      body: |
+        Since compose yaml files are often used for balena deployments,
+        and optionally for docker compose tests, let's avoid overloading
+        the file further and ignore it when looking for bake files.
+
+        This should avoid a confusing mess of services to build when
+        both compose files and bake files are present in a repo.
+
+        Bake files used for docker build and deploy.
+        Compose files used for docker compose tests and balena deploy.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.37.18
+  title: ""
+  date: 2022-11-12T02:14:32.603Z
+- commits:
     - subject: Fix broken reference to the branch or tag when finalizing docker images
       hash: 62eb021711e1a44eb019894d695efebbfbdd7bf2
       body: ""
