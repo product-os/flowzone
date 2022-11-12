@@ -1,4 +1,20 @@
 - commits:
+    - subject: Remove compose test file from bake override
+      hash: d047121c21d2e9928a128eeef4b36e88f837c111
+      body: |
+        This was only being used for image pre-build and will
+        cause issues if it depends on resources in docker-compose.yml.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.37.19
+  title: ""
+  date: 2022-11-12T02:31:26.338Z
+- commits:
     - subject: Remove docker-compose.yml from parsed bake files
       hash: 1721872a342646d636916530709a4f2dd8bef61e
       body: |
