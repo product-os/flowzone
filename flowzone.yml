@@ -400,7 +400,7 @@ jobs:
         id: docker_bake
         uses: kanga333/json-array-builder@v0.1.0
         with:
-          cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -name 'docker-bake*' -o -name 'docker-compose.yml' -o -name 'docker-compose.yaml'" || true
+          cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -name 'docker-bake*'" || true
           separator: newline
 
       - name: Check for balena.yml
