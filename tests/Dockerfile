@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM ubuntu
+FROM alpine
 
 COPY . ./
 
