@@ -99,6 +99,15 @@ on:
         type: string
         required: false
         default: ""
+      cargo_targets:
+        description: "Comma-delimited string of Rust stable targets to publish (skipped if empty)"
+        type: string
+        required: false
+        default: aarch64-unknown-linux-gnu,
+          armv7-unknown-linux-gnueabi,
+          arm-unknown-linux-gnueabihf,
+          x86_64-unknown-linux-gnu,
+          i686-unknown-linux-gnu
       protect_branch:
         description: "Set to false to disable updating branch protection rules after a successful run"
         type: boolean
@@ -237,6 +246,7 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       docker_images: ${{ steps.docker_images.outputs.build }}
       bake_targets: ${{ steps.bake_targets.outputs.build }}
+      cargo_targets: ${{ steps.cargo_targets.outputs.build }}
 
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
@@ -248,6 +258,7 @@ jobs:
       node_versions: ${{ steps.node_versions.outputs.json }}
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
+      cargo: ${{ steps.cargo.outputs.enabled }}
 
       custom_test: ${{ steps.custom.outputs.test }}
       custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
@@ -289,6 +300,14 @@ jobs:
         uses: kanga333/json-array-builder@v0.1.0
         env:
           INPUT: ${{ inputs.bake_targets }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+      - name: Convert cargo_targets to a JSON array
+        id: cargo_targets
+        uses: kanga333/json-array-builder@v0.1.0
+        env:
+          INPUT: ${{ inputs.cargo_targets }}
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
@@ -517,6 +536,17 @@ jobs:
           if [ "${PYTHON_VERSIONS}" != "[]" ]
           then
             echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Cargo.toml
+        id: cargo
+        run: |
+          if test -f "Cargo.toml"
+          then
+            echo "found Cargo.toml"
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check for custom jobs
@@ -1363,7 +1393,7 @@ jobs:
         run: |
           poetry install
       - name: Add linters and pytest to poetry
-        run : |
+        run: |
           dep_list=`poetry show`
           if (grep -wq ^flake8 <<< "$dep_list") && \
              (grep -wq ^pydocstyle <<< "$dep_list") && \
@@ -1397,6 +1427,136 @@ jobs:
           echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
           echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+
+  ###################################################
+  # rust
+  ###################################################
+
+  cargo_test:
+    name: Test rust
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.project_types.outputs.cargo == 'true' && 
+      join(fromJSON(needs.project_types.outputs.cargo_targets)) != ''
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.project_types.outputs.cargo_targets) }}
+
+    outputs:
+      package: ${{ steps.meta.outputs.package }}
+      version: ${{ steps.meta.outputs.version }}
+      branch_tag: ${{ steps.meta.outputs.branch_tag }}
+      sha_tag: ${{ steps.meta.outputs.sha_tag }}
+      version_tag: ${{ steps.meta.outputs.version_tag }}
+
+    steps:
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
+
+      - name: Set up toolchain ${{ matrix.target }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          components: rustfmt, clippy
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Lint with clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Install cross
+        run: cargo install cross
+
+      - name: Run tests for toolchain ${{ matrix.target }}
+        run: cross test --target ${{ matrix.target }}
+
+      - name: Generate metadata
+        id: meta
+        run: |
+          package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
+          version="${{ needs.versioned_source.outputs.version }}"
+          branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+
+          echo "package=${package}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
+          echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
+          echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+
+  cargo_publish:
+    name: Build rust release artifacts
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - project_types
+      - versioned_source
+      - cargo_test
+      - custom_test
+    if: |
+      !failure() && !cancelled() &&
+      needs.event_types.outputs.do_draft == 'true' &&
+      needs.cargo_test.result == 'success' &&
+      join(fromJSON(needs.project_types.outputs.cargo_targets)) != ''
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.project_types.outputs.cargo_targets) }}
+
+    steps:
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
+
+      - name: Set up toolchain ${{ matrix.target }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross
+        run: cargo install cross
+
+      - name: Build release for toolchain ${{ matrix.target }}
+        run: cross build --release --target ${{ matrix.target }}
+
+      - name: Install LLVM
+        run: sudo apt-get install -y llvm
+
+      - name: LLVM strip
+        run: llvm-strip target/${{ matrix.target }}/release/${{ needs.cargo_test.outputs.package }}
+
+      - name: Compress
+        run: |
+          tar -czvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
+          retention-days: 1
+
+  # TODO: finalize
 
   ###################################################
   ## custom
@@ -1441,6 +1601,7 @@ jobs:
         versioned_source,
         npm_test,
         docker_test,
+        cargo_test,
         custom_test,
       ]
     if: |
@@ -1565,6 +1726,8 @@ jobs:
         event_types,
         npm_publish,
         npm_test,
+        cargo_test,
+        cargo_publish,
         project_types,
         versioned_source,
       ]
