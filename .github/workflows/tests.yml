@@ -18,6 +18,3 @@ jobs:
         ghcr.io/product-os/flowzone
       balena_slugs: |
         product_os/flowzone
-      bake_targets: |
-        default,
-        debug
