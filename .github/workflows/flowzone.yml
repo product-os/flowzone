@@ -89,6 +89,11 @@ on:
         type: string
         required: false
         default: aarch64-unknown-linux-gnu, armv7-unknown-linux-gnueabi, arm-unknown-linux-gnueabihf, x86_64-unknown-linux-gnu, i686-unknown-linux-gnu
+      rust_binaries:
+        description: Set to true to publish Rust binary release artifacts to GitHub
+        type: boolean
+        required: false
+        default: false
       protect_branch:
         description: Set to false to disable updating branch protection rules after a successful run
         type: boolean
@@ -1266,6 +1271,114 @@ jobs:
           echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
           echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+  github_clean:
+    name: Clean draft GitHub release
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - project_types
+      - versioned_source
+      - npm_publish
+    if: |
+      !failure() && !cancelled() &&
+      needs.event_types.outputs.do_draft == 'true'
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xvf ${{ runner.temp }}/source.tgz
+      - name: Delete draft release
+        run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+  github_publish:
+    name: Publish draft Github release
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - project_types
+      - versioned_source
+      - npm_publish
+      - cargo_publish
+      - custom_publish
+    if: |
+      !failure() && !cancelled() &&
+      needs.event_types.outputs.do_draft == 'true'
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ${{ runner.temp }}
+      - name: Check if any release artifacts exist
+        id: gh_artifacts
+        run: |
+          set -ea
+
+          artifact_count=0
+          [ -d "${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}" ] && \
+              artifact_count=$(ls "${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}" | wc -l | sed 's/^ *//;s/ *$//')
+          echo "count=$artifact_count" >> $GITHUB_OUTPUT
+      - name: Publish artifacts
+        if: steps.gh_artifacts.outputs.count != '0'
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ github.event.pull_request.head.ref }}
+          tag_name: ${{ github.event.pull_request.head.ref }}
+          draft: true
+          prerelease: true
+          files: ${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}/*
+  github_finalize:
+    name: Finalize GitHub release
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+    if: |
+      needs.event_types.outputs.do_final == 'true'
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Finalize GitHub release (if any)
+        if: needs.versioned_source.outputs.version != ''
+        shell: bash
+        run: |
+          set -ea
+          # prevent git from existing with 141
+          set +o pipefail
+          previous_tag="$(git tag --sort=-version:refname | head -n 2 | tail -n 1)"
+          release_notes="$(git log ${previous_tag}..HEAD --pretty=reference)"
+
+          gh release view '${{ github.event.pull_request.head.ref }}' || (echo "No release found for PR"; exit 0)
+          gh release edit '${{ github.event.pull_request.head.ref }}' \
+            --notes "${release_notes}" \
+            --title 'v${{ needs.versioned_source.outputs.version }}' \
+            --tag 'v${{ needs.versioned_source.outputs.version }}' \
+            --prerelease=false \
+            --draft=false
+          release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/v${{ needs.versioned_source.outputs.version }}" \
+            -H 'Accept: application/vnd.github+json' | jq -r .id)"
+          gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
+            -H 'Accept: application/vnd.github+json' \
+            -F make_latest="true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
   cargo_test:
     name: Test rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1342,7 +1455,8 @@ jobs:
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
       needs.cargo_test.result == 'success' &&
-      join(fromJSON(needs.project_types.outputs.cargo_targets)) != ''
+      join(fromJSON(needs.project_types.outputs.cargo_targets)) != '' && 
+      inputs.rust_binaries == true
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1379,7 +1493,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
           retention-days: 1
   custom_test:
@@ -1562,6 +1676,7 @@ jobs:
       - npm_test
       - cargo_test
       - cargo_publish
+      - github_publish
       - project_types
       - versioned_source
     if: |
