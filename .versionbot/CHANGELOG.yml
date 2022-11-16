@@ -1,4 +1,20 @@
 - commits:
+    - subject: Test Flowzone without custom bake targets
+      hash: 7783554c0e8c8782ad5e21bc5405ad444fcfffc3
+      body: |
+        The common use case will be just dockerfiles and compose files
+        and a default target so it's better to cover those scenarios.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.37.20
+  title: ""
+  date: 2022-11-16T15:08:19.309Z
+- commits:
     - subject: Remove compose test file from bake override
       hash: d047121c21d2e9928a128eeef4b36e88f837c111
       body: |
