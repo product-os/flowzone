@@ -30,6 +30,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`DOCKERHUB_USER`](#dockerhub_user)
     - [`DOCKERHUB_TOKEN`](#dockerhub_token)
     - [`BALENA_API_KEY`](#balena_api_key)
+    - [`CARGO_REGISTRY_TOKEN`](#cargo_registry_token)
     - [`COMPOSE_VARS`](#compose_vars)
     - [`CUSTOM_JOB_SECRET_1`](#custom_job_secret_1)
     - [`CUSTOM_JOB_SECRET_2`](#custom_job_secret_2)
@@ -313,6 +314,12 @@ Required for [Docker](#docker) projects.
 [API key](https://www.balena.io/docs/learn/manage/account/#api-keys) for pushing releases to balena applications.
 
 Required for [balena](#balena) projects.
+
+#### `CARGO_REGISTRY_TOKEN`
+
+[API token](https://doc.rust-lang.org/cargo/reference/publishing.html) for publishing a library into a cargo registry.
+
+Publishing to a cargo registry will be skipped if the token is empty.
 
 #### `COMPOSE_VARS`
 
