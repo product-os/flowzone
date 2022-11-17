@@ -15,6 +15,8 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [Docker](#docker)
   - [balena](#balena)
   - [Python (with Poetry)](#python-with-poetry)
+  - [Rust](#rust)
+  - [GitHub](#github)
   - [Custom](#custom)
   - [Versioning](#versioning)
   - [Docs](#docs)
@@ -28,6 +30,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`DOCKERHUB_USER`](#dockerhub_user)
     - [`DOCKERHUB_TOKEN`](#dockerhub_token)
     - [`BALENA_API_KEY`](#balena_api_key)
+    - [`CARGO_REGISTRY_TOKEN`](#cargo_registry_token)
     - [`COMPOSE_VARS`](#compose_vars)
     - [`CUSTOM_JOB_SECRET_1`](#custom_job_secret_1)
     - [`CUSTOM_JOB_SECRET_2`](#custom_job_secret_2)
@@ -41,6 +44,8 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`bake_targets`](#bake_targets)
     - [`balena_environment`](#balena_environment)
     - [`balena_slugs`](#balena_slugs)
+    - [`cargo_targets`](#cargo_targets)
+    - [`rust_binaries`](#rust_binaries)
     - [`protect_branch`](#protect_branch)
     - [`disable_versioning`](#disable_versioning)
     - [`required_approving_review_count`](#required_approving_review_count)
@@ -191,7 +196,21 @@ To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_sl
 
 Python tests will be run if a `pyproject.toml` file is found in the root of the repository and Poetry is used as a package manager.
 
-Multiple versions (>=3.7, <3.11) of Python  will be tested as long as they meet the range in the `pyproject.toml` file.
+Multiple versions (>=3.7, <3.11) of Python will be tested as long as they meet the range in the `pyproject.toml` file.
+
+### Rust
+
+If a `Cargo.toml` file is found in the root of the repository, Flowzone will run tests on the code formatting (using `cargo fmt` and `cargo clippy`) and then run tests for a set of target architectures given in [`cargo_targets`](#cargo_targets). In order to disable Rust testing, set the value of that variable to `""`.
+
+When [`rust_binaries`](#rust_binaries) is set to `true`, Flowzone will also build release artifacts for each target architecture given in [`cargo_targets`](#cargo_targets) and upload the artifacts to the GitHub release.
+
+### GitHub
+
+Flowzone will look for any artifacts created with the name `gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}` and
+upload all files found to a draft release matching the branch name. Custom flowzone actions can use this namespace for publishing extra artifacts.
+
+On finalizing the release, Flowzone will edit the release to make it final an add the commit information to the release
+notes.
 
 ### Custom
 
@@ -296,6 +315,12 @@ Required for [Docker](#docker) projects.
 
 Required for [balena](#balena) projects.
 
+#### `CARGO_REGISTRY_TOKEN`
+
+[API token](https://doc.rust-lang.org/cargo/reference/publishing.html) for publishing a library into a cargo registry.
+
+Publishing to a cargo registry will be skipped if the token is empty.
+
 #### `COMPOSE_VARS`
 
 Optional base64 encoded docker-compose `.env` file for testing [Docker](#docker) projects.
@@ -311,7 +336,6 @@ Optional secret for use with [Custom](#custom) jobs.
 #### `CUSTOM_JOB_SECRET_3`
 
 Optional secret for use with [Custom](#custom) jobs.
-
 
 ### Inputs
 
@@ -381,6 +405,22 @@ Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped
 Type: _string_
 
 Default: `''`
+
+#### `cargo_targets`
+
+Comma-delimited string of Rust stable targets to publish (skipped if empty).
+
+Type: _string_
+
+Default: `'aarch64-unknown-linux-gnu,armv7-unknown-linux-gnueabi,arm-unknown-linux-gnueabihf,x86_64-unknown-linux-gnu,i686-unknown-linux-gnu'`
+
+### `rust_binaries`
+
+Set to true to publish Rust binary artifacts to GitHub.
+
+Type: _boolean_
+
+Default: `true`
 
 #### `protect_branch`
 
