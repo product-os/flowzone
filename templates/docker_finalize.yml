@@ -1,0 +1,85 @@
+name: Finalize docker
+runs-on: ${{ fromJSON(inputs.runs_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs: [event_types, project_types, versioned_source]
+if: |
+  needs.event_types.outputs.do_final == 'true' &&
+  join(fromJSON(needs.project_types.outputs.docker_images)) != ''
+
+defaults:
+  run:
+    working-directory: .
+    shell: bash --noprofile --norc -eo pipefail -x {0}
+
+strategy:
+  fail-fast: false
+  matrix:
+    image: ${{ fromJSON(needs.project_types.outputs.docker_images) }}
+    target: ${{ fromJSON(needs.project_types.outputs.bake_targets) }}
+
+steps:
+  - name: Login to GitHub Container Registry
+    continue-on-error: true
+    uses: docker/login-action@v2
+    with:
+      registry: ghcr.io
+      username: ${{ env.GHCR_USER }}
+      password: ${{ env.GHCR_TOKEN }}
+
+  - name: Login to Docker Hub
+    continue-on-error: true
+    uses: docker/login-action@v2
+    with:
+      registry: docker.io
+      username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+      password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+
+  - name: Set env vars
+    run: |
+      if [ ${{ matrix.target }} != 'default' ]
+      then
+        echo "PREFIX=${{ matrix.target }}-" >> $GITHUB_ENV
+      fi
+
+  # merge events with flowzone versioning
+  # https://github.com/docker/metadata-action
+  - name: Generate versioned labels and tags
+    id: meta1
+    if: needs.versioned_source.outputs.version != ''
+    uses: docker/metadata-action@v4
+    with:
+      images: |
+        ${{ matrix.image }}
+      tags: |
+        type=raw,value=${{ github.base_ref || github.ref_name }}
+        type=raw,value=${{ needs.versioned_source.outputs.new_tag }}
+        type=raw,value=${{ needs.versioned_source.outputs.version }}
+      flavor: |
+        latest=true
+        prefix=${{ env.PREFIX }},onlatest=true
+
+  # merge or tag events with versioning disabled
+  # https://github.com/docker/metadata-action
+  - name: Generate labels and tags
+    id: meta2
+    if: needs.versioned_source.outputs.version == ''
+    uses: docker/metadata-action@v4
+    with:
+      images: |
+        ${{ matrix.image }}
+      tags: |
+        type=raw,value=${{ github.base_ref || github.ref_name }}
+        type=ref,event=tag
+        type=semver,pattern={{version}}
+      flavor: |
+        latest=auto
+        prefix=${{ env.PREFIX }},onlatest=true
+
+  # only one of the destination lines should have values based on the meta restrictions above
+  - name: Publish final tags
+    uses: akhilerm/tag-push-action@v2.0.0
+    with:
+      src: ${{ matrix.image }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+      dst: |
+        ${{ steps.meta1.outputs.tags }}
+        ${{ steps.meta2.outputs.tags }}

@@ -1,0 +1,35 @@
+name: Publish custom
+runs-on: ${{ matrix.os }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs:
+  [
+    event_types,
+    project_types,
+    versioned_source,
+    npm_test,
+    docker_test,
+    custom_test,
+  ]
+if: |
+  !failure() && !cancelled() &&
+  needs.event_types.outputs.do_draft == 'true' &&
+  needs.project_types.outputs.custom_publish == 'true'
+
+strategy:
+  fail-fast: false
+  matrix:
+    value: ${{ fromJSON(needs.project_types.outputs.custom_publish_matrix) }}
+    os: ${{ fromJSON(inputs.tests_run_on) }}
+
+steps:
+  - *downloadSourceArtifact
+  - *extractSourceArtifact
+
+  - name: Set the matrix value env var
+    run: |
+      echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
+
+  - uses: ./.github/actions/publish
+    with:
+      json: ${{ toJSON(inputs) }}
+      secrets: ${{ toJSON(secrets) }}

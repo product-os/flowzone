@@ -1,0 +1,20 @@
+name: Clean custom
+runs-on: ${{ matrix.os }}
+strategy:
+  fail-fast: true
+  matrix:
+    os: ${{ fromJSON(inputs.tests_run_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs: [event_types, project_types, versioned_source]
+if: |
+  needs.event_types.outputs.do_clean == 'true' &&
+  needs.project_types.outputs.custom_clean == 'true'
+
+steps:
+  - *downloadSourceArtifact
+  - *extractSourceArtifact
+
+  - uses: ./.github/actions/clean
+    with:
+      json: ${{ toJSON(inputs) }}
+      secrets: ${{ toJSON(secrets) }}

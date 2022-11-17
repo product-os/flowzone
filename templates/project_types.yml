@@ -1,0 +1,347 @@
+name: Project types
+runs-on: ${{ fromJSON(inputs.runs_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs: [event_types]
+
+defaults:
+  run:
+    working-directory: ${{ inputs.working_directory }}
+    shell: bash --noprofile --norc -eo pipefail -x {0}
+
+outputs:
+  balena_slugs: ${{ steps.balena_slugs.outputs.build }}
+  docker_images: ${{ steps.docker_images.outputs.build }}
+  bake_targets: ${{ steps.bake_targets.outputs.build }}
+
+  npm: ${{ steps.npm.outputs.enabled }}
+  npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
+  npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
+  docker_compose: ${{ steps.docker_compose.outputs.file }} # can be null or unset
+  docker_compose_test: ${{ steps.docker_compose_test.outputs.file }} # can be null or unset
+  docker_bake: ${{ steps.docker_bake.outputs.build }}
+  balena: ${{ steps.balena.outputs.enabled }}
+  node_versions: ${{ steps.node_versions.outputs.json }}
+  python_poetry: ${{ steps.python_poetry.outputs.enabled }}
+  python_versions: ${{ steps.python_versions.outputs.json }}
+
+  custom_test: ${{ steps.custom.outputs.test }}
+  custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
+  custom_publish: ${{ steps.custom.outputs.publish }}
+  custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
+  custom_finalize: ${{ steps.custom.outputs.finalize }}
+  custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
+  custom_clean: ${{ steps.custom.outputs.clean }}
+  custom_always: ${{ steps.custom.outputs.always }}
+
+steps:
+  - name: Checkout source
+    uses: actions/checkout@v3
+    with:
+      fetch-depth: ${{ inputs.checkout_fetch_depth }}
+      submodules: "recursive"
+      token: ${{ secrets.FLOWZONE_TOKEN }}
+
+  - name: Convert balena_slugs to a JSON array
+    id: balena_slugs
+    uses: kanga333/json-array-builder@v0.1.0
+    env:
+      INPUT: ${{ inputs.balena_slugs }}
+    with:
+      cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+      separator: ","
+
+  - name: Convert docker_images to a JSON array
+    id: docker_images
+    uses: kanga333/json-array-builder@v0.1.0
+    env:
+      INPUT: ${{ inputs.docker_images }}
+    with:
+      cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+      separator: ","
+
+  - name: Convert bake_targets to a JSON array
+    id: bake_targets
+    uses: kanga333/json-array-builder@v0.1.0
+    env:
+      INPUT: ${{ inputs.bake_targets }}
+    with:
+      cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+      separator: ","
+
+  - name: Check for package.json
+    id: npm
+    run: |
+      if test -f "package.json"
+      then
+        echo "found package.json"
+        echo "enabled=true" >> $GITHUB_OUTPUT
+        echo "private=$(jq -r '.private' package.json)" >> $GITHUB_OUTPUT
+        echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> $GITHUB_OUTPUT
+        echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
+      else
+        echo "enabled=false" >> $GITHUB_OUTPUT
+      fi
+
+  # check which past and current and future Node.js LTS releases meet the engine requirements
+  # if there are no engine requirements then the current LTS will be used
+
+  - name: Setup Node.js 12.x
+    if: steps.npm.outputs.enabled == 'true'
+    uses: actions/setup-node@v3
+    with:
+      node-version: 12.x
+  - name: Check engine
+    if: steps.npm.outputs.enabled == 'true'
+    run: |
+      if npx -q -y -- check-engine
+      then
+        echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["12.x"]')" >> $GITHUB_ENV
+      fi
+
+  - name: Setup Node.js 14.x
+    if: steps.npm.outputs.enabled == 'true'
+    uses: actions/setup-node@v3
+    with:
+      node-version: 14.x
+  - name: Check engine
+    if: steps.npm.outputs.enabled == 'true'
+    run: |
+      if npx -q -y -- check-engine
+      then
+        echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["14.x"]')" >> $GITHUB_ENV
+      fi
+
+  - name: Setup Node.js 16.x
+    if: steps.npm.outputs.enabled == 'true'
+    uses: actions/setup-node@v3
+    with:
+      node-version: 16.x
+  - name: Check engine
+    if: steps.npm.outputs.enabled == 'true'
+    run: |
+      if npx -q -y -- check-engine
+      then
+        echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["16.x"]')" >> $GITHUB_ENV
+      fi
+
+  - name: Setup Node.js 18.x
+    if: steps.npm.outputs.enabled == 'true'
+    uses: actions/setup-node@v3
+    with:
+      node-version: 18.x
+  - name: Check engine
+    if: steps.npm.outputs.enabled == 'true'
+    run: |
+      if npx -q -y -- check-engine
+      then
+        echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> $GITHUB_ENV
+      fi
+
+  # default to the current LTS version if none were matched
+  # by the engine checks above
+  - name: Set Node.js versions
+    if: steps.npm.outputs.enabled == 'true'
+    id: node_versions
+    run: |
+      echo "json=[\"16.x\"]" >> $GITHUB_OUTPUT
+      if [ "${NODE_VERSIONS}" != "[]" ]
+      then
+        echo "json=${NODE_VERSIONS}" >> $GITHUB_OUTPUT
+      fi
+
+  - name: Check for Docker compose files
+    id: docker_compose
+    run: |
+      if [ -f docker-compose.yml ]
+      then
+        echo "file=docker-compose.yml" >> $GITHUB_OUTPUT
+      elif [ -f docker-compose.yaml ]
+      then
+        echo "file=docker-compose.yaml" >> $GITHUB_OUTPUT
+      fi
+
+  - name: Check for Docker compose test files
+    id: docker_compose_test
+    run: |
+      if [ -f docker-compose.test.yml ]
+      then
+        echo "file=docker-compose.test.yml" >> $GITHUB_OUTPUT
+      elif [ -f docker-compose.test.yaml ]
+      then
+        echo "file=docker-compose.test.yaml" >> $GITHUB_OUTPUT
+      fi
+
+  - name: Check for Docker bake files
+    id: docker_bake
+    uses: kanga333/json-array-builder@v0.1.0
+    with:
+      cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -name 'docker-bake*'" || true
+      separator: newline
+
+  - name: Check for balena.yml
+    id: balena
+    run: |
+      if test -f balena.yml
+      then
+        echo "found balena.yml"
+        echo "enabled=true" >> $GITHUB_OUTPUT
+      else
+        echo "enabled=false" >> $GITHUB_OUTPUT
+      fi
+
+  - name: Check for Python Poetry pyproject.toml
+    id: python_poetry
+    run: |
+      if test -f "pyproject.toml"
+      then
+        echo "found pyproject.toml"
+        if grep 'build-backend.*poetry' pyproject.toml
+        then
+          echo "Poetry used"
+          echo "enabled=true" >> $GITHUB_OUTPUT
+          echo "PYTHON_VERSIONS=[]" >> $GITHUB_ENV
+        else
+          echo "Poetry not used"
+          echo "enabled=false" >> $GITHUB_OUTPUT
+        fi
+      else
+        echo "enabled=false" >> $GITHUB_OUTPUT
+      fi
+
+  # Check which Python 3.7+ versions meet the Poetry project requirements
+  - name: Install Poetry
+    if: steps.python_poetry.outputs.enabled == 'true'
+    run: |
+      pipx install poetry
+
+  - name: Set up Python 3.7
+    if: steps.python_poetry.outputs.enabled == 'true'
+    uses: actions/setup-python@v4
+    with:
+      python-version: "3.7"
+
+  - name: Check compatibility
+    if: steps.python_poetry.outputs.enabled == 'true'
+    run: |
+      error_check=`(poetry env use 3.7 2>&1 || true)`
+      if ! grep -q "Please choose a compatible version" <<< $error_check
+      then
+        echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.7"]')" >> $GITHUB_ENV
+      else
+        echo "Python 3.7 does not meet project requirements."
+      fi
+
+  - name: Set up Python 3.8
+    if: steps.python_poetry.outputs.enabled == 'true'
+    uses: actions/setup-python@v4
+    with:
+      python-version: "3.8"
+
+  - name: Check compatibility
+    if: steps.python_poetry.outputs.enabled == 'true'
+    run: |
+      error_check=`(poetry env use 3.8 2>&1 || true)`
+      if ! grep -q "Please choose a compatible version" <<< $error_check
+      then
+        echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.8"]')" >> $GITHUB_ENV
+      else
+        echo "Python 3.8 does not meet project requirements."
+      fi
+
+  - name: Set up Python 3.9
+    if: steps.python_poetry.outputs.enabled == 'true'
+    uses: actions/setup-python@v4
+    with:
+      python-version: "3.9"
+
+  - name: Check compatibility
+    if: steps.python_poetry.outputs.enabled == 'true'
+    run: |
+      error_check=`(poetry env use 3.9 2>&1 || true)`
+      if ! grep -q "Please choose a compatible version" <<< $error_check
+      then
+        echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.9"]')" >> $GITHUB_ENV
+      else
+        echo "Python 3.9 does not meet project requirements."
+      fi
+
+  - name: Set up Python 3.10
+    if: steps.python_poetry.outputs.enabled == 'true'
+    uses: actions/setup-python@v4
+    with:
+      python-version: "3.10"
+
+  - name: Check compatibility
+    if: steps.python_poetry.outputs.enabled == 'true'
+    run: |
+      error_check=`(poetry env use 3.10 2>&1 || true)`
+      if ! grep -q "Please choose a compatible version" <<< $error_check
+      then
+        echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.10"]')" >> $GITHUB_ENV
+      else
+        echo "Python 3.10 does not meet project requirements."
+      fi
+
+  # default to the latest version (^3.7) on the runner
+  # if none were matched by the checks above
+  - name: Set Python versions
+    if: steps.python_poetry.outputs.enabled == 'true'
+    id: python_versions
+    run: |
+      echo "json=[\"\^3.7\"]" >> $GITHUB_OUTPUT
+      if [ "${PYTHON_VERSIONS}" != "[]" ]
+      then
+        echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
+      fi
+
+  - name: Check for custom jobs
+    id: custom
+    working-directory: .
+    run: |
+      if [ -d .github/actions/test ]
+      then
+        echo "test=true" >> $GITHUB_OUTPUT
+      fi
+      if [ -d .github/actions/publish ]
+      then
+        echo "publish=true" >> $GITHUB_OUTPUT
+      fi
+      if [ -d .github/actions/finalize ]
+      then
+        echo "finalize=true" >> $GITHUB_OUTPUT
+      fi
+      if [ -d .github/actions/clean ]
+      then
+        echo "clean=true" >> $GITHUB_OUTPUT
+      fi
+      if [ -d .github/actions/always ]
+      then
+        echo "always=true" >> $GITHUB_OUTPUT
+      fi
+
+  - name: Convert custom_test_matrix to a JSON array
+    id: custom_test_matrix
+    uses: kanga333/json-array-builder@v0.1.0
+    env:
+      INPUT: ${{ inputs.custom_test_matrix }}
+    with:
+      cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+      separator: ","
+
+  - name: Convert custom_publish_matrix to a JSON array
+    id: custom_publish_matrix
+    uses: kanga333/json-array-builder@v0.1.0
+    env:
+      INPUT: ${{ inputs.custom_publish_matrix }}
+    with:
+      cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+      separator: ","
+
+  - name: Convert custom_finalize_matrix to a JSON array
+    id: custom_finalize_matrix
+    uses: kanga333/json-array-builder@v0.1.0
+    env:
+      INPUT: ${{ inputs.custom_finalize_matrix }}
+    with:
+      cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+      separator: ","

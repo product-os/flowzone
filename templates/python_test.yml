@@ -1,0 +1,73 @@
+name: Test python poetry
+runs-on: ${{ fromJSON(inputs.runs_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs: [event_types, project_types, versioned_source]
+if: |
+  needs.event_types.outputs.do_draft == 'true' &&
+  needs.project_types.outputs.python_poetry == 'true'
+
+defaults:
+  run:
+    working-directory: ${{ inputs.working_directory }}
+    shell: bash --noprofile --norc -eo pipefail -x {0}
+
+strategy:
+  fail-fast: false
+  matrix:
+    python-version: ${{ fromJSON(needs.project_types.outputs.python_versions) }}
+
+outputs:
+  package: ${{ steps.meta.outputs.package }}
+  version: ${{ steps.meta.outputs.version }}
+  branch_tag: ${{ steps.meta.outputs.branch_tag }}
+  sha_tag: ${{ steps.meta.outputs.sha_tag }}
+  version_tag: ${{ steps.meta.outputs.version_tag }}
+
+steps:
+  - *downloadSourceArtifact
+  - *extractSourceArtifact
+  - name: Set up Python ${{ matrix.python-version }}
+    uses: actions/setup-python@v4
+    with:
+      python-version: ${{ matrix.python-version }}
+  - name: Install Poetry
+    run: |
+      pipx install poetry
+  - name: Run poetry install
+    run: |
+      poetry install
+  - name: Add linters and pytest to poetry
+    run: |
+      dep_list=`poetry show`
+      if (grep -wq ^flake8 <<< "$dep_list") && \
+         (grep -wq ^pydocstyle <<< "$dep_list") && \
+         (grep -wq ^pytest <<< "$dep_list")
+      then
+        echo "Dev dependencies already installed"
+      else
+        poetry add --group dev flake8@latest pydocstyle@latest pytest@latest
+      fi
+  - name: Lint with flake8
+    run: |
+      poetry run flake8 --max-line-length=120 --benchmark --extend-ignore=E203
+  - name: Lint with pydocstyle
+    run: |
+      poetry run pydocstyle
+  - name: Test with pytest
+    run: |
+      poetry run pytest tests/
+
+  - name: Generate metadata
+    id: meta
+    run: |
+      package="$(grep '^name = \"' pyproject.toml | awk -F[\"\"] '{print $2}')"
+      version="${{ needs.versioned_source.outputs.version }}"
+      branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+      sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
+      version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+
+      echo "package=${package}" >> $GITHUB_OUTPUT
+      echo "version=${version}" >> $GITHUB_OUTPUT
+      echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
+      echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
+      echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT

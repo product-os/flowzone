@@ -1,0 +1,39 @@
+name: Publish balena
+runs-on: ${{ fromJSON(inputs.runs_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs:
+  [
+    event_types,
+    project_types,
+    versioned_source,
+    npm_test,
+    docker_test,
+    custom_test,
+  ]
+if: |
+  !failure() && !cancelled() &&
+  needs.event_types.outputs.do_draft == 'true' &&
+  needs.project_types.outputs.balena == 'true' &&
+  join(fromJSON(needs.project_types.outputs.balena_slugs)) != ''
+
+strategy:
+  fail-fast: false
+  matrix:
+    slug: ${{ fromJSON(needs.project_types.outputs.balena_slugs) }}
+
+defaults:
+  run:
+    working-directory: ${{ inputs.working_directory }}
+    shell: bash --noprofile --norc -eo pipefail -x {0}
+
+steps:
+  - *downloadSourceArtifact
+  - *extractSourceArtifact
+
+  - uses: balena-io/deploy-to-balena-action@master
+    with:
+      balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
+      environment: ${{ inputs.balena_environment }}
+      fleet: ${{ matrix.slug }}
+      versionbot: false # disable the included versionbot branch checkout
+      source: ${{ inputs.working_directory }}

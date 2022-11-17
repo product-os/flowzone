@@ -1,0 +1,36 @@
+name: Finalize npm
+runs-on: ${{ fromJSON(inputs.runs_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs: [event_types, project_types, versioned_source]
+if: |
+  needs.event_types.outputs.do_final == 'true' &&
+  needs.project_types.outputs.npm == 'true' &&
+  needs.project_types.outputs.npm_private != 'true'
+
+defaults:
+  run:
+    working-directory: .
+    shell: bash --noprofile --norc -eo pipefail -x {0}
+
+steps:
+  # https://github.com/dawidd6/action-download-artifact
+  # TODO: what if this is a tag event and PR artifacts do not exist?
+  - name: Download artifacts from PR
+    uses: dawidd6/action-download-artifact@v2
+    with:
+      github_token: ${{ secrets.FLOWZONE_TOKEN }}
+      commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+      path: ${{ runner.temp }}
+      workflow_conclusion: success
+
+  - name: Login to registry
+    run: |
+      if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+        echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+        npm whoami
+      fi
+
+  - name: Publish final release
+    run: |
+      pack="$(ls ${{ runner.temp }}/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+      npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}"

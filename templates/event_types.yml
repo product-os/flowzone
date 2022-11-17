@@ -1,0 +1,56 @@
+name: Event types
+runs-on: ${{ fromJSON(inputs.runs_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+# all jobs depend on this one in some way so add global trigger rules here
+if: |
+  (github.event_name == 'pull_request') ||
+  (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.disable_versioning == true)
+
+outputs:
+  pr_opened: ${{ steps.pr_opened.outcome == 'success' }}
+  pr_synchronize: ${{ steps.pr_synchronize.outcome == 'success' }}
+  pr_merged: ${{ steps.pr_merged.outcome == 'success' }}
+  pr_closed: ${{ steps.pr_closed.outcome == 'success' }}
+  tagged: ${{ steps.tagged.outcome == 'success' }}
+  do_draft: ${{ steps.pr_opened.outcome == 'success' || steps.pr_synchronize.outcome == 'success' }}
+  do_final: ${{ steps.pr_merged.outcome == 'success' || steps.tagged.outcome == 'success' }}
+  do_clean: ${{ steps.pr_closed.outcome == 'success' }}
+
+defaults:
+  run:
+    working-directory: .
+    shell: bash
+
+env:
+  JSON: ${{ toJSON(github) }}
+
+steps:
+  - name: Pull Request opened
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    id: pr_opened
+    run: |
+      echo "${JSON}" || true
+
+  - name: Pull Request synchronize
+    if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
+    id: pr_synchronize
+    run: |
+      echo "${JSON}" || true
+
+  - name: Pull Request merged
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    id: pr_merged
+    run: |
+      echo "${JSON}" || true
+
+  - name: Pull Request closed
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    id: pr_closed
+    run: |
+      echo "${JSON}" || true
+
+  - name: Tag event
+    if: github.event_name == 'push'
+    id: tagged
+    run: |
+      echo "${JSON}" || true

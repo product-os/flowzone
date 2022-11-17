@@ -1,0 +1,26 @@
+name: Finalize custom
+runs-on: ${{ matrix.os }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs: [event_types, project_types, versioned_source]
+if: |
+  needs.event_types.outputs.do_final == 'true' &&
+  needs.project_types.outputs.custom_finalize == 'true'
+
+strategy:
+  fail-fast: false
+  matrix:
+    value: ${{ fromJSON(needs.project_types.outputs.custom_finalize_matrix) }}
+    os: ${{ fromJSON(inputs.tests_run_on) }}
+
+steps:
+  - *downloadSourceArtifact
+  - *extractSourceArtifact
+
+  - name: Set the matrix value env var
+    run: |
+      echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
+
+  - uses: ./.github/actions/finalize
+    with:
+      json: ${{ toJSON(inputs) }}
+      secrets: ${{ toJSON(secrets) }}

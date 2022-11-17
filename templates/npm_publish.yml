@@ -1,0 +1,42 @@
+name: Publish npm
+runs-on: ${{ fromJSON(inputs.runs_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs: [project_types, versioned_source, npm_test, custom_test]
+if: |
+  !failure() && !cancelled() &&
+  needs.npm_test.result == 'success' &&
+  needs.event_types.outputs.do_draft == 'true' &&
+  needs.project_types.outputs.npm_private != 'true'
+
+defaults:
+  run:
+    working-directory: .
+    shell: bash --noprofile --norc -eo pipefail -x {0}
+
+steps:
+  - name: Download all artifacts
+    uses: actions/download-artifact@v3
+    with:
+      path: ${{ runner.temp }}
+
+  - name: Login to registry
+    run: |
+      echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+      npm whoami
+
+  # unpack the tarball provided by the tests so we can apply the draft version to package.json
+  # before publishing
+  - name: Publish draft release
+    run: |
+      pack="$(ls ${{ runner.temp }}/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+      tar xvf "${pack}"
+      (cd package
+      npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
+      )
+      tar czvf "${pack}" package
+
+      if [ ${{ github.run_attempt }} -gt  1 ]; then
+        npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$((${{ github.run_attempt }} - 1)) || true
+      fi
+      npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}"
+      npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} ${{ needs.npm_test.outputs.branch_tag }}

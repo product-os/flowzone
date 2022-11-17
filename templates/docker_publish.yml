@@ -1,0 +1,107 @@
+name: Publish docker
+runs-on: ${{ fromJSON(inputs.runs_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs: [project_types, versioned_source, npm_test, docker_test, custom_test]
+if: |
+  !failure() && !cancelled() &&
+  needs.event_types.outputs.do_draft == 'true' &&
+  join(fromJSON(needs.project_types.outputs.docker_images)) != ''
+
+defaults:
+  run:
+    working-directory: .
+    shell: bash --noprofile --norc -eo pipefail -x {0}
+
+strategy:
+  fail-fast: false
+  matrix:
+    target: ${{ fromJSON(needs.project_types.outputs.bake_targets) }}
+
+env:
+  BAKE_OVERRIDE: /tmp/docker-bake.override.json
+  BAKE_EMPTY: /tmp/docker-bake.empty.json
+
+steps:
+  - name: Check test result
+    if: needs.docker_test.result != 'success'
+    run: echo "::warning::Missing docker-compose tests whilst using docker building/publishing"
+
+  - name: Login to GitHub Container Registry
+    continue-on-error: true
+    uses: docker/login-action@v2
+    with:
+      registry: ghcr.io
+      username: ${{ env.GHCR_USER }}
+      password: ${{ env.GHCR_TOKEN }}
+
+  - name: Login to Docker Hub
+    continue-on-error: true
+    uses: docker/login-action@v2
+    with:
+      registry: docker.io
+      username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+      password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+
+  - *downloadSourceArtifact
+  - *extractSourceArtifact
+
+  - name: Setup QEMU
+    uses: docker/setup-qemu-action@v2
+
+  - name: Setup buildx
+    uses: docker/setup-buildx-action@v2
+    with:
+      driver-opts: network=host
+      install: true
+
+  - name: Set env vars
+    run: |
+      DOCKER_IMAGES="$(echo "${{ join(fromJSON(needs.project_types.outputs.docker_images),' ') }}" | tr " " "\n")"
+      echo "DOCKER_IMAGES<<EOF" >> $GITHUB_ENV
+      echo "${DOCKER_IMAGES}" >> $GITHUB_ENV
+      echo "EOF" >> $GITHUB_ENV
+
+      if [ ${{ matrix.target }} != 'default' ]
+      then
+        echo "PREFIX=${{ matrix.target }}-" >> $GITHUB_ENV
+      fi
+
+  # https://github.com/docker/metadata-action
+  - name: Generate draft labels and tags
+    id: meta
+    uses: docker/metadata-action@v4
+    with:
+      images: |
+        ${{ env.DOCKER_IMAGES }}
+      tags: |
+        type=raw,value=${{ github.event.pull_request.head.sha }}
+        type=raw,value=${{ github.event.pull_request.head.ref }}
+      flavor: |
+        latest=false
+        prefix=${{ env.PREFIX }}
+
+  # this override file will add additional cache sources and inherit the docker-metadata-action
+  # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
+  - name: Create bake override
+    run: |
+      jq -n '{target:{default:{}}}' > ${BAKE_EMPTY}
+      docker buildx bake --print ${{ matrix.target }} \
+        -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
+        | jq '.target |= map_values(."inherits" += ["docker-metadata-action"])' \
+        | jq '.target |= map_values(."cache-to" += ["type=gha,scope=buildkit,mode=max"])' \
+        | jq '.target |= map_values(."cache-from" += ["type=gha,scope=buildkit"])' \
+        | jq '.target |= map_values(."cache-from" += ${{ toJSON(fromJSON(steps.meta.outputs.json).tags) }})' \
+        > "${BAKE_OVERRIDE}"
+        jq . "${BAKE_OVERRIDE}"
+
+  # https://github.com/docker/bake-action
+  - name: Docker bake and push
+    uses: docker/bake-action@v2
+    with:
+      workdir: ${{ inputs.working_directory }}
+      files: |
+        ${{ env.BAKE_OVERRIDE }}
+        ${{ steps.meta.outputs.bake-file }}
+      targets: ${{ matrix.target }}
+      load: false
+      push: true

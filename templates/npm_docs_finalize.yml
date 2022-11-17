@@ -1,0 +1,35 @@
+name: Finalize npm docs
+runs-on: ${{ fromJSON(inputs.runs_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs: [event_types, project_types, versioned_source]
+if: |
+  needs.event_types.outputs.do_final == 'true' &&
+  needs.project_types.outputs.npm_docs == 'true'
+
+defaults:
+  run:
+    working-directory: .
+    shell: bash --noprofile --norc -eo pipefail -x {0}
+
+steps:
+  # https://github.com/dawidd6/action-download-artifact
+  # TODO: what if this is a tag event and PR artifacts do not exist?
+  - name: Download artifacts from PR
+    uses: dawidd6/action-download-artifact@v2
+    with:
+      github_token: ${{ secrets.FLOWZONE_TOKEN }}
+      commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+      path: ${{ runner.temp }}
+      workflow_conclusion: success
+
+  - name: Extract docs artifact
+    run: |
+      docs="$(ls ${{ runner.temp }}/docs-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+      tar -xvf "${docs}"
+
+  - name: Publish generated docs to GitHub Pages
+    uses: peaceiris/actions-gh-pages@v3
+    with:
+      github_token: ${{ secrets.FLOWZONE_TOKEN }}
+      publish_dir: docs
+      publish_branch: docs

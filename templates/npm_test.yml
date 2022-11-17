@@ -1,0 +1,104 @@
+name: Test npm
+runs-on: ${{ fromJSON(inputs.runs_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs: [event_types, project_types, versioned_source]
+if: |
+  needs.event_types.outputs.do_draft == 'true' &&
+  needs.project_types.outputs.npm == 'true'
+
+defaults:
+  run:
+    working-directory: ${{ inputs.working_directory }}
+    shell: bash --noprofile --norc -eo pipefail -x {0}
+
+strategy:
+  fail-fast: false
+  matrix:
+    node_version: ${{ fromJSON(needs.project_types.outputs.node_versions) }}
+
+outputs:
+  package: ${{ steps.meta.outputs.package }}
+  version: ${{ steps.meta.outputs.version }}
+  branch_tag: ${{ steps.meta.outputs.branch_tag }}
+  sha_tag: ${{ steps.meta.outputs.sha_tag }}
+  version_tag: ${{ steps.meta.outputs.version_tag }}
+
+steps:
+  - *downloadSourceArtifact
+  - *extractSourceArtifact
+
+  - name: Setup Node.js
+    uses: actions/setup-node@v3
+    with:
+      node-version: "${{ matrix.node_version }}"
+
+  - name: Generate metadata
+    id: meta
+    run: |
+      package="$(jq -r '.name' package.json)"
+      version="$(jq -r '.version' package.json)"
+      branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+      sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
+      version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+
+      echo "package=${package}" >> $GITHUB_OUTPUT
+      echo "version=${version}" >> $GITHUB_OUTPUT
+      echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
+      echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
+      echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+
+  - name: Login to registry
+    run: |
+      if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+        echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
+        npm whoami
+      fi
+
+  - name: Install native dependencies (if necessary)
+    run: |
+      npm run flowzone-preinstall --if-present
+
+  - name: Install dependencies
+    run: |
+      if [ -e package-lock.json ]; then
+        npm ci
+      else
+        npm i
+      fi
+
+  - name: Run build
+    run: npm run build --if-present
+
+  - name: Run tests
+    run: npm test
+
+  - name: Run pack
+    run: |
+      mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
+
+      # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
+      [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
+
+  - name: Upload artifact
+    uses: actions/upload-artifact@v3
+    with:
+      name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
+      path: ${{ runner.temp }}/npm-pack/*.tgz
+      retention-days: 90
+
+  - name: Generate docs (if present)
+    if: needs.project_types.outputs.npm_docs == 'true'
+    shell: bash
+    run: npm run doc
+
+  - name: Compress docs
+    if: needs.project_types.outputs.npm_docs == 'true'
+    run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
+
+  - name: Upload artifact
+    if: needs.project_types.outputs.npm_docs == 'true'
+    uses: actions/upload-artifact@v3
+    with:
+      name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
+      path: ${{ runner.temp }}/docs.tgz
+      retention-days: 90

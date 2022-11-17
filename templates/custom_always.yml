@@ -1,0 +1,25 @@
+name: Always custom
+runs-on: ${{ matrix.os }}
+strategy:
+  fail-fast: true
+  matrix:
+    os: ${{ fromJSON(inputs.tests_run_on) }}
+timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+needs:
+  - event_types
+  - custom_test
+  - custom_publish
+  - custom_finalize
+  - custom_clean
+if: |
+  always() &&
+  needs.project_types.outputs.custom_always == 'true'
+
+steps:
+  - *downloadSourceArtifact
+  - *extractSourceArtifact
+
+  - uses: ./.github/actions/always
+    with:
+      json: ${{ toJSON(inputs) }}
+      secrets: ${{ toJSON(secrets) }}
