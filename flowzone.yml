@@ -15,135 +15,7 @@
 
 name: Flowzone
 
-on:
-  workflow_call:
-    secrets:
-      FLOWZONE_TOKEN:
-        description: "Personal access token (PAT) for the GitHub service account with admin/owner permissions"
-        required: true
-      GPG_PRIVATE_KEY:
-        description: "GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits"
-        required: false
-      GPG_PASSPHRASE:
-        description: "Passphrase to decrypt GPG private key"
-        required: false
-      NPM_TOKEN:
-        description: "The npm auth token to use for publishing"
-        required: false
-      GHCR_TOKEN:
-        description: "A personal access token to publish to the GitHub Container Registry, will use FLOWZONE_TOKEN if unset"
-        required: false
-      DOCKERHUB_USER:
-        description: "Username to publish to the Docker Hub container registry"
-        required: false
-      DOCKER_REGISTRY_USER:
-        description: "Deprecated, use DOCKERHUB_USER instead"
-        required: false
-      DOCKERHUB_TOKEN:
-        description: "A personal access token to publish to the Docker Hub container registry"
-        required: false
-      DOCKER_REGISTRY_PASS:
-        description: "Deprecated, use DOCKERHUB_TOKEN instead"
-        required: false
-      BALENA_API_KEY:
-        description: "API key for pushing releases to balena applications"
-        required: false
-      BALENA_API_KEY_PUSH:
-        description: "Deprecated, use BALENA_API_KEY instead"
-        required: false
-      COMPOSE_VARS:
-        description: "Optional base64 encoded docker-compose `.env` file for testing Docker images"
-        required: false
-      CUSTOM_JOB_SECRET_1:
-        description: "Optional secret for using with custom jobs"
-        required: false
-      CUSTOM_JOB_SECRET_2:
-        description: "Optional secret for using with custom jobs"
-        required: false
-      CUSTOM_JOB_SECRET_3:
-        description: "Optional secret for using with custom jobs"
-        required: false
-    inputs:
-      runs_on:
-        description: "GitHub Actions runner type."
-        type: string
-        required: false
-        default: '["ubuntu-latest"]'
-      jobs_timeout_minutes:
-        description: "Timeout for the job(s)."
-        type: number
-        required: false
-        default: 360
-      working_directory:
-        description: "GitHub actions working directory"
-        type: string
-        required: false
-        default: "."
-      docker_images:
-        description: "Comma-delimited string of Docker images (without tags) to publish (skipped if empty)"
-        type: string
-        required: false
-        default: ""
-      bake_targets:
-        description: "Comma-delimited string of Docker buildx bake targets to publish (skipped if empty)"
-        type: string
-        required: false
-        default: "default"
-      balena_environment:
-        description: "balenaCloud environment"
-        type: string
-        required: false
-        default: balena-cloud.com
-      balena_slugs:
-        description: "Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty)"
-        type: string
-        required: false
-        default: ""
-      protect_branch:
-        description: "Set to false to disable updating branch protection rules after a successful run"
-        type: boolean
-        required: false
-        default: true
-      disable_versioning:
-        description: "Set to true to disable automatic versioning"
-        type: boolean
-        required: false
-        default: false
-      required_approving_review_count:
-        description: "Setting this value to zero effectively means merge==deploy without approval(s)"
-        type: string
-        required: false
-        default: "1"
-      job_name:
-        description: "The name of the job, necessary for branch protection if not using the default of 'Flowzone'"
-        type: string
-        required: false
-        default: "Flowzone"
-      checkout_fetch_depth:
-        description: "Configures the depth of the actions/checkout git fetch."
-        type: number
-        required: false
-        default: 1
-      tests_run_on:
-        description: GitHub Actions runner type for custom jobs.
-        type: string
-        required: false
-        default: '["ubuntu-latest"]'
-      custom_test_matrix:
-        description: "Comma-delimited string of values that will be passed to the custom test action"
-        type: string
-        required: false
-        default: ""
-      custom_publish_matrix:
-        description: "Comma-delimited string of values that will be passed to the custom publish action"
-        type: string
-        required: false
-        default: ""
-      custom_finalize_matrix:
-        description: "Comma-delimited string of values that will be passed to the custom finalize action"
-        type: string
-        required: false
-        default: ""
+# {{ ./templates/on_webhook.yml}}
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -1363,7 +1235,7 @@ jobs:
         run: |
           poetry install
       - name: Add linters and pytest to poetry
-        run : |
+        run: |
           dep_list=`poetry show`
           if (grep -wq ^flake8 <<< "$dep_list") && \
              (grep -wq ^pydocstyle <<< "$dep_list") && \
