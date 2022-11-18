@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix error in github_finalize if no release exists
+      hash: 9a463bed72d9fb2fc56f078541855811fb28bfa5
+      body: |
+        The script now looks for a release before continuing with
+        the finalization steps.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 0.38.2
+  title: ""
+  date: 2022-11-18T15:31:44.916Z
+- commits:
     - subject: Fix finalization failures on npm/rust/github
       hash: 7ebf8373fcb988094324dae62bf25ab46de29089
       body: |
