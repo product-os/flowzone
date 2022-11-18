@@ -3,7 +3,7 @@
   "version": "0.37.5",
   "description": "Sample NPM package for testing the build process",
   "main": "index.js",
-  "private": false,
+  "private": true,
   "scripts": {
     "root-tests": "cd .. && npm ci --production && npm test",
     "test": "jest && npm run root-tests"

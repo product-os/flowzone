@@ -1441,8 +1441,8 @@ jobs:
   # GitHub
   ###################################################
 
-  github_clean:
-    name: Clean draft GitHub release
+  github_prepare:
+    name: Clean previous GitHub draft release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1528,6 +1528,9 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
+
       # https://docs.github.com/en/rest/releases
       - name: Finalize GitHub release (if any)
         if: needs.versioned_source.outputs.version != ''
@@ -1551,6 +1554,34 @@ jobs:
           gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
             -H 'Accept: application/vnd.github+json' \
             -F make_latest="true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+
+  github_clean:
+    name: Clean unused GitHub release
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - project_types
+      - versioned_source
+      - npm_publish
+    if: |
+      !failure() && !cancelled() &&
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.merged == false &&
+        github.event.action == 'closed'
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+
+    steps:
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
+
+      - name: Delete draft release
+        run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
           GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
 
@@ -1699,17 +1730,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
-      # https://github.com/dawidd6/action-download-artifact
-      # TODO: what if this is a tag event and PR artifacts do not exist?
-      - name: Download source artifact from PR
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          github_token: ${{ secrets.FLOWZONE_TOKEN }}
-          commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-          workflow_conclusion: success
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-
+      - *downloadSourceArtifact
       - *extractSourceArtifact
 
       - name: Set up toolchain ${{ matrix.target }}
@@ -1717,7 +1738,9 @@ jobs:
 
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
         run: |
-          [ -n "$CARGO_REGISTRY_TOKEN" ] && cargo publish
+          if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
+            cargo publish
+          fi
         env:
           CARGO_REGISTRY_DEFAULT: ${{ env.CARGO_REGISTRY }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
