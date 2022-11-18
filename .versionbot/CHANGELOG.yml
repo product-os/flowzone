@@ -1,4 +1,27 @@
 - commits:
+    - subject: Fix finalization failures on npm/rust/github
+      hash: 7ebf8373fcb988094324dae62bf25ab46de29089
+      body: |
+        This fixes a few bugs in those language jobs
+        that were preventing the post-merge run from terminating successfully.
+
+        - `github_finalize` was missing a step to download the sources
+        - `cargo_publish` was wrongly failing if `CARGO_REGISTRY_TOKEN` was
+          empty
+        - `npm_finalize` was failing because the test package publishing was
+          conflicting with the flowzone package publish.
+
+        This commit also adds a new github clean job, to remove any draft
+        releases left behind after a PR is closed without merging.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 0.38.1
+  title: ""
+  date: 2022-11-18T14:47:55.208Z
+- commits:
     - subject: Add Rust support
       hash: 429eb5fab1089050d4b6f07df2b268d7b53ca129
       body: ""
