@@ -1378,18 +1378,21 @@ jobs:
           previous_tag="$(git tag --sort=-version:refname | head -n 2 | tail -n 1)"
           release_notes="$(git log ${previous_tag}..HEAD --pretty=reference)"
 
-          gh release view '${{ github.event.pull_request.head.ref }}' || (echo "No release found for PR"; exit 0)
-          gh release edit '${{ github.event.pull_request.head.ref }}' \
-            --notes "${release_notes}" \
-            --title 'v${{ needs.versioned_source.outputs.version }}' \
-            --tag 'v${{ needs.versioned_source.outputs.version }}' \
-            --prerelease=false \
-            --draft=false
-          release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/v${{ needs.versioned_source.outputs.version }}" \
-            -H 'Accept: application/vnd.github+json' | jq -r .id)"
-          gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
-            -H 'Accept: application/vnd.github+json' \
-            -F make_latest="true"
+          if gh release view '${{ github.event.pull_request.head.ref }}'; then
+            gh release edit '${{ github.event.pull_request.head.ref }}' \
+              --notes "${release_notes}" \
+              --title 'v${{ needs.versioned_source.outputs.version }}' \
+              --tag 'v${{ needs.versioned_source.outputs.version }}' \
+              --prerelease=false \
+              --draft=false
+            release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/v${{ needs.versioned_source.outputs.version }}" \
+              -H 'Accept: application/vnd.github+json' | jq -r .id)"
+            gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
+              -H 'Accept: application/vnd.github+json' \
+              -F make_latest="true"
+          else
+            echo "No release found for the current PR"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
   github_clean:
