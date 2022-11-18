@@ -1,4 +1,22 @@
 - commits:
+    - subject: Do not include the merge commit in the release notes
+      hash: 7c5f3022c034207b835e59cb99ae949648d7a983
+      body: |
+        During merge, we want to use the PR source for creating the release
+        notes instead of the latest source since that will include the merge
+        commit and it will pollute the notes.
+
+        See https://github.com/balena-os/fatrw/releases/tag/v0.2.14 for an
+        example
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 0.38.4
+  title: ""
+  date: 2022-11-18T20:10:47.886Z
+- commits:
     - subject: Ensure github prepare job is run before gh publish
       hash: 07911de18dbaca751a76676025ccd9a7497e6861
       body: ""
