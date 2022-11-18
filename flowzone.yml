@@ -1528,7 +1528,19 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
-      - *downloadSourceArtifact
+      # https://github.com/dawidd6/action-download-artifact
+      # TODO: what if this is a tag event and PR artifacts do not exist?
+      # We want to use the source artifact from the PR instead of the merge
+      # action so the release notes don't include the merge commit
+      - name: Download source artifact from PR
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+          workflow_conclusion: success
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+
       - *extractSourceArtifact
 
       # https://docs.github.com/en/rest/releases
