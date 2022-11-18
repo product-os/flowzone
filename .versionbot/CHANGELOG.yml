@@ -1,4 +1,16 @@
 - commits:
+    - subject: Ensure github prepare job is run before gh publish
+      hash: 07911de18dbaca751a76676025ccd9a7497e6861
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 0.38.3
+  title: ""
+  date: 2022-11-18T17:19:08.571Z
+- commits:
     - subject: Fix error in github_finalize if no release exists
       hash: 9a463bed72d9fb2fc56f078541855811fb28bfa5
       body: |
