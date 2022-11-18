@@ -1282,7 +1282,6 @@ jobs:
     needs:
       - project_types
       - versioned_source
-      - npm_publish
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true'
@@ -1311,6 +1310,7 @@ jobs:
     needs:
       - project_types
       - versioned_source
+      - github_prepare
       - npm_publish
       - cargo_publish
       - custom_publish
@@ -1402,7 +1402,6 @@ jobs:
     needs:
       - project_types
       - versioned_source
-      - npm_publish
     if: |
       !failure() && !cancelled() &&
         github.event_name == 'pull_request' &&
