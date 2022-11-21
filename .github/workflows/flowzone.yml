@@ -42,6 +42,12 @@ on:
       COMPOSE_VARS:
         description: Optional base64 encoded docker-compose `.env` file for testing Docker images
         required: false
+      CF_ACCOUNT_ID:
+        description: Cloudflare account ID
+        required: false
+      CF_API_TOKEN:
+        description: Cloudflare API token with limited access for Pages projects
+        required: false
       CUSTOM_JOB_SECRET_1:
         description: Optional secret for using with custom jobs
         required: false
@@ -127,6 +133,11 @@ on:
         type: string
         required: false
         default: '["ubuntu-latest"]'
+      cloudflare_website:
+        description: Setting this to your existing CF pages project name will generate and deploy a website. Skipped if empty.
+        type: string
+        required: false
+        default: ""
       custom_test_matrix:
         description: Comma-delimited string of values that will be passed to the custom test action
         type: string
@@ -225,6 +236,7 @@ jobs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
       cargo: ${{ steps.cargo.outputs.enabled }}
+      has_readme: ${{ steps.has_readme.outputs.enabled }}
       custom_test: ${{ steps.custom.outputs.test }}
       custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
       custom_publish: ${{ steps.custom.outputs.publish }}
@@ -475,6 +487,16 @@ jobs:
           if test -f "Cargo.toml"
           then
             echo "found Cargo.toml"
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Check for README for building a website
+        id: has_readme
+        run: |
+          if test -f "README.md"
+          then
+            echo "found README.md"
             echo "enabled=true" >> $GITHUB_OUTPUT
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
@@ -1215,6 +1237,41 @@ jobs:
           echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
           echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+  website_build:
+    name: Build website using Docusaurus
+    runs-on: ${{fromJSON(inputs.runs_on)}}
+    needs:
+      - project_types
+      - versioned_source
+    if: |
+      needs.project_types.outputs.has_readme == 'true' &&
+      inputs.cloudflare_website != ''
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xvf ${{ runner.temp }}/source.tgz
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Docusaurus Builder
+        uses: product-os/docusaurus-theme@master
+        with:
+          repo: ${{ github.event.repository.name }}
+          org: ${{ github.repository_owner }}
+          default_branch: ${{ github.event.repository.default_branch }}
+          url: https://${{ inputs.cloudflare_website }}.pages.dev
+      - name: Cloudflare Pages
+        uses: cloudflare/wrangler-action@2.0.0
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: pages publish --project-name=${{ inputs.cloudflare_website }} build/
   github_prepare:
     name: Clean previous GitHub draft release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1378,7 +1435,7 @@ jobs:
       - versioned_source
     if: |
       needs.event_types.outputs.do_draft == 'true' &&
-      needs.project_types.outputs.cargo == 'true' && 
+      needs.project_types.outputs.cargo == 'true' &&
       join(fromJSON(needs.project_types.outputs.cargo_targets)) != ''
     defaults:
       run:
@@ -1444,7 +1501,7 @@ jobs:
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
       needs.cargo_test.result == 'success' &&
-      join(fromJSON(needs.project_types.outputs.cargo_targets)) != '' && 
+      join(fromJSON(needs.project_types.outputs.cargo_targets)) != '' &&
       inputs.rust_binaries == true
     defaults:
       run:
@@ -1495,7 +1552,7 @@ jobs:
       - versioned_source
     if: |
       needs.event_types.outputs.do_final == 'true' &&
-      needs.project_types.outputs.cargo == 'true' && 
+      needs.project_types.outputs.cargo == 'true' &&
       join(fromJSON(needs.project_types.outputs.cargo_targets)) != ''
     defaults:
       run:
