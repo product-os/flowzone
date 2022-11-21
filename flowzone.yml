@@ -1431,7 +1431,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: pages publish --project-name=${{ inputs.cloudflare_website }} build/
+          command: pages publish --project-name=${{ inputs.cloudflare_website }} build/ >> $GITHUB_STEP_SUMMARY
   ###################################################
   # GitHub
   ###################################################
