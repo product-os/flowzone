@@ -1,4 +1,22 @@
 - commits:
+    - subject: Combine docker test and publish jobs
+      hash: 65813d58c8c15d481ac88ba6fd92d1c96a609764
+      body: |
+        This will allow testing of the same image that is published
+        by using image: `localhost:5000/sut` in a compose file.
+
+        It also ensures only one build and improved caching.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.38.5
+  title: ""
+  date: 2022-11-21T15:19:05.765Z
+- commits:
     - subject: Do not include the merge commit in the release notes
       hash: 7c5f3022c034207b835e59cb99ae949648d7a983
       body: |
