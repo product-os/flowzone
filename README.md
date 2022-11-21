@@ -186,6 +186,8 @@ For advanced Docker build options, including multi-arch, add one or more [Docker
 To publish multiple image variants, set the [`bake_targets`](#bake_targets) input to the name of each target in the Docker bake file(s).
 All targets except `default` will have the target name prefixed to the tags - eg. `v1.2.3`, `debug-v1.2.3`.
 
+An example of multiple bake targets can be found here: <https://github.com/balena-io-modules/open-balena-base/blob/master/docker-bake.hcl>
+
 ### balena
 
 If a `balena.yml` file is found in the root of the repository Flowzone will attempt to push draft releases to your application slug(s) and finalize on merge.
