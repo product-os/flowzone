@@ -12,13 +12,16 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Dump context
+    # since core versioning operates only at root level
+    - name: Version package.json
       shell: bash
-      env:
-        INPUTS: ${{ inputs.json }}
-        SECRETS: ${{ inputs.secrets }}
-        GITHUB: ${{ toJSON(github) }}
       run: |
-        echo "${INPUTS}"
-        echo "${SECRETS}"
-        echo "${GITHUB}"
+        tmppkg="$(mktemp)"
+
+        version="$(jq -r '.version' ../package.json)"
+
+        jq --arg version "${version}" '.version=$version' package.json > "${tmppkg}"
+
+        cat < "${tmppkg}" | jq -r > package.json
+
+        rm -f "${tmppkg}"
