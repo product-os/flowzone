@@ -22,3 +22,17 @@ runs:
         echo "${INPUTS}"
         echo "${SECRETS}"
         echo "${GITHUB}"
+
+    # since core versioning operates only at root level
+    - name: Version package.json
+      shell: bash
+      run: |
+        tmppkg="$(mktemp)"
+
+        version="$(jq -r '.version' ../package.json)"
+
+        jq --arg version "${version}" '.version=$version' package.json > "${tmppkg}"
+
+        cat < "${tmppkg}" | jq -r > package.json
+
+        rm -f "${tmppkg}"
