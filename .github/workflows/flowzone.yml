@@ -1080,6 +1080,15 @@ jobs:
           dst: |
             ${{ steps.meta1.outputs.tags }}
             ${{ steps.meta2.outputs.tags }}
+      - name: Update DockerHub Description
+        if: startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.')
+        continue-on-error: true
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+          repository: ${{ matrix.image }}
+          readme-filepath: ./README.md
   balena_publish:
     name: Publish balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
