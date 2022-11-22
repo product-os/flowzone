@@ -570,6 +570,13 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           token: ${{ secrets.FLOWZONE_TOKEN }}
+      - name: Reject merge commits
+        run: |
+          if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep '^parent ' | wc -l)" -gt 1 ]
+          then
+            echo "::error::Latest commit appears to be a merge, which is currently unsupported. Try a rebase instead."
+            exit 1
+          fi
       - name: Import GPG key for signing commits
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'
         id: import-gpg
