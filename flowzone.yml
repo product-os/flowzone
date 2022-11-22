@@ -1190,6 +1190,9 @@ jobs:
         target: ${{ fromJSON(needs.project_types.outputs.bake_targets) }}
 
     steps:
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
+
       - name: Login to GitHub Container Registry
         continue-on-error: true
         uses: docker/login-action@v2
@@ -1423,14 +1426,14 @@ jobs:
           echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
           echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
- ###################################################
- # Website
- ###################################################
+  ###################################################
+  # Website
+  ###################################################
 
   website_build:
     name: Build website using Docusaurus
     runs-on: ${{fromJSON(inputs.runs_on)}}
-    needs: [project_types,versioned_source]
+    needs: [project_types, versioned_source]
     if: |
       needs.project_types.outputs.has_readme == 'true' &&
       inputs.cloudflare_website != ''

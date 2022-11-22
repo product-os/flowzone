@@ -1032,6 +1032,15 @@ jobs:
         image: ${{ fromJSON(needs.project_types.outputs.docker_images) }}
         target: ${{ fromJSON(needs.project_types.outputs.bake_targets) }}
     steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Login to GitHub Container Registry
         continue-on-error: true
         uses: docker/login-action@v2
