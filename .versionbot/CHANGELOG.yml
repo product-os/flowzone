@@ -1,4 +1,18 @@
 - commits:
+    - subject: Update import-gpg action to v5.2.0
+      hash: 6a286489397dac312bef8d9ae65c86dd2ded7d3d
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.39.4
+  title: ""
+  date: 2022-11-22T20:00:59.070Z
+- commits:
     - subject: Reject workflow if latest branch commit is a merge commit
       hash: 79e00236a29c3afd07303ccf681dad6c942d71e5
       body: >
