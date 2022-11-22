@@ -1247,6 +1247,18 @@ jobs:
             ${{ steps.meta1.outputs.tags }}
             ${{ steps.meta2.outputs.tags }}
 
+      # if the image name host is docker.io or it does not have a host prefix (indicated by presence of '.')
+      # then attempt to update the dockerhub description, but do not abort on failure
+      - name: Update DockerHub Description
+        if: startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.')
+        continue-on-error: true
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+          repository: ${{ matrix.image }}
+          readme-filepath: ./README.md
+
   ###################################################
   ## balena
   ###################################################
