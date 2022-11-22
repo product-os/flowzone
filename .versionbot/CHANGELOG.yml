@@ -1,4 +1,28 @@
 - commits:
+    - subject: Reject workflow if latest branch commit is a merge commit
+      hash: 79e00236a29c3afd07303ccf681dad6c942d71e5
+      body: >
+        This may extend to more valid uses than intended, but for now we need
+
+        to prevent merging PRs that have had master merged into them. This scenario
+
+        will break versioning in master.
+
+
+        The intended workflow at balena has always been to rebase PRs, so we have
+
+        to continue to force this for now and avoid breaking merges.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.39.3
+  title: ""
+  date: 2022-11-22T19:22:49.029Z
+- commits:
     - subject: Update kanga333/json-array-builder to v0.2.1
       hash: f4ad45d616d4c5158d2da58a5f88c35fa83d55e5
       body: |
