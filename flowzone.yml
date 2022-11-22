@@ -300,7 +300,7 @@ jobs:
 
       - name: Convert balena_slugs to a JSON array
         id: balena_slugs
-        uses: kanga333/json-array-builder@v0.1.0
+        uses: kanga333/json-array-builder@v0.2.1
         env:
           INPUT: ${{ inputs.balena_slugs }}
         with:
@@ -309,7 +309,7 @@ jobs:
 
       - name: Convert docker_images to a JSON array
         id: docker_images
-        uses: kanga333/json-array-builder@v0.1.0
+        uses: kanga333/json-array-builder@v0.2.1
         env:
           INPUT: ${{ inputs.docker_images }}
         with:
@@ -318,7 +318,7 @@ jobs:
 
       - name: Convert bake_targets to a JSON array
         id: bake_targets
-        uses: kanga333/json-array-builder@v0.1.0
+        uses: kanga333/json-array-builder@v0.2.1
         env:
           INPUT: ${{ inputs.bake_targets }}
         with:
@@ -326,7 +326,7 @@ jobs:
           separator: ","
       - name: Convert cargo_targets to a JSON array
         id: cargo_targets
-        uses: kanga333/json-array-builder@v0.1.0
+        uses: kanga333/json-array-builder@v0.2.1
         env:
           INPUT: ${{ inputs.cargo_targets }}
         with:
@@ -438,7 +438,7 @@ jobs:
 
       - name: Check for Docker bake files
         id: docker_bake
-        uses: kanga333/json-array-builder@v0.1.0
+        uses: kanga333/json-array-builder@v0.2.1
         with:
           cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -name 'docker-bake*'" || true
           separator: newline
@@ -610,7 +610,7 @@ jobs:
 
       - name: Convert custom_test_matrix to a JSON array
         id: custom_test_matrix
-        uses: kanga333/json-array-builder@v0.1.0
+        uses: kanga333/json-array-builder@v0.2.1
         env:
           INPUT: ${{ inputs.custom_test_matrix }}
         with:
@@ -619,7 +619,7 @@ jobs:
 
       - name: Convert custom_publish_matrix to a JSON array
         id: custom_publish_matrix
-        uses: kanga333/json-array-builder@v0.1.0
+        uses: kanga333/json-array-builder@v0.2.1
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
         with:
@@ -628,7 +628,7 @@ jobs:
 
       - name: Convert custom_finalize_matrix to a JSON array
         id: custom_finalize_matrix
-        uses: kanga333/json-array-builder@v0.1.0
+        uses: kanga333/json-array-builder@v0.2.1
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
         with:
