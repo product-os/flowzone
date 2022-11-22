@@ -164,6 +164,7 @@ env:
 jobs:
   debug:
     name: Debug
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
     steps:
       - name: Dump context
         run: echo "${{ toJSON(github) }}"
