@@ -590,7 +590,7 @@ jobs:
       - name: Install versionist
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'
         run: |
-          npm install -g balena-versionist@0.14.10 versionist@6.8.4
+          npm install -g balena-versionist@0.14.11 versionist@6.9.0
       - name: Generate changelog
         if: inputs.disable_versioning != true && github.event_name == 'pull_request'
         run: |
