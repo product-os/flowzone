@@ -171,9 +171,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
-      (github.event_name == 'pull_request') ||
+      (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.disable_versioning == true)
     outputs:
+      pr: ${{ steps.pr.outcome == 'success' }}
       pr_opened: ${{ steps.pr_opened.outcome == 'success' }}
       pr_synchronize: ${{ steps.pr_synchronize.outcome == 'success' }}
       pr_merged: ${{ steps.pr_merged.outcome == 'success' }}
@@ -189,23 +190,28 @@ jobs:
     env:
       JSON: ${{ toJSON(github) }}
     steps:
+      - name: Pull Request
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+        id: pr
+        run: |
+          echo "${JSON}" || true
       - name: Pull Request opened
-        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        if: steps.pr.outcome == 'success' && github.event.action == 'opened'
         id: pr_opened
         run: |
           echo "${JSON}" || true
       - name: Pull Request synchronize
-        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
+        if: steps.pr.outcome == 'success' && github.event.action == 'synchronize'
         id: pr_synchronize
         run: |
           echo "${JSON}" || true
       - name: Pull Request merged
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        if: steps.pr.outcome == 'success' && github.event.pull_request.merged == true
         id: pr_merged
         run: |
           echo "${JSON}" || true
       - name: Pull Request closed
-        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        if: steps.pr.outcome == 'success' && github.event.action == 'closed'
         id: pr_closed
         run: |
           echo "${JSON}" || true
@@ -256,6 +262,7 @@ jobs:
           fetch-depth: ${{ inputs.checkout_fetch_depth }}
           submodules: recursive
           token: ${{ secrets.FLOWZONE_TOKEN }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
       - name: Convert balena_slugs to a JSON array
         id: balena_slugs
         uses: kanga333/json-array-builder@v0.2.1
@@ -600,6 +607,7 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           token: ${{ secrets.FLOWZONE_TOKEN }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
       - name: Reject merge commits
         run: |
           if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep '^parent ' | wc -l)" -gt 1 ]
@@ -608,7 +616,7 @@ jobs:
             exit 1
           fi
       - name: Import GPG key for signing commits
-        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@v5.2.0
         with:
@@ -618,11 +626,11 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
       - name: Install versionist
-        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         run: |
           npm install -g balena-versionist@0.14.11 versionist@6.9.0
       - name: Generate changelog
-        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
           then
@@ -638,13 +646,13 @@ jobs:
       - name: Get latest tag for current branch
         continue-on-error: true
         id: old_version
-        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         run: |
           tag="$(git tag --list --sort=-version:refname "v*.*.*" --merged | head -n1)"
           echo "semver=${tag/v/}" >> $GITHUB_OUTPUT
           echo "tag=${tag}" >> $GITHUB_OUTPUT
       - name: Run versionist
-        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         run: |
           balena-versionist
       - name: Git describe
@@ -652,7 +660,7 @@ jobs:
         run: echo "tag=$(git describe --tags --always --dirty)" >> $GITHUB_OUTPUT
       - name: Inspect versioned files
         id: new_version
-        if: inputs.disable_versioning != true && github.event_name == 'pull_request'
+        if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         run: |
           git status --porcelain
           versions=()
@@ -1452,11 +1460,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - project_types
       - versioned_source
     if: |
       !failure() && !cancelled() &&
-        github.event_name == 'pull_request' &&
+        needs.event_types.outputs.pr == 'true' &&
         github.event.pull_request.merged == false &&
         github.event.action == 'closed'
     defaults:
