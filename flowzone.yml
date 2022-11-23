@@ -1477,7 +1477,9 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
-      - *downloadSourceArtifact
+      - <<: *downloadSourceArtifact
+        name: Renaming the step
+
       - *extractSourceArtifact
 
       - name: Delete draft release
