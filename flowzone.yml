@@ -1019,7 +1019,7 @@ jobs:
     name: Test docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [project_types, versioned_source, npm_test, custom_test]
+    needs: [project_types, versioned_source]
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&

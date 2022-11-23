@@ -880,8 +880,6 @@ jobs:
     needs:
       - project_types
       - versioned_source
-      - npm_test
-      - custom_test
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
