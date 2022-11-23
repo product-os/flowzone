@@ -22,3 +22,11 @@ runs:
         echo "${INPUTS}"
         echo "${SECRETS}"
         echo "${GITHUB}"
+
+    # Test publishing release artifacts to github
+    - name: Upload generated flowzone.yml
+      uses: actions/upload-artifact@v3
+      with:
+        name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+        path: .github/workflows/flowzone.yml
+        retention-days: 1
