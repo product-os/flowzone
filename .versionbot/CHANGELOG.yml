@@ -1,4 +1,44 @@
 - commits:
+    - subject: Rename tag {branch} to build-{branch} for draft docker images
+      hash: 1f2469f2303f3bb399f5c4ddc709d98eef0e7928
+      body: |
+        This aligns with balenaCI and prevents weirdness if a branch is named
+        in a way that looks like semver.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Run docker tests in parallel with npm and custom tests
+      hash: ef2eb0b733390f9133578ef229059a83e9451855
+      body: |
+        It was initially serialized to prevent publishing docker
+        images when npm and custom tests haven't completed, but this
+        ended up increasing the overall test time.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Clone source during docker finalize for DockerHub description
+      hash: 454427ebcc6cb8dea5ac219811a19c179f35709b
+      body: |
+        This step is failing because the README was not found.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.39.5
+  title: ""
+  date: 2022-11-23T02:31:47.929Z
+- commits:
     - subject: Update import-gpg action to v5.2.0
       hash: 6a286489397dac312bef8d9ae65c86dd2ded7d3d
       body: ""
