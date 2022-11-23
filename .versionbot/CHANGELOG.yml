@@ -1,4 +1,27 @@
 - commits:
+    - subject: Use merge source when creating github release notes
+      hash: c7e5fa15167afa33ef872af91a6752c7069a0413
+      body: >
+        The `github_finalize` job was trying to use the original source of the PR
+
+        for creating the release notes. This required the source artifact to
+
+        exist at the moment of merge which is not always true as merge can
+
+        happen at any point after creating the PR. This changes the job to use
+
+        the latest source but exclude the last two commits (merge and version)
+
+        from the release notes.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 0.39.6
+  title: ""
+  date: 2022-11-23T21:18:34.003Z
+- commits:
     - subject: Rename tag {branch} to build-{branch} for draft docker images
       hash: 1f2469f2303f3bb399f5c4ddc709d98eef0e7928
       body: |
