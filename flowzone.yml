@@ -1518,9 +1518,11 @@ jobs:
           set -ea
 
           artifact_count=0
-          [ -d "${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}" ] && \
-              artifact_count=$(ls "${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}" | wc -l | sed 's/^ *//;s/ *$//')
+          [ -d "$GH_ARTIFACTS" ] && \
+              artifact_count=$(ls "$GH_ARTIFACTS" | wc -l | sed 's/^ *//;s/ *$//')
           echo "count=$artifact_count" >> $GITHUB_OUTPUT
+        env:
+          GH_ARTIFACTS: ${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
 
       - name: Publish artifacts
         if: steps.gh_artifacts.outputs.count != '0'
@@ -1547,31 +1549,18 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
-      # https://github.com/dawidd6/action-download-artifact
-      # TODO: what if this is a tag event and PR artifacts do not exist?
-      # We want to use the source artifact from the PR instead of the merge
-      # action so the release notes don't include the merge commit
-      - name: Download source artifact from PR
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          github_token: ${{ secrets.FLOWZONE_TOKEN }}
-          commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-          workflow_conclusion: success
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-
+      - *downloadSourceArtifact
       - *extractSourceArtifact
 
       # https://docs.github.com/en/rest/releases
       - name: Finalize GitHub release (if any)
         if: needs.versioned_source.outputs.version != ''
-        shell: bash
         run: |
           set -ea
           # prevent git from existing with 141
           set +o pipefail
           previous_tag="$(git tag --sort=-version:refname | head -n 2 | tail -n 1)"
-          release_notes="$(git log ${previous_tag}..HEAD --pretty=reference)"
+          release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
 
           if gh release view '${{ github.event.pull_request.head.ref }}'; then
             gh release edit '${{ github.event.pull_request.head.ref }}' \
