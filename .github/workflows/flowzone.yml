@@ -158,7 +158,6 @@ concurrency:
   cancel-in-progress: true
 env:
   GHCR_USER: flowzone
-  GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
   NPM_REGISTRY: registry.npmjs.org
   CARGO_REGISTRY: crates.io
 jobs:
@@ -908,7 +907,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ env.GHCR_USER }}
-          password: ${{ env.GHCR_TOKEN }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
       - name: Login to Docker Hub
         continue-on-error: true
         uses: docker/login-action@v2
@@ -1045,7 +1044,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ env.GHCR_USER }}
-          password: ${{ env.GHCR_TOKEN }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
       - name: Login to Docker Hub
         continue-on-error: true
         uses: docker/login-action@v2
