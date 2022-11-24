@@ -1046,22 +1046,6 @@ jobs:
           - 5000:5000
 
     steps:
-      - name: Login to GitHub Container Registry
-        continue-on-error: true
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
-
-      - name: Login to Docker Hub
-        continue-on-error: true
-        uses: docker/login-action@v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-
       - *downloadSourceArtifact
       - *extractSourceArtifact
 
@@ -1160,6 +1144,22 @@ jobs:
         if: join(fromJSON(needs.project_types.outputs.docker_images)) != '' && steps.compose_test.result == 'skipped'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
 
+      - name: Login to GitHub Container Registry
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USER }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
+
+      - name: Login to Docker Hub
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+
       - name: Publish draft tags
         if: join(fromJSON(needs.project_types.outputs.docker_images)) != ''
         uses: akhilerm/tag-push-action@v2.0.0
@@ -1191,22 +1191,6 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
-
-      - name: Login to GitHub Container Registry
-        continue-on-error: true
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
-
-      - name: Login to Docker Hub
-        continue-on-error: true
-        uses: docker/login-action@v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
       - name: Set env vars
         run: |
@@ -1248,6 +1232,22 @@ jobs:
           flavor: |
             latest=auto
             prefix=${{ env.PREFIX }},onlatest=true
+
+      - name: Login to GitHub Container Registry
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USER }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
+
+      - name: Login to Docker Hub
+        continue-on-error: true
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
 
       # only one of the destination lines should have values based on the meta restrictions above
       - name: Publish final tags
