@@ -1,4 +1,20 @@
 - commits:
+    - subject: Only login to docker registries immediately before pushing
+      hash: 35e5beb658a7b69c2d8e945f016b96b2b1c52d6f
+      body: |
+        This prevents docker credentials from leaking into arbitrary test
+        code.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.39.9
+  title: ""
+  date: 2022-11-24T20:20:59.219Z
+- commits:
     - subject: Remove the global GHCR_TOKEN env var as it contains secrets
       hash: 93c0b563bc6601b38108b018f26be55126f522b0
       body: ""
