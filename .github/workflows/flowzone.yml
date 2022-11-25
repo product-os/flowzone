@@ -718,7 +718,8 @@ jobs:
           echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
           echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
-      - name: Login to registry
+      - name: Login to registry for private dependencies
+        if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
           if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
             echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
