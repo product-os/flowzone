@@ -1,4 +1,23 @@
 - commits:
+    - subject: Avoid leaking npm secrets during npm tests
+      hash: 47438963c8050d96e0261602afbea81215b59472
+      body: |
+        Do not login to the npm registry if the pull request is
+        an external contribution.
+
+        The npm scripts like preinstall and test are considered
+        arbitrary code and cannot be trusted with secrets in the environment.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.39.11
+  title: ""
+  date: 2022-11-25T17:51:24.483Z
+- commits:
     - subject: Add build- prefix to npm branch tags to avoid matching semver
       hash: 13033af54340f9c2181cc35e26e02c515ba567b5
       body: ""
