@@ -138,6 +138,11 @@ on:
         type: string
         required: false
         default: ""
+      restrict_custom_actions:
+        description: Do not execute custom actions for external contributors. Only remove this restriction if custom actions have been vetted as secure.
+        type: boolean
+        required: false
+        default: true
       custom_test_matrix:
         description: Comma-delimited string of values that will be passed to the custom test action
         type: string
@@ -500,7 +505,8 @@ jobs:
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
-      - name: Check for custom jobs
+      - name: Check for custom actions
+        if: github.event.pull_request.head.repo.full_name == github.repository || inputs.restrict_custom_actions == false
         id: custom
         working-directory: .
         run: |
