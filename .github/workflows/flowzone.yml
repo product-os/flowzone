@@ -709,7 +709,7 @@ jobs:
         run: |
           package="$(jq -r '.name' package.json)"
           version="$(jq -r '.version' package.json)"
-          branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          branch_tag="$(echo 'build-${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
