@@ -1126,7 +1126,7 @@ jobs:
             ${{ steps.meta1.outputs.tags }}
             ${{ steps.meta2.outputs.tags }}
       - name: Update DockerHub Description
-        if: startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.')
+        if: (startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.')) && github.base_ref == github.event.repository.default_branch
         continue-on-error: true
         uses: peter-evans/dockerhub-description@v3
         with:

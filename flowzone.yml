@@ -1298,7 +1298,7 @@ jobs:
       # if the image name host is docker.io or it does not have a host prefix (indicated by presence of '.')
       # then attempt to update the dockerhub description, but do not abort on failure
       - name: Update DockerHub Description
-        if: startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.')
+        if: (startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.')) && github.base_ref == github.event.repository.default_branch
         continue-on-error: true
         uses: peter-evans/dockerhub-description@v3
         with:
