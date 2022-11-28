@@ -192,7 +192,7 @@ An example of multiple bake targets can be found here: <https://github.com/balen
 
 If a `balena.yml` file is found in the root of the repository Flowzone will attempt to push draft releases to your fleet's slug(s) and finalize on merge.
 
-This will **require** your organization or your repository to have an API key secret named as `BALENA_API_KEY` set in GitHub. If you intend to set an org level secret then make sure the API key is valid for all repositories in that organization. A repository level secret will override an organization level secret. This API key will be used to login into balena and push draft releases to your fleet. 
+This will **require** either your organization or your repository to have a balenaCloud API key set as a secret named `BALENA_API_KEY`. If you intend to set the secret at the org level then make sure that the API key is valid for all repositories in that organization. A repository-level secret will override an organization-level secret. This API key will be used to login into balena-cli and push draft releases to your fleet in balenaCloud.  
 
 To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
 
