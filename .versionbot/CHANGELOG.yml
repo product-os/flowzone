@@ -1,4 +1,16 @@
 - commits:
+    - subject: "patch: Document need for balena publish/finalize API secret"
+      hash: 9f1ba61cb8be4afefafbd1ebb4fbb4d2312e4296
+      body: ""
+      footer:
+        Signed-off-by: Vipul Gupta (@vipulgupta2048) <vipul@balena.io>
+        signed-off-by: Vipul Gupta (@vipulgupta2048) <vipul@balena.io>
+      author: Vipul Gupta (@vipulgupta2048)
+      nested: []
+  version: 0.39.12
+  title: ""
+  date: 2022-11-28T08:35:52.928Z
+- commits:
     - subject: Avoid leaking npm secrets during npm tests
       hash: 47438963c8050d96e0261602afbea81215b59472
       body: |
