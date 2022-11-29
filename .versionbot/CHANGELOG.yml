@@ -1,4 +1,27 @@
 - commits:
+    - subject: Add security checks for external contributors
+      hash: 0bec46b5f6d15d164ecbf0ee6057283bd9d83f20
+      body: >
+        Since the COMPOSE_VARS secret is injected into the environment before
+        running compose
+
+        tests we cannot allow it to be used with external contributions.
+
+
+        Similarly, modifications to workflow files are considered trusted code and
+
+        not enabled for external contributions.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.39.14
+  title: ""
+  date: 2022-11-29T12:55:02.150Z
+- commits:
     - subject: Skip custom actions for external contributions by default
       hash: d9495823be378260538a9681a5e106685cfbc56b
       body: |
