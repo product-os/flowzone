@@ -1697,16 +1697,16 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-          components: rustfmt, clippy
+          components: rustfmt
 
       - name: Check formatting
         run: cargo fmt --check
 
-      - name: Lint with clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
       - name: Install cross
         run: cargo install cross
+
+      - name: Lint with clippy
+        run: cross clippy --all-targets --all-features -- -D warnings
 
       - name: Run tests for toolchain ${{ matrix.target }}
         run: cross test --target ${{ matrix.target }}
