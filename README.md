@@ -8,7 +8,9 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 
 - [Getting Started](#getting-started)
 - [Usage](#usage)
-  - [Commit Message Commands](#commit-message-commands)
+  - [Merging](#merging)
+  - [External Contributions](#external-contributions)
+  - [Commit Message](#commit-message)
     - [Skipping Workflow Runs](#skipping-workflow-runs)
 - [Supported project types](#supported-project-types)
   - [npm](#npm)
@@ -78,14 +80,21 @@ name: Flowzone
 on:
   pull_request:
     types: [opened, synchronize, closed]
-    branches:
-      - "main"
-      - "master"
+    branches: [main, master]
+  # allow external contributions to use secrets within trusted code
+  pull_request_target:
+    types: [opened, synchronize, closed]
+    branches: [main, master]
 
 jobs:
   flowzone:
     name: Flowzone
     uses: product-os/flowzone/.github/workflows/flowzone.yml@master
+    # prevent duplicate workflows and only allow one `pull_request` or `pull_request_target` for
+    # internal or external contributions respectively
+    if: |
+      (github.event.pull_request.head.repo.full_name == github.repository && github.event_name == 'pull_request') ||
+      (github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request_target')
     secrets:
       FLOWZONE_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -107,14 +116,21 @@ name: Flowzone
 on:
   pull_request:
     types: [opened, synchronize, closed]
-    branches:
-      - "main"
-      - "master"
+    branches: [main, master]
+  # allow external contributions to use secrets within trusted code
+  pull_request_target:
+    types: [opened, synchronize, closed]
+    branches: [main, master]
 
 jobs:
   flowzone:
     name: Flowzone
     uses: product-os/flowzone/.github/workflows/flowzone.yml@master
+    # prevent duplicate workflows and only allow one `pull_request` or `pull_request_target` for
+    # internal or external contributions respectively
+    if: |
+      (github.event.pull_request.head.repo.full_name == github.repository && github.event_name == 'pull_request') ||
+      (github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request_target')
     secrets: inherit
 ```
 
@@ -128,6 +144,18 @@ Avoid using **Squash and merge** or **Rebase and merge** as these methods will r
 This would prevent Flowzone from finding and finalizing existing draft artifacts.
 
 You can read more about the available merge methods [here](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/about-merge-methods-on-github).
+
+### External Contributions
+
+Flowzone supports external contributions (ie. PRs from forks) to your repository by using [`pull_request_target`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) events in addition to `pull_request`. This allows access to secrets normally available to members of the organization or the repository.
+
+To mitigate the risk of secrets being exposed by malicious pull requests, we have taken the following steps in the Flowzone workflow.
+
+- Trusted code includes the Flowzone workflow itself and cannot be modified by pull requests.
+- Untrusted or arbitrary code can be called by Flowzone (eg. npm scripts) but does not expose any secrets in the environment at these points.
+- Custom actions are disabled for external contributors by default and can be [enabled](#restrict_custom_actions) after the custom action has been vetted to not leak secrets to untrusted code.
+
+See the [usage examples](#usage) to get started and allow external contributions to your repo.
 
 ### Commit Message
 
