@@ -49,6 +49,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`protect_branch`](#protect_branch)
     - [`disable_versioning`](#disable_versioning)
     - [`required_approving_review_count`](#required_approving_review_count)
+    - [`restrict_custom_actions`](#restrict_custom_actions)
     - [`custom_test_matrix`](#custom_test_matrix)
     - [`custom_publish_matrix`](#custom_publish_matrix)
     - [`custom_finalize_matrix`](#custom_finalize_matrix)
@@ -455,6 +456,14 @@ Setting this value to zero effectively means merge==deploy without approval(s).
 Type: _string_
 
 Default: `''`
+
+#### `restrict_custom_actions`
+
+Do not execute custom actions for external contributors. Only remove this restriction if custom actions have been vetted as secure.
+
+Type: _boolean_
+
+Default: `true`
 
 #### `custom_test_matrix`
 
