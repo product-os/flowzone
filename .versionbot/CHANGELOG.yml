@@ -1,4 +1,20 @@
 - commits:
+    - subject: Skip custom actions for external contributions by default
+      hash: d9495823be378260538a9681a5e106685cfbc56b
+      body: |
+        This toggle can be changed via an input after the custom actions
+        have been vetted for security and cannot leak secrets.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.39.13
+  title: ""
+  date: 2022-11-29T01:14:03.307Z
+- commits:
     - subject: "patch: Document need for balena publish/finalize API secret"
       hash: 9f1ba61cb8be4afefafbd1ebb4fbb4d2312e4296
       body: ""
