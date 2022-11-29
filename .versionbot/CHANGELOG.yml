@@ -1,4 +1,18 @@
 - commits:
+    - subject: Only update dockerhub description on PRs to default branch
+      hash: 1b48666e1f92dfbbe74f1af5b34d643ce39f8d7f
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.39.15
+  title: ""
+  date: 2022-11-29T16:02:23.723Z
+- commits:
     - subject: Add security checks for external contributors
       hash: 0bec46b5f6d15d164ecbf0ee6057283bd9d83f20
       body: >
