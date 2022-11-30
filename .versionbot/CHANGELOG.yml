@@ -1,4 +1,62 @@
 - commits:
+    - subject: Use merge_commit_sha to checkout PR sources
+      hash: 0ef2b3a16dafa532a078b7b4562c757ef59dec56
+      body: |
+        Using the direct link to refs/pull does not work for merged PRs.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: For PR events we need the merged source
+      hash: caaa1a1ff77134c8d0326078c24b09ce208cf4cb
+      body: |
+        Otherwise we will fail to push the versioned commits to master.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Update documentation to outline external contributions
+      hash: 7d778c70068882066337fc9563a88a089a03e9d9
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Enable external contributions
+      hash: 0864107588bf7ba428e2323b68b92141c5dde372
+      body: >
+        The test workflow will identify whether the PR is from a fork or not
+
+        and we conditionally run either `pull_request` or `pull_request_target`
+
+        events and skip the other to avoid duplicate workflows.
+
+
+        Modifications to workflow files will be ignored for `pull_request_target`
+
+        events by GitHub so we just need to make sure we aren't sharing secrets
+
+        to arbitrary code.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.40.0
+  title: ""
+  date: 2022-11-30T15:57:50.991Z
+- commits:
     - subject: Only update dockerhub description on PRs to default branch
       hash: 1b48666e1f92dfbbe74f1af5b34d643ce39f8d7f
       body: ""
