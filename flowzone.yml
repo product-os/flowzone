@@ -696,6 +696,9 @@ jobs:
       new_tag: ${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
       version: ${{ steps.new_version.outputs.semver }}
 
+    env:
+      merge_ref: "refs/pull/${{ github.event.number }}/merge"
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
@@ -703,7 +706,9 @@ jobs:
           fetch-depth: 0
           submodules: "recursive"
           token: ${{ secrets.FLOWZONE_TOKEN }}
-          ref: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          # we need the merge commit in the checkout in order to push versioned changes
+          # otherwise our branch appears to be behind upstream
+          ref: ${{ github.event.head_commit.id || env.merge_ref }}
 
       # fail on merge commits (ones with more than one parent)
       - name: Reject merge commits
