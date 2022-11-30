@@ -1,4 +1,21 @@
 - commits:
+    - subject: Avoid failing Flowzone internal tests when COMPOSE_VARS is unset
+      hash: f0cf74aa51f0843d2175a68d950ae13e7fceb00f
+      body: |
+        We block external contributors when this secret is set so in order
+        to allow contributions to flowzone itself we need to remove the secret
+        and avoid failing the docker compose tests.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.40.2
+  title: ""
+  date: 2022-11-30T20:25:43.443Z
+- commits:
     - subject: Run clippy using cross for rust targets
       hash: caad4a59ee9542531089334cc11ed9ac4548e299
       body: >
