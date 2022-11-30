@@ -97,7 +97,7 @@ on:
         description: Comma-delimited string of Rust stable targets to publish (skipped if empty)
         type: string
         required: false
-        default: aarch64-unknown-linux-gnu, armv7-unknown-linux-gnueabi, arm-unknown-linux-gnueabihf, x86_64-unknown-linux-gnu, i686-unknown-linux-gnu
+        default: aarch64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf, arm-unknown-linux-gnueabihf, x86_64-unknown-linux-gnu, i686-unknown-linux-gnu
       rust_binaries:
         description: Set to true to publish Rust binary release artifacts to GitHub
         type: boolean
@@ -1526,13 +1526,13 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-          components: rustfmt, clippy
+          components: rustfmt
       - name: Check formatting
         run: cargo fmt --check
-      - name: Lint with clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Install cross
         run: cargo install cross
+      - name: Lint with clippy
+        run: cross clippy --all-targets --all-features -- -D warnings
       - name: Run tests for toolchain ${{ matrix.target }}
         run: cross test --target ${{ matrix.target }}
       - name: Generate metadata
