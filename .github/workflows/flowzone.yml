@@ -262,7 +262,7 @@ jobs:
           fetch-depth: ${{ inputs.checkout_fetch_depth }}
           submodules: recursive
           token: ${{ secrets.FLOWZONE_TOKEN }}
-          ref: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          ref: ${{ github.event.pull_request.head.merge_commit_sha || github.event.head_commit.id }}
       - name: Convert balena_slugs to a JSON array
         id: balena_slugs
         uses: kanga333/json-array-builder@v0.2.1
@@ -600,8 +600,6 @@ jobs:
     outputs:
       new_tag: ${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
       version: ${{ steps.new_version.outputs.semver }}
-    env:
-      merge_ref: refs/pull/${{ github.event.number }}/merge
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
@@ -609,7 +607,7 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           token: ${{ secrets.FLOWZONE_TOKEN }}
-          ref: ${{ github.event.head_commit.id || env.merge_ref }}
+          ref: ${{ github.event.pull_request.head.merge_commit_sha || github.event.head_commit.id }}
       - name: Reject merge commits
         run: |
           if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep '^parent ' | wc -l)" -gt 1 ]
