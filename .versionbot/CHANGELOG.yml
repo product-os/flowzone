@@ -1,4 +1,26 @@
 - commits:
+    - subject: Run clippy using cross for rust targets
+      hash: caad4a59ee9542531089334cc11ed9ac4548e299
+      body: >
+        Clippy needs to install repository dependencies before running. These
+
+        dependencies may sometimes require external packages, which are provided
+
+        by `cross` [pre-build hook](https://github.com/cross-rs/cross#pre-build-hook) feature.
+
+
+        This PR changes the rust steps order so clippy is run using cross
+
+        instead of default cargo.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 0.40.1
+  title: ""
+  date: 2022-11-30T16:14:30.315Z
+- commits:
     - subject: Use merge_commit_sha to checkout PR sources
       hash: 0ef2b3a16dafa532a078b7b4562c757ef59dec56
       body: |
