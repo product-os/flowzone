@@ -208,6 +208,9 @@ Typically, the `sut` container will execute your e2e or integration tests and wi
 If you need to provide environment variables to the compose environment you can add a repository secret called [`COMPOSE_VARS`](#compose_vars) that should be a base64 encoded `.env` file.
 This will be decoded and written to a `.env` file inside the test worker at runtime.
 
+> **WARNING**: The `COMPOSE_VARS` secret is not well protected from leaking and we recommend alternate methods where possible.
+> See <https://github.com/product-os/flowzone/issues/236>.
+
 To enable publishing of Docker artifacts set the [`docker_images`](#docker_images) input to correct value of docker image repositories without tags - eg `ghcr.io/product-os/flowzone`.
 
 For advanced Docker build options, including multi-arch, add one or more [Docker bake files](https://docs.docker.com/build/customize/bake/file-definition/) to your project.
@@ -365,6 +368,9 @@ Publishing to a cargo registry will be skipped if the token is empty.
 #### `COMPOSE_VARS`
 
 Optional base64 encoded docker-compose `.env` file for testing [Docker](#docker) projects.
+
+> **WARNING**: The `COMPOSE_VARS` secret is not well protected from leaking and we recommend alternate methods where possible.
+> See <https://github.com/product-os/flowzone/issues/236>.
 
 #### `CUSTOM_JOB_SECRET_1`
 
