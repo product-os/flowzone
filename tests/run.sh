@@ -5,8 +5,6 @@
 # was instantiated correctly
 if [ -z "${REPO_SECRET}" ]; then
 	echo "REPO_SECRET is not set"
-	exit 1
 else
 	echo "value ${REPO_SECRET} found"
-	exit 0
 fi
