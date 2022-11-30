@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix refence to merge_commit_sha that was returning empty
+      hash: 3b8c77c46678b68ced491b64111de153a8b72641
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.40.3
+  title: ""
+  date: 2022-11-30T21:01:06.751Z
+- commits:
     - subject: Avoid failing Flowzone internal tests when COMPOSE_VARS is unset
       hash: f0cf74aa51f0843d2175a68d950ae13e7fceb00f
       body: |
