@@ -51,10 +51,12 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`protect_branch`](#protect_branch)
     - [`disable_versioning`](#disable_versioning)
     - [`required_approving_review_count`](#required_approving_review_count)
+    - [`github_prerelease`](#github_prerelease)
     - [`restrict_custom_actions`](#restrict_custom_actions)
     - [`custom_test_matrix`](#custom_test_matrix)
     - [`custom_publish_matrix`](#custom_publish_matrix)
     - [`custom_finalize_matrix`](#custom_finalize_matrix)
+
 - [Maintenance](#maintenance)
   - [Generate GPG keys](#generate-gpg-keys)
 - [Help](#help)
@@ -224,7 +226,7 @@ An example of multiple bake targets can be found here: <https://github.com/balen
 
 If a `balena.yml` file is found in the root of the repository Flowzone will attempt to push draft releases to your fleet's slug(s) and finalize on merge.
 
-This will **require** either your organization or your repository to have a balenaCloud API key set as a secret named `BALENA_API_KEY`. If you intend to set the secret at the org level then make sure that the API key is valid for all repositories in that organization. A repository-level secret will override an organization-level secret. This API key will be used to login into balena-cli and push draft releases to your fleet in balenaCloud.  
+This will **require** either your organization or your repository to have a balenaCloud API key set as a secret named `BALENA_API_KEY`. If you intend to set the secret at the org level then make sure that the API key is valid for all repositories in that organization. A repository-level secret will override an organization-level secret. This API key will be used to login into balena-cli and push draft releases to your fleet in balenaCloud.
 
 To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
 
@@ -492,6 +494,14 @@ Setting this value to zero effectively means merge==deploy without approval(s).
 Type: _string_
 
 Default: `''`
+
+#### `github_prerelease`
+
+Make GitHub release final on merge.
+
+Type: _boolean_
+
+Default: `false`
 
 #### `restrict_custom_actions`
 
