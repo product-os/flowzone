@@ -1480,7 +1480,12 @@ jobs:
   website_build:
     name: Build website using Docusaurus
     runs-on: ${{fromJSON(inputs.runs_on)}}
-    needs: [project_types, versioned_source]
+    env:
+     CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
+    needs:
+      - project_types
+      - versioned_source
+      - event_types
     if: |
       needs.project_types.outputs.has_readme == 'true' &&
       inputs.cloudflare_website != ''
@@ -1497,12 +1502,16 @@ jobs:
           org: ${{ github.repository_owner }}
           default_branch: ${{ github.event.repository.default_branch }}
           url: https://${{ inputs.cloudflare_website }}.pages.dev
+      - name: Update deploy branch for merged PRs
+        if: needs.event_types.outputs.pr_merged == 'true'
+        run: |
+            echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
       - name: Cloudflare Pages
         uses: cloudflare/wrangler-action@2.0.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: pages publish --project-name=${{ inputs.cloudflare_website }} build/ >> $GITHUB_STEP_SUMMARY
+          command: pages publish --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ >> $GITHUB_STEP_SUMMARY
   ###################################################
   # GitHub
   ###################################################
