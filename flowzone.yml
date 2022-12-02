@@ -754,7 +754,7 @@ jobs:
       - name: Install versionist
         if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         run: |
-          npm install -g balena-versionist@0.14.11 versionist@6.9.0
+          npm install -g balena-versionist@0.14.12 versionist@6.9.2
 
       - name: Generate changelog
         if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
