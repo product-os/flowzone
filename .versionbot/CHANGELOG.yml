@@ -1,4 +1,20 @@
 - commits:
+    - subject: Remove the checkout ref until it can be fixed properly
+      hash: 8b33bee541e7f973bd772b671f6c49df407e07b7
+      body: |
+        This will break external contributions but will
+        unblock internal tasks.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.40.6
+  title: ""
+  date: 2022-12-02T14:06:59.565Z
+- commits:
     - subject: Send branch to cloudflare so merge to master deploys to prod
       hash: e3f2ad208d47a80a53bd02e8a703e4b3f0948170
       body: ""
