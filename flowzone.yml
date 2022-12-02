@@ -302,10 +302,24 @@ jobs:
       custom_always: ${{ steps.custom.outputs.always }}
 
     steps:
-      - name: Checkout source
+      # for pull_request_target events that are not closed we need to specify the merge branch manually
+      # because the default checkout ref is the tip of the main/master branch
+      - name: Checkout merge branch
+        if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
+        id: checkout_merge
         uses: actions/checkout@v3
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 0
+          submodules: "recursive"
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+          ref: "refs/pull/${{ github.event.number }}/merge"
+
+      # otherwise use the default checkout behaviour
+      - name: Checkout sha
+        if: steps.checkout_merge.outcome == 'skipped'
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
           submodules: "recursive"
           token: ${{ secrets.FLOWZONE_TOKEN }}
 
@@ -696,7 +710,21 @@ jobs:
       version: ${{ steps.new_version.outputs.semver }}
 
     steps:
-      - name: Checkout source
+      # for pull_request_target events that are not closed we need to specify the merge branch manually
+      # because the default checkout ref is the tip of the main/master branch
+      - name: Checkout merge branch
+        if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
+        id: checkout_merge
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: "recursive"
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+          ref: "refs/pull/${{ github.event.number }}/merge"
+
+      # otherwise use the default checkout behaviour
+      - name: Checkout sha
+        if: steps.checkout_merge.outcome == 'skipped'
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
