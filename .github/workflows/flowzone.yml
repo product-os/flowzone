@@ -256,10 +256,20 @@ jobs:
       custom_clean: ${{ steps.custom.outputs.clean }}
       custom_always: ${{ steps.custom.outputs.always }}
     steps:
-      - name: Checkout source
+      - name: Checkout merge branch
+        if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
+        id: checkout_merge
         uses: actions/checkout@v3
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+          ref: refs/pull/${{ github.event.number }}/merge
+      - name: Checkout sha
+        if: steps.checkout_merge.outcome == 'skipped'
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
           submodules: recursive
           token: ${{ secrets.FLOWZONE_TOKEN }}
       - name: Convert balena_slugs to a JSON array
@@ -600,7 +610,17 @@ jobs:
       new_tag: ${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
       version: ${{ steps.new_version.outputs.semver }}
     steps:
-      - name: Checkout source
+      - name: Checkout merge branch
+        if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
+        id: checkout_merge
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+          ref: refs/pull/${{ github.event.number }}/merge
+      - name: Checkout sha
+        if: steps.checkout_merge.outcome == 'skipped'
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
