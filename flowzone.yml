@@ -308,7 +308,6 @@ jobs:
           fetch-depth: ${{ inputs.checkout_fetch_depth }}
           submodules: "recursive"
           token: ${{ secrets.FLOWZONE_TOKEN }}
-          ref: ${{ github.event.pull_request.merge_commit_sha || github.event.head_commit.id }}
 
       - name: Convert balena_slugs to a JSON array
         id: balena_slugs
@@ -703,9 +702,6 @@ jobs:
           fetch-depth: 0
           submodules: "recursive"
           token: ${{ secrets.FLOWZONE_TOKEN }}
-          # we need the merge commit in the checkout in order to push versioned changes
-          # otherwise our branch appears to be behind upstream
-          ref: ${{ github.event.pull_request.merge_commit_sha || github.event.head_commit.id }}
 
       # fail on merge commits (ones with more than one parent)
       - name: Reject merge commits
