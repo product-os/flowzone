@@ -1739,10 +1739,10 @@ jobs:
         run: cargo install cross
 
       - name: Lint with clippy
-        run: cross clippy --all-targets --all-features -- -D warnings
+        run: cross -v clippy --all-targets --all-features -- -D warnings
 
       - name: Run tests for toolchain ${{ matrix.target }}
-        run: cross test --target ${{ matrix.target }}
+        run: cross -v test --target ${{ matrix.target }}
 
       - name: Generate metadata
         id: meta
@@ -1798,7 +1798,7 @@ jobs:
         run: cargo install cross
 
       - name: Build release for toolchain ${{ matrix.target }}
-        run: cross build --release --target ${{ matrix.target }}
+        run: cross -v build --release --target ${{ matrix.target }}
 
       - name: Install LLVM
         run: sudo apt-get install -y llvm
