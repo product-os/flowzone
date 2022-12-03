@@ -1,4 +1,17 @@
 - commits:
+    - subject: Use verbose output in calls to `cross` command
+      hash: 3a6116cda3b22b977b6e19c9fd9b89ee1ac6afbb
+      body: |
+        This will help with better identification of problems during rust builds
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 0.40.8
+  title: ""
+  date: 2022-12-03T00:35:37.298Z
+- commits:
     - subject: Checkout the PR merge branch for pull_request_target events
       hash: ce8588f0a59cd59e5f68df0691d27df1bd6d151c
       body: ""
