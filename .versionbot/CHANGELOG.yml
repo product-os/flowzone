@@ -1,4 +1,26 @@
 - commits:
+    - subject: Allow GitHub pre-release(s)
+      hash: ec8de760fb869fb5ea514bc73425ae5b0a5aad2b
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: ab77
+      nested: []
+    - subject: Add a warning regarding COMPOSE_VARS secrets
+      hash: f60ab1bd592fc8cd1e00592f9976b0acdbc2f75c
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.40.10
+  title: ""
+  date: 2022-12-05T18:47:32.393Z
+- commits:
     - subject: "patch: Upgrade *versionist versions"
       hash: d3cdf175c5d22f61165c9c0c75925b4d2a1b0a68
       body: Contains critical improvements to unblock work.
