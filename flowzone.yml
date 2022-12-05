@@ -157,6 +157,11 @@ on:
         type: string
         required: false
         default: ""
+      github_prerelease:
+        description: "Finalise releases on merge."
+        type: boolean
+        required: false
+        default: false
       restrict_custom_actions:
         description: "Do not execute custom actions for external contributors. Only remove this restriction if custom actions have been vetted as secure."
         type: boolean
@@ -1647,13 +1652,16 @@ jobs:
               --notes "${release_notes}" \
               --title 'v${{ needs.versioned_source.outputs.version }}' \
               --tag 'v${{ needs.versioned_source.outputs.version }}' \
-              --prerelease=false \
+              --prerelease='${{ inputs.github_prerelease }}' \
               --draft=false
-            release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/v${{ needs.versioned_source.outputs.version }}" \
-              -H 'Accept: application/vnd.github+json' | jq -r .id)"
-            gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
-              -H 'Accept: application/vnd.github+json' \
-              -F make_latest="true"
+
+            if [[ ${{ inputs.github_prerelease }} =~ false ]]; then
+                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/v${{ needs.versioned_source.outputs.version }}" \
+                  -H 'Accept: application/vnd.github+json' | jq -r .id)"
+                gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
+                  -H 'Accept: application/vnd.github+json' \
+                  -F make_latest=true
+            fi
           else
             echo "No release found for the current PR"
           fi
