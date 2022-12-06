@@ -2269,9 +2269,25 @@ jobs:
     name: Standardise repository settngs
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: protect_branch
-    if: inputs.repo_config == true
-
+    needs:
+      [
+        balena_publish,
+        custom_publish,
+        custom_test,
+        python_test,
+        docker_test,
+        event_types,
+        npm_publish,
+        npm_test,
+        cargo_test,
+        cargo_publish,
+        github_publish,
+        project_types,
+        versioned_source,
+      ]
+    if: |
+      needs.event_types.outputs.do_final == 'true' &&
+      needs.repo_config == 'true'
     steps:
       - name: Configure repository
         run: |
