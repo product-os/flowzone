@@ -2272,7 +2272,7 @@ jobs:
     needs: [event_types]
     if: |
       needs.event_types.outputs.do_final == 'true' &&
-      needs.repo_config == 'true'
+      inputs.repo_config == 'true'
     steps:
       - name: Configure repository
         run: |
