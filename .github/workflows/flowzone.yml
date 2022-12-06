@@ -2093,7 +2093,7 @@ jobs:
 
           if [[ -n '${{ inputs.homepage }}' ]]; then
               homepage='--homepage ${{ inputs.homepage }}'
-          elif [[ -n ${{ inputs.cloudflare_website }} ]]; then
+          elif [[ -n '${{ inputs.cloudflare_website }}' ]]; then
               homepage='https://${{ inputs.cloudflare_website }}.pages.dev'
           else
               homepage=''
