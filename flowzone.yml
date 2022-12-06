@@ -2167,8 +2167,6 @@ jobs:
         run: |
           jsondata=${{ steps.get_protection_rules.outputs.result }}
 
-          is_org="$(echo '${{ toJSON(github) }}' | jq -r '.event | keys | any(. == "organization")')"
-
           required_status_checks__strict=$(echo $jsondata | jq ".required_status_checks.strict // true")
 
           # Filter all Flowzone or ResinCI checks
@@ -2230,7 +2228,7 @@ jobs:
           )
 
           # unsupported restrictions outside of Github organisations
-          if [[ $is_org =~ false ]]; then
+          if [[ -z '${{ github.event.organization }}' ]]; then
               newjson="$(echo "${newjson}" | jq -r 'del(.required_pull_request_reviews.dismissal_restrictions, .required_pull_request_reviews.bypass_pull_request_allowances)')"
           fi
 
@@ -2284,7 +2282,7 @@ jobs:
 
           description=''
           if [[ -n '${{ inputs.repo_description }}' ]]; then
-              description='--description ${{ inputs.repo_description }}'
+              description="--description '${{ inputs.repo_description }}'"
           fi
 
           if [[ -n '${{ inputs.homepage }}' ]]; then
