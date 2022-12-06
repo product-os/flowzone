@@ -2292,7 +2292,7 @@ jobs:
           description=''
           if [[ -n '${{ inputs.repo_description }}' ]]; then
               trimmed="$(trim '${{ inputs.repo_description }}')"
-              description="--description "${trimmed}""
+              description="--description \"${trimmed}\""
           fi
 
           if [[ -n '${{ inputs.homepage }}' ]]; then
