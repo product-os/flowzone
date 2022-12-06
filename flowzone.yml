@@ -2158,7 +2158,7 @@ jobs:
             # If there are no existing protections then use an empty object
             echo 'result={}' >> $GITHUB_OUTPUT
           else
-            echo ::error title={url}::"get_protection_rules failed with ${message} ${result} "
+            echo ::error::"get_protection_rules failed with ${message} ${result} "
             exit 1
           fi
       - name: Parse and prepare protection rules
@@ -2245,12 +2245,12 @@ jobs:
           message="$(echo "${result}" | jq -r .message)"
 
           if ! [[ $message =~ null ]]; then
-            echo ::error title={url}::"apply_branch_protection_rules failed with ${message} ${result} "
+            echo ::error::"apply_branch_protection_rules failed with ${message} ${result} "
             exit 1
           fi
 
           if [[ $(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count') -ne ${{ inputs.required_approving_review_count }} ]]; then
-            echo ::error title={url}::"branch protection required_pull_request_reviews.required_approving_review_count not set to ${{ inputs.required_approving_review_count }}"
+            echo ::error::"branch protection required_pull_request_reviews.required_approving_review_count not set to ${{ inputs.required_approving_review_count }}"
             exit 1
           fi
 
@@ -2296,17 +2296,22 @@ jobs:
           [[ -n "${homepage}" ]] && gh repo edit '${{ github.repository }}' \
             --homepage "${homepage}"
 
+          # HTTP 422: This organization does not allow private repository forking
+          if ! gh repo edit '${{ github.repository }}' \
+            --allow-forking=${{ inputs.repo_allow_forking }}; then
+              echo '::warning::Failed to configure some repository settings.'
+          fi
+
           gh repo edit '${{ github.repository }}' \
-            --allow-forking '${{ inputs.repo_allow_forking }}' \
-            --default-branch '${{ inputs.repo_default_branch }}' \
-            --delete-branch-on-merge '${{ inputs.repo_delete_branch_on_merge }}' \
-            --enable-auto-merge '${{ inputs.repo_enable_auto_merge }}' \
-            --enable-issues '${{ inputs.repo_enable_issues }}' \
-            --enable-merge-commit '${{ inputs.repo_enable_merge_commit }}' \
-            --enable-projects '${{ inputs.repo_enable_projects }}' \
-            --enable-rebase-merge '${{ inputs.repo_enable_rebase_merge }}' \
-            --enable-squash-merge '${{ inputs.repo_enable_squash_merge }}' \
-            --enable-wiki '${{ inputs.repo_enable_wiki }}'
+            --default-branch=${{ inputs.repo_default_branch }} \
+            --delete-branch-on-merge=${{ inputs.repo_delete_branch_on_merge }} \
+            --enable-auto-merge=${{ inputs.repo_enable_auto_merge }} \
+            --enable-issues=${{ inputs.repo_enable_issues }} \
+            --enable-merge-commit=${{ inputs.repo_enable_merge_commit }} \
+            --enable-projects=${{ inputs.repo_enable_projects }} \
+            --enable-rebase-merge=${{ inputs.repo_enable_rebase_merge }} \
+            --enable-squash-merge=${{ inputs.repo_enable_squash_merge }} \
+            --enable-wiki=${{ inputs.repo_enable_wiki }}
 
           # allow_update_branch not currently available for update via gh-cli
           gh api --method PATCH '/repos/${{ github.repository }}' \
