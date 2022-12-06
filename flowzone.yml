@@ -2291,8 +2291,8 @@ jobs:
           fi
 
           if [[ -n '${{ inputs.repo_description }}' ]]; then
-              gh repo edit '${{ github.repository }}' \
-                --description "$(trim '${{ inputs.repo_description }}')"
+              description="$(trim '${{ inputs.repo_description }}')"
+              gh repo edit '${{ github.repository }}' --description "${description}"
           fi
 
           if [[ -n '${{ inputs.homepage }}' ]]; then
