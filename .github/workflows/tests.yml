@@ -19,8 +19,7 @@ jobs:
     with:
       working_directory: ./tests
       repo_config: true
-      repo_description: |
-        Reusable, opinionated, zero-conf workflows for GitHub actions
+      repo_description: "Reusable, opinionated, zero-conf workflows for GitHub actions"
       docker_images: |
         ghcr.io/product-os/flowzone
       balena_slugs: |

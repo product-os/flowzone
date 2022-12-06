@@ -2274,15 +2274,6 @@ jobs:
     steps:
       - name: Configure repository
         run: |
-          trim() {
-              local var="$*"
-              # remove leading whitespace characters
-              var="${var#"${var%%[![:space:]]*}"}"
-              # remove trailing whitespace characters
-              var="${var%"${var##*[![:space:]]}"}"
-              printf '%s' "$var"
-          }
-
           # only change repository visibility if explicitly set to one of the permissible values
           visibility=''
           if [[ '${{ inputs.repo_visibility }}' =~ private|public|internal ]]; then
@@ -2291,8 +2282,8 @@ jobs:
           fi
 
           if [[ -n '${{ inputs.repo_description }}' ]]; then
-              description="$(trim '${{ inputs.repo_description }}')"
-              gh repo edit '${{ github.repository }}' --description "${description}"
+              gh repo edit '${{ github.repository }}' \
+                --description '${{ inputs.repo_description }}'
           fi
 
           if [[ -n '${{ inputs.homepage }}' ]]; then
