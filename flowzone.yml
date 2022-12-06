@@ -2286,22 +2286,24 @@ jobs:
           # only change repository visibility if explicitly set to one of the permissible values
           visibility=''
           if [[ '${{ inputs.repo_visibility }}' =~ private|public|internal ]]; then
-              visibility='--visibility ${{ inputs.repo_visibility }}'
+              gh repo edit '${{ github.repository }}' \
+                --visibility '${{ inputs.repo_visibility }}'
           fi
 
-          description=''
           if [[ -n '${{ inputs.repo_description }}' ]]; then
-              trimmed="$(trim '${{ inputs.repo_description }}')"
-              description="--description \"${trimmed}\""
+              gh repo edit '${{ github.repository }}' \
+                --description "$(trim '${{ inputs.repo_description }}')"
           fi
 
           if [[ -n '${{ inputs.homepage }}' ]]; then
-              homepage='--homepage ${{ inputs.homepage }}'
+              homepage='${{ inputs.homepage }}'
           elif [[ -n '${{ inputs.cloudflare_website }}' ]]; then
               homepage='https://${{ inputs.cloudflare_website }}.pages.dev'
           else
               homepage=''
           fi
+          [[ -n "${homepage}" ]] && gh repo edit '${{ github.repository }}' \
+            --homepage "${homepage}"
 
           gh repo edit '${{ github.repository }}' \
             --allow-forking '${{ inputs.repo_allow_forking }}' \
@@ -2313,10 +2315,7 @@ jobs:
             --enable-projects '${{ inputs.repo_enable_projects }}' \
             --enable-rebase-merge '${{ inputs.repo_enable_rebase_merge }}' \
             --enable-squash-merge '${{ inputs.repo_enable_squash_merge }}' \
-            --enable-wiki '${{ inputs.repo_enable_wiki }}' \
-            "${homepage}" \
-            "${visibility}" \
-            "${description}"
+            --enable-wiki '${{ inputs.repo_enable_wiki }}'
 
           # allow_update_branch not currently available for update via gh-cli
           gh api --method PATCH '/repos/${{ github.repository }}' \
