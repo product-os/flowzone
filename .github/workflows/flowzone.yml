@@ -2076,7 +2076,7 @@ jobs:
       - event_types
     if: |
       needs.event_types.outputs.do_final == 'true' &&
-      inputs.repo_config == 'true'
+      inputs.repo_config == true
     steps:
       - name: Configure repository
         run: |
