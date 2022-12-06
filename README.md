@@ -49,6 +49,21 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`cargo_targets`](#cargo_targets)
     - [`rust_binaries`](#rust_binaries)
     - [`protect_branch`](#protect_branch)
+    - [`repo_config`](#repo_config)
+    - [`repo_allow_forking`](#repo_allow_forking)
+    - [`repo_default_branch`](#repo_default_branch)
+    - [`repo_delete_branch_on_merge`](#repo_delete_branch_on_merge)
+    - [`repo_allow_update_branch`](#repo_allow_update_branch)
+    - [`repo_description`](#repo_description)
+    - [`repo_homepage`](#repo_homepage)
+    - [`repo_enable_auto_merge`](#repo_enable_auto_merge)
+    - [`repo_enable_issues`](#repo_enable_issues)
+    - [`repo_enable_merge_commit`](#repo_enable_merge_commit)
+    - [`repo_enable_projects`](#repo_enable_projects)
+    - [`repo_enable_rebase_merge`](#repo_enable_rebase_merge)
+    - [`repo_enable_squash_merge`](#repo_enable_squash_merge)
+    - [`repo_enable_wiki`](#repo_enable_wiki)
+    - [`repo_visibility`](#repo_visibility)
     - [`disable_versioning`](#disable_versioning)
     - [`required_approving_review_count`](#required_approving_review_count)
     - [`github_prerelease`](#github_prerelease)
@@ -478,6 +493,126 @@ Set to false to disable updating branch protection rules after a successful run.
 Type: _boolean_
 
 Default: `true`
+
+#### `repo_config`
+
+Set to true to standardise repository settings after a successful run.
+
+Type: _boolean_
+
+Default: `false`
+
+#### `repo_allow_forking`
+
+Allow forking of an organization repository.
+
+Type: _boolean_
+
+Default: `true`
+
+#### `repo_default_branch`
+
+Set the default branch name for the repository.
+
+Type: _string_
+
+Default: `master`
+
+#### `repo_delete_branch_on_merge`
+
+Delete head branch when pull requests are merged.
+
+Type: _boolean_
+
+Default: `true`
+
+#### `repo_allow_update_branch`
+
+Always suggest updating pull request branches.
+
+Type: _boolean_
+
+Default: `true`
+
+#### `repo_description`
+
+Description of the repository.
+
+Type: _string_
+
+Default: `''`
+
+#### `repo_homepage`
+
+Repository home page URL.
+
+Type: _string_
+
+Default: `''`
+
+#### `repo_enable_auto_merge`
+
+Enable auto-merge functionality.
+
+Type: _boolean_
+
+Default: `true`
+
+#### `repo_enable_issues`
+
+Enable issues in the repository.
+
+Type: _boolean_
+
+Default: `true`
+
+#### `repo_enable_merge_commit`
+
+Enable merging pull requests via merge commit.
+
+Type: _boolean_
+
+Default: `true`
+
+#### `repo_enable_projects`
+
+Enable projects in the repository.
+
+Type: _boolean_
+
+Default: `false`
+
+#### `repo_enable_rebase_merge`
+
+Enable merging pull requests via rebase.
+
+Type: _boolean_
+
+Default: `false`
+
+#### `repo_enable_squash_merge`
+
+Enable merging pull requests via squashed commit.
+
+Type: _boolean_
+
+Default: `false`
+
+#### `repo_enable_wiki`
+
+Enable wiki in the repository.
+
+Type: _boolean_
+
+Default: `false`
+
+#### `repo_visibility`
+
+Change the visibility of the repository to {public,private,internal}.
+
+Type: _string_
+
+Default: `default`
 
 #### `disable_versioning`
 

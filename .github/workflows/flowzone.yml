@@ -108,6 +108,81 @@ on:
         type: boolean
         required: false
         default: true
+      repo_config:
+        description: Set to true to standardise repository settings after a successful run
+        type: boolean
+        required: false
+        default: false
+      repo_allow_forking:
+        description: Allow forking of an organization repository
+        type: boolean
+        required: false
+        default: true
+      repo_default_branch:
+        description: Set the default branch name for the repository
+        type: string
+        required: false
+        default: master
+      repo_delete_branch_on_merge:
+        description: Delete head branch when pull requests are merged
+        type: boolean
+        required: false
+        default: true
+      repo_allow_update_branch:
+        description: Always suggest updating pull request branches
+        type: boolean
+        required: false
+        default: true
+      repo_description:
+        description: Description of the repository
+        type: string
+        required: false
+        default: ""
+      repo_homepage:
+        description: Repository home page URL
+        type: string
+        required: false
+        default: ""
+      repo_enable_auto_merge:
+        description: Enable auto-merge functionality
+        type: boolean
+        required: false
+        default: true
+      repo_enable_issues:
+        description: Enable issues in the repository
+        type: boolean
+        required: false
+        default: true
+      repo_enable_merge_commit:
+        description: Enable merging pull requests via merge commit
+        type: boolean
+        required: false
+        default: true
+      repo_enable_projects:
+        description: Enable projects in the repository
+        type: boolean
+        required: false
+        default: false
+      repo_enable_rebase_merge:
+        description: Enable merging pull requests via rebase
+        type: boolean
+        required: false
+        default: false
+      repo_enable_squash_merge:
+        description: Enable merging pull requests via squashed commit
+        type: boolean
+        required: false
+        default: false
+      repo_enable_wiki:
+        description: Enable wiki in the repository
+        type: boolean
+        required: false
+        default: false
+      repo_visibility:
+        description: Change the visibility of the repository to {public,private,internal}
+        type: string
+        required: false
+        default: default
       disable_versioning:
         description: Set to true to disable automatic versioning
         type: boolean
@@ -1363,7 +1438,10 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: pages publish --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ >> $GITHUB_STEP_SUMMARY
+          command: |
+            pages publish \
+              --branch ${{ env.CF_BRANCH }} \
+              --project-name=${{ inputs.cloudflare_website }} build/ >> $GITHUB_STEP_SUMMARY
   github_prepare:
     name: Clean previous GitHub draft release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1865,7 +1943,8 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     env:
-      BRANCH_PROTECTION_URL: ${{ github.api_url }}/repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
+      BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
+      GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
     steps:
       - name: Check needed jobs
         run: |
@@ -1879,17 +1958,16 @@ jobs:
       - name: Get protection rules
         id: get_protection_rules
         run: |
-          status_code=$(curl -o body.json --silent -w "%{http_code}\n" -X GET "${{ env.BRANCH_PROTECTION_URL }}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.FLOWZONE_TOKEN }}")
-          result=$(cat body.json | jq '. | @json' )
-          if [[ "$status_code" -eq 200 ]] ; then
-            echo "result=${result}" >> $GITHUB_OUTPUT
-          elif [[ "$status_code" -eq 404 && "$(cat body.json | jq --raw-output '.message' )" = 'Branch not protected' ]] ; then
+          result="$(gh api ${{ env.BRANCH_PROTECTION_URI }} || true)"
+          message="$(echo "${result}" | jq -r .message)"
+
+          if [[ "$message" =~ null ]]; then
+            echo "result=$(echo "${result}" | jq '. | @json')" >> $GITHUB_OUTPUT
+          elif [[ -z "$message" ]] || [[ "$message" =~ 'Not Found'|'Branch not protected' ]]; then
             # If there are no existing protections then use an empty object
             echo 'result={}' >> $GITHUB_OUTPUT
           else
-            echo ::error title={url}::"get_protection_rules failed with ${status_code} ${result} "
+            echo ::error title={url}::"get_protection_rules failed with ${message} ${result} "
             exit 1
           fi
       - name: Parse and prepare protection rules
@@ -1897,6 +1975,8 @@ jobs:
         if: ${{ steps.get_protection_rules.conclusion == 'success' }}
         run: |
           jsondata=${{ steps.get_protection_rules.outputs.result }}
+
+          is_org="$(echo '${{ toJSON(github) }}' | jq -r '.event | keys | any(. == "organization")')"
 
           required_status_checks__strict=$(echo $jsondata | jq ".required_status_checks.strict // true")
 
@@ -1925,7 +2005,6 @@ jobs:
           enforce_admins=$(echo $jsondata | jq ".enforce_admins.enabled // false")
           block_creations=$(echo $jsondata | jq ".block_creations.enabled // false")
           required_conversation_resolution=$(echo $jsondata | jq ".required_conversation_resolution.enabled // false")
-
 
           newjson=$(cat <<-END
             {
@@ -1959,24 +2038,28 @@ jobs:
           END
           )
 
-          result=$(echo "$newjson" | jq '. | @json' )
+          # unsupported restrictions outside of Github organisations
+          if [[ $is_org =~ false ]]; then
+              newjson="$(echo "${newjson}" | jq -r 'del(.required_pull_request_reviews.dismissal_restrictions, .required_pull_request_reviews.bypass_pull_request_allowances)')"
+          fi
+
+          result=$(echo "${newjson}" | jq '. | @json' )
           echo "result=${result}" >> $GITHUB_OUTPUT
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
         if: ${{ steps.parse_prepare_protection_rules.conclusion == 'success' }}
         run: |
-          status_code="$(curl -o body.json --silent -w "%{http_code}\n" -X PUT "${{ env.BRANCH_PROTECTION_URL }}" \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'Authorization: Bearer ${{ secrets.FLOWZONE_TOKEN }}' \
-            -d '${{ fromJSON(steps.parse_prepare_protection_rules.outputs.result) }}')"
+          result="$(echo '${{ fromJSON(steps.parse_prepare_protection_rules.outputs.result) }}' \
+            | gh api --method PUT ${{ env.BRANCH_PROTECTION_URI }} --input -)"
 
-          result=$(cat body.json | jq '.' )
-          if [[ "$status_code" -ne 200 ]] ; then
-            echo ::error title={url}::"apply_branch_protection_rules failed with ${status_code} ${result} "
+          message="$(echo "${result}" | jq -r .message)"
+
+          if ! [[ $message =~ null ]]; then
+            echo ::error title={url}::"apply_branch_protection_rules failed with ${message} ${result} "
             exit 1
           fi
 
-          if [[  $(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count') -ne ${{ inputs.required_approving_review_count }} ]]; then
+          if [[ $(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count') -ne ${{ inputs.required_approving_review_count }} ]]; then
             echo ::error title={url}::"branch protection required_pull_request_reviews.required_approving_review_count not set to ${{ inputs.required_approving_review_count }}"
             exit 1
           fi
@@ -1985,3 +2068,52 @@ jobs:
           echo "result<<${DELIMITER}" >> $GITHUB_OUTPUT
           echo "${result}" >> $GITHUB_OUTPUT
           echo "${DELIMITER}" >> $GITHUB_OUTPUT
+  repo_config:
+    name: Standardise repository settngs
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs: protect_branch
+    if: inputs.repo_config == true
+    steps:
+      - name: Configure repository
+        run: |
+          # only change repository visibility if explicitly set to one of the permissible values
+          visibility=''
+          if [[ '${{ inputs.repo_visibility }}' =~ private|public|internal ]]; then
+              visibility='--visibility ${{ inputs.repo_visibility }}'
+          fi
+
+          description=''
+          if [[ -n '${{ inputs.repo_description }}' ]]; then
+              description='--description ${{ inputs.repo_description }}'
+          fi
+
+          if [[ -n '${{ inputs.homepage }}' ]]; then
+              homepage='--homepage ${{ inputs.homepage }}'
+          elif [[ -n ${{ inputs.cloudflare_website }} ]]; then
+              homepage='https://${{ inputs.cloudflare_website }}.pages.dev'
+          else
+              homepage=''
+          fi
+
+          gh repo edit '${{ github.repository }}' \
+            --allow-forking '${{ inputs.repo_allow_forking }}' \
+            --default-branch '${{ inputs.repo_default_branch }}' \
+            --delete-branch-on-merge '${{ inputs.repo_delete_branch_on_merge }}' \
+            --enable-auto-merge '${{ inputs.repo_enable_auto_merge }}' \
+            --enable-issues '${{ inputs.repo_enable_issues }}' \
+            --enable-merge-commit '${{ inputs.repo_enable_merge_commit }}' \
+            --enable-projects '${{ inputs.repo_enable_projects }}' \
+            --enable-rebase-merge '${{ inputs.repo_enable_rebase_merge }}' \
+            --enable-squash-merge '${{ inputs.repo_enable_squash_merge }}' \
+            --enable-wiki '${{ inputs.repo_enable_wiki }}' \
+            "${homepage}" \
+            "${visibility}" \
+            "${description}"
+
+          # allow_update_branch not currently available for update via gh-cli
+          gh api --method PATCH '/repos/${{ github.repository }}' \
+            -H "Accept: application/vnd.github+json" \
+            -F allow_update_branch='${{ inputs.repo_allow_update_branch }}'
+        env:
+          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
