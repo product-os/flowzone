@@ -820,20 +820,6 @@ jobs:
             exit 1
           fi
 
-      # if auto_merge is enabled at the repository level, configure PR auto-merge
-      - name: Enable PR auto-merge
-        if: |
-          github.event.pull_request.draft == false &&
-          needs.event_types.outputs.do_draft == 'true' &&
-          inputs.repo_config == true
-        run: |
-          if [[ '${{ inputs.repo_enable_auto_merge }}' =~ true ]]; then
-              gh pr merge ${{ github.event.pull_request.number }} --merge --auto
-          fi
-
-        env:
-         GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-
       - name: Import GPG key for signing commits
         if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         id: import-gpg
@@ -2147,6 +2133,9 @@ jobs:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
       GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
     steps:
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
+
       # loop over all needed jobs and fail this job if any of them failed
       - name: Check needed jobs
         run: |
@@ -2269,6 +2258,16 @@ jobs:
           echo "result<<${DELIMITER}" >> $GITHUB_OUTPUT
           echo "${result}" >> $GITHUB_OUTPUT
           echo "${DELIMITER}" >> $GITHUB_OUTPUT
+
+      # if auto_merge is enabled at the repository level, configure PR auto-merge
+      - name: Enable PR auto-merge
+        if: github.event.pull_request.draft == false
+        run: |
+          if [[ $(gh api '/repos/${{ github.repository }}' | jq -r .allow_auto_merge) =~ true ]]; then
+              if [[ ${{ inputs.required_approving_review_count }} -gt 0 ]]; then
+                  gh pr merge ${{ github.event.pull_request.number }} --merge --auto
+              fi
+          fi
 
   ###################################################
   ## configure standard repository settings
