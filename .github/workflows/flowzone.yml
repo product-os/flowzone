@@ -1231,14 +1231,20 @@ jobs:
           dst: |
             ${{ steps.meta1.outputs.tags }}
             ${{ steps.meta2.outputs.tags }}
+      - name: Strip docker.io prefix
+        if: (startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.'))
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: |
+          echo "DOCKERHUB_REPOSITORY=${IMAGE#*/}" >> $GITHUB_OUTPUT
       - name: Update DockerHub Description
-        if: (startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.')) && github.base_ref == github.event.repository.default_branch
+        if: env.DOCKERHUB_REPOSITORY != '' && github.base_ref == github.event.repository.default_branch
         continue-on-error: true
         uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-          repository: ${{ matrix.image }}
+          repository: ${{ env.DOCKERHUB_REPOSITORY }}
           readme-filepath: ./README.md
   balena_publish:
     name: Publish balena
