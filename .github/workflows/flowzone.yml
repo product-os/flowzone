@@ -713,6 +713,17 @@ jobs:
             echo "::error::Latest commit appears to be a merge, which is currently unsupported. Try a rebase instead."
             exit 1
           fi
+      - name: Enable PR auto-merge
+        if: |
+          github.event.pull_request.draft == false &&
+          needs.event_types.outputs.do_draft == 'true' &&
+          inputs.repo_config == true
+        run: |
+          if [[ '${{ inputs.repo_enable_auto_merge }}' =~ true ]]; then
+              gh pr merge ${{ github.event.pull_request.number }} --merge --auto
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
       - name: Import GPG key for signing commits
         if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         id: import-gpg
@@ -2087,8 +2098,8 @@ jobs:
                 --description '${{ inputs.repo_description }}'
           fi
 
-          if [[ -n '${{ inputs.homepage }}' ]]; then
-              homepage='${{ inputs.homepage }}'
+          if [[ -n '${{ inputs.repo_homepage }}' ]]; then
+              homepage='${{ inputs.repo_homepage }}'
           elif [[ -n '${{ inputs.cloudflare_website }}' ]]; then
               homepage='https://${{ inputs.cloudflare_website }}.pages.dev'
           else
