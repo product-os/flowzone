@@ -1,4 +1,18 @@
 - commits:
+    - subject: Strip docker.io prefix when updating dockerhub description
+      hash: 7fdb275c34ceeb6bba578ee6e1dbfe242995f5d3
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.42.2
+  title: ""
+  date: 2022-12-08T22:01:26.750Z
+- commits:
     - subject: PR auto-merge only if reviewers > 0
       hash: 196fa8137d2b5a38e261116727e16e7f164b6b91
       body: ""
