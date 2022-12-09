@@ -1979,7 +1979,7 @@ jobs:
             # If there are no existing protections then use an empty object
             echo 'result={}' >> $GITHUB_OUTPUT
           else
-            echo ::error::"get_protection_rules failed with ${message} ${result} "
+            echo  "::error::Failed to get branch protection rules ${message} ${result} "
             exit 1
           fi
       - name: Parse and prepare protection rules
@@ -2065,13 +2065,14 @@ jobs:
           message="$(echo "${result}" | jq -r .message)"
 
           if ! [[ $message =~ null ]]; then
-            echo ::error::"apply_branch_protection_rules failed with ${message} ${result} "
+            echo "::error::Failed to apply branch protection rules with ${message} ${result} "
             exit 1
           fi
 
+          # here the number of required approvals sent to the gh API is checked back from the PUT response from GH api 
+          # Specifies the number of reviewers required to approve pull requests. Use a number between 1 and 6 or 0 to not require reviewers (successful checks => merge) .
           if [[ $(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count') -ne ${{ inputs.required_approving_review_count }} ]]; then
-            echo ::error::"branch protection required_pull_request_reviews.required_approving_review_count not set to ${{ inputs.required_approving_review_count }}"
-            exit 1
+            echo "::warning::Failed to set required approvers count. Check that branch protection is enabled on your repo and try again."
           fi
 
           DELIMITER=$(echo $RANDOM | md5sum | head -c 32)
@@ -2087,7 +2088,7 @@ jobs:
               fi
           fi
   repo_config:
-    name: Standardise repository settngs
+    name: Standardise repository settings
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
