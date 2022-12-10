@@ -1,6 +1,6 @@
 # Flowzone
 
-![ridiculous logo about hating and flowing](logo.png)
+![ridiculous logo about hating and flowing](./docs/images/logo.png)
 
 Reusable, opinionated, zero-conf workflows for GitHub actions
 

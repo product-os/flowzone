@@ -1409,9 +1409,6 @@ jobs:
     runs-on: ${{fromJSON(inputs.runs_on)}}
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
-    defaults:
-      run:
-        working-directory: .
     needs:
       - project_types
       - versioned_source
