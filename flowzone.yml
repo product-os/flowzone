@@ -704,11 +704,10 @@ jobs:
           fi
 
       # Check if we have atleast a README to build a website from
-
       - name: Check for README for building a website
         id: has_readme
         run: |
-          if test -f "README.md"
+          if test -e "README.md"
           then
             echo "found README.md"
             echo "enabled=true" >> $GITHUB_OUTPUT
