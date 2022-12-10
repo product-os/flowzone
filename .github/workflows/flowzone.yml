@@ -619,7 +619,7 @@ jobs:
       - name: Check for README for building a website
         id: has_readme
         run: |
-          if test -f "README.md"
+          if test -e "README.md"
           then
             echo "found README.md"
             echo "enabled=true" >> $GITHUB_OUTPUT
