@@ -339,7 +339,7 @@ jobs:
       - name: Checkout merge branch
         if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
         id: checkout_merge
-        uses: actions/checkout@v3
+        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
         with:
           fetch-depth: 0
           submodules: recursive
@@ -347,14 +347,14 @@ jobs:
           ref: refs/pull/${{ github.event.number }}/merge
       - name: Checkout sha
         if: steps.checkout_merge.outcome == 'skipped'
-        uses: actions/checkout@v3
+        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
         with:
           fetch-depth: 0
           submodules: recursive
           token: ${{ secrets.FLOWZONE_TOKEN }}
       - name: Convert balena_slugs to a JSON array
         id: balena_slugs
-        uses: kanga333/json-array-builder@v0.2.1
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
         env:
           INPUT: ${{ inputs.balena_slugs }}
         with:
@@ -362,7 +362,7 @@ jobs:
           separator: ","
       - name: Convert docker_images to a JSON array
         id: docker_images
-        uses: kanga333/json-array-builder@v0.2.1
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
         env:
           INPUT: ${{ inputs.docker_images }}
         with:
@@ -370,7 +370,7 @@ jobs:
           separator: ","
       - name: Convert bake_targets to a JSON array
         id: bake_targets
-        uses: kanga333/json-array-builder@v0.2.1
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
         env:
           INPUT: ${{ inputs.bake_targets }}
         with:
@@ -378,7 +378,7 @@ jobs:
           separator: ","
       - name: Convert cargo_targets to a JSON array
         id: cargo_targets
-        uses: kanga333/json-array-builder@v0.2.1
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
         env:
           INPUT: ${{ inputs.cargo_targets }}
         with:
@@ -424,7 +424,7 @@ jobs:
           fi
       - name: Setup Node.js 12.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516
         with:
           node-version: 12.x
       - name: Check engine
@@ -436,7 +436,7 @@ jobs:
           fi
       - name: Setup Node.js 14.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516
         with:
           node-version: 14.x
       - name: Check engine
@@ -448,7 +448,7 @@ jobs:
           fi
       - name: Setup Node.js 16.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516
         with:
           node-version: 16.x
       - name: Check engine
@@ -460,7 +460,7 @@ jobs:
           fi
       - name: Setup Node.js 18.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516
         with:
           node-version: 18.x
       - name: Check engine
@@ -501,7 +501,7 @@ jobs:
           fi
       - name: Check for Docker bake files
         id: docker_bake
-        uses: kanga333/json-array-builder@v0.2.1
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
         with:
           cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -name 'docker-bake*'" || true
           separator: newline
@@ -539,7 +539,7 @@ jobs:
           pipx install poetry
       - name: Set up Python 3.7
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
         with:
           python-version: "3.7"
       - name: Check compatibility
@@ -554,7 +554,7 @@ jobs:
           fi
       - name: Set up Python 3.8
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
         with:
           python-version: "3.8"
       - name: Check compatibility
@@ -569,7 +569,7 @@ jobs:
           fi
       - name: Set up Python 3.9
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
         with:
           python-version: "3.9"
       - name: Check compatibility
@@ -584,7 +584,7 @@ jobs:
           fi
       - name: Set up Python 3.10
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
         with:
           python-version: "3.10"
       - name: Check compatibility
@@ -653,7 +653,7 @@ jobs:
           fi
       - name: Convert custom_test_matrix to a JSON array
         id: custom_test_matrix
-        uses: kanga333/json-array-builder@v0.2.1
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
         env:
           INPUT: ${{ inputs.custom_test_matrix }}
         with:
@@ -661,7 +661,7 @@ jobs:
           separator: ","
       - name: Convert custom_publish_matrix to a JSON array
         id: custom_publish_matrix
-        uses: kanga333/json-array-builder@v0.2.1
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
         with:
@@ -669,7 +669,7 @@ jobs:
           separator: ","
       - name: Convert custom_finalize_matrix to a JSON array
         id: custom_finalize_matrix
-        uses: kanga333/json-array-builder@v0.2.1
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
         with:
@@ -693,7 +693,7 @@ jobs:
       - name: Checkout merge branch
         if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
         id: checkout_merge
-        uses: actions/checkout@v3
+        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
         with:
           fetch-depth: 0
           submodules: recursive
@@ -701,7 +701,7 @@ jobs:
           ref: refs/pull/${{ github.event.number }}/merge
       - name: Checkout sha
         if: steps.checkout_merge.outcome == 'skipped'
-        uses: actions/checkout@v3
+        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
         with:
           fetch-depth: 0
           submodules: recursive
@@ -716,7 +716,7 @@ jobs:
       - name: Import GPG key for signing commits
         if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         id: import-gpg
-        uses: crazy-max/ghaction-import-gpg@v5.2.0
+        uses: crazy-max/ghaction-import-gpg@111c56156bcc6918c056dbef52164cfa583dc549
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
@@ -797,7 +797,7 @@ jobs:
       - name: Compress source
         run: tar -acvf ${{ runner.temp }}/source.tgz .
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/source.tgz
@@ -829,7 +829,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -838,7 +838,7 @@ jobs:
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516
         with:
           node-version: ${{ matrix.node_version }}
       - name: Generate metadata
@@ -883,7 +883,7 @@ jobs:
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
@@ -897,7 +897,7 @@ jobs:
         run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
       - name: Upload artifact
         if: needs.project_types.outputs.npm_docs == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/docs.tgz
@@ -922,7 +922,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           path: ${{ runner.temp }}
       - name: Login to registry
@@ -961,7 +961,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download artifacts from PR
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@e6e25ac3a2b93187502a8be1ef9e9603afc34925
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -994,7 +994,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download artifacts from PR
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@e6e25ac3a2b93187502a8be1ef9e9603afc34925
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -1005,7 +1005,7 @@ jobs:
           docs="$(ls ${{ runner.temp }}/docs-*/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar -xvf "${docs}"
       - name: Publish generated docs to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@de7ea6f8efb354206b205ef54722213d99067935
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           publish_dir: docs
@@ -1040,7 +1040,7 @@ jobs:
           - 5000:5000
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1049,9 +1049,9 @@ jobs:
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18
       - name: Setup buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325
         with:
           driver-opts: network=host
           install: true
@@ -1075,7 +1075,7 @@ jobs:
           fi
       - name: Generate draft labels and tags
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
         with:
           images: |
             ${{ env.DOCKER_IMAGES || env.SUT_IMAGE }}
@@ -1097,7 +1097,7 @@ jobs:
             > "${BAKE_OVERRIDE}"
           jq . "${BAKE_OVERRIDE}"
       - name: Docker bake and push to local registry
-        uses: docker/bake-action@v2
+        uses: docker/bake-action@6c87dcca988e4e074e3ab1f976a70f63ec9673fb
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
@@ -1127,21 +1127,21 @@ jobs:
         run: echo "::warning::Publishing Docker images without docker compose tests!"
       - name: Login to GitHub Container Registry
         continue-on-error: true
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           registry: ghcr.io
           username: ${{ env.GHCR_USER }}
           password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
       - name: Login to Docker Hub
         continue-on-error: true
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
       - name: Publish draft tags
         if: join(fromJSON(needs.project_types.outputs.docker_images)) != ''
-        uses: akhilerm/tag-push-action@v2.0.0
+        uses: akhilerm/tag-push-action@f973043dc002b8e5a772c53e79441e6e1861e874
         with:
           src: ${{ env.SUT_IMAGE }}:${{ env.PREFIX }}latest
           dst: |
@@ -1168,7 +1168,7 @@ jobs:
         target: ${{ fromJSON(needs.project_types.outputs.bake_targets) }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1185,7 +1185,7 @@ jobs:
       - name: Generate versioned labels and tags
         id: meta1
         if: needs.versioned_source.outputs.version != ''
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
         with:
           images: |
             ${{ matrix.image }}
@@ -1199,7 +1199,7 @@ jobs:
       - name: Generate labels and tags
         id: meta2
         if: needs.versioned_source.outputs.version == ''
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
         with:
           images: |
             ${{ matrix.image }}
@@ -1212,20 +1212,20 @@ jobs:
             prefix=${{ env.PREFIX }},onlatest=true
       - name: Login to GitHub Container Registry
         continue-on-error: true
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           registry: ghcr.io
           username: ${{ env.GHCR_USER }}
           password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
       - name: Login to Docker Hub
         continue-on-error: true
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
       - name: Publish final tags
-        uses: akhilerm/tag-push-action@v2.0.0
+        uses: akhilerm/tag-push-action@f973043dc002b8e5a772c53e79441e6e1861e874
         with:
           src: ${{ matrix.image }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           dst: |
@@ -1241,7 +1241,7 @@ jobs:
       - name: Update DockerHub Description
         if: steps.dockerhub.outputs.repository != '' && github.base_ref == github.event.repository.default_branch
         continue-on-error: true
-        uses: peter-evans/dockerhub-description@v3
+        uses: peter-evans/dockerhub-description@93b93397c27ed52b4055b8c6b2f8d92456ab3c56
         with:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
@@ -1273,7 +1273,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1310,7 +1310,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1352,7 +1352,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1361,7 +1361,7 @@ jobs:
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install Poetry
@@ -1418,7 +1418,7 @@ jobs:
       inputs.cloudflare_website != ''
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1426,7 +1426,7 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516
         with:
           node-version: 18
       - name: Docusaurus Builder
@@ -1441,7 +1441,7 @@ jobs:
         run: |
           echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
       - name: Cloudflare Pages
-        uses: cloudflare/wrangler-action@2.0.0
+        uses: cloudflare/wrangler-action@4c10c1822abba527d820b29e6333e7f5dac2cabd
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
@@ -1462,7 +1462,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1494,7 +1494,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           path: ${{ runner.temp }}
       - name: Check if any release artifacts exist
@@ -1510,7 +1510,7 @@ jobs:
           GH_ARTIFACTS: ${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
       - name: Publish artifacts
         if: steps.gh_artifacts.outputs.count != '0'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           name: ${{ github.event.pull_request.head.ref }}
           tag_name: ${{ github.event.pull_request.head.ref }}
@@ -1533,7 +1533,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1589,7 +1589,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1629,7 +1629,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1638,7 +1638,7 @@ jobs:
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@984d158d699777abbaa79de23de3134e60c187fa
         with:
           targets: ${{ matrix.target }}
           components: rustfmt
@@ -1689,7 +1689,7 @@ jobs:
         target: ${{ fromJSON(needs.project_types.outputs.cargo_targets) }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1698,7 +1698,7 @@ jobs:
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@984d158d699777abbaa79de23de3134e60c187fa
         with:
           targets: ${{ matrix.target }}
       - name: Install cross
@@ -1713,7 +1713,7 @@ jobs:
         run: |
           tar -czvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
         with:
           name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
@@ -1736,7 +1736,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1745,7 +1745,7 @@ jobs:
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@984d158d699777abbaa79de23de3134e60c187fa
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
         run: |
           if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
@@ -1772,7 +1772,7 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1810,7 +1810,7 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1843,7 +1843,7 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1875,7 +1875,7 @@ jobs:
       needs.project_types.outputs.custom_clean == 'true'
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1906,7 +1906,7 @@ jobs:
       needs.project_types.outputs.custom_always == 'true'
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1951,7 +1951,7 @@ jobs:
       GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
