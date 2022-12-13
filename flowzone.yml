@@ -1617,7 +1617,7 @@ jobs:
           node-version: 18
 
       - name: Docusaurus Builder
-        uses: product-os/docusaurus-theme@master
+        uses: product-os/docusaurus-builder@master
         with:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
