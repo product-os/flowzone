@@ -1,4 +1,20 @@
 - commits:
+    - subject: Add post-upgrade command for Renovate
+      hash: bb07162d307074ec671feb170ce74c75a3be6b21
+      body: |
+        Perform the same steps as a pre-commit by running
+        npm ci and npm run test.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.43.2
+  title: ""
+  date: 2022-12-13T21:10:35.312Z
+- commits:
     - subject: Extend filematch for Renovate github-actions manager
       hash: ed02bbbeb50b35e5c0b7e8e95c5bfbb162bfe512
       body: ""
