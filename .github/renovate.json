@@ -1,5 +1,16 @@
 {
 	"github-actions": {
 		"fileMatch": ["flowzone.yml"]
-	}
+	},
+	"packageRules": [
+		{
+			"matchManagers": ["github-actions"],
+			"matchFiles": ["flowzone.yml"],
+			"postUpgradeTasks": {
+				"commands": ["npm ci && npm run test"],
+				"fileFilters": [".github/workflows/flowzone.yml"],
+				"executionMode": "update"
+			}
+		}
+	]
 }
