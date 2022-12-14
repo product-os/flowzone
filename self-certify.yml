@@ -1,0 +1,58 @@
+name: Self-certify
+
+on:
+  workflow_call:
+    secrets:
+      FLOWZONE_TOKEN:
+        description: "Personal access token (PAT) for the GitHub service account with admin/owner permissions"
+        required: true
+    inputs:
+      runs_on:
+        description: "GitHub Actions runner type."
+        type: string
+        required: false
+        default: '["ubuntu-latest"]'
+      jobs_timeout_minutes:
+        description: "Timeout for the job(s)."
+        type: number
+        required: false
+        default: 60
+      working_directory:
+        description: "GitHub actions working directory"
+        type: string
+        required: false
+        default: "."
+
+jobs:
+  self-certify:
+    name: "Check PR comment"
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    # Only run on PR comment creation
+    if: |
+      github.event_name == 'issue_comment' && 
+      github.event.action == 'created' && 
+      github.event.issue.pull_request != null && 
+      !github.event.issue.pull_request.draft && (
+        github.event.comment.body == 'I self-certify!' || 
+        github.event.comment.body == 'I self certify!'
+      )
+
+    defaults:
+      run:
+        working-directory: .
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.FLOWZONE_TOKEN }}
+          script: |
+            const user = github.event.comment.user.login;
+            const repo = github.context.repo;
+            const response = await github.repos.getCollaboratorPermissionLevel({ owner: repo.owner, repo: repo.repo, username: user });
+            if (response.data.permission === 'write') {
+              const pr = github.event.issue;
+              console.log('APPROVE!!');
+            }

@@ -1,0 +1,11 @@
+name: Test self-certify
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  self-certify:
+    name: Self-certify
+    uses: ./.github/workflows/self-certify.yml
+    secrets: inherit
