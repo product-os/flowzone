@@ -7,7 +7,7 @@
 			"matchManagers": ["github-actions"],
 			"matchFiles": ["flowzone.yml"],
 			"postUpgradeTasks": {
-				"commands": ["npm ci", "npm run test"],
+				"commands": ["npm ci", "npm run build"],
 				"fileFilters": [".github/workflows/flowzone.yml"],
 				"executionMode": "update"
 			}
