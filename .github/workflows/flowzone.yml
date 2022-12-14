@@ -62,7 +62,7 @@ on:
         description: GitHub Actions runner type.
         type: string
         required: false
-        default: '["ubuntu-latest"]'
+        default: '["ubuntu-22.04"]'
       jobs_timeout_minutes:
         description: Timeout for the job(s).
         type: number
@@ -207,7 +207,7 @@ on:
         description: GitHub Actions runner type for custom jobs.
         type: string
         required: false
-        default: '["ubuntu-latest"]'
+        default: '["ubuntu-22.04"]'
       cloudflare_website:
         description: Setting this to your existing CF pages project name will generate and deploy a website. Skipped if empty.
         type: string
