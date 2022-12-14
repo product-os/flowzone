@@ -232,11 +232,11 @@ on:
         type: string
         required: false
         default: ""
-      custom_website_build:
-        description: "Add the custom command or script you want to run to build the website. Skipped if empty."
-        type: string
+      docusaurus_website:
+        description: "Set to false to disable building a docusaurus website. If false the script `npm run deploy-docs` will be run if it exists."
+        type: boolean
         required: false
-        default: ""
+        default: false
       github_prerelease:
         description: "Finalise releases on merge."
         type: boolean
@@ -708,12 +708,12 @@ jobs:
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
-      # Check if we have atleast a README to build a website from
+      # Check if we have at least a README to build a website from
 
       - name: Check for README for building a website
         id: has_readme
         run: |
-          if test -f "README.md"
+          if test -e "README.md"
           then
             echo "found README.md"
             echo "enabled=true" >> $GITHUB_OUTPUT
@@ -1607,10 +1607,15 @@ jobs:
     runs-on: ${{fromJSON(inputs.runs_on)}}
     env:
      CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
+
     needs:
       - project_types
       - versioned_source
       - event_types
+
+    if: |
+      inputs.cloudflare_website != ''
+
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
@@ -1622,8 +1627,8 @@ jobs:
       - name: Docusaurus Builder
         if: |
           needs.project_types.outputs.has_readme == 'true' &&
-          inputs.cloudflare_website != '' && inputs.custom_website_build = ''
-        uses: product-os/docusaurus-theme@master
+          inputs.docusaurus_website != false
+        uses: product-os/docusaurus-theme@9cb615b78bcf2c2f9d8fa683a296a52d7beefae1 # 1.3.0
         with:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
@@ -1632,8 +1637,8 @@ jobs:
 
       - name: Custom Website Builder
         if: |
-          inputs.custom_website_build != ''
-        run: ${{ inputs.custom_website_build }}
+          inputs.docusaurus_website == false
+        run: npm run deploy-docs --if-present
 
       - name: Update deploy branch for merged PRs
         if: needs.event_types.outputs.pr_merged == 'true'
@@ -1645,7 +1650,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: pages publish --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} $GITHUB_WORKSPACE/build/ >> $GITHUB_STEP_SUMMARY
+          command: pages publish --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ >> $GITHUB_STEP_SUMMARY
 
   ###################################################
   # GitHub
@@ -2267,7 +2272,7 @@ jobs:
             exit 1
           fi
 
-          # here the number of required approvals sent to the gh API is checked back from the PUT response from GH api 
+          # here the number of required approvals sent to the gh API is checked back from the PUT response from GH api
           # Specifies the number of reviewers required to approve pull requests. Use a number between 1 and 6 or 0 to not require reviewers (successful checks => merge) .
           if [[ $(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count') -ne ${{ inputs.required_approving_review_count }} ]]; then
             echo "::warning::Failed to set required approvers count. Check that branch protection is enabled on your repo and try again."

@@ -213,6 +213,11 @@ on:
         type: string
         required: false
         default: ""
+      docusaurus_website:
+        description: Set to false to disable building a docusaurus website. If false the script `npm run deploy-docs` will be run if it exists.
+        type: boolean
+        required: false
+        default: false
       github_prerelease:
         description: Finalise releases on merge.
         type: boolean
@@ -1414,7 +1419,6 @@ jobs:
       - versioned_source
       - event_types
     if: |
-      needs.project_types.outputs.has_readme == 'true' &&
       inputs.cloudflare_website != ''
     steps:
       - name: Download source artifact
@@ -1430,12 +1434,19 @@ jobs:
         with:
           node-version: 18
       - name: Docusaurus Builder
-        uses: product-os/docusaurus-builder@master
+        if: |
+          needs.project_types.outputs.has_readme == 'true' &&
+          inputs.docusaurus_website != false
+        uses: product-os/docusaurus-theme@9cb615b78bcf2c2f9d8fa683a296a52d7beefae1
         with:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
           default_branch: ${{ github.event.repository.default_branch }}
-          url: https://${{ inputs.cloudflare_website }}.pages.dev
+          url: https://${{ inputs.cloudflare_website }}.pages.dev/
+      - name: Custom Website Builder
+        if: |
+          inputs.docusaurus_website == false
+        run: npm run deploy-docs --if-present
       - name: Update deploy branch for merged PRs
         if: needs.event_types.outputs.pr_merged == 'true'
         run: |
@@ -2070,7 +2081,7 @@ jobs:
             exit 1
           fi
 
-          # here the number of required approvals sent to the gh API is checked back from the PUT response from GH api 
+          # here the number of required approvals sent to the gh API is checked back from the PUT response from GH api
           # Specifies the number of reviewers required to approve pull requests. Use a number between 1 and 6 or 0 to not require reviewers (successful checks => merge) .
           if [[ $(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count') -ne ${{ inputs.required_approving_review_count }} ]]; then
             echo "::warning::Failed to set required approvers count. Check that branch protection is enabled on your repo and try again."
