@@ -1,4 +1,19 @@
 - commits:
+    - subject: "chore(deps): pin dependencies"
+      hash: 62ff33e2bf11c81a7663d7a4968367adb05100f7
+      body: |
+        Update actions/checkout to
+
+        Update actions/checkout from 3 to
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Renovate Bot
+      nested: []
+  version: 0.44.0
+  title: ""
+  date: 2022-12-14T01:15:24.370Z
+- commits:
     - subject: "renovate: run npm build instead of npm test"
       hash: a48055bc877d4a2ebed6f47406e07b328a507ad8
       body: ""
