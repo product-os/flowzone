@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix syntax of renovate post upgrade commands
+      hash: ee18039de95a116ca6f2c28eeeb7d5a910b541d9
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.43.3
+  title: ""
+  date: 2022-12-14T00:39:48.748Z
+- commits:
     - subject: Add post-upgrade command for Renovate
       hash: bb07162d307074ec671feb170ce74c75a3be6b21
       body: |
