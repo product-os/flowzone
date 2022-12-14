@@ -232,6 +232,11 @@ on:
         type: string
         required: false
         default: ""
+      custom_website_build:
+        description: "Add the custom command or script you want to run to build the website. Skipped if empty."
+        type: string
+        required: false
+        default: ""
       github_prerelease:
         description: "Finalise releases on merge."
         type: boolean
@@ -704,10 +709,11 @@ jobs:
           fi
 
       # Check if we have atleast a README to build a website from
+
       - name: Check for README for building a website
         id: has_readme
         run: |
-          if test -e "README.md"
+          if test -f "README.md"
           then
             echo "found README.md"
             echo "enabled=true" >> $GITHUB_OUTPUT
@@ -1605,9 +1611,6 @@ jobs:
       - project_types
       - versioned_source
       - event_types
-    if: |
-      needs.project_types.outputs.has_readme == 'true' &&
-      inputs.cloudflare_website != ''
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
@@ -1617,12 +1620,20 @@ jobs:
           node-version: 18
 
       - name: Docusaurus Builder
-        uses: product-os/docusaurus-builder@master
+        if: |
+          needs.project_types.outputs.has_readme == 'true' &&
+          inputs.cloudflare_website != '' && inputs.custom_website_build = ''
+        uses: product-os/docusaurus-theme@master
         with:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
           default_branch: ${{ github.event.repository.default_branch }}
-          url: https://${{ inputs.cloudflare_website }}.pages.dev
+          url: https://${{ inputs.cloudflare_website }}.pages.dev/
+
+      - name: Custom Website Builder
+        if: |
+          inputs.custom_website_build != ''
+        run: ${{ inputs.custom_website_build }}
 
       - name: Update deploy branch for merged PRs
         if: needs.event_types.outputs.pr_merged == 'true'
@@ -1634,7 +1645,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: pages publish --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ >> $GITHUB_STEP_SUMMARY
+          command: pages publish --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} $GITHUB_WORKSPACE/build/ >> $GITHUB_STEP_SUMMARY
 
   ###################################################
   # GitHub
