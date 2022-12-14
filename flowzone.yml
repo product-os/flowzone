@@ -1313,7 +1313,7 @@ jobs:
 
       - name: Publish draft tags
         if: join(fromJSON(needs.project_types.outputs.docker_images)) != ''
-        uses: akhilerm/tag-push-action@f973043dc002b8e5a772c53e79441e6e1861e874 # v2.0.0
+        uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37 # v2.1.0
         with:
           src: ${{ env.SUT_IMAGE }}:${{ env.PREFIX }}latest
           dst: |
@@ -1402,7 +1402,7 @@ jobs:
 
       # only one of the destination lines should have values based on the meta restrictions above
       - name: Publish final tags
-        uses: akhilerm/tag-push-action@f973043dc002b8e5a772c53e79441e6e1861e874 # v2.0.0
+        uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37 # v2.1.0
         with:
           src: ${{ matrix.image }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           dst: |
