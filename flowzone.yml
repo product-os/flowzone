@@ -1993,6 +1993,7 @@ jobs:
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
+          echo "os_value=${{ matrix.os }}" >> $GITHUB_ENV
 
       - uses: ./.github/actions/test
         with:
@@ -2031,6 +2032,7 @@ jobs:
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
+          echo "os_value=${{ matrix.os }}" >> $GITHUB_ENV
 
       - uses: ./.github/actions/publish
         with:
@@ -2059,6 +2061,7 @@ jobs:
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
+          echo "os_value=${{ matrix.os }}" >> $GITHUB_ENV
 
       - uses: ./.github/actions/finalize
         with:
