@@ -22,6 +22,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [Custom](#custom)
   - [Versioning](#versioning)
   - [Docs](#docs)
+  - [Website](#Website)
 - [Customization](#customization)
   - [Secrets](#secrets)
     - [`FLOWZONE_TOKEN`](#flowzone_token)
@@ -71,6 +72,8 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`custom_test_matrix`](#custom_test_matrix)
     - [`custom_publish_matrix`](#custom_publish_matrix)
     - [`custom_finalize_matrix`](#custom_finalize_matrix)
+    - [`cloudflare_website`](#cloudflare_website)
+    - [`docusaurus_website`](#docusaurus_website)
 
 - [Maintenance](#maintenance)
   - [Generate GPG keys](#generate-gpg-keys)
@@ -318,6 +321,13 @@ If you have [VersionBot3](https://github.com/apps/versionbot3) installed it will
 ### Docs
 
 If you have an `npm run doc` script then it will automatically be run and the generated `docs` folder will be published to a `docs` branch for github pages use.
+
+### Website
+
+If you have docs that you intend to publish on a website, checkout the [Getting Started](https://docusaurus-builder.pages.dev/) section of the Docusaurus builder. The docs will be built using the Docusaurus framework and published on Cloudflare Pages. 
+
+If you intend to use a custom framework for your docs build, then you can make use of the custom website build option by adding your desired build command in a input called `custom_website_build`. This command should generate your static site into a folder called `build` which will then be deployed to Cloudflare Pages. 
+
 
 ## Customization
 
@@ -669,6 +679,22 @@ Comma-delimited string of values that will be passed to the custom finalize acti
 Type: _string_
 
 Default: `''`
+
+#### `cloudflare_website`
+
+Setting this to your existing CF pages project name will generate and deploy a website. Skipped if empty.
+
+Type: _string_
+
+Default: `""`
+
+#### `docusaurus_website`
+
+Set to false to disable building a docusaurus website. If false the script `npm run deploy-docs` will be run if it exists.
+
+Type: _string_
+
+Default: true
 
 ## Maintenance
 
