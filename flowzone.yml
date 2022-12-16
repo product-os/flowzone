@@ -127,6 +127,16 @@ on:
         type: boolean
         required: false
         default: true
+      pr_enable_auto_merge:
+        description: "Set to true to enforce automatic merging after a successful run"
+        type: boolean
+        required: false
+        default: false
+      pr_merge_option:
+        description: "Set to enforce the default merge option for pull requests"
+        type: boolean
+        required: false
+        default: merge
       repo_config:
         description: "Set to true to standardise repository settings after a successful run"
         type: boolean
@@ -2336,5 +2346,47 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -F allow_update_branch='${{ inputs.repo_allow_update_branch }}'
 
+        env:
+         GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+
+
+  ###################################################
+  ## configure pull request settings
+  ###################################################
+
+  pr_config:
+    name: Standardise pull request settings
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs: [event_types]
+    if: |
+      needs.event_types.outputs.do_final == 'true' &&
+      inputs.pr_enable_auto_merge == true
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xvf ${{ runner.temp }}/source.tgz
+      - name: Configure pull request
+        run: |
+          # Only do something when auto-merge is enabled
+          if [ "${{ inputs.pr_enable_auto_merge }}" == "true" ]; then
+            CMD="gh pr merge --auto"
+            # Sets the default merge option
+            # This only matters when we are automatically merging
+            if [ "${{ inputs.pr_merge_option }}" == "merge" ]; then
+              CMD="${CMD} --merge"
+            elif [ "${{ inputs.pr_merge_option }}" == "rebase" ]; then
+              CMD="${CMD} --rebase"
+            elif [ "${{ inputs.pr_merge_option }}" == "squash" ]; then
+              CMD="${CMD} --squash"
+            fi
+            ${CMD}
+          fi
         env:
          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
