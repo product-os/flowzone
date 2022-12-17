@@ -2137,6 +2137,7 @@ jobs:
         github_publish,
         project_types,
         versioned_source,
+        website_build
       ]
     # avoid being skipped when dependencies are skipped
     # this job must always run so branch protection rules can depend on it
