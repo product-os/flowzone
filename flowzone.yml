@@ -1292,6 +1292,11 @@ jobs:
           if [ -n "${COMPOSE_VARS}" ]
           then
             echo "${COMPOSE_VARS}" | base64 --decode > .env
+
+            # mask secrets
+            while read -r line; do
+              echo "::add-mask::${line}"
+            done <<< "$(cat < .env)"
           fi
 
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
@@ -2340,6 +2345,7 @@ jobs:
               echo '::warning::Failed to configure some repository settings.'
           fi
 
+          # FIXME: https://github.com/cli/cli/issues/6652#issuecomment-1323908232
           gh repo edit '${{ github.repository }}' \
             --default-branch=${{ inputs.repo_default_branch }} \
             --delete-branch-on-merge=${{ inputs.repo_delete_branch_on_merge }} \
