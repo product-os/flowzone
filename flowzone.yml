@@ -236,7 +236,7 @@ on:
         description: "Set to false to disable building a docusaurus website. If false the script `npm run deploy-docs` will be run if it exists."
         type: boolean
         required: false
-        default: false
+        default: true
       github_prerelease:
         description: "Finalise releases on merge."
         type: boolean
@@ -2137,6 +2137,7 @@ jobs:
         github_publish,
         project_types,
         versioned_source,
+        website_build
       ]
     # avoid being skipped when dependencies are skipped
     # this job must always run so branch protection rules can depend on it
