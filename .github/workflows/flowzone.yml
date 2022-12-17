@@ -217,7 +217,7 @@ on:
         description: Set to false to disable building a docusaurus website. If false the script `npm run deploy-docs` will be run if it exists.
         type: boolean
         required: false
-        default: false
+        default: true
       github_prerelease:
         description: Finalise releases on merge.
         type: boolean
