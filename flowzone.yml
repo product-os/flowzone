@@ -1295,7 +1295,8 @@ jobs:
 
             # mask secrets
             while read -r line; do
-              echo "::add-mask::${line}"
+              secret="$(echo "${line}" | awk -F'=' '{print $2}')"
+              echo "::add-mask::${secret}"
             done <<< "$(cat < .env)"
           fi
 
