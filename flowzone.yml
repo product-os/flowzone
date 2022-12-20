@@ -13,6 +13,38 @@
     working-directory: .
     run: tar -xvf ${{ runner.temp }}/source.tgz
 
+  - &deployToBalenaAction
+    uses: balena-io/deploy-to-balena-action@master
+    with:
+      balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
+      environment: ${{ inputs.balena_environment }}
+      fleet: ${{ matrix.slug }}
+      versionbot: false # disable the included versionbot branch checkout
+      source: ${{ inputs.working_directory }}
+
+  - &checkoutMergeBranch
+    # for pull_request_target events that are not closed we need to specify the merge branch manually
+    # because the default checkout ref is the tip of the main/master branch
+    name: Checkout merge branch
+    if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
+    id: checkout_merge
+    uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3
+    with:
+      fetch-depth: 0
+      submodules: "recursive"
+      token: ${{ secrets.FLOWZONE_TOKEN }}
+      ref: "refs/pull/${{ github.event.number }}/merge"
+
+  - &checkoutSha
+    # otherwise use the default checkout behaviour
+    name: Checkout sha
+    if: steps.checkout_merge.outcome == 'skipped'
+    uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3
+    with:
+      fetch-depth: 0
+      submodules: "recursive"
+      token: ${{ secrets.FLOWZONE_TOKEN }}
+
 name: Flowzone
 
 on:
@@ -387,26 +419,8 @@ jobs:
       custom_always: ${{ steps.custom.outputs.always }}
 
     steps:
-      # for pull_request_target events that are not closed we need to specify the merge branch manually
-      # because the default checkout ref is the tip of the main/master branch
-      - name: Checkout merge branch
-        if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
-        id: checkout_merge
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3
-        with:
-          fetch-depth: 0
-          submodules: "recursive"
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-          ref: "refs/pull/${{ github.event.number }}/merge"
-
-      # otherwise use the default checkout behaviour
-      - name: Checkout sha
-        if: steps.checkout_merge.outcome == 'skipped'
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3
-        with:
-          fetch-depth: 0
-          submodules: "recursive"
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+      - *checkoutMergeBranch
+      - *checkoutSha
 
       - name: Convert balena_slugs to a JSON array
         id: balena_slugs
@@ -795,26 +809,8 @@ jobs:
       version: ${{ steps.new_version.outputs.semver }}
 
     steps:
-      # for pull_request_target events that are not closed we need to specify the merge branch manually
-      # because the default checkout ref is the tip of the main/master branch
-      - name: Checkout merge branch
-        if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
-        id: checkout_merge
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3
-        with:
-          fetch-depth: 0
-          submodules: "recursive"
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-          ref: "refs/pull/${{ github.event.number }}/merge"
-
-      # otherwise use the default checkout behaviour
-      - name: Checkout sha
-        if: steps.checkout_merge.outcome == 'skipped'
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3
-        with:
-          fetch-depth: 0
-          submodules: "recursive"
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+      - *checkoutMergeBranch
+      - *checkoutSha
 
       # fail on merge commits (ones with more than one parent)
       - name: Reject merge commits
@@ -1477,14 +1473,7 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
-
-      - uses: balena-io/deploy-to-balena-action@master
-        with:
-          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
-          environment: ${{ inputs.balena_environment }}
-          fleet: ${{ matrix.slug }}
-          versionbot: false # disable the included versionbot branch checkout
-          source: ${{ inputs.working_directory }}
+      - *deployToBalenaAction
 
   balena_finalize:
     name: Finalize balena
@@ -1509,14 +1498,7 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
-
-      - uses: balena-io/deploy-to-balena-action@master
-        with:
-          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
-          environment: ${{ inputs.balena_environment }}
-          fleet: ${{ matrix.slug }}
-          versionbot: false # disable the included versionbot branch checkout
-          source: ${{ inputs.working_directory }}
+      - *deployToBalenaAction
 
   ###################################################
   ## Python
