@@ -213,6 +213,11 @@ on:
         type: string
         required: false
         default: ""
+      domain_website:
+        description: Set this to the domain that you want to deploy your website to. By default it will be deployed to a *.pages.dev
+        type: string
+        required: false
+        default: ""
       docusaurus_website:
         description: Set to false to disable building a docusaurus website. If false the script `npm run deploy-docs` will be run if it exists.
         type: boolean
@@ -1448,7 +1453,7 @@ jobs:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
           default_branch: ${{ github.event.repository.default_branch }}
-          url: https://${{ inputs.cloudflare_website }}.pages.dev/
+          url: ${{ inputs.domain_website }}
       - name: Custom Website Builder
         if: |
           inputs.docusaurus_website == false

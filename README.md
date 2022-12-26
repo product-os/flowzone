@@ -72,7 +72,8 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`custom_test_matrix`](#custom_test_matrix)
     - [`custom_publish_matrix`](#custom_publish_matrix)
     - [`custom_finalize_matrix`](#custom_finalize_matrix)
-    - [`cloudflare_website`](#cloudflare_website)
+    - [`cloudflare_website`](#cloudflare_website
+    - [`domain_website`](#domain_website)
     - [`docusaurus_website`](#docusaurus_website)
 
 - [Maintenance](#maintenance)
@@ -683,6 +684,14 @@ Default: `''`
 #### `cloudflare_website`
 
 Setting this to your existing CF pages project name will generate and deploy a website. Skipped if empty.
+
+Type: _string_
+
+Default: `""`
+
+#### `domain_website`
+
+Set this to the domain that you want to deploy your website to. By default it will be deployed to a *.pages.dev
 
 Type: _string_
 
