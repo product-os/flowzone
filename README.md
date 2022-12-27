@@ -691,7 +691,7 @@ Default: `""`
 
 #### `domain_website`
 
-Set this to the domain that you want to deploy your website to. By default it will be deployed to a *.pages.dev
+Set this to the domain that you want to deploy your website to. By default, it will be deployed to a `PROJECT_NAME.pages.dev` Cloudflare Pages URL.
 
 Type: _string_
 
