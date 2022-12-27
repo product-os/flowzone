@@ -72,7 +72,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`custom_test_matrix`](#custom_test_matrix)
     - [`custom_publish_matrix`](#custom_publish_matrix)
     - [`custom_finalize_matrix`](#custom_finalize_matrix)
-    - [`cloudflare_website`](#cloudflare_website
+    - [`cloudflare_website`](#cloudflare_website)
     - [`domain_website`](#domain_website)
     - [`docusaurus_website`](#docusaurus_website)
 
