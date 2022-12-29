@@ -544,7 +544,7 @@ jobs:
           pipx install poetry
       - name: Set up Python 3.7
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
+        uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912
         with:
           python-version: "3.7"
       - name: Check compatibility
@@ -559,7 +559,7 @@ jobs:
           fi
       - name: Set up Python 3.8
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
+        uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912
         with:
           python-version: "3.8"
       - name: Check compatibility
@@ -574,7 +574,7 @@ jobs:
           fi
       - name: Set up Python 3.9
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
+        uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912
         with:
           python-version: "3.9"
       - name: Check compatibility
@@ -589,7 +589,7 @@ jobs:
           fi
       - name: Set up Python 3.10
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
+        uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912
         with:
           python-version: "3.10"
       - name: Check compatibility
@@ -1372,7 +1372,7 @@ jobs:
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
+        uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install Poetry
