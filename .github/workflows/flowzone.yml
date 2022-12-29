@@ -872,7 +872,7 @@ jobs:
           npm run flowzone-preinstall --if-present
       - name: Install dependencies
         run: |
-          if [ -e package-lock.json ]; then
+          if [ -e package-lock.json ] || [ -e npm-shrinkwrap.json ]; then
             npm ci
           else
             npm i
