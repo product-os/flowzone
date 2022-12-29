@@ -633,7 +633,7 @@ jobs:
 
       - name: Set up Python 3.7
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9 # v4
+        uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912 # v4
         with:
           python-version: "3.7"
 
@@ -650,7 +650,7 @@ jobs:
 
       - name: Set up Python 3.8
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9 # v4
+        uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912 # v4
         with:
           python-version: "3.8"
 
@@ -667,7 +667,7 @@ jobs:
 
       - name: Set up Python 3.9
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9 # v4
+        uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912 # v4
         with:
           python-version: "3.9"
 
@@ -684,7 +684,7 @@ jobs:
 
       - name: Set up Python 3.10
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9 # v4
+        uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912 # v4
         with:
           python-version: "3.10"
 
@@ -1535,7 +1535,7 @@ jobs:
       - *extractSourceArtifact
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9 # v4
+        uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912 # v4
         with:
           python-version: ${{ matrix.python-version }}
 
