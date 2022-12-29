@@ -1152,7 +1152,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
       - name: Publish draft tags
         if: join(fromJSON(needs.project_types.outputs.docker_images)) != ''
-        uses: akhilerm/tag-push-action@239dfa3128c3459fd8bc077a2367c838fd145e35
+        uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
         with:
           src: ${{ env.SUT_IMAGE }}:${{ env.PREFIX }}latest
           dst: |
@@ -1236,7 +1236,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
       - name: Publish final tags
-        uses: akhilerm/tag-push-action@239dfa3128c3459fd8bc077a2367c838fd145e35
+        uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
         with:
           src: ${{ matrix.image }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           dst: |
