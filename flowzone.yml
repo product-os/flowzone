@@ -488,13 +488,22 @@ jobs:
       - name: Check for package.json
         id: npm
         run: |
+          runner_os="$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')"
           if test -f "package.json"
           then
             echo "found package.json"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-            echo "private=$(jq -r '.private' package.json)" >> $GITHUB_OUTPUT
-            echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> $GITHUB_OUTPUT
-            echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
+            os_count="$(jq '.os | length' package.json)"
+            index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
+            if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]
+            then
+                echo "found supported OS"
+                echo "enabled=true" >> $GITHUB_OUTPUT
+                echo "private=$(jq -r '.private' package.json)" >> $GITHUB_OUTPUT
+                echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> $GITHUB_OUTPUT
+                echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
+            else
+                echo "$runner_os is not supported in package.json"
+            fi
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
