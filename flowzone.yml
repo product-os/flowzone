@@ -488,22 +488,13 @@ jobs:
       - name: Check for package.json
         id: npm
         run: |
-          runner_os="$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')"
           if test -f "package.json"
           then
             echo "found package.json"
-            os_count="$(jq '.os | length' package.json)"
-            index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
-            if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]
-            then
-                echo "found supported OS"
-                echo "enabled=true" >> $GITHUB_OUTPUT
-                echo "private=$(jq -r '.private' package.json)" >> $GITHUB_OUTPUT
-                echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> $GITHUB_OUTPUT
-                echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
-            else
-                echo "$runner_os is not supported in package.json"
-            fi
+            echo "enabled=true" >> $GITHUB_OUTPUT
+            echo "private=$(jq -r '.private' package.json)" >> $GITHUB_OUTPUT
+            echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> $GITHUB_OUTPUT
+            echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
@@ -1008,10 +999,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          if [ -e package-lock.json ] || [ -e npm-shrinkwrap.json ]; then
-            npm ci
+          runner_os="$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')"
+          os_count="$(jq '.os | length' package.json)"
+          index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
+          if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
+              if [ -e package-lock.json ] || [ -e npm-shrinkwrap.json ]; then
+                npm ci
+              else
+                npm i
+              fi
           else
-            npm i
+              echo "${runner_os} is not supported in package.json"
           fi
 
       - name: Run build
