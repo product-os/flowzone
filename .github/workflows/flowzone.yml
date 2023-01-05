@@ -344,7 +344,7 @@ jobs:
       - name: Checkout merge branch
         if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
         id: checkout_merge
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
         with:
           fetch-depth: 0
           submodules: recursive
@@ -352,7 +352,7 @@ jobs:
           ref: refs/pull/${{ github.event.number }}/merge
       - name: Checkout sha
         if: steps.checkout_merge.outcome == 'skipped'
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
         with:
           fetch-depth: 0
           submodules: recursive
@@ -698,7 +698,7 @@ jobs:
       - name: Checkout merge branch
         if: github.event_name == 'pull_request_target' && needs.event_types.outputs.pr_closed != true
         id: checkout_merge
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
         with:
           fetch-depth: 0
           submodules: recursive
@@ -706,7 +706,7 @@ jobs:
           ref: refs/pull/${{ github.event.number }}/merge
       - name: Checkout sha
         if: steps.checkout_merge.outcome == 'skipped'
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
         with:
           fetch-depth: 0
           submodules: recursive
