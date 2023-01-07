@@ -834,7 +834,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -934,7 +934,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           path: ${{ runner.temp }}
       - name: Login to registry
@@ -1052,7 +1052,7 @@ jobs:
           - 5000:5000
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1186,7 +1186,7 @@ jobs:
         target: ${{ fromJSON(needs.project_types.outputs.bake_targets) }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1291,7 +1291,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1328,7 +1328,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1370,7 +1370,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1435,7 +1435,7 @@ jobs:
       inputs.cloudflare_website != ''
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1486,7 +1486,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1518,7 +1518,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           path: ${{ runner.temp }}
       - name: Check if any release artifacts exist
@@ -1557,7 +1557,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1613,7 +1613,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1653,7 +1653,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1713,7 +1713,7 @@ jobs:
         target: ${{ fromJSON(needs.project_types.outputs.cargo_targets) }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1760,7 +1760,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1796,7 +1796,7 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1835,7 +1835,7 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1869,7 +1869,7 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1902,7 +1902,7 @@ jobs:
       needs.project_types.outputs.custom_clean == 'true'
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1933,7 +1933,7 @@ jobs:
       needs.project_types.outputs.custom_always == 'true'
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
@@ -1979,7 +1979,7 @@ jobs:
       GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
     steps:
       - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@e9ef242655d12993efdcda9058dee2db83a2cb9b
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
