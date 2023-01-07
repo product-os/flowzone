@@ -1,7 +1,7 @@
 .flowzone:
   - &downloadSourceArtifact
     name: Download source artifact
-    uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # v3
+    uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
     with:
       name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
       path: ${{ runner.temp }}
@@ -1067,7 +1067,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           path: ${{ runner.temp }}
 
@@ -1699,7 +1699,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@9782bd6a9848b53b110e712e20e42d89988822b7 # v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           path: ${{ runner.temp }}
 
