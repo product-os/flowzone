@@ -721,7 +721,7 @@ jobs:
       - name: Import GPG key for signing commits
         if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         id: import-gpg
-        uses: crazy-max/ghaction-import-gpg@111c56156bcc6918c056dbef52164cfa583dc549
+        uses: crazy-max/ghaction-import-gpg@3774d0e7f5ff2ea7cf9f20a4f7cfe2d01559571a
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
