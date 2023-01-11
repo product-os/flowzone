@@ -2,6 +2,9 @@
 	"github-actions": {
 		"fileMatch": ["flowzone.yml"]
 	},
+	"ignorePaths": [
+		".github/workflows/flowzone.yml"
+	],
 	"packageRules": [
 		{
 			"matchManagers": ["github-actions"],
