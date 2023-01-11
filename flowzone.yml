@@ -35,8 +35,7 @@
       token: ${{ secrets.FLOWZONE_TOKEN }}
       ref: "refs/pull/${{ github.event.number }}/merge"
 
-  - &checkoutSha
-    # otherwise use the default checkout behaviour
+  - &checkoutSha # otherwise use the default checkout behaviour
     name: Checkout sha
     if: steps.checkout_merge.outcome == 'skipped'
     uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3
@@ -144,7 +143,8 @@ on:
         description: "Comma-delimited string of Rust stable targets to publish (skipped if empty)"
         type: string
         required: false
-        default: aarch64-unknown-linux-gnu,
+        default: |
+          aarch64-unknown-linux-gnu,
           armv7-unknown-linux-gnueabihf,
           arm-unknown-linux-gnueabihf,
           x86_64-unknown-linux-gnu,
@@ -1601,7 +1601,7 @@ jobs:
     name: Build website using Docusaurus
     runs-on: ${{fromJSON(inputs.runs_on)}}
     env:
-     CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
+      CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
 
     needs:
       - project_types
@@ -1638,7 +1638,7 @@ jobs:
       - name: Update deploy branch for merged PRs
         if: needs.event_types.outputs.pr_merged == 'true'
         run: |
-            echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
+          echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
 
       - name: Cloudflare Pages
         uses: cloudflare/wrangler-action@4c10c1822abba527d820b29e6333e7f5dac2cabd # 2.0.0
@@ -2135,7 +2135,7 @@ jobs:
         github_publish,
         project_types,
         versioned_source,
-        website_build
+        website_build,
       ]
     # avoid being skipped when dependencies are skipped
     # this job must always run so branch protection rules can depend on it
@@ -2151,9 +2151,11 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
       GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
@@ -2168,6 +2170,7 @@ jobs:
             echo "Needed job returned result: ${result}"
             exit 1
           done
+
       - name: Get protection rules
         id: get_protection_rules
         run: |
@@ -2387,4 +2390,4 @@ jobs:
             -F allow_update_branch='${{ inputs.repo_allow_update_branch }}'
 
         env:
-         GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
