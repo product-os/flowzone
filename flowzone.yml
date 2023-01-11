@@ -243,7 +243,7 @@ on:
         description: "Count of GitHub approved reviews required for Pull Requests to be merged. Set to 0 if using palantir/policy-bot for PR merge conditions."
         type: string
         required: false
-        default: "1"
+        default: "0"
       job_name:
         description: "The name of the job, necessary for branch protection if not using the default of 'Flowzone'"
         type: string
@@ -2196,7 +2196,9 @@ jobs:
           jsondata=${{ steps.get_protection_rules.outputs.result }}
 
           required_status_checks__strict=$(echo $jsondata | jq ".required_status_checks.strict // true")
-          
+
+          echo "old_required_approving_review_count=$(echo $jsondata | jq '.required_pull_request_reviews.required_approving_review_count // 0')" >> $GITHUB_OUTPUT
+
           # get the pass/fail/pending Flowzone and policybot checks from the current PR
           status_checks="$((gh pr checks ${{ github.event.pull_request.number }} || true) \
             | awk -F'\t' 'tolower($1) ~ /^(${{ env.flowzone_prefix }}|${{ env.policy_bot_prefix }})/ && $2 ~ /^(pass|fail|pending)$/ { print $1 }')"
@@ -2268,6 +2270,19 @@ jobs:
 
           result=$(echo "${newjson}" | jq '. | @json' )
           echo "result=${result}" >> $GITHUB_OUTPUT
+
+      # Disable auto-merge on any existing PRs if the current repo required reviewer count is
+      # greater than the required reviewer count being applied by Flowzone, likely a one-time change
+      # This should be done BEFORE applying the new rules
+      - name: Disable PR auto-merge
+        if: |
+          fromJSON(steps.parse_prepare_protection_rules.outputs.old_required_approving_review_count) > fromJSON(inputs.required_approving_review_count)
+        run: |
+          for pr in $(gh pr list --state=open --draft=false --json=number | jq -r '.[].number')
+          do
+            gh pr merge ${pr} --disable-auto || true
+          done
+
       # https://github.com/cli/cli/issues/3528
       - name: Apply branch protection rules
         id: apply_branch_protection_rules

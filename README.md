@@ -638,7 +638,7 @@ Count of GitHub approved reviews required for Pull Requests to be merged. Set to
 
 Type: _string_
 
-Default: `'1'`
+Default: `'0'`
 
 #### `github_prerelease`
 
