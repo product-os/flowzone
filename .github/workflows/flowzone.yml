@@ -2108,9 +2108,12 @@ jobs:
             exit 1
           fi
 
+          new_required_approving_review_count="$(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count')"
+          echo "new_required_approving_review_count=${new_required_approving_review_count}" >> $GITHUB_OUTPUT
+
           # here the number of required approvals sent to the gh API is checked back from the PUT response from GH api
           # Specifies the number of reviewers required to approve pull requests. Use a number between 1 and 6 or 0 to not require reviewers (successful checks => merge) .
-          if [[ $(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count') -ne ${{ inputs.required_approving_review_count }} ]]; then
+          if [[  ${new_required_approving_review_count} -ne ${{ inputs.required_approving_review_count }} ]]; then
             echo "::warning::Failed to set required approvers count. Check that branch protection is enabled on your repo and try again."
           fi
 
@@ -2119,12 +2122,13 @@ jobs:
           echo "${result}" >> $GITHUB_OUTPUT
           echo "${DELIMITER}" >> $GITHUB_OUTPUT
       - name: Enable PR auto-merge
-        if: github.event.pull_request.draft == false
+        if: |
+          github.event.pull_request.draft == false &&
+          (fromJSON(steps.apply_branch_protection_rules.outputs.new_required_approving_review_count) > 0 ||
+          steps.parse_prepare_protection_rules.outputs.policy_bot == 'true')
         run: |
           if [[ $(gh api '/repos/${{ github.repository }}' | jq -r .allow_auto_merge) =~ true ]]; then
-              if [[ ${{ inputs.required_approving_review_count }} -gt 0 ]]; then
-                  gh pr merge ${{ github.event.pull_request.number }} --merge --auto
-              fi
+            gh pr merge ${{ github.event.pull_request.number }} --merge --auto
           fi
   repo_config:
     name: Standardise repository settings
