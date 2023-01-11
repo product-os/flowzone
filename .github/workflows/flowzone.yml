@@ -189,7 +189,7 @@ on:
         required: false
         default: false
       required_approving_review_count:
-        description: Setting this value to zero effectively means merge==deploy without approval(s)
+        description: Count of GitHub approved reviews required for Pull Requests to be merged. Set to 0 if using palantir/policy-bot for PR merge conditions.
         type: string
         required: false
         default: "1"
@@ -2011,26 +2011,36 @@ jobs:
             echo  "::error::Failed to get branch protection rules ${message} ${result} "
             exit 1
           fi
+
+          echo "flowzone_prefix=${{ inputs.job_name }}" | awk '{print tolower($0)}' >> $GITHUB_ENV
       - name: Parse and prepare protection rules
         id: parse_prepare_protection_rules
         if: ${{ steps.get_protection_rules.conclusion == 'success' }}
+        env:
+          policy_bot_prefix: policy-bot
         run: |
           jsondata=${{ steps.get_protection_rules.outputs.result }}
 
           required_status_checks__strict=$(echo $jsondata | jq ".required_status_checks.strict // true")
 
-          # Filter all Flowzone or ResinCI checks
-          # leave other checks (eg jenkins)
-          # add hard coded flowzone checks back
+          # get the pass/fail/pending Flowzone and policybot checks from the current PR
+          status_checks="$((gh pr checks ${{ github.event.pull_request.number }} || true) \
+            | awk -F'\t' 'tolower($1) ~ /^(${{ env.flowzone_prefix }}|${{ env.policy_bot_prefix }})/ && $2 ~ /^(pass|fail|pending)$/ { print $1 }')"
+
+          if echo "${status_checks}" | grep -iq '^${{ env.policy_bot_prefix }}'
+          then
+            echo "policy_bot=true" >> $GITHUB_OUTPUT
+          fi
+
+          # Remove any existing required Flowzone or ResinCI checks from the repo settings
+          # Leave other required checks (eg. Jenkins, CircleCI)
+          # Re-add the Flowzone and policybot checks from the current PR to the required checks
+          # This avoids blocking PRs when Flowzone jobs are renamed but the old name was required
+          # It also ensures that policy-bot is marked as required
           required_status_checks__contexts=$(echo $jsondata | \
             jq ".required_status_checks.contexts // [] | del(.[] | \
-            select(ascii_downcase | startswith(\"${{ inputs.job_name }}\") or startswith(\"resinci\"))) |\
-            . + [ \
-              \"${{ inputs.job_name }} / Protect branch\", \
-              \"${{ inputs.job_name }} / Project types\", \
-              \"${{ inputs.job_name }} / Versioned source\", \
-              \"${{ inputs.job_name }} / Event types\" \
-            ]")
+            select(ascii_downcase | startswith(\"${{ env.flowzone_prefix }}\") or startswith(\"resinci\"))) |\
+            . + $(echo -n "${status_checks}" | jq -cRs 'split("\n")') | unique")
 
           required_pull_request_reviews__dismiss_stale_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.dismiss_stale_reviews // false")
           required_pull_request_reviews__require_code_owner_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.require_code_owner_reviews // false")
