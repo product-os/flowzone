@@ -802,7 +802,7 @@ jobs:
       - name: Compress source
         run: tar -acvf ${{ runner.temp }}/source.tgz .
       - name: Upload artifact
-        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/source.tgz
@@ -895,7 +895,7 @@ jobs:
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
       - name: Upload artifact
-        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
@@ -909,7 +909,7 @@ jobs:
         run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
       - name: Upload artifact
         if: needs.project_types.outputs.npm_docs == 'true'
-        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/docs.tgz
@@ -1737,7 +1737,7 @@ jobs:
         run: |
           tar -czvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
       - name: Upload artifact
-        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
