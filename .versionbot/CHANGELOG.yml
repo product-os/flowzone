@@ -1,4 +1,45 @@
 - commits:
+    - subject: Set default required reviewers to zero
+      hash: d05f41b6189d61da43fc72850bb620da47357358
+      body: |
+        At the same time, toggle auto-merge to off on any
+        existing PRs that would be impacted by this change.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Enable auto-merge on the PR if policy-bot is enabled
+      hash: 11a24864339a06ed46ce215e1b9ba71da4c5883f
+      body: |
+        If policy-bot is in place we can ignore the required
+        reviewers count and trust that policy-bot will prevent
+        the merge if conditions are not met.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Detect Flowzone & policy-bot status checks and mark as required
+      hash: 5a776127ec322f25ac3a4b71251c17a090ba14e1
+      body: |
+        With this change Flowzone will check the current status checks on the
+        PR and mark any Flowzone or policy-bot related checks as required.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.52.0
+  title: ""
+  date: 2023-01-12T14:51:16.094Z
+- commits:
     - subject: "renovate: Add generated flowzone workflow to ignored files"
       hash: 23c47ef0ffdf14f41779e79b93639245f49cb0d0
       body: ""
