@@ -504,7 +504,7 @@ jobs:
 
       - name: Setup Node.js 12.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516 # v3
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
           node-version: 12.x
       - name: Check engine
@@ -517,7 +517,7 @@ jobs:
 
       - name: Setup Node.js 14.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516 # v3
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
           node-version: 14.x
       - name: Check engine
@@ -530,7 +530,7 @@ jobs:
 
       - name: Setup Node.js 16.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516 # v3
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
           node-version: 16.x
       - name: Check engine
@@ -543,7 +543,7 @@ jobs:
 
       - name: Setup Node.js 18.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516 # v3
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
           node-version: 18.x
       - name: Check engine
@@ -965,7 +965,7 @@ jobs:
       - *extractSourceArtifact
 
       - name: Setup Node.js
-        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516 # v3
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
           node-version: "${{ matrix.node_version }}"
 
@@ -1615,7 +1615,7 @@ jobs:
       - *downloadSourceArtifact
       - *extractSourceArtifact
 
-      - uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516 # v3
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
           node-version: 18
 
