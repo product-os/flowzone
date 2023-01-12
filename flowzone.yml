@@ -35,8 +35,7 @@
       token: ${{ secrets.FLOWZONE_TOKEN }}
       ref: "refs/pull/${{ github.event.number }}/merge"
 
-  - &checkoutSha
-    # otherwise use the default checkout behaviour
+  - &checkoutSha # otherwise use the default checkout behaviour
     name: Checkout sha
     if: steps.checkout_merge.outcome == 'skipped'
     uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3
@@ -144,7 +143,8 @@ on:
         description: "Comma-delimited string of Rust stable targets to publish (skipped if empty)"
         type: string
         required: false
-        default: aarch64-unknown-linux-gnu,
+        default: |
+          aarch64-unknown-linux-gnu,
           armv7-unknown-linux-gnueabihf,
           arm-unknown-linux-gnueabihf,
           x86_64-unknown-linux-gnu,
@@ -240,10 +240,10 @@ on:
         required: false
         default: false
       required_approving_review_count:
-        description: "Setting this value to zero effectively means merge==deploy without approval(s)"
+        description: "Count of GitHub approved reviews required for Pull Requests to be merged. Set to 0 if using palantir/policy-bot for PR merge conditions."
         type: string
         required: false
-        default: "1"
+        default: "0"
       job_name:
         description: "The name of the job, necessary for branch protection if not using the default of 'Flowzone'"
         type: string
@@ -1601,7 +1601,7 @@ jobs:
     name: Build website using Docusaurus
     runs-on: ${{fromJSON(inputs.runs_on)}}
     env:
-     CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
+      CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
 
     needs:
       - project_types
@@ -1638,7 +1638,7 @@ jobs:
       - name: Update deploy branch for merged PRs
         if: needs.event_types.outputs.pr_merged == 'true'
         run: |
-            echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
+          echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
 
       - name: Cloudflare Pages
         uses: cloudflare/wrangler-action@4c10c1822abba527d820b29e6333e7f5dac2cabd # 2.0.0
@@ -2135,7 +2135,7 @@ jobs:
         github_publish,
         project_types,
         versioned_source,
-        website_build
+        website_build,
       ]
     # avoid being skipped when dependencies are skipped
     # this job must always run so branch protection rules can depend on it
@@ -2151,9 +2151,11 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
       GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
@@ -2168,6 +2170,7 @@ jobs:
             echo "Needed job returned result: ${result}"
             exit 1
           done
+
       - name: Get protection rules
         id: get_protection_rules
         run: |
@@ -2183,26 +2186,40 @@ jobs:
             echo  "::error::Failed to get branch protection rules ${message} ${result} "
             exit 1
           fi
+
+          echo "flowzone_prefix=${{ inputs.job_name }}" | awk '{print tolower($0)}' >> $GITHUB_ENV
+
       - name: Parse and prepare protection rules
         id: parse_prepare_protection_rules
         if: ${{ steps.get_protection_rules.conclusion == 'success' }}
+        env:
+          # we can expose this as a configurable input if needed
+          policy_bot_prefix: policy-bot
         run: |
           jsondata=${{ steps.get_protection_rules.outputs.result }}
 
           required_status_checks__strict=$(echo $jsondata | jq ".required_status_checks.strict // true")
 
-          # Filter all Flowzone or ResinCI checks
-          # leave other checks (eg jenkins)
-          # add hard coded flowzone checks back
+          echo "old_required_approving_review_count=$(echo $jsondata | jq '.required_pull_request_reviews.required_approving_review_count // 0')" >> $GITHUB_OUTPUT
+
+          # get the pass/fail/pending Flowzone and policybot checks from the current PR
+          status_checks="$((gh pr checks ${{ github.event.pull_request.number }} || true) \
+            | awk -F'\t' 'tolower($1) ~ /^(${{ env.flowzone_prefix }}|${{ env.policy_bot_prefix }})/ && $2 ~ /^(pass|fail|pending)$/ { print $1 }')"
+
+          if echo "${status_checks}" | grep -iq '^${{ env.policy_bot_prefix }}'
+          then
+            echo "policy_bot=true" >> $GITHUB_OUTPUT
+          fi
+
+          # Remove any existing required Flowzone or ResinCI checks from the repo settings
+          # Leave other required checks (eg. Jenkins, CircleCI)
+          # Re-add the Flowzone and policybot checks from the current PR to the required checks
+          # This avoids blocking PRs when Flowzone jobs are renamed but the old name was required
+          # It also ensures that policy-bot is marked as required
           required_status_checks__contexts=$(echo $jsondata | \
             jq ".required_status_checks.contexts // [] | del(.[] | \
-            select(ascii_downcase | startswith(\"${{ inputs.job_name }}\") or startswith(\"resinci\"))) |\
-            . + [ \
-              \"${{ inputs.job_name }} / Protect branch\", \
-              \"${{ inputs.job_name }} / Project types\", \
-              \"${{ inputs.job_name }} / Versioned source\", \
-              \"${{ inputs.job_name }} / Event types\" \
-            ]")
+            select(ascii_downcase | startswith(\"${{ env.flowzone_prefix }}\") or startswith(\"resinci\"))) |\
+            . + $(echo -n "${status_checks}" | jq -cRs 'split("\n")') | unique")
 
           required_pull_request_reviews__dismiss_stale_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.dismiss_stale_reviews // false")
           required_pull_request_reviews__require_code_owner_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.require_code_owner_reviews // false")
@@ -2256,6 +2273,19 @@ jobs:
 
           result=$(echo "${newjson}" | jq '. | @json' )
           echo "result=${result}" >> $GITHUB_OUTPUT
+
+      # Disable auto-merge on any existing PRs if the current repo required reviewer count is
+      # greater than the required reviewer count being applied by Flowzone, likely a one-time change
+      # This should be done BEFORE applying the new rules
+      - name: Disable PR auto-merge
+        if: |
+          fromJSON(steps.parse_prepare_protection_rules.outputs.old_required_approving_review_count) > fromJSON(inputs.required_approving_review_count)
+        run: |
+          for pr in $(gh pr list --state=open --draft=false --json=number | jq -r '.[].number')
+          do
+            gh pr merge ${pr} --disable-auto || true
+          done
+
       # https://github.com/cli/cli/issues/3528
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
@@ -2271,9 +2301,12 @@ jobs:
             exit 1
           fi
 
+          new_required_approving_review_count="$(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count')"
+          echo "new_required_approving_review_count=${new_required_approving_review_count}" >> $GITHUB_OUTPUT
+
           # here the number of required approvals sent to the gh API is checked back from the PUT response from GH api
           # Specifies the number of reviewers required to approve pull requests. Use a number between 1 and 6 or 0 to not require reviewers (successful checks => merge) .
-          if [[ $(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count') -ne ${{ inputs.required_approving_review_count }} ]]; then
+          if [[  ${new_required_approving_review_count} -ne ${{ inputs.required_approving_review_count }} ]]; then
             echo "::warning::Failed to set required approvers count. Check that branch protection is enabled on your repo and try again."
           fi
 
@@ -2282,14 +2315,18 @@ jobs:
           echo "${result}" >> $GITHUB_OUTPUT
           echo "${DELIMITER}" >> $GITHUB_OUTPUT
 
-      # if auto_merge is enabled at the repository level, configure PR auto-merge
+      # If auto-merge is enabled at the repository level,
+      # and this PR not a draft
+      # and required reviewers > 1 OR policy-bot is enabled,
+      # then toggle auto-merge to ON for this PR for convenience
       - name: Enable PR auto-merge
-        if: github.event.pull_request.draft == false
+        if: |
+          github.event.pull_request.draft == false &&
+          (fromJSON(steps.apply_branch_protection_rules.outputs.new_required_approving_review_count) > 0 ||
+          steps.parse_prepare_protection_rules.outputs.policy_bot == 'true')
         run: |
           if [[ $(gh api '/repos/${{ github.repository }}' | jq -r .allow_auto_merge) =~ true ]]; then
-              if [[ ${{ inputs.required_approving_review_count }} -gt 0 ]]; then
-                  gh pr merge ${{ github.event.pull_request.number }} --merge --auto
-              fi
+            gh pr merge ${{ github.event.pull_request.number }} --merge --auto
           fi
 
   ###################################################
@@ -2353,4 +2390,4 @@ jobs:
             -F allow_update_branch='${{ inputs.repo_allow_update_branch }}'
 
         env:
-         GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}

@@ -634,11 +634,11 @@ Default: `false`
 
 #### `required_approving_review_count`
 
-Setting this value to zero effectively means merge==deploy without approval(s).
+Count of GitHub approved reviews required for Pull Requests to be merged. Set to 0 if using [policy-bot](https://github.com/palantir/policy-bot) for PR merge conditions.
 
 Type: _string_
 
-Default: `''`
+Default: `'0'`
 
 #### `github_prerelease`
 
