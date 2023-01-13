@@ -2187,14 +2187,14 @@ jobs:
             exit 1
           fi
 
-          echo "flowzone_prefix=${{ inputs.job_name }}" | awk '{print tolower($0)}' >> $GITHUB_ENV
-
       - name: Parse and prepare protection rules
         id: parse_prepare_protection_rules
         if: ${{ steps.get_protection_rules.conclusion == 'success' }}
         env:
-          # we can expose this as a configurable input if needed
-          policy_bot_prefix: policy-bot
+          # the regex matching will be case insensitive, so no need to account for that here
+          policybot_re: "^policy-?bot"
+          resinci_re: "^resinci"
+          flowzone_re: "^${{ inputs.job_name }}"
         run: |
           jsondata=${{ steps.get_protection_rules.outputs.result }}
 
@@ -2202,24 +2202,36 @@ jobs:
 
           echo "old_required_approving_review_count=$(echo $jsondata | jq '.required_pull_request_reviews.required_approving_review_count // 0')" >> $GITHUB_OUTPUT
 
-          # get the pass/fail/pending Flowzone and policybot checks from the current PR
-          status_checks="$((gh pr checks ${{ github.event.pull_request.number }} || true) \
-            | awk -F'\t' 'tolower($1) ~ /^(${{ env.flowzone_prefix }}|${{ env.policy_bot_prefix }})/ && $2 ~ /^(pass|fail|pending)$/ { print $1 }')"
+          # Get the pass/fail/pending Flowzone and PolicyBot checks from the current PR
+          # so we can mark them as required
+          running_status_checks="$((gh pr checks ${{ github.event.pull_request.number }} || true) | \
+            awk -F'\t' '$2 ~ /^(pass|fail|pending)$/ { print $1 }' | \
+            jq -cRs "split(\"\n\") |
+              map(select(
+                test(\"${{ env.flowzone_re }}\";\"i\") or
+                test(\"${{ env.policybot_re }}\";\"i\")
+              ))
+            ")"
 
-          if echo "${status_checks}" | grep -iq '^${{ env.policy_bot_prefix }}'
+          if jq -e "map(select(test(\"${{ env.policybot_re }}\";\"i\")))" <<<"${running_status_checks}"
           then
             echo "policy_bot=true" >> $GITHUB_OUTPUT
           fi
 
-          # Remove any existing required Flowzone or ResinCI checks from the repo settings
+          # Remove any existing required Flowzone or ResinCI or PolicyBot checks from the repo settings
           # Leave other required checks (eg. Jenkins, CircleCI)
-          # Re-add the Flowzone and policybot checks from the current PR to the required checks
-          # This avoids blocking PRs when Flowzone jobs are renamed but the old name was required
-          # It also ensures that policy-bot is marked as required
+          # Re-add the Flowzone and PolicyBot checks from the current PR to the required checks
+          # This avoids blocking PRs when jobs are renamed and the old name was marked as required
+          # It also ensures that PolicyBot is marked as required
           required_status_checks__contexts=$(echo $jsondata | \
-            jq ".required_status_checks.contexts // [] | del(.[] | \
-            select(ascii_downcase | startswith(\"${{ env.flowzone_prefix }}\") or startswith(\"resinci\"))) |\
-            . + $(echo -n "${status_checks}" | jq -cRs 'split("\n")') | unique")
+            jq ".required_status_checks.contexts // [] |
+              del(.[] | select(
+                test(\"${{ env.flowzone_re }}\",\"i\") or
+                test(\"${{ env.policybot_re }}\",\"i\") or
+                test(\"${{ env.resinci_re }}\",\"i\")
+              )) |
+              . + ${running_status_checks} | unique
+            ")
 
           required_pull_request_reviews__dismiss_stale_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.dismiss_stale_reviews // false")
           required_pull_request_reviews__require_code_owner_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.require_code_owner_reviews // false")
