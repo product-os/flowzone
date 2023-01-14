@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix error in required checks regex
+      hash: b3f080bc14e783afd7454df6b3f00458af852f36
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.54.2
+  title: ""
+  date: 2023-01-14T17:00:15.872Z
+- commits:
     - subject: Improve regex for matching required status checks
       hash: 20e5ee856bc0b61edf68c1c71b44f417e0331c8f
       body: |
