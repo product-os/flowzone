@@ -9,6 +9,9 @@ inputs:
   secrets:
     description: "JSON stringified object containing all the secrets from the calling workflow"
     required: true
+  needs:
+    description: "JSON stringified object containing all the needs from the calling workflow"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -17,8 +20,10 @@ runs:
       env:
         INPUTS: ${{ inputs.json }}
         SECRETS: ${{ inputs.secrets }}
+        NEEDS: ${{ inputs.needs }}
         GITHUB: ${{ toJSON(github) }}
       run: |
         echo "${INPUTS}"
         echo "${SECRETS}"
+        echo "${NEEDS}"
         echo "${GITHUB}"

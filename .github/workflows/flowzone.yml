@@ -1950,6 +1950,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          needs: ${{ toJSON(needs) }}
   protect_branch:
     name: Protect branch
     runs-on: ${{ fromJSON(inputs.runs_on) }}

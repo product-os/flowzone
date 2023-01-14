@@ -2111,6 +2111,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          needs: ${{ toJSON(needs) }}
 
   ###################################################
   ## protect branch
