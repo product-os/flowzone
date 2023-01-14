@@ -2226,9 +2226,9 @@ jobs:
           required_status_checks__contexts=$(echo $jsondata | \
             jq ".required_status_checks.contexts // [] |
               map(select(
-                test(\"${{ env.flowzone_re }}\",\"i\") or
-                test(\"${{ env.policybot_re }}\",\"i\") or
-                test(\"${{ env.resinci_re }}\",\"i\") | not
+                test(\"${{ env.flowzone_re }}\";\"i\") or
+                test(\"${{ env.policybot_re }}\";\"i\") or
+                test(\"${{ env.resinci_re }}\";\"i\") | not
               )) |
               . + ${running_status_checks} | unique
             ")
