@@ -1070,7 +1070,7 @@ jobs:
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.project_types.outputs.node_versions)[-1] }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.project_types.outputs.node_versions)[0] }}
 
       - name: Login to registry
         run: |
@@ -1119,7 +1119,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.project_types.outputs.node_versions)[-1] }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.project_types.outputs.node_versions)[0] }}
 
       - name: Login to registry
         run: |
@@ -1157,7 +1157,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.project_types.outputs.node_versions)[-1] }}
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.project_types.outputs.node_versions)[0] }}
 
       - name: Extract docs artifact
         run: |
