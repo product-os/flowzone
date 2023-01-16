@@ -1066,10 +1066,11 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
-      - name: Download all artifacts
+      - name: Download npm artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           path: ${{ runner.temp }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.project_types.outputs.node_versions)[-1] }}
 
       - name: Login to registry
         run: |
@@ -1080,7 +1081,7 @@ jobs:
       # before publishing
       - name: Publish draft release
         run: |
-          pack="$(ls ${{ runner.temp }}/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar xvf "${pack}"
           (cd package
           npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
@@ -1111,13 +1112,14 @@ jobs:
     steps:
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
-      - name: Download artifacts from PR
+      - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.project_types.outputs.node_versions)[-1] }}
 
       - name: Login to registry
         run: |
@@ -1128,7 +1130,7 @@ jobs:
 
       - name: Publish final release
         run: |
-          pack="$(ls ${{ runner.temp }}/npm-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
           npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}"
 
   npm_docs_finalize:
@@ -1148,17 +1150,18 @@ jobs:
     steps:
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
-      - name: Download artifacts from PR
+      - name: Download npm docs artifact from last run
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.project_types.outputs.node_versions)[-1] }}
 
       - name: Extract docs artifact
         run: |
-          docs="$(ls ${{ runner.temp }}/docs-*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          docs="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar -xvf "${docs}"
 
       - name: Publish generated docs to GitHub Pages
