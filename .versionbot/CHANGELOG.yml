@@ -1,4 +1,21 @@
 - commits:
+    - subject: Only download the required npm artifacts for finalize
+      hash: 15895de8816574b1d9d562e1b86885c2e1e23002
+      body: |
+        The entire download step fails if other artifacts from
+        the workflow run have expired. Make sure we only grab
+        the npm artifacts with the long expiry time.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.55.1
+  title: ""
+  date: 2023-01-16T18:42:14.804Z
+- commits:
     - subject: "chore(deps): update actions/setup-python digest to d27e3f3"
       hash: 3d8b7c7031dc54741a692c9ba2ff867395365b8f
       body: |
