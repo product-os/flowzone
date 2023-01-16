@@ -1,4 +1,21 @@
 - commits:
+    - subject: Allow continue on error when pushing versioned commit
+      hash: b44070f965197220949b02d506f34c0fddecfea7
+      body: |
+        If we need to re-run a merge job due to a failed publish,
+        we don't want to be blocked by the fact that the commit already
+        exists in the base branch.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.55.3
+  title: ""
+  date: 2023-01-16T20:14:26.367Z
+- commits:
     - subject: Index the first element of the node_versions array
       hash: 133488e19ac5c77fd199e91926c532787b72cf93
       body: |
