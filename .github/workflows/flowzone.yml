@@ -1096,7 +1096,7 @@ jobs:
           fi
       - name: Generate draft labels and tags
         id: meta
-        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
+        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
         with:
           images: |
             ${{ env.DOCKER_IMAGES || env.SUT_IMAGE }}
@@ -1212,7 +1212,7 @@ jobs:
       - name: Generate versioned labels and tags
         id: meta1
         if: needs.versioned_source.outputs.version != ''
-        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
+        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
         with:
           images: |
             ${{ matrix.image }}
@@ -1226,7 +1226,7 @@ jobs:
       - name: Generate labels and tags
         id: meta2
         if: needs.versioned_source.outputs.version == ''
-        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
+        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
         with:
           images: |
             ${{ matrix.image }}
