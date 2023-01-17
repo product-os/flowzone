@@ -1580,12 +1580,14 @@ jobs:
           set -ea
           # prevent git from existing with 141
           set +o pipefail
-          previous_tag="$(git tag --sort=-version:refname | head -n 2 | tail -n 1)"
-          release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+          previous_tag="$(git tag -l --sort=-version:refname "v*" | head -n1)"
+          release_notes="$(mktemp)"
+
+          git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes}"
 
           if gh release view '${{ github.event.pull_request.head.ref }}'; then
             gh release edit '${{ github.event.pull_request.head.ref }}' \
-              --notes "${release_notes}" \
+              --notes-file "${release_notes}" \
               --title 'v${{ needs.versioned_source.outputs.version }}' \
               --tag 'v${{ needs.versioned_source.outputs.version }}' \
               --prerelease='${{ inputs.github_prerelease }}' \
