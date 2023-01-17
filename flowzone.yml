@@ -1754,7 +1754,7 @@ jobs:
           set -ea
           # prevent git from existing with 141
           set +o pipefail
-          previous_tag="$(git tag --sort=-version:refname | head -n 2 | tail -n 1)"
+          previous_tag="$(git tag -l --sort=-version:refname "v*" | head -n1)"
           release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
 
           if gh release view '${{ github.event.pull_request.head.ref }}'; then
