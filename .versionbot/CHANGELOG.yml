@@ -1,4 +1,28 @@
 - commits:
+    - subject: Write release notes to file to avoid parsing errors
+      hash: deb7ff65245c405fad9371bace0366e47009a93e
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Update previous tag search to match the v prefix
+      hash: 43c551b1edf43b9861c1e1fcee8d26ccd61f15ae
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.55.4
+  title: ""
+  date: 2023-01-17T16:42:38.389Z
+- commits:
     - subject: Allow continue on error when pushing versioned commit
       hash: b44070f965197220949b02d506f34c0fddecfea7
       body: |
