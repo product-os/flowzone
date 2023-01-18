@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix parsing of previous tag for release notes
+      hash: 2d41b6f2a8f960061e8ceb4ae7865fba70152272
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.58.1
+  title: ""
+  date: 2023-01-18T15:22:37.437Z
+- commits:
     - subject: "fix(deps): update dependency jest to 29.3.1"
       hash: c0742ee3de74e8368fd3b64007b961423acb22ed
       body: |
