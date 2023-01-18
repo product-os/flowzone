@@ -1580,7 +1580,7 @@ jobs:
           set -ea
           # prevent git from existing with 141
           set +o pipefail
-          previous_tag="$(git tag -l --sort=-version:refname "v*" | head -n1)"
+          previous_tag="$(git tag -l --sort=-version:refname "v*" | head -n2 | tail -n1)"
           release_notes="$(mktemp)"
 
           git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes}"
