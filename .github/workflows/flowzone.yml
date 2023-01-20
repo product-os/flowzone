@@ -926,6 +926,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - project_types
       - versioned_source
       - npm_test
@@ -1037,6 +1038,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - project_types
       - versioned_source
     if: |
@@ -1485,6 +1487,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - project_types
       - versioned_source
     if: |
@@ -1519,6 +1522,7 @@ jobs:
       - npm_publish
       - cargo_publish
       - custom_publish
+      - event_types
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true'
@@ -1709,6 +1713,7 @@ jobs:
       - versioned_source
       - cargo_test
       - custom_test
+      - event_types
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&

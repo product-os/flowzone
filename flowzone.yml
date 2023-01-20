@@ -1055,7 +1055,7 @@ jobs:
     name: Publish npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [project_types, versioned_source, npm_test, custom_test]
+    needs: [event_types, project_types, versioned_source, npm_test, custom_test]
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
@@ -1183,7 +1183,7 @@ jobs:
     name: Test docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [project_types, versioned_source]
+    needs: [event_types, project_types, versioned_source]
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
@@ -1661,6 +1661,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - project_types
       - versioned_source
     if: |
@@ -1692,6 +1693,7 @@ jobs:
       - npm_publish
       - cargo_publish
       - custom_publish
+      - event_types
 
     if: |
       !failure() && !cancelled() &&
@@ -1889,6 +1891,7 @@ jobs:
       - versioned_source
       - cargo_test
       - custom_test
+      - event_types
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
