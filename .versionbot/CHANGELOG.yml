@@ -1,4 +1,42 @@
 - commits:
+    - subject: Prevent external contributions from applying branch protection
+      hash: be2c868d16230672dc90bcaf7d3d736bd7a2cae4
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Make sure event_types is required by every job
+      hash: 2d903d2a977227b5bf829bb756f7862b444c24c8
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Move workflow de-duplication condition into flowzone core
+      hash: dbd1a064de4f6ed4c95797f743ab94d80474237a
+      body: |
+        This check to prevent duplicate runs when both pull_request and
+        pull_request_target are triggered is always required, and is
+        better defined inside Flowzone itself rather than the calling
+        workflow.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.60.0
+  title: ""
+  date: 2023-01-20T18:25:48.769Z
+- commits:
     - subject: "chore(deps): update product-os/docusaurus-builder action to 1.4.0"
       hash: 5a3a813bdeda6fa73ed5a74bb729e2813926422e
       body: |
