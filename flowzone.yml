@@ -316,8 +316,9 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     # all jobs depend on this one in some way so add global trigger rules here
     if: |
-      (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.disable_versioning == true)
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.disable_versioning == true) ||
+      (github.event.pull_request.head.repo.full_name == github.repository && github.event_name == 'pull_request') ||
+      (github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request_target')
 
     outputs:
       pr: ${{ steps.pr.outcome == 'success' }}

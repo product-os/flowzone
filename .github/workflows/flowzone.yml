@@ -261,8 +261,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
-      (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.disable_versioning == true)
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.disable_versioning == true) ||
+      (github.event.pull_request.head.repo.full_name == github.repository && github.event_name == 'pull_request') ||
+      (github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request_target')
     outputs:
       pr: ${{ steps.pr.outcome == 'success' }}
       pr_opened: ${{ steps.pr_opened.outcome == 'success' }}
