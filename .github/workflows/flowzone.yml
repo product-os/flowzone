@@ -326,12 +326,14 @@ jobs:
       docker_images: ${{ steps.docker_images.outputs.build }}
       bake_targets: ${{ steps.bake_targets.outputs.build }}
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
+      docker_images_crlf: ${{ steps.docker_images_crlf.outputs.build }}
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }}
       npm_docs: ${{ steps.npm.outputs.docs }}
       docker_compose: ${{ steps.docker_compose.outputs.file }}
       docker_compose_test: ${{ steps.docker_compose_test.outputs.file }}
-      docker_bake: ${{ steps.docker_bake.outputs.build }}
+      docker_bake_json: ${{ steps.docker_bake.outputs.json }}
+      docker_bake_matrix: ${{ steps.docker_bake.outputs.matrix }}
       balena: ${{ steps.balena.outputs.enabled }}
       node_versions: ${{ steps.node_versions.outputs.json }}
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
@@ -395,6 +397,13 @@ jobs:
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
+      - name: Convert docker_images to a newline list
+        id: docker_images_crlf
+        run: |
+          build="$(echo "${{ join(fromJSON(steps.docker_images.outputs.build),' ') }}" | tr " " "\n")"
+          echo "build<<EOF" >> $GITHUB_OUTPUT
+          echo "${build}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - name: Check external contributor limitations
         if: github.event.pull_request.head.repo.full_name != github.repository
         env:
@@ -510,12 +519,6 @@ jobs:
           then
             echo "file=docker-compose.test.yaml" >> $GITHUB_OUTPUT
           fi
-      - name: Check for Docker bake files
-        id: docker_bake
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -name 'docker-bake*'" || true
-          separator: newline
       - name: Check for balena.yml
         id: balena
         run: |
@@ -686,6 +689,32 @@ jobs:
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
+      - name: Check for Docker bake files
+        id: docker_bake_files
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
+        with:
+          cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -name 'docker-bake*'" || true
+          separator: newline
+      - name: Create docker bake matrix
+        id: docker_bake
+        if: join(fromJSON(steps.docker_images.outputs.build)) != '' || steps.docker_compose_test.outputs.file != ''
+        env:
+          BAKE_EMPTY: /tmp/docker-bake.empty.json
+        run: |
+          echo '${{ steps.bake_targets.outputs.build }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_EMPTY}
+
+          json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets.outputs.build),' ') }} \
+            -f ${{ join(fromJSON(steps.docker_bake_files.outputs.build),' -f ') || env.BAKE_EMPTY }} \
+            | jq '.target |= map_values(."inherits" += ["docker-metadata-action"])' \
+            | jq '.target |= map_values(."cache-to" //= ["type=gha"])' \
+            | jq '.target |= map_values(."cache-from" //= ["type=gha"])' \
+            | jq '.target |= map_values(."platforms" //= ["linux/amd64"])' \
+            | jq -cr)"
+
+          matrix="$(jq -cr '.target | to_entries | { include: map(.value.platforms[] as $p | {target: .key, platform: $p})}' <<< "${json}")"
+            
+          echo "json=${json}">> $GITHUB_OUTPUT
+          echo "matrix=${matrix}">> $GITHUB_OUTPUT
   versioned_source:
     name: Versioned source
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1051,17 +1080,10 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
-      matrix:
-        target: ${{ fromJSON(needs.project_types.outputs.bake_targets) }}
+      matrix: ${{ fromJSON(needs.project_types.outputs.docker_bake_matrix) }}
     env:
-      BAKE_OVERRIDE: /tmp/docker-bake.override.json
-      BAKE_EMPTY: /tmp/docker-bake.empty.json
-      SUT_IMAGE: localhost:5000/sut
-    services:
-      registry:
-        image: registry:2.8.1
-        ports:
-          - 5000:5000
+      DOCKER_BAKE_FILE: /tmp/docker-bake.json
+      IMAGE_TAR: /tmp/docker.tar
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -1081,15 +1103,13 @@ jobs:
           install: true
       - name: Set env vars
         run: |
-          DOCKER_IMAGES="$(echo "${{ join(fromJSON(needs.project_types.outputs.docker_images),' ') }}" | tr " " "\n")"
-          echo "DOCKER_IMAGES<<EOF" >> $GITHUB_ENV
-          echo "${DOCKER_IMAGES}" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
+          echo "TARGET=$(echo ${{ matrix.TARGET }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
           if [ ${{ matrix.target }} != 'default' ]
           then
-            echo "PREFIX=${{ matrix.target }}-" >> $GITHUB_ENV
+            echo "PREFIX=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')-" >> $GITHUB_ENV
           fi
+
+          echo "PLATFORM=$(echo ${{ matrix.platform }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
 
           if [ -f "${{ needs.project_types.outputs.docker_compose }}" ]
           then
@@ -1097,43 +1117,36 @@ jobs:
           else
             echo "COMPOSE_FILE=${{ needs.project_types.outputs.docker_compose_test }}" >> $GITHUB_ENV
           fi
-      - name: Generate draft labels and tags
+
+          echo '${{ needs.project_types.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
+          jq . "${DOCKER_BAKE_FILE}"
+      - name: Generate image labels and sut tags
         id: meta
         uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
         with:
           images: |
-            ${{ env.DOCKER_IMAGES || env.SUT_IMAGE }}
+            sut
+            localhost:5000/sut
+            ${{ needs.project_types.outputs.docker_images_crlf }}
+            ${{ github.repository }}
           tags: |
-            type=raw,value=${{ github.event.pull_request.head.sha }}
-            type=raw,value=build-${{ github.event.pull_request.head.ref }}
+            type=raw,value=${{ matrix.target }}
+            type=raw,value=${{ matrix.platform }}
           labels: org.opencontainers.image.version=${{ needs.versioned_source.outputs.new_tag }}
           flavor: |
-            latest=false
-            prefix=${{ env.PREFIX }}
-      - name: Create bake override
-        run: |
-          jq -n '{target:{"${{ matrix.target }}":{}}}' > ${BAKE_EMPTY}
-          docker buildx bake --print ${{ matrix.target }} \
-            -f ${{ join(fromJSON(needs.project_types.outputs.docker_bake),' -f ') || env.BAKE_EMPTY }} \
-            | jq '.target |= map_values(."inherits" += ["docker-metadata-action"])' \
-            | jq '.target |= map_values(."cache-to" //= ["type=gha"])' \
-            | jq '.target |= map_values(."cache-from" //= ["type=gha"])' \
-            > "${BAKE_OVERRIDE}"
-          jq . "${BAKE_OVERRIDE}"
-      - name: Docker bake and push to local registry
+            latest=true
+      - name: Docker bake
         uses: docker/bake-action@6c87dcca988e4e074e3ab1f976a70f63ec9673fb
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
-            ${{ env.BAKE_OVERRIDE }}
+            ${{ env.DOCKER_BAKE_FILE }}
             ${{ steps.meta.outputs.bake-file }}
           targets: ${{ matrix.target }}
           set: |
-            *.tags=${{ env.SUT_IMAGE }}:${{ env.PREFIX }}latest
-          load: false
-          push: true
+            *.platform=${{ matrix.platform }}
+          load: true
       - name: Run docker compose tests
-        id: compose_test
         if: needs.project_types.outputs.docker_compose_test != ''
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
@@ -1152,9 +1165,85 @@ jobs:
 
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
           docker compose logs
+      - name: Save image to file
+        run: |
+          docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ env.IMAGE_TAR }}
+      - name: Upload arifacts
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+        with:
+          name: docker-${{ github.event.pull_request.head.sha }}-${{ env.TARGET }}-${{ env.PLATFORM }}
+          path: ${{ env.IMAGE_TAR }}
+          retention-days: 1
+  docker_publish:
+    name: Publish docker
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - event_types
+      - project_types
+      - versioned_source
+      - docker_test
+    if: |
+      !failure() && !cancelled() && needs.event_types.outputs.do_draft == 'true' &&
+      join(fromJSON(needs.project_types.outputs.docker_images)) != ''
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    services:
+      registry:
+        image: registry:2.8.1
+        ports:
+          - 5000:5000
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.project_types.outputs.bake_targets) }}
+    env:
+      LOCAL_TAG: localhost:5000/sut:latest
+    steps:
       - name: Warn if tests skipped
-        if: join(fromJSON(needs.project_types.outputs.docker_images)) != '' && steps.compose_test.result == 'skipped'
+        if: needs.project_types.outputs.docker_compose_test == ''
         run: echo "::warning::Publishing Docker images without docker compose tests!"
+      - name: Download all artifacts
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        with:
+          path: ${{ runner.temp }}
+      - name: Generate image tags
+        id: meta
+        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
+        with:
+          images: |
+            ${{ needs.project_types.outputs.docker_images_crlf }}
+          tags: |
+            type=raw,value=${{ github.event.pull_request.head.sha }}
+            type=raw,value=build-${{ github.event.pull_request.head.ref }}
+          flavor: |
+            latest=false
+            prefix=${{ env.PREFIX }}
+      - name: Create manifest
+        id: manifest
+        run: |
+          target="$(echo ${{ matrix.TARGET }} | sed 's/[^[:alnum:]]/-/g')"
+
+          platforms="$(echo '${{ needs.project_types.outputs.docker_bake_matrix }}' | \
+            jq -r '.include[] | select(.target == "${{ matrix.target}}") | .platform' | \
+            sed 's/[^[:alnum:]]/-/g')"
+
+          for platform in ${platforms}
+          do
+            tar=${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${target}-${platform}/docker.tar
+            platform_tag="localhost:5000/sut:${platform}"
+
+            loaded="$(docker load -i "${tar}" | grep '^Loaded image:' | awk '{print $NF}')"
+            echo "${loaded}" | xargs -I{} docker tag {} "${platform_tag}"
+
+            docker inspect "${platform_tag}"
+            docker push "${platform_tag}"
+
+            docker buildx imagetools create -t ${LOCAL_TAG} --append "${platform_tag}" || \
+              docker buildx imagetools create -t ${LOCAL_TAG} "${platform_tag}"
+          done
       - name: Login to GitHub Container Registry
         continue-on-error: true
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
@@ -1173,7 +1262,7 @@ jobs:
         if: join(fromJSON(needs.project_types.outputs.docker_images)) != ''
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
         with:
-          src: ${{ env.SUT_IMAGE }}:${{ env.PREFIX }}latest
+          src: ${{ env.LOCAL_TAG }}
           dst: |
             ${{ steps.meta.outputs.tags }}
   docker_finalize:
