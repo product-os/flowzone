@@ -1,4 +1,34 @@
 - commits:
+    - subject: Separate docker publish from docker test
+      hash: 7479f686f95bae273e6e6b139507c9e6bbe92412
+      body: |
+        This allows more control over which platforms are
+        tested when multiple targets and architectures are
+        are being published.
+
+        It also opens the possiblity of running ARM builds
+        on dedicated ARM runners.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Add multiarch target to docker bake tests
+      hash: 0068beef1fcb33524dc13c43857c56ef0ab92099
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.61.0
+  title: ""
+  date: 2023-01-23T21:53:54.919Z
+- commits:
     - subject: "chore(deps): update product-os/docusaurus-builder action to 1.4.1"
       hash: c617023961ee994a421e16c094fee1d3fa3f46a1
       body: |
