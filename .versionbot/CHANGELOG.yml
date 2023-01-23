@@ -1,4 +1,19 @@
 - commits:
+    - subject: "chore(deps): update product-os/docusaurus-builder action to 1.4.1"
+      hash: c617023961ee994a421e16c094fee1d3fa3f46a1
+      body: |
+        Update product-os/docusaurus-builder to 1.4.1
+
+        Update product-os/docusaurus-builder from 1.4.0 to 1.4.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Renovate Bot
+      nested: []
+  version: 0.60.1
+  title: ""
+  date: 2023-01-23T11:51:26.803Z
+- commits:
     - subject: Prevent external contributions from applying branch protection
       hash: be2c868d16230672dc90bcaf7d3d736bd7a2cae4
       body: ""
