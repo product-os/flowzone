@@ -1141,6 +1141,9 @@ jobs:
           set: |
             *.platform=${{ matrix.platform }}
           load: true
+      - name: Save image to file
+        run: |
+          docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ env.IMAGE_TAR }}
       - name: Run docker compose tests
         if: needs.project_types.outputs.docker_compose_yaml != ''
         env:
@@ -1160,9 +1163,6 @@ jobs:
 
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
           docker compose logs
-      - name: Save image to file
-        run: |
-          docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ env.IMAGE_TAR }}
       - name: Upload arifacts
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
