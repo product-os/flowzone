@@ -949,7 +949,7 @@ jobs:
         if: inputs.disable_versioning != true && needs.event_types.outputs.pr_merged == 'true'
         continue-on-error: true
         run: |
-          git push origin HEAD:${{ github.base_ref }}
+          git push origin HEAD:refs/heads/${{ github.base_ref }}
           # We push the tag separately so that it is only pushed if the commit push succeed, this avoids
           # issues if something else updates the main branch whilst we're running and causes us to push
           # the tag successfully but not the main branch and breaks future versioning attempts
