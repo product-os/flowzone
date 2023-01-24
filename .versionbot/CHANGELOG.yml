@@ -1,4 +1,20 @@
 - commits:
+    - subject: Avoid name clashes by specifying branches with heads reference
+      hash: 74e5a1fb78bd17fd05cc325fa8672eb134954dae
+      body: |
+        This avoid problems when there is a tag and a branch with the same name,
+        which happens to be the case when we create ESR branches in meta-balena.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Alex Gonzalez <alexg@balena.io>
+        signed-off-by: Alex Gonzalez <alexg@balena.io>
+      author: Alex Gonzalez
+      nested: []
+  version: 0.61.1
+  title: ""
+  date: 2023-01-24T14:00:35.217Z
+- commits:
     - subject: Separate docker publish from docker test
       hash: 7479f686f95bae273e6e6b139507c9e6bbe92412
       body: |
