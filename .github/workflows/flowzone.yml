@@ -786,7 +786,7 @@ jobs:
         id: old_version
         if: inputs.disable_versioning != true && needs.event_types.outputs.pr == 'true'
         run: |
-          tag="$(git tag --list --sort=-version:refname "v*.*.*" --merged | head -n1)"
+          tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n1)"
           echo "semver=${tag/v/}" >> $GITHUB_OUTPUT
           echo "tag=${tag}" >> $GITHUB_OUTPUT
       - name: Run versionist
@@ -1674,7 +1674,7 @@ jobs:
           set -ea
           # prevent git from existing with 141
           set +o pipefail
-          previous_tag="$(git tag -l --sort=-version:refname "v*" | head -n2 | tail -n1)"
+          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n2 | tail -n1)"
           release_notes="$(mktemp)"
 
           git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes}"
