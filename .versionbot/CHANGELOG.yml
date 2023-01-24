@@ -1,4 +1,20 @@
 - commits:
+    - subject: Save image to file before running compose tests
+      hash: 47935c5889b141d4c5e628cd68a28fa315afe981
+      body: |
+        This prevents accidentally uploading images that were built
+        with docker-compose tests.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.61.4
+  title: ""
+  date: 2023-01-24T21:54:26.761Z
+- commits:
     - subject: Pre-process compose files so we can modify them before tests
       hash: 3fc3a2615551cabde0f8c6cbc3895f482e34f901
       body: ""
