@@ -1,4 +1,18 @@
 - commits:
+    - subject: Pre-process compose files so we can modify them before tests
+      hash: 3fc3a2615551cabde0f8c6cbc3895f482e34f901
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.61.3
+  title: ""
+  date: 2023-01-24T21:32:44.068Z
+- commits:
     - subject: Disable pager for git log commands to avoid error 141
       hash: e8671897e521f5307eef558856b9f082de21ada3
       body: ""
