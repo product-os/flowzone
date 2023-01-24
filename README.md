@@ -314,7 +314,9 @@ If you have an `npm run doc` script then it will automatically be run and the ge
 
 ### Website
 
-If you have docs that you intend to publish on a website, checkout the [Getting Started](https://docusaurus-builder.pages.dev/) section of the Docusaurus builder. The docs will be built using the Docusaurus framework and published on Cloudflare Pages. 
+1. Ask admin to create a new Cloudflare Pages Project for you and share the project name
+2. Add the project name to your `flowzone.yml` under the `cloudflare_website` input
+3. Admin will also set the deployment branch for you on the Cloudflare Dashboard (typically master or main - depending on what you chose when creating the repo)
 
 If you intend to use a custom framework for your docs build, then you can make use of the custom website build option by adding your desired build command in a input called `custom_website_build`. This command should generate your static site into a folder called `build` which will then be deployed to Cloudflare Pages. 
 
