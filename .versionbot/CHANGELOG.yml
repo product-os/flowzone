@@ -1,4 +1,18 @@
 - commits:
+    - subject: Disable pager for git log commands to avoid error 141
+      hash: e8671897e521f5307eef558856b9f082de21ada3
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.61.2
+  title: ""
+  date: 2023-01-24T18:03:28.674Z
+- commits:
     - subject: Avoid name clashes by specifying branches with heads reference
       hash: 74e5a1fb78bd17fd05cc325fa8672eb134954dae
       body: |
