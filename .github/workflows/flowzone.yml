@@ -330,8 +330,7 @@ jobs:
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }}
       npm_docs: ${{ steps.npm.outputs.docs }}
-      docker_compose: ${{ steps.docker_compose.outputs.file }}
-      docker_compose_test: ${{ steps.docker_compose_test.outputs.file }}
+      docker_compose_yaml: ${{ steps.docker_compose.outputs.yaml }}
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
       docker_bake_matrix: ${{ steps.docker_bake.outputs.matrix }}
       balena: ${{ steps.balena.outputs.enabled }}
@@ -498,26 +497,6 @@ jobs:
           if [ "${NODE_VERSIONS}" != "[]" ]
           then
             echo "json=${NODE_VERSIONS}" >> $GITHUB_OUTPUT
-          fi
-      - name: Check for Docker compose files
-        id: docker_compose
-        run: |
-          if [ -f docker-compose.yml ]
-          then
-            echo "file=docker-compose.yml" >> $GITHUB_OUTPUT
-          elif [ -f docker-compose.yaml ]
-          then
-            echo "file=docker-compose.yaml" >> $GITHUB_OUTPUT
-          fi
-      - name: Check for Docker compose test files
-        id: docker_compose_test
-        run: |
-          if [ -f docker-compose.test.yml ]
-          then
-            echo "file=docker-compose.test.yml" >> $GITHUB_OUTPUT
-          elif [ -f docker-compose.test.yaml ]
-          then
-            echo "file=docker-compose.test.yaml" >> $GITHUB_OUTPUT
           fi
       - name: Check for balena.yml
         id: balena
@@ -689,15 +668,32 @@ jobs:
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
+      - name: Check for Docker compose files
+        id: docker_compose_files
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
+        with:
+          cmd: bash -c "find -L ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -type f -name 'docker-compose*.yml' -o -name 'docker-compose*.yaml'" || true
+          separator: newline
+      - name: Pre-process Docker compose files
+        id: docker_compose
+        if: |
+          contains(fromJSON(steps.docker_compose_files.outputs.build), '${{ github.workspace }}/${{ inputs.working_directory }}/docker-compose.test.yml') || 
+          contains(fromJSON(steps.docker_compose_files.outputs.build), '${{ github.workspace }}/${{ inputs.working_directory }}/docker-compose.test.yaml')
+        run: |
+          yaml="$(docker compose -f ${{ join(fromJSON(steps.docker_compose_files.outputs.build),' -f ') }} config)"
+
+          echo "yaml<<EOF" >> $GITHUB_OUTPUT
+          echo "${yaml}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - name: Check for Docker bake files
         id: docker_bake_files
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
         with:
-          cmd: bash -c "find ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -name 'docker-bake*'" || true
+          cmd: bash -c "find -L ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -type f -name 'docker-bake*.json' -o -name 'docker-bake*.hcl'" || true
           separator: newline
-      - name: Create docker bake matrix
+      - name: Pre-process Docker bake files
         id: docker_bake
-        if: join(fromJSON(steps.docker_images.outputs.build)) != '' || steps.docker_compose_test.outputs.file != ''
+        if: join(fromJSON(steps.docker_images.outputs.build)) != '' || steps.docker_compose.outputs.yaml != ''
         env:
           BAKE_EMPTY: /tmp/docker-bake.empty.json
         run: |
@@ -1073,7 +1069,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
-      (join(fromJSON(needs.project_types.outputs.docker_images)) != '' || needs.project_types.outputs.docker_compose_test != '')
+      (join(fromJSON(needs.project_types.outputs.docker_images)) != '' || needs.project_types.outputs.docker_compose_yaml != '')
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1083,6 +1079,7 @@ jobs:
       matrix: ${{ fromJSON(needs.project_types.outputs.docker_bake_matrix) }}
     env:
       DOCKER_BAKE_FILE: /tmp/docker-bake.json
+      COMPOSE_FILE: /tmp/docker-compose.yaml
       IMAGE_TAR: /tmp/docker.tar
     steps:
       - name: Download source artifact
@@ -1104,6 +1101,7 @@ jobs:
       - name: Set env vars
         run: |
           echo "TARGET=$(echo ${{ matrix.TARGET }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
+
           if [ ${{ matrix.target }} != 'default' ]
           then
             echo "PREFIX=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')-" >> $GITHUB_ENV
@@ -1111,12 +1109,9 @@ jobs:
 
           echo "PLATFORM=$(echo ${{ matrix.platform }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
 
-          if [ -f "${{ needs.project_types.outputs.docker_compose }}" ]
-          then
-            echo "COMPOSE_FILE=${{ needs.project_types.outputs.docker_compose }}:${{ needs.project_types.outputs.docker_compose_test }}" >> $GITHUB_ENV
-          else
-            echo "COMPOSE_FILE=${{ needs.project_types.outputs.docker_compose_test }}" >> $GITHUB_ENV
-          fi
+          echo '${{ needs.project_types.outputs.docker_compose_yaml }}' > "${COMPOSE_FILE}"
+          yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
+          yq . "${COMPOSE_FILE}"
 
           echo '${{ needs.project_types.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
           jq . "${DOCKER_BAKE_FILE}"
@@ -1147,7 +1142,7 @@ jobs:
             *.platform=${{ matrix.platform }}
           load: true
       - name: Run docker compose tests
-        if: needs.project_types.outputs.docker_compose_test != ''
+        if: needs.project_types.outputs.docker_compose_yaml != ''
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
           DOCKER_BUILDKIT: "1"
@@ -1203,7 +1198,7 @@ jobs:
       LOCAL_TAG: localhost:5000/sut:latest
     steps:
       - name: Warn if tests skipped
-        if: needs.project_types.outputs.docker_compose_test == ''
+        if: needs.project_types.outputs.docker_compose_yaml == ''
         run: echo "::warning::Publishing Docker images without docker compose tests!"
       - name: Download all artifacts
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
