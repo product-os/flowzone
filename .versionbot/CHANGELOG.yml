@@ -1,4 +1,21 @@
 - commits:
+    - subject: Saves the COMPOSE_VARS secret to .env for docker-compose pre-processing.
+      hash: f4a9841ee9b6b31b37efa414e0d269bf85a079fa
+      body: |
+        This fixes the `no such file or directory` error when docker compose
+        pre-processing (`docker compose config`) is done for a docker-compose
+        that requires a `.env` file.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Carlo Miguel F. Cruz <carloc@balena.io>
+        signed-off-by: Carlo Miguel F. Cruz <carloc@balena.io>
+      author: Carlo Miguel F. Cruz
+      nested: []
+  version: 0.61.7
+  title: ""
+  date: 2023-01-25T07:07:15.620Z
+- commits:
     - subject: Restore target prefix for non-default targets
       hash: c0533ea10e2143d747294dd12702c9a9e5c2b591
       body: |
