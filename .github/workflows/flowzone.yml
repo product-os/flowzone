@@ -490,12 +490,13 @@ jobs:
           then
             echo "json=${NODE_VERSIONS}" >> $GITHUB_OUTPUT
           fi
-  process_source:
-    name: Process source
+  docker_preflight:
+    name: Pre-flight docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
+      - versioned_source
       - sanitize_inputs
     defaults:
       run:
@@ -505,6 +506,75 @@ jobs:
       docker_compose_yaml: ${{ steps.docker_compose.outputs.yaml }}
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
       docker_bake_matrix: ${{ steps.docker_bake.outputs.matrix }}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xvf ${{ runner.temp }}/source.tgz
+      - name: Pre-process Docker compose files
+        id: docker_compose
+        env:
+          COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
+        run: |
+          test -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" || exit 0
+
+          export COMPOSE_FILE="$(echo $(ls -1 docker-compose.test.{yml,yaml} docker-compose.{yml,yaml} 2>/dev/null) | sed 's/ /:/')"
+          if [ -n "${COMPOSE_VARS}" ]
+          then
+            echo "${COMPOSE_VARS}" | base64 --decode > .env
+
+            # mask secrets
+            while read -r line; do
+              secret="$(echo "${line}" | awk -F'=' '{print $2}')"
+              echo "::add-mask::${secret}"
+            done <<< "$(cat < .env)"
+          fi
+
+          yaml="$(docker compose config)"
+
+          echo "yaml<<EOF" >> $GITHUB_OUTPUT
+          echo "${yaml}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Pre-process Docker bake files
+        id: docker_bake
+        env:
+          BAKE_FILE: /tmp/docker-bake.json
+        run: |
+          if [ -n "$(ls docker-bake{.override,}.{json,hcl} 2>/dev/null)" ]
+          then
+            files="$(echo $(ls -1 docker-bake{.override,}.{json,hcl} 2>/dev/null) | sed 's/ / -f /')"
+          else
+            echo '${{ needs.sanitize_inputs.outputs.bake_targets }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
+            files="${BAKE_FILE}"
+          fi
+
+          json="$(docker buildx bake --print ${{ join(fromJSON(needs.sanitize_inputs.outputs.bake_targets),' ') }} -f ${files} \
+            | jq '.target |= map_values(."inherits" += ["docker-metadata-action"])' \
+            | jq '.target |= map_values(."cache-to" //= ["type=gha"])' \
+            | jq '.target |= map_values(."cache-from" //= ["type=gha"])' \
+            | jq '.target |= map_values(."platforms" //= ["linux/amd64"])' \
+            | jq -cr)"
+
+          matrix="$(jq -cr '.target | to_entries | { include: map(.value.platforms[] as $p | {target: .key, platform: $p})}' <<< "${json}")"
+            
+          echo "json=${json}">> $GITHUB_OUTPUT
+          echo "matrix=${matrix}">> $GITHUB_OUTPUT
+  process_source:
+    name: Process source
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - context_check
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    outputs:
       balena: ${{ steps.balena.outputs.enabled }}
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
@@ -703,54 +773,6 @@ jobs:
           then
             echo "always=true" >> $GITHUB_OUTPUT
           fi
-      - name: Pre-process Docker compose files
-        id: docker_compose
-        env:
-          COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
-        run: |
-          test -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" || exit 0
-
-          export COMPOSE_FILE="$(echo $(ls -1 docker-compose.test.{yml,yaml} docker-compose.{yml,yaml} 2>/dev/null) | sed 's/ /:/')"
-          if [ -n "${COMPOSE_VARS}" ]
-          then
-            echo "${COMPOSE_VARS}" | base64 --decode > .env
-
-            # mask secrets
-            while read -r line; do
-              secret="$(echo "${line}" | awk -F'=' '{print $2}')"
-              echo "::add-mask::${secret}"
-            done <<< "$(cat < .env)"
-          fi
-
-          yaml="$(docker compose config)"
-
-          echo "yaml<<EOF" >> $GITHUB_OUTPUT
-          echo "${yaml}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-      - name: Pre-process Docker bake files
-        id: docker_bake
-        env:
-          BAKE_FILE: /tmp/docker-bake.json
-        run: |
-          if [ -n "$(ls docker-bake{.override,}.{json,hcl} 2>/dev/null)" ]
-          then
-            files="$(echo $(ls -1 docker-bake{.override,}.{json,hcl} 2>/dev/null) | sed 's/ / -f /')"
-          else
-            echo '${{ needs.sanitize_inputs.outputs.bake_targets }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
-            files="${BAKE_FILE}"
-          fi
-
-          json="$(docker buildx bake --print ${{ join(fromJSON(needs.sanitize_inputs.outputs.bake_targets),' ') }} -f ${files} \
-            | jq '.target |= map_values(."inherits" += ["docker-metadata-action"])' \
-            | jq '.target |= map_values(."cache-to" //= ["type=gha"])' \
-            | jq '.target |= map_values(."cache-from" //= ["type=gha"])' \
-            | jq '.target |= map_values(."platforms" //= ["linux/amd64"])' \
-            | jq -cr)"
-
-          matrix="$(jq -cr '.target | to_entries | { include: map(.value.platforms[] as $p | {target: .key, platform: $p})}' <<< "${json}")"
-            
-          echo "json=${json}">> $GITHUB_OUTPUT
-          echo "matrix=${matrix}">> $GITHUB_OUTPUT
   versioned_source:
     name: Versioned source
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1100,20 +1122,20 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
+      - docker_preflight
       - versioned_source
       - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
-      (join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != '' || needs.process_source.outputs.docker_compose_yaml != '')
+      (join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != '' || needs.docker_preflight.outputs.docker_compose_yaml != '')
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.process_source.outputs.docker_bake_matrix) }}
+      matrix: ${{ fromJSON(needs.docker_preflight.outputs.docker_bake_matrix) }}
     env:
       DOCKER_BAKE_FILE: /tmp/docker-bake.json
       COMPOSE_FILE: docker-compose.yml
@@ -1146,7 +1168,7 @@ jobs:
 
           echo "PLATFORM=$(echo ${{ matrix.platform }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
 
-          echo '${{ needs.process_source.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
+          echo '${{ needs.docker_preflight.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
           jq . "${DOCKER_BAKE_FILE}"
       - name: Generate image labels and sut tags
         id: meta
@@ -1178,12 +1200,12 @@ jobs:
         run: |
           docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ env.IMAGE_TAR }}
       - name: Run docker compose tests
-        if: needs.process_source.outputs.docker_compose_yaml != ''
+        if: needs.docker_preflight.outputs.docker_compose_yaml != ''
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
           DOCKER_BUILDKIT: "1"
         run: |
-          echo '${{ needs.process_source.outputs.docker_compose_yaml }}' > "${COMPOSE_FILE}"
+          echo '${{ needs.docker_preflight.outputs.docker_compose_yaml }}' > "${COMPOSE_FILE}"
           yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
           yq . "${COMPOSE_FILE}"
 
@@ -1212,7 +1234,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
+      - docker_preflight
       - docker_test
       - sanitize_inputs
     if: |
@@ -1235,7 +1257,7 @@ jobs:
       LOCAL_TAG: localhost:5000/sut:latest
     steps:
       - name: Warn if tests skipped
-        if: needs.process_source.outputs.docker_compose_yaml == ''
+        if: needs.docker_preflight.outputs.docker_compose_yaml == ''
         run: echo "::warning::Publishing Docker images without docker compose tests!"
       - name: Download all artifacts
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -1264,7 +1286,7 @@ jobs:
         run: |
           target="$(echo ${{ matrix.TARGET }} | sed 's/[^[:alnum:]]/-/g')"
 
-          platforms="$(echo '${{ needs.process_source.outputs.docker_bake_matrix }}' | \
+          platforms="$(echo '${{ needs.docker_preflight.outputs.docker_bake_matrix }}' | \
             jq -r '.include[] | select(.target == "${{ matrix.target}}") | .platform' | \
             sed 's/[^[:alnum:]]/-/g')"
 
