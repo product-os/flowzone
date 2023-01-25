@@ -808,12 +808,14 @@ jobs:
           then
             echo "always=true" >> $GITHUB_OUTPUT
           fi
-  process_source:
-    name: Process source
+  website_check:
+    name: Check website
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
+      - versioned_source
+    if: inputs.cloudflare_website != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -821,22 +823,15 @@ jobs:
     outputs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
     steps:
-      - name: Checkout merge branch
-        if: github.event_name == 'pull_request_target' && needs.context_check.outputs.pr_closed != true
-        id: checkout_merge
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+      - name: Download source artifact
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
-          fetch-depth: 0
-          submodules: recursive
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-          ref: refs/pull/${{ github.event.number }}/merge
-      - name: Checkout sha
-        if: steps.checkout_merge.outcome == 'skipped'
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
-        with:
-          fetch-depth: 0
-          submodules: recursive
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Check for README for building a website
         id: has_readme
         run: |
@@ -1687,11 +1682,9 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
-      - process_source
+      - website_check
       - versioned_source
       - context_check
-    if: |
-      inputs.cloudflare_website != ''
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -1707,7 +1700,7 @@ jobs:
           node-version: 18
       - name: Docusaurus Builder
         if: |
-          needs.process_source.outputs.has_readme == 'true' &&
+          needs.website_check.outputs.has_readme == 'true' &&
           inputs.docusaurus_website != false
         uses: product-os/docusaurus-builder@c44214ff7bc25e1b511cf4c5c0e7c56737f5e437
         with:
@@ -1735,7 +1728,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
       - versioned_source
     if: |
       !failure() && !cancelled() &&
@@ -1763,7 +1755,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - process_source
       - versioned_source
       - github_prepare
       - npm_publish
@@ -1808,7 +1799,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
       - versioned_source
     if: |
       needs.context_check.outputs.do_final == 'true'
@@ -1863,7 +1853,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
       - versioned_source
     if: |
       !failure() && !cancelled() &&
@@ -2228,7 +2217,6 @@ jobs:
       - cargo_test
       - cargo_publish
       - github_publish
-      - process_source
       - versioned_source
       - website_build
     if: |
