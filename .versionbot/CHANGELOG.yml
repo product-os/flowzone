@@ -1,4 +1,19 @@
 - commits:
+    - subject: Update product-os/docusaurus-builder action to 1.4.2
+      hash: be786134fd04b492add6a021efee84698163b046
+      body: |
+        Update product-os/docusaurus-builder to 1.4.2
+
+        Update product-os/docusaurus-builder from 1.4.1 to 1.4.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Renovate Bot
+      nested: []
+  version: 0.61.8
+  title: ""
+  date: 2023-01-25T14:54:01.319Z
+- commits:
     - subject: Saves the COMPOSE_VARS secret to .env for docker-compose pre-processing.
       hash: f4a9841ee9b6b31b37efa414e0d269bf85a079fa
       body: |
