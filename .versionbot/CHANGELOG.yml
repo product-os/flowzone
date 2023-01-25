@@ -1,4 +1,20 @@
 - commits:
+    - subject: Restore target prefix for non-default targets
+      hash: c0533ea10e2143d747294dd12702c9a9e5c2b591
+      body: |
+        This bug prevented the target name from being
+        prefixed on docker images tags.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.61.6
+  title: ""
+  date: 2023-01-25T03:46:14.749Z
+- commits:
     - subject: Fix checks when docker-compose files are not found
       hash: 8528a590a4913c81aa3a35bf7c859347036de887
       body: ""
