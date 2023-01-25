@@ -648,11 +648,11 @@ jobs:
           echo "json=${json}">> $GITHUB_OUTPUT
           echo "matrix=${matrix}">> $GITHUB_OUTPUT
 
-  process_source:
-    name: Process source
+  python_preflight:
+    name: Pre-flight python
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check]
+    needs: [context_check, versioned_source]
 
     defaults:
       run:
@@ -660,59 +660,12 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
-      balena: ${{ steps.balena.outputs.enabled }}
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
-      cargo: ${{ steps.cargo.outputs.enabled }}
-      has_readme: ${{ steps.has_readme.outputs.enabled }}
-
-      custom_test: ${{ steps.custom.outputs.test }}
-      custom_publish: ${{ steps.custom.outputs.publish }}
-      custom_finalize: ${{ steps.custom.outputs.finalize }}
-      custom_clean: ${{ steps.custom.outputs.clean }}
-      custom_always: ${{ steps.custom.outputs.always }}
 
     steps:
-      - *checkoutMergeBranch
-      - *checkoutSha
-
-      # reject external contribution workflow in certain conditions to prevent leaking secrets
-      - name: Check external contributor limitations
-        if: github.event.pull_request.head.repo.full_name != github.repository
-        env:
-          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ -n "${{ secrets.COMPOSE_VARS }}" ]
-          then
-            echo "::notice::COMPOSE_VARS secrets are not currently supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-
-          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
-          then
-            echo "::notice::Modifications to workflow files are not supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-
-          if [ "${{ inputs.restrict_custom_actions }}" == "true" ]
-          then
-            echo "::notice::Custom actions are disabled for external contributors and will be skipped. \
-              Please contact a member of the organization for assistance."
-            exit 0
-          fi
-
-      - name: Check for balena.yml
-        id: balena
-        run: |
-          if test -f balena.yml
-          then
-            echo "found balena.yml"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
 
       - name: Check for Python Poetry pyproject.toml
         id: python_poetry
@@ -817,6 +770,70 @@ jobs:
           if [ "${PYTHON_VERSIONS}" != "[]" ]
           then
             echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
+          fi
+
+  process_source:
+    name: Process source
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs: [context_check]
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+
+    outputs:
+      balena: ${{ steps.balena.outputs.enabled }}
+      cargo: ${{ steps.cargo.outputs.enabled }}
+      has_readme: ${{ steps.has_readme.outputs.enabled }}
+
+      custom_test: ${{ steps.custom.outputs.test }}
+      custom_publish: ${{ steps.custom.outputs.publish }}
+      custom_finalize: ${{ steps.custom.outputs.finalize }}
+      custom_clean: ${{ steps.custom.outputs.clean }}
+      custom_always: ${{ steps.custom.outputs.always }}
+
+    steps:
+      - *checkoutMergeBranch
+      - *checkoutSha
+
+      # reject external contribution workflow in certain conditions to prevent leaking secrets
+      - name: Check external contributor limitations
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+        run: |
+          if [ -n "${{ secrets.COMPOSE_VARS }}" ]
+          then
+            echo "::notice::COMPOSE_VARS secrets are not currently supported for external contributions. \
+              Please contact a member of the organization for assistance."
+            exit 1
+          fi
+
+          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
+          then
+            echo "::notice::Modifications to workflow files are not supported for external contributions. \
+              Please contact a member of the organization for assistance."
+            exit 1
+          fi
+
+          if [ "${{ inputs.restrict_custom_actions }}" == "true" ]
+          then
+            echo "::notice::Custom actions are disabled for external contributors and will be skipped. \
+              Please contact a member of the organization for assistance."
+            exit 0
+          fi
+
+      - name: Check for balena.yml
+        id: balena
+        run: |
+          if test -f balena.yml
+          then
+            echo "found balena.yml"
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check Cargo.toml
