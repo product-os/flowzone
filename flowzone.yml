@@ -777,7 +777,8 @@ jobs:
     name: Pre-flight rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, versioned_source]
+    needs: [context_check, versioned_source, sanitize_inputs]
+    if: join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
 
     defaults:
       run:
@@ -807,7 +808,8 @@ jobs:
     name: Pre-flight balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, versioned_source]
+    needs: [context_check, versioned_source, sanitize_inputs]
+    if: join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
 
     defaults:
       run:
@@ -887,6 +889,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs: [context_check, versioned_source]
+    if: inputs.cloudflare_website != ''
 
     defaults:
       run:
@@ -1204,8 +1207,7 @@ jobs:
     name: Publish npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      [context_check, npm_preflight, npm_test, custom_test]
+    needs: [context_check, npm_preflight, npm_test, custom_test]
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
@@ -1470,13 +1472,7 @@ jobs:
     name: Publish docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      [
-        context_check,
-        docker_preflight,
-        docker_test,
-        sanitize_inputs,
-      ]
+    needs: [context_check, docker_preflight, docker_test, sanitize_inputs]
     if: |
       !failure() && !cancelled() && needs.context_check.outputs.do_draft == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
@@ -1583,7 +1579,7 @@ jobs:
     name: Finalize docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, sanitize_inputs]
+    needs: [context_check, sanitize_inputs, docker_preflight]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
@@ -1710,8 +1706,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.balena_preflight.outputs.balena == 'true' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
+      needs.balena_preflight.outputs.balena == 'true'
 
     strategy:
       fail-fast: false
@@ -1735,8 +1730,7 @@ jobs:
     needs: [context_check, balena_preflight, versioned_source, sanitize_inputs]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
-      needs.balena_preflight.outputs.balena == 'true' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
+      needs.balena_preflight.outputs.balena == 'true'
 
     strategy:
       fail-fast: false
@@ -1854,9 +1848,6 @@ jobs:
       - versioned_source
       - context_check
 
-    if: |
-      inputs.cloudflare_website != ''
-
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
@@ -1933,7 +1924,6 @@ jobs:
       - cargo_publish
       - custom_publish
       - context_check
-
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true'
@@ -2031,9 +2021,9 @@ jobs:
       - versioned_source
     if: |
       !failure() && !cancelled() &&
-        needs.context_check.outputs.pr == 'true' &&
-        github.event.pull_request.merged == false &&
-        github.event.action == 'closed'
+      needs.context_check.outputs.pr == 'true' &&
+      github.event.pull_request.merged == false &&
+      github.event.action == 'closed'
 
     defaults:
       run:
@@ -2064,8 +2054,7 @@ jobs:
       - sanitize_inputs
     if: |
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.cargo_preflight.outputs.cargo == 'true' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
+      needs.cargo_preflight.outputs.cargo == 'true'
 
     defaults:
       run:
@@ -2135,7 +2124,6 @@ jobs:
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
       needs.cargo_test.result == 'success' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != '' &&
       inputs.rust_binaries == true
 
     defaults:
@@ -2184,11 +2172,10 @@ jobs:
     name: Finalize rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, cargo_preflight, versioned_source, sanitize_inputs]
+    needs: [context_check, cargo_preflight, versioned_source]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
-      needs.cargo_preflight.outputs.cargo == 'true' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
+      needs.cargo_preflight.outputs.cargo == 'true'
 
     defaults:
       run:

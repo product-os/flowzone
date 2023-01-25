@@ -686,6 +686,8 @@ jobs:
     needs:
       - context_check
       - versioned_source
+      - sanitize_inputs
+    if: join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -719,6 +721,8 @@ jobs:
     needs:
       - context_check
       - versioned_source
+      - sanitize_inputs
+    if: join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -804,6 +808,7 @@ jobs:
     needs:
       - context_check
       - versioned_source
+    if: inputs.cloudflare_website != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1414,6 +1419,7 @@ jobs:
     needs:
       - context_check
       - sanitize_inputs
+      - docker_preflight
     if: |
       needs.context_check.outputs.do_final == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
@@ -1522,8 +1528,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.balena_preflight.outputs.balena == 'true' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
+      needs.balena_preflight.outputs.balena == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -1560,8 +1565,7 @@ jobs:
       - sanitize_inputs
     if: |
       needs.context_check.outputs.do_final == 'true' &&
-      needs.balena_preflight.outputs.balena == 'true' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
+      needs.balena_preflight.outputs.balena == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -1675,8 +1679,6 @@ jobs:
       - website_preflight
       - versioned_source
       - context_check
-    if: |
-      inputs.cloudflare_website != ''
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -1848,9 +1850,9 @@ jobs:
       - versioned_source
     if: |
       !failure() && !cancelled() &&
-        needs.context_check.outputs.pr == 'true' &&
-        github.event.pull_request.merged == false &&
-        github.event.action == 'closed'
+      needs.context_check.outputs.pr == 'true' &&
+      github.event.pull_request.merged == false &&
+      github.event.action == 'closed'
     defaults:
       run:
         working-directory: .
@@ -1880,8 +1882,7 @@ jobs:
       - sanitize_inputs
     if: |
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.cargo_preflight.outputs.cargo == 'true' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
+      needs.cargo_preflight.outputs.cargo == 'true'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1947,7 +1948,6 @@ jobs:
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
       needs.cargo_test.result == 'success' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != '' &&
       inputs.rust_binaries == true
     defaults:
       run:
@@ -1996,11 +1996,9 @@ jobs:
       - context_check
       - cargo_preflight
       - versioned_source
-      - sanitize_inputs
     if: |
       needs.context_check.outputs.do_final == 'true' &&
-      needs.cargo_preflight.outputs.cargo == 'true' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
+      needs.cargo_preflight.outputs.cargo == 'true'
     defaults:
       run:
         working-directory: .
