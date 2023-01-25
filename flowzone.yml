@@ -1232,7 +1232,7 @@ jobs:
 
     env:
       DOCKER_BAKE_FILE: /tmp/docker-bake.json
-      COMPOSE_FILE: /tmp/docker-compose.yaml
+      COMPOSE_FILE: docker-compose.yml
       IMAGE_TAR: /tmp/docker.tar
 
     steps:
@@ -1263,10 +1263,6 @@ jobs:
           fi
 
           echo "PLATFORM=$(echo ${{ matrix.platform }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
-
-          echo '${{ needs.project_types.outputs.docker_compose_yaml }}' > "${COMPOSE_FILE}"
-          yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
-          yq . "${COMPOSE_FILE}"
 
           echo '${{ needs.project_types.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
           jq . "${DOCKER_BAKE_FILE}"
@@ -1326,6 +1322,10 @@ jobs:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
           DOCKER_BUILDKIT: "1"
         run: |
+          echo '${{ needs.project_types.outputs.docker_compose_yaml }}' > "${COMPOSE_FILE}"
+          yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
+          yq . "${COMPOSE_FILE}"
+
           if [ -n "${COMPOSE_VARS}" ]
           then
             echo "${COMPOSE_VARS}" | base64 --decode > .env
