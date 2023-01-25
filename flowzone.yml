@@ -882,11 +882,11 @@ jobs:
             echo "always=true" >> $GITHUB_OUTPUT
           fi
 
-  process_source:
-    name: Process source
+  website_preflight:
+    name: Pre-flight website
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check]
+    needs: [context_check, versioned_source]
 
     defaults:
       run:
@@ -897,11 +897,10 @@ jobs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
 
     steps:
-      - *checkoutMergeBranch
-      - *checkoutSha
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
 
       # Check if we have at least a README to build a website from
-
       - name: Check for README for building a website
         id: has_readme
         run: |
@@ -1584,7 +1583,7 @@ jobs:
     name: Finalize docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, process_source, sanitize_inputs]
+    needs: [context_check, sanitize_inputs]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
@@ -1851,7 +1850,7 @@ jobs:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
 
     needs:
-      - process_source
+      - website_preflight
       - versioned_source
       - context_check
 
@@ -1868,7 +1867,7 @@ jobs:
 
       - name: Docusaurus Builder
         if: |
-          needs.process_source.outputs.has_readme == 'true' &&
+          needs.website_preflight.outputs.has_readme == 'true' &&
           inputs.docusaurus_website != false
         uses: product-os/docusaurus-builder@c44214ff7bc25e1b511cf4c5c0e7c56737f5e437 # v1.5.0
         with:
@@ -1904,7 +1903,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
       - versioned_source
     if: |
       !failure() && !cancelled() &&
@@ -1929,7 +1927,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - process_source
       - versioned_source
       - github_prepare
       - npm_publish
@@ -1979,7 +1976,7 @@ jobs:
     name: Finalize GitHub release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, process_source, versioned_source]
+    needs: [context_check, versioned_source]
     if: |
       needs.context_check.outputs.do_final == 'true'
 
@@ -2031,7 +2028,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
       - versioned_source
     if: |
       !failure() && !cancelled() &&
@@ -2389,7 +2385,6 @@ jobs:
         cargo_test,
         cargo_publish,
         github_publish,
-        process_source,
         versioned_source,
         website_build,
       ]
