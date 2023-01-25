@@ -679,6 +679,39 @@ jobs:
           then
             echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
           fi
+  cargo_preflight:
+    name: Pre-flight rust
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - context_check
+      - versioned_source
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    outputs:
+      cargo: ${{ steps.cargo.outputs.enabled }}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xvf ${{ runner.temp }}/source.tgz
+      - name: Check Cargo.toml
+        id: cargo
+        run: |
+          if test -f "Cargo.toml"
+          then
+            echo "found Cargo.toml"
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
+          fi
   process_source:
     name: Process source
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -691,7 +724,6 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
       balena: ${{ steps.balena.outputs.enabled }}
-      cargo: ${{ steps.cargo.outputs.enabled }}
       has_readme: ${{ steps.has_readme.outputs.enabled }}
       custom_test: ${{ steps.custom.outputs.test }}
       custom_publish: ${{ steps.custom.outputs.publish }}
@@ -746,16 +778,6 @@ jobs:
           if test -f balena.yml
           then
             echo "found balena.yml"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
-      - name: Check Cargo.toml
-        id: cargo
-        run: |
-          if test -f "Cargo.toml"
-          then
-            echo "found Cargo.toml"
             echo "enabled=true" >> $GITHUB_OUTPUT
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
@@ -1534,11 +1556,11 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
+      - python_preflight
       - versioned_source
     if: |
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.process_source.outputs.python_poetry == 'true'
+      needs.python_preflight.outputs.python_poetry == 'true'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1546,7 +1568,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ fromJSON(needs.process_source.outputs.python_versions) }}
+        python-version: ${{ fromJSON(needs.python_preflight.outputs.python_versions) }}
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -1820,12 +1842,12 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
+      - cargo_preflight
       - versioned_source
       - sanitize_inputs
     if: |
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.process_source.outputs.cargo == 'true' &&
+      needs.cargo_preflight.outputs.cargo == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
     defaults:
       run:
@@ -1883,7 +1905,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - process_source
       - versioned_source
       - cargo_test
       - custom_test
@@ -1940,12 +1961,12 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
+      - cargo_preflight
       - versioned_source
       - sanitize_inputs
     if: |
       needs.context_check.outputs.do_final == 'true' &&
-      needs.process_source.outputs.cargo == 'true' &&
+      needs.cargo_preflight.outputs.cargo == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
     defaults:
       run:
