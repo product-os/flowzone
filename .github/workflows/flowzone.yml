@@ -668,39 +668,32 @@ jobs:
         with:
           cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
           separator: ","
-      - name: Check for Docker compose files
-        id: docker_compose_files
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "find -L ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -type f -name 'docker-compose*.yml' -o -name 'docker-compose*.yaml'" || true
-          separator: newline
       - name: Pre-process Docker compose files
         id: docker_compose
-        if: |
-          contains(fromJSON(steps.docker_compose_files.outputs.build), '${{ github.workspace }}/${{ inputs.working_directory }}/docker-compose.test.yml') || 
-          contains(fromJSON(steps.docker_compose_files.outputs.build), '${{ github.workspace }}/${{ inputs.working_directory }}/docker-compose.test.yaml')
         run: |
-          yaml="$(docker compose -f ${{ join(fromJSON(steps.docker_compose_files.outputs.build),' -f ') }} config)"
+          test -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" || exit 0
+
+          export COMPOSE_FILE="$(echo $(ls -1 docker-compose.test.{yml,yaml} docker-compose.{yml,yaml} 2>/dev/null) | sed 's/ /:/')"
+          yaml="$(docker compose config)"
 
           echo "yaml<<EOF" >> $GITHUB_OUTPUT
           echo "${yaml}" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      - name: Check for Docker bake files
-        id: docker_bake_files
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "find -L ${{ github.workspace }}/${{ inputs.working_directory }} -maxdepth 1 -type f -name 'docker-bake*.json' -o -name 'docker-bake*.hcl'" || true
-          separator: newline
       - name: Pre-process Docker bake files
         id: docker_bake
         if: join(fromJSON(steps.docker_images.outputs.build)) != '' || steps.docker_compose.outputs.yaml != ''
         env:
-          BAKE_EMPTY: /tmp/docker-bake.empty.json
+          BAKE_FILE: /tmp/docker-bake.json
         run: |
-          echo '${{ steps.bake_targets.outputs.build }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_EMPTY}
+          if [ -n "$(ls docker-bake{.override,}.{json,hcl} 2>/dev/null)" ]
+          then
+            files="$(echo $(ls -1 docker-bake{.override,}.{json,hcl} 2>/dev/null) | sed 's/ / -f /')"
+          else
+            echo '${{ steps.bake_targets.outputs.build }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
+            files="${BAKE_FILE}"
+          fi
 
-          json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets.outputs.build),' ') }} \
-            -f ${{ join(fromJSON(steps.docker_bake_files.outputs.build),' -f ') || env.BAKE_EMPTY }} \
+          json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets.outputs.build),' ') }} -f ${files} \
             | jq '.target |= map_values(."inherits" += ["docker-metadata-action"])' \
             | jq '.target |= map_values(."cache-to" //= ["type=gha"])' \
             | jq '.target |= map_values(."cache-from" //= ["type=gha"])' \
@@ -1079,7 +1072,7 @@ jobs:
       matrix: ${{ fromJSON(needs.project_types.outputs.docker_bake_matrix) }}
     env:
       DOCKER_BAKE_FILE: /tmp/docker-bake.json
-      COMPOSE_FILE: /tmp/docker-compose.yaml
+      COMPOSE_FILE: docker-compose.yml
       IMAGE_TAR: /tmp/docker.tar
     steps:
       - name: Download source artifact
@@ -1108,10 +1101,6 @@ jobs:
           fi
 
           echo "PLATFORM=$(echo ${{ matrix.platform }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
-
-          echo '${{ needs.project_types.outputs.docker_compose_yaml }}' > "${COMPOSE_FILE}"
-          yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
-          yq . "${COMPOSE_FILE}"
 
           echo '${{ needs.project_types.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
           jq . "${DOCKER_BAKE_FILE}"
@@ -1150,6 +1139,10 @@ jobs:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
           DOCKER_BUILDKIT: "1"
         run: |
+          echo '${{ needs.project_types.outputs.docker_compose_yaml }}' > "${COMPOSE_FILE}"
+          yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
+          yq . "${COMPOSE_FILE}"
+
           if [ -n "${COMPOSE_VARS}" ]
           then
             echo "${COMPOSE_VARS}" | base64 --decode > .env
