@@ -790,31 +790,6 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           token: ${{ secrets.FLOWZONE_TOKEN }}
-      - name: Check external contributor limitations
-        if: github.event.pull_request.head.repo.full_name != github.repository
-        env:
-          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ -n "${{ secrets.COMPOSE_VARS }}" ]
-          then
-            echo "::notice::COMPOSE_VARS secrets are not currently supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-
-          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
-          then
-            echo "::notice::Modifications to workflow files are not supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-
-          if [ "${{ inputs.restrict_custom_actions }}" == "true" ]
-          then
-            echo "::notice::Custom actions are disabled for external contributors and will be skipped. \
-              Please contact a member of the organization for assistance."
-            exit 0
-          fi
       - name: Check for README for building a website
         id: has_readme
         run: |
@@ -880,6 +855,31 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           token: ${{ secrets.FLOWZONE_TOKEN }}
+      - name: Check external contributor limitations
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+        run: |
+          if [ -n "${{ secrets.COMPOSE_VARS }}" ]
+          then
+            echo "::notice::COMPOSE_VARS secrets are not currently supported for external contributions. \
+              Please contact a member of the organization for assistance."
+            exit 1
+          fi
+
+          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
+          then
+            echo "::notice::Modifications to workflow files are not supported for external contributions. \
+              Please contact a member of the organization for assistance."
+            exit 1
+          fi
+
+          if [ "${{ inputs.restrict_custom_actions }}" == "true" ]
+          then
+            echo "::notice::Custom actions are disabled for external contributors and will be skipped. \
+              Please contact a member of the organization for assistance."
+            exit 0
+          fi
       - name: Reject merge commits
         run: |
           if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep '^parent ' | wc -l)" -gt 1 ]
