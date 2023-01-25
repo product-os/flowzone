@@ -772,6 +772,7 @@ jobs:
             echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
           fi
 
+  # check for Cargo.toml in source
   cargo_preflight:
     name: Pre-flight rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -801,6 +802,36 @@ jobs:
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
+  # check for balena.yml in source
+  balena_preflight:
+    name: Pre-flight balena
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs: [context_check, versioned_source]
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+
+    outputs:
+      balena: ${{ steps.balena.outputs.enabled }}
+
+    steps:
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
+
+      - name: Check for balena.yml
+        id: balena
+        run: |
+          if test -f balena.yml
+          then
+            echo "found balena.yml"
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
+          fi
+
   process_source:
     name: Process source
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -813,9 +844,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
-      balena: ${{ steps.balena.outputs.enabled }}
       has_readme: ${{ steps.has_readme.outputs.enabled }}
-
       custom_test: ${{ steps.custom.outputs.test }}
       custom_publish: ${{ steps.custom.outputs.publish }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
@@ -851,17 +880,6 @@ jobs:
             echo "::notice::Custom actions are disabled for external contributors and will be skipped. \
               Please contact a member of the organization for assistance."
             exit 0
-          fi
-
-      - name: Check for balena.yml
-        id: balena
-        run: |
-          if test -f balena.yml
-          then
-            echo "found balena.yml"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
       # Check if we have at least a README to build a website from
@@ -1665,7 +1683,7 @@ jobs:
     needs:
       [
         context_check,
-        process_source,
+        balena_preflight,
         versioned_source,
         npm_test,
         docker_test,
@@ -1675,7 +1693,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.process_source.outputs.balena == 'true' &&
+      needs.balena_preflight.outputs.balena == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
 
     strategy:
@@ -1697,10 +1715,10 @@ jobs:
     name: Finalize balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, process_source, versioned_source, sanitize_inputs]
+    needs: [context_check, balena_preflight, versioned_source, sanitize_inputs]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
-      needs.process_source.outputs.balena == 'true' &&
+      needs.balena_preflight.outputs.balena == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
 
     strategy:
