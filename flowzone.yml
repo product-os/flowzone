@@ -394,6 +394,10 @@ jobs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       docker_images_crlf: ${{ steps.docker_images_crlf.outputs.build }}
 
+      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
+      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
+      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
+
     steps:
       - name: Convert balena_slugs to json
         id: balena_slugs
@@ -438,6 +442,33 @@ jobs:
           echo "build<<EOF" >> $GITHUB_OUTPUT
           echo "${build}" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Convert custom_test_matrix to json
+        id: custom_test_matrix
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+        env:
+          INPUT: ${{ inputs.custom_test_matrix }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+
+      - name: Convert custom_publish_matrix to json
+        id: custom_publish_matrix
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+        env:
+          INPUT: ${{ inputs.custom_publish_matrix }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+
+      - name: Convert custom_finalize_matrix to json
+        id: custom_finalize_matrix
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+        env:
+          INPUT: ${{ inputs.custom_finalize_matrix }}
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
 
   # check if the repository has a package.json file and which engine versions are supported
   npm_preflight:
@@ -564,11 +595,8 @@ jobs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
 
       custom_test: ${{ steps.custom.outputs.test }}
-      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
       custom_publish: ${{ steps.custom.outputs.publish }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
       custom_clean: ${{ steps.custom.outputs.clean }}
       custom_always: ${{ steps.custom.outputs.always }}
 
@@ -769,33 +797,6 @@ jobs:
           then
             echo "always=true" >> $GITHUB_OUTPUT
           fi
-
-      - name: Convert custom_test_matrix to a JSON array
-        id: custom_test_matrix
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
-        env:
-          INPUT: ${{ inputs.custom_test_matrix }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
-
-      - name: Convert custom_publish_matrix to a JSON array
-        id: custom_publish_matrix
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
-        env:
-          INPUT: ${{ inputs.custom_publish_matrix }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
-
-      - name: Convert custom_finalize_matrix to a JSON array
-        id: custom_finalize_matrix
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
-        env:
-          INPUT: ${{ inputs.custom_finalize_matrix }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
 
       # only if docker-compose test files are found
       # merge all compose files in the project and record the merged config as a multiline yaml output
@@ -2136,7 +2137,7 @@ jobs:
     name: Test custom
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, process_source, versioned_source]
+    needs: [context_check, process_source, versioned_source, sanitize_inputs]
     if: |
       needs.context_check.outputs.do_draft == 'true' &&
       needs.process_source.outputs.custom_test == 'true'
@@ -2144,7 +2145,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.process_source.outputs.custom_test_matrix) }}
+        value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_test_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on) }}
 
     steps:
@@ -2174,6 +2175,7 @@ jobs:
         docker_test,
         cargo_test,
         custom_test,
+        sanitize_inputs,
       ]
     if: |
       !failure() && !cancelled() &&
@@ -2183,7 +2185,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.process_source.outputs.custom_publish_matrix) }}
+        value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_publish_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on) }}
 
     steps:
@@ -2204,7 +2206,7 @@ jobs:
     name: Finalize custom
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, process_source, versioned_source]
+    needs: [context_check, process_source, versioned_source, sanitize_inputs]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
       needs.process_source.outputs.custom_finalize == 'true'
@@ -2212,7 +2214,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.process_source.outputs.custom_finalize_matrix) }}
+        value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_finalize_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on) }}
 
     steps:
