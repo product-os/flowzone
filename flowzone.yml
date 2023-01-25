@@ -832,11 +832,12 @@ jobs:
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
-  process_source:
-    name: Process source
+  # check for custom actions in source
+  custom_preflight:
+    name: Pre-flight custom
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check]
+    needs: [context_check, versioned_source]
 
     defaults:
       run:
@@ -844,7 +845,6 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
-      has_readme: ${{ steps.has_readme.outputs.enabled }}
       custom_test: ${{ steps.custom.outputs.test }}
       custom_publish: ${{ steps.custom.outputs.publish }}
       custom_finalize: ${{ steps.custom.outputs.finalize }}
@@ -852,21 +852,8 @@ jobs:
       custom_always: ${{ steps.custom.outputs.always }}
 
     steps:
-      - *checkoutMergeBranch
-      - *checkoutSha
-
-      # Check if we have at least a README to build a website from
-
-      - name: Check for README for building a website
-        id: has_readme
-        run: |
-          if test -e "README.md"
-          then
-            echo "found README.md"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
+      - *downloadSourceArtifact
+      - *extractSourceArtifact
 
       - name: Check for custom actions
         # skip custom actions for external contributions by default
@@ -893,6 +880,37 @@ jobs:
           if [ -d .github/actions/always ]
           then
             echo "always=true" >> $GITHUB_OUTPUT
+          fi
+
+  process_source:
+    name: Process source
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs: [context_check]
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+
+    outputs:
+      has_readme: ${{ steps.has_readme.outputs.enabled }}
+
+    steps:
+      - *checkoutMergeBranch
+      - *checkoutSha
+
+      # Check if we have at least a README to build a website from
+
+      - name: Check for README for building a website
+        id: has_readme
+        run: |
+          if test -e "README.md"
+          then
+            echo "found README.md"
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
           fi
 
   ###################################################
@@ -2205,10 +2223,10 @@ jobs:
     name: Test custom
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, process_source, versioned_source, sanitize_inputs]
+    needs: [context_check, custom_preflight, versioned_source, sanitize_inputs]
     if: |
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.process_source.outputs.custom_test == 'true'
+      needs.custom_preflight.outputs.custom_test == 'true'
 
     strategy:
       fail-fast: false
@@ -2237,7 +2255,7 @@ jobs:
     needs:
       [
         context_check,
-        process_source,
+        custom_preflight,
         versioned_source,
         npm_test,
         docker_test,
@@ -2248,7 +2266,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.process_source.outputs.custom_publish == 'true'
+      needs.custom_preflight.outputs.custom_publish == 'true'
 
     strategy:
       fail-fast: false
@@ -2274,10 +2292,10 @@ jobs:
     name: Finalize custom
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, process_source, versioned_source, sanitize_inputs]
+    needs: [context_check, custom_preflight, versioned_source, sanitize_inputs]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
-      needs.process_source.outputs.custom_finalize == 'true'
+      needs.custom_preflight.outputs.custom_finalize == 'true'
 
     strategy:
       fail-fast: false
@@ -2307,10 +2325,10 @@ jobs:
       matrix:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, process_source, versioned_source]
+    needs: [context_check, custom_preflight, versioned_source]
     if: |
       needs.context_check.outputs.do_clean == 'true' &&
-      needs.process_source.outputs.custom_clean == 'true'
+      needs.custom_preflight.outputs.custom_clean == 'true'
 
     steps:
       - *downloadSourceArtifact
@@ -2335,10 +2353,11 @@ jobs:
       - custom_publish
       - custom_finalize
       - custom_clean
-      - process_source
+      - custom_preflight
+      - versioned_source
     if: |
       always() &&
-      needs.process_source.outputs.custom_always == 'true'
+      needs.custom_preflight.outputs.custom_always == 'true'
 
     steps:
       - *downloadSourceArtifact
