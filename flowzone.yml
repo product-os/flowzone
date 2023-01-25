@@ -306,9 +306,6 @@ env:
   CARGO_REGISTRY: crates.io
 
 jobs:
-  ###################################################
-  ## event types
-  ###################################################
 
   context_check:
     name: Check context
@@ -914,10 +911,6 @@ jobs:
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
-
-  ###################################################
-  ## versioned source
-  ###################################################
 
   versioned_source:
     name: Versioned source
@@ -1837,8 +1830,8 @@ jobs:
   # Website
   ###################################################
 
-  website_build:
-    name: Build website using Docusaurus
+  website_publish:
+    name: Publish website
     runs-on: ${{fromJSON(inputs.runs_on)}}
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
@@ -1888,8 +1881,8 @@ jobs:
   # GitHub
   ###################################################
 
-  github_prepare:
-    name: Clean previous GitHub draft release
+  github_clean:
+    name: Clean GitHub release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1897,7 +1890,8 @@ jobs:
       - versioned_source
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true'
+      (needs.context_check.outputs.do_draft == 'true' ||
+      (needs.context_check.outputs.pr_closed == 'true' && needs.context_check.outputs.pr_merged == 'false'))
 
     defaults:
       run:
@@ -1914,12 +1908,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
 
   github_publish:
-    name: Publish draft Github release
+    name: Publish Github release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - versioned_source
-      - github_prepare
+      - github_clean
       - npm_publish
       - cargo_publish
       - custom_publish
@@ -2009,33 +2002,6 @@ jobs:
           else
             echo "No release found for the current PR"
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-
-  github_clean:
-    name: Clean unused GitHub release
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      - context_check
-      - versioned_source
-    if: |
-      !failure() && !cancelled() &&
-      needs.context_check.outputs.pr == 'true' &&
-      github.event.pull_request.merged == false &&
-      github.event.action == 'closed'
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-
-    steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
-
-      - name: Delete draft release
-        run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
           GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
 
@@ -2373,7 +2339,7 @@ jobs:
         cargo_publish,
         github_publish,
         versioned_source,
-        website_build,
+        website_publish,
       ]
     # avoid being skipped when dependencies are skipped
     # this job must always run so branch protection rules can depend on it
@@ -2585,10 +2551,10 @@ jobs:
   ###################################################
 
   repo_config:
-    name: Standardise repository settings
+    name: Apply repo settings
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check]
+    needs: [context_check, sanitize_inputs]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
       inputs.repo_config == true
