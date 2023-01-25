@@ -44,6 +44,16 @@
       submodules: "recursive"
       token: ${{ secrets.FLOWZONE_TOKEN }}
 
+  - &customWorkingDirectory
+    run:
+      working-directory: ${{ inputs.working_directory }}
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+
+  - &rootWorkingDirectory
+    run:
+      working-directory: .
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+
 name: Flowzone
 
 on:
@@ -328,6 +338,7 @@ jobs:
       do_final: ${{ steps.pr_merged.outcome == 'success' || steps.tagged.outcome == 'success' }}
       do_clean: ${{ steps.pr_closed.outcome == 'success' }}
 
+    # don't use bash tracing here as the logs are too long
     defaults:
       run:
         working-directory: .
@@ -377,12 +388,8 @@ jobs:
     name: Sanitize inputs
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs: [context_check]
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
@@ -472,12 +479,8 @@ jobs:
     name: Pre-flight npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs: [context_check, versioned_source]
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
@@ -575,12 +578,8 @@ jobs:
     name: Pre-flight docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs: [context_check, versioned_source, sanitize_inputs]
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
       docker_compose_yaml: ${{ steps.docker_compose.outputs.yaml }}
@@ -649,12 +648,8 @@ jobs:
     name: Pre-flight python
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs: [context_check, versioned_source]
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
@@ -774,13 +769,9 @@ jobs:
     name: Pre-flight rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs: [context_check, versioned_source, sanitize_inputs]
     if: join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
       cargo: ${{ steps.cargo.outputs.enabled }}
@@ -805,13 +796,9 @@ jobs:
     name: Pre-flight balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs: [context_check, versioned_source, sanitize_inputs]
     if: join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
       balena: ${{ steps.balena.outputs.enabled }}
@@ -836,12 +823,8 @@ jobs:
     name: Pre-flight custom
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs: [context_check, versioned_source]
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
@@ -858,7 +841,6 @@ jobs:
         # skip custom actions for external contributions by default
         if: github.event.pull_request.head.repo.full_name == github.repository || inputs.restrict_custom_actions == false
         id: custom
-        working-directory: .
         run: |
           if [ -d .github/actions/test ]
           then
@@ -885,13 +867,9 @@ jobs:
     name: Pre-flight website
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs: [context_check, versioned_source]
     if: inputs.cloudflare_website != ''
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
@@ -916,12 +894,8 @@ jobs:
     name: Versioned source
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs: [context_check]
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     outputs:
       new_tag: ${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
@@ -1085,15 +1059,11 @@ jobs:
     name: Test npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs: [context_check, npm_preflight, versioned_source]
     if: |
       needs.context_check.outputs.do_draft == 'true' &&
       needs.npm_preflight.outputs.npm == 'true'
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     strategy:
       fail-fast: false
@@ -1200,17 +1170,13 @@ jobs:
     name: Publish npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs: [context_check, npm_preflight, npm_test, custom_test]
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
       needs.context_check.outputs.do_draft == 'true' &&
       needs.npm_preflight.outputs.npm_private != 'true'
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
       - name: Download npm artifact
@@ -1245,16 +1211,12 @@ jobs:
     name: Finalize npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs: [context_check, npm_preflight]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
       needs.npm_preflight.outputs.npm == 'true' &&
       needs.npm_preflight.outputs.npm_private != 'true'
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
       # https://github.com/dawidd6/action-download-artifact
@@ -1284,15 +1246,11 @@ jobs:
     name: Finalize npm docs
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs: [context_check, npm_preflight]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
       needs.npm_preflight.outputs.npm_docs == 'true'
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
       # https://github.com/dawidd6/action-download-artifact
@@ -1328,16 +1286,12 @@ jobs:
     name: Test docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs: [context_check, docker_preflight, versioned_source, sanitize_inputs]
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
       (join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != '' || needs.docker_preflight.outputs.docker_compose_yaml != '')
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     strategy:
       fail-fast: false
@@ -1465,15 +1419,11 @@ jobs:
     name: Publish docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs: [context_check, docker_preflight, docker_test, sanitize_inputs]
     if: |
       !failure() && !cancelled() && needs.context_check.outputs.do_draft == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     services:
       registry:
@@ -1572,15 +1522,11 @@ jobs:
     name: Finalize docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs: [context_check, sanitize_inputs, docker_preflight]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     strategy:
       fail-fast: false
@@ -1686,6 +1632,7 @@ jobs:
     name: Publish balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs:
       [
         context_check,
@@ -1706,11 +1653,6 @@ jobs:
       matrix:
         slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
@@ -1720,6 +1662,7 @@ jobs:
     name: Finalize balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs: [context_check, balena_preflight, versioned_source, sanitize_inputs]
     if: |
       needs.context_check.outputs.do_final == 'true' &&
@@ -1729,11 +1672,6 @@ jobs:
       fail-fast: false
       matrix:
         slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
       - *downloadSourceArtifact
@@ -1748,15 +1686,11 @@ jobs:
     name: Test python poetry
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs: [context_check, python_preflight, versioned_source]
     if: |
       needs.context_check.outputs.do_draft == 'true' &&
       needs.python_preflight.outputs.python_poetry == 'true'
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     strategy:
       fail-fast: false
@@ -1833,9 +1767,10 @@ jobs:
   website_publish:
     name: Publish website
     runs-on: ${{fromJSON(inputs.runs_on)}}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
-
     needs:
       - website_preflight
       - versioned_source
@@ -1885,6 +1820,7 @@ jobs:
     name: Clean GitHub release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs:
       - context_check
       - versioned_source
@@ -1892,11 +1828,6 @@ jobs:
       !failure() && !cancelled() &&
       (needs.context_check.outputs.do_draft == 'true' ||
       (needs.context_check.outputs.pr_closed == 'true' && needs.context_check.outputs.pr_merged == 'false'))
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
       - *downloadSourceArtifact
@@ -1911,6 +1842,7 @@ jobs:
     name: Publish Github release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs:
       - github_clean
       - npm_publish
@@ -1920,11 +1852,6 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true'
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
       - name: Download all artifacts
@@ -1959,14 +1886,10 @@ jobs:
     name: Finalize GitHub release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs: [context_check, versioned_source]
     if: |
       needs.context_check.outputs.do_final == 'true'
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     steps:
       - *downloadSourceArtifact
@@ -2022,10 +1945,7 @@ jobs:
       needs.context_check.outputs.do_draft == 'true' &&
       needs.cargo_preflight.outputs.cargo == 'true'
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -2080,6 +2000,7 @@ jobs:
     name: Build rust release artifacts
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *customWorkingDirectory
     needs:
       - versioned_source
       - cargo_test
@@ -2091,11 +2012,6 @@ jobs:
       needs.context_check.outputs.do_draft == 'true' &&
       needs.cargo_test.result == 'success' &&
       inputs.rust_binaries == true
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     strategy:
       fail-fast: false
@@ -2143,10 +2059,7 @@ jobs:
       needs.context_check.outputs.do_final == 'true' &&
       needs.cargo_preflight.outputs.cargo == 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -2325,6 +2238,7 @@ jobs:
     name: Protect branch
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    defaults: *rootWorkingDirectory
     needs:
       [
         balena_publish,
@@ -2351,11 +2265,6 @@ jobs:
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
-
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
 
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
