@@ -1378,6 +1378,13 @@ jobs:
         with:
           path: ${{ runner.temp }}
 
+      - name: Set env vars
+        run: |
+          if [ ${{ matrix.target }} != 'default' ]
+          then
+            echo "PREFIX=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')-" >> $GITHUB_ENV
+          fi
+
       # https://github.com/docker/metadata-action
       - name: Generate image tags
         id: meta
