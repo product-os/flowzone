@@ -1197,6 +1197,12 @@ jobs:
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
           path: ${{ runner.temp }}
+      - name: Set env vars
+        run: |
+          if [ ${{ matrix.target }} != 'default' ]
+          then
+            echo "PREFIX=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')-" >> $GITHUB_ENV
+          fi
       - name: Generate image tags
         id: meta
         uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
