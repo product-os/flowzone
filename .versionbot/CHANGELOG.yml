@@ -1,4 +1,29 @@
 - commits:
+    - subject: Fix checks when docker-compose files are not found
+      hash: 8528a590a4913c81aa3a35bf7c859347036de887
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Write docker-compose file to the working directory
+      hash: 881d1cc7b0c8314a21f3c55f76afaf379554c794
+      body: |
+        This is required to inherit environment files
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.61.5
+  title: ""
+  date: 2023-01-25T03:31:03.223Z
+- commits:
     - subject: Save image to file before running compose tests
       hash: 47935c5889b141d4c5e628cd68a28fa315afe981
       body: |
