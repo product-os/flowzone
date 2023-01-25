@@ -367,13 +367,13 @@ jobs:
           echo "build<<EOF" >> $GITHUB_OUTPUT
           echo "${build}" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-  process_source:
-    name: Process source
+  npm_preflight:
+    name: Pre-flight npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - sanitize_inputs
+      - versioned_source
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -382,65 +382,17 @@ jobs:
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }}
       npm_docs: ${{ steps.npm.outputs.docs }}
-      docker_compose_yaml: ${{ steps.docker_compose.outputs.yaml }}
-      docker_bake_json: ${{ steps.docker_bake.outputs.json }}
-      docker_bake_matrix: ${{ steps.docker_bake.outputs.matrix }}
-      balena: ${{ steps.balena.outputs.enabled }}
       node_versions: ${{ steps.node_versions.outputs.json }}
-      python_poetry: ${{ steps.python_poetry.outputs.enabled }}
-      python_versions: ${{ steps.python_versions.outputs.json }}
-      cargo: ${{ steps.cargo.outputs.enabled }}
-      has_readme: ${{ steps.has_readme.outputs.enabled }}
-      custom_test: ${{ steps.custom.outputs.test }}
-      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
-      custom_publish: ${{ steps.custom.outputs.publish }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
-      custom_finalize: ${{ steps.custom.outputs.finalize }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
-      custom_clean: ${{ steps.custom.outputs.clean }}
-      custom_always: ${{ steps.custom.outputs.always }}
     steps:
-      - name: Checkout merge branch
-        if: github.event_name == 'pull_request_target' && needs.context_check.outputs.pr_closed != true
-        id: checkout_merge
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+      - name: Download source artifact
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
-          fetch-depth: 0
-          submodules: recursive
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-          ref: refs/pull/${{ github.event.number }}/merge
-      - name: Checkout sha
-        if: steps.checkout_merge.outcome == 'skipped'
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
-        with:
-          fetch-depth: 0
-          submodules: recursive
-          token: ${{ secrets.FLOWZONE_TOKEN }}
-      - name: Check external contributor limitations
-        if: github.event.pull_request.head.repo.full_name != github.repository
-        env:
-          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ -n "${{ secrets.COMPOSE_VARS }}" ]
-          then
-            echo "::notice::COMPOSE_VARS secrets are not currently supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-
-          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
-          then
-            echo "::notice::Modifications to workflow files are not supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-
-          if [ "${{ inputs.restrict_custom_actions }}" == "true" ]
-          then
-            echo "::notice::Custom actions are disabled for external contributors and will be skipped. \
-              Please contact a member of the organization for assistance."
-            exit 0
-          fi
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Check for package.json
         id: npm
         run: |
@@ -510,6 +462,76 @@ jobs:
           if [ "${NODE_VERSIONS}" != "[]" ]
           then
             echo "json=${NODE_VERSIONS}" >> $GITHUB_OUTPUT
+          fi
+  process_source:
+    name: Process source
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - context_check
+      - sanitize_inputs
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    outputs:
+      docker_compose_yaml: ${{ steps.docker_compose.outputs.yaml }}
+      docker_bake_json: ${{ steps.docker_bake.outputs.json }}
+      docker_bake_matrix: ${{ steps.docker_bake.outputs.matrix }}
+      balena: ${{ steps.balena.outputs.enabled }}
+      python_poetry: ${{ steps.python_poetry.outputs.enabled }}
+      python_versions: ${{ steps.python_versions.outputs.json }}
+      cargo: ${{ steps.cargo.outputs.enabled }}
+      has_readme: ${{ steps.has_readme.outputs.enabled }}
+      custom_test: ${{ steps.custom.outputs.test }}
+      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
+      custom_publish: ${{ steps.custom.outputs.publish }}
+      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
+      custom_finalize: ${{ steps.custom.outputs.finalize }}
+      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
+      custom_clean: ${{ steps.custom.outputs.clean }}
+      custom_always: ${{ steps.custom.outputs.always }}
+    steps:
+      - name: Checkout merge branch
+        if: github.event_name == 'pull_request_target' && needs.context_check.outputs.pr_closed != true
+        id: checkout_merge
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+          ref: refs/pull/${{ github.event.number }}/merge
+      - name: Checkout sha
+        if: steps.checkout_merge.outcome == 'skipped'
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.FLOWZONE_TOKEN }}
+      - name: Check external contributor limitations
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+        run: |
+          if [ -n "${{ secrets.COMPOSE_VARS }}" ]
+          then
+            echo "::notice::COMPOSE_VARS secrets are not currently supported for external contributions. \
+              Please contact a member of the organization for assistance."
+            exit 1
+          fi
+
+          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
+          then
+            echo "::notice::Modifications to workflow files are not supported for external contributions. \
+              Please contact a member of the organization for assistance."
+            exit 1
+          fi
+
+          if [ "${{ inputs.restrict_custom_actions }}" == "true" ]
+          then
+            echo "::notice::Custom actions are disabled for external contributors and will be skipped. \
+              Please contact a member of the organization for assistance."
+            exit 0
           fi
       - name: Check for balena.yml
         id: balena
@@ -862,11 +884,11 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
+      - npm_preflight
       - versioned_source
     if: |
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.process_source.outputs.npm == 'true'
+      needs.npm_preflight.outputs.npm == 'true'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -874,7 +896,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node_version: ${{ fromJSON(needs.process_source.outputs.node_versions) }}
+        node_version: ${{ fromJSON(needs.npm_preflight.outputs.node_versions) }}
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -950,14 +972,14 @@ jobs:
           path: ${{ runner.temp }}/npm-pack/*.tgz
           retention-days: 90
       - name: Generate docs (if present)
-        if: needs.process_source.outputs.npm_docs == 'true'
+        if: needs.npm_preflight.outputs.npm_docs == 'true'
         shell: bash
         run: npm run doc
       - name: Compress docs
-        if: needs.process_source.outputs.npm_docs == 'true'
+        if: needs.npm_preflight.outputs.npm_docs == 'true'
         run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
       - name: Upload artifact
-        if: needs.process_source.outputs.npm_docs == 'true'
+        if: needs.npm_preflight.outputs.npm_docs == 'true'
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -969,14 +991,14 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
+      - npm_preflight
       - npm_test
       - custom_test
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
       needs.context_check.outputs.do_draft == 'true' &&
-      needs.process_source.outputs.npm_private != 'true'
+      needs.npm_preflight.outputs.npm_private != 'true'
     defaults:
       run:
         working-directory: .
@@ -986,7 +1008,7 @@ jobs:
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.process_source.outputs.node_versions)[0] }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.npm_preflight.outputs.node_versions)[0] }}
       - name: Login to registry
         run: |
           echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
@@ -1011,11 +1033,11 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
+      - npm_preflight
     if: |
       needs.context_check.outputs.do_final == 'true' &&
-      needs.process_source.outputs.npm == 'true' &&
-      needs.process_source.outputs.npm_private != 'true'
+      needs.npm_preflight.outputs.npm == 'true' &&
+      needs.npm_preflight.outputs.npm_private != 'true'
     defaults:
       run:
         working-directory: .
@@ -1028,7 +1050,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.process_source.outputs.node_versions)[0] }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.npm_preflight.outputs.node_versions)[0] }}
       - name: Login to registry
         run: |
           if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
@@ -1045,10 +1067,10 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - context_check
-      - process_source
+      - npm_preflight
     if: |
       needs.context_check.outputs.do_final == 'true' &&
-      needs.process_source.outputs.npm_docs == 'true'
+      needs.npm_preflight.outputs.npm_docs == 'true'
     defaults:
       run:
         working-directory: .
@@ -1061,7 +1083,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.process_source.outputs.node_versions)[0] }}
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.npm_preflight.outputs.node_versions)[0] }}
       - name: Extract docs artifact
         run: |
           docs="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
