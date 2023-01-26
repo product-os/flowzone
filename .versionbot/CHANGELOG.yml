@@ -1,4 +1,22 @@
 - commits:
+    - subject: Use -f for multi-docker-compose instead of COMPOSE_FILE
+      hash: 76f63f82303066006a67654be0eda4e388aba17a
+      body: ""
+      footer:
+        Closes: "#456"
+        closes: "#456"
+        See: "#454"
+        see: "#454"
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Christina Ying Wang <christina@balena.io>
+        signed-off-by: Christina Ying Wang <christina@balena.io>
+      author: Christina Ying Wang
+      nested: []
+  version: 0.62.2
+  title: ""
+  date: 2023-01-26T20:09:51.803Z
+- commits:
     - subject: Reverse docker compose file preprocessing order to favor `test` yaml
       hash: 150fb602e8e883531e1643f43d3cca63980dec65
       body: ""
