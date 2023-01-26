@@ -1,4 +1,20 @@
 - commits:
+    - subject: Reverse docker compose file preprocessing order to favor `test` yaml
+      hash: 150fb602e8e883531e1643f43d3cca63980dec65
+      body: ""
+      footer:
+        Closes: "#454"
+        closes: "#454"
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Christina Ying Wang <christina@balena.io>
+        signed-off-by: Christina Ying Wang <christina@balena.io>
+      author: Christina Ying Wang
+      nested: []
+  version: 0.62.1
+  title: ""
+  date: 2023-01-26T00:35:13.880Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to 1.5.0
       hash: 7c83214bbec68e3087a8aeae7d49949bae0877b1
       body: |
