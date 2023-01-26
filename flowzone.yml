@@ -26,7 +26,7 @@
     # for pull_request_target events that are not closed we need to specify the merge branch manually
     # because the default checkout ref is the tip of the main/master branch
     name: Checkout merge branch
-    if: github.event_name == 'pull_request_target' && needs.context_check.outputs.pr_closed != true
+    if: github.event_name == 'pull_request_target' && needs.is_pr_open.result == 'success'
     id: checkout_merge
     uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3
     with:
@@ -53,6 +53,12 @@
     run:
       working-directory: .
       shell: bash --noprofile --norc -eo pipefail -x {0}
+
+  - &dumpGithubContext
+    name: Dump GitHub context
+    env:
+      GITHUB_CONTEXT: ${{ toJSON(github) }}
+    run: echo "$GITHUB_CONTEXT" || true
 
 name: Flowzone
 
@@ -317,79 +323,126 @@ env:
 
 jobs:
 
-  context_check:
-    name: Check context
+  is_pr_open:
+    name: PR opened/synchronized
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    # all jobs depend on this one in some way so add global trigger rules here
     if: |
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.disable_versioning == true) ||
-      (github.event.pull_request.head.repo.full_name == github.repository && github.event_name == 'pull_request') ||
-      (github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request_target')
-
-    outputs:
-      pr: ${{ steps.pr.outcome == 'success' }}
-      pr_opened: ${{ steps.pr_opened.outcome == 'success' }}
-      pr_synchronize: ${{ steps.pr_synchronize.outcome == 'success' }}
-      pr_merged: ${{ steps.pr_merged.outcome == 'success' }}
-      pr_closed: ${{ steps.pr_closed.outcome == 'success' }}
-      tagged: ${{ steps.tagged.outcome == 'success' }}
-      do_draft: ${{ steps.pr_opened.outcome == 'success' || steps.pr_synchronize.outcome == 'success' }}
-      do_final: ${{ steps.pr_merged.outcome == 'success' || steps.tagged.outcome == 'success' }}
-      do_clean: ${{ steps.pr_closed.outcome == 'success' }}
-
-    # don't use bash tracing here as the logs are too long
-    defaults:
-      run:
-        working-directory: .
-        shell: bash
-
-    env:
-      JSON: ${{ toJSON(github) }}
-
+      ((github.event.pull_request.head.repo.full_name == github.repository && github.event_name == 'pull_request') ||
+      (github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request_target')) &&
+      (github.event.action == 'opened' || github.event.action == 'synchronize')
     steps:
-      - name: Pull Request
-        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
-        id: pr
-        run: |
-          echo "${JSON}" || true
+      - *dumpGithubContext
 
-      - name: Pull Request opened
-        if: steps.pr.outcome == 'success' && github.event.action == 'opened'
-        id: pr_opened
-        run: |
-          echo "${JSON}" || true
+  is_pr_merged:
+    name: PR merged
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    if: |
+      ((github.event.pull_request.head.repo.full_name == github.repository && github.event_name == 'pull_request') ||
+      (github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request_target')) &&
+      github.event.action == 'closed' && github.event.pull_request.merged == true
+    steps:
+      - *dumpGithubContext
 
-      - name: Pull Request synchronize
-        if: steps.pr.outcome == 'success' && github.event.action == 'synchronize'
-        id: pr_synchronize
-        run: |
-          echo "${JSON}" || true
+  is_pr_closed:
+    name: PR closed
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    if: |
+      ((github.event.pull_request.head.repo.full_name == github.repository && github.event_name == 'pull_request') ||
+      (github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request_target')) &&
+      github.event.action == 'closed' && github.event.pull_request.merged != true
+    steps:
+      - *dumpGithubContext
 
-      - name: Pull Request merged
-        if: steps.pr.outcome == 'success' && github.event.pull_request.merged == true
-        id: pr_merged
-        run: |
-          echo "${JSON}" || true
+  # if versioning is disabled then listen for tag push events
+  is_tag_push:
+    name: Tag pushed
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    if: |
+      github.event_name == 'push' &&
+      startsWith(github.ref, 'refs/tags/') &&
+      inputs.disable_versioning == true
+    steps:
+      - *dumpGithubContext
 
-      - name: Pull Request closed
-        if: steps.pr.outcome == 'success' && github.event.action == 'closed'
-        id: pr_closed
-        run: |
-          echo "${JSON}" || true
+  do_always:
+    name: Do always
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_pr_open
+      - is_pr_merged
+      - is_pr_closed
+      - is_tag_push
+    if: |
+      !failure() && !cancelled() && (
+        needs.is_pr_open.results == 'success' ||
+        needs.is_pr_merged.results == 'success' ||
+        needs.is_tag_push.results == 'success' ||
+        needs.is_pr_closed.results == 'success'
+      )
+    steps:
+      - *dumpGithubContext
 
-      - name: Tag event
-        if: github.event_name == 'push'
-        id: tagged
-        run: |
-          echo "${JSON}" || true
+  do_draft:
+    name: Do draft
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_pr_open
+    steps:
+      - *dumpGithubContext
+
+  do_publish:
+    name: Do publish
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_pr_open
+      - docker_test
+      - npm_test
+      - cargo_test
+      - github_clean
+      - custom_test
+    if: |
+      !failure() && !cancelled() && needs.is_pr_open.result == 'success'
+    steps:
+      - *dumpGithubContext
+
+  do_final:
+    name: Do final
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs: 
+      - is_pr_merged
+      - is_tag_push
+    if: |
+      !failure() && !cancelled() && (
+        needs.is_pr_merged.result == 'success' ||
+        needs.is_tag_push.result == 'success'
+      )
+    steps:
+      - *dumpGithubContext
+
+  do_clean:
+    name: Do clean
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_pr_closed
+    steps:
+      - *dumpGithubContext
 
   sanitize_inputs:
     name: Sanitize inputs
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
-    needs: [context_check]
+    needs:
+      - do_always
 
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
@@ -480,7 +533,8 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
-    needs: [context_check, versioned_source]
+    needs:
+      - versioned_source
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
@@ -579,7 +633,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
-    needs: [context_check, versioned_source, sanitize_inputs]
+    needs:
+      - versioned_source
+      - sanitize_inputs
 
     outputs:
       docker_compose_yaml: ${{ steps.docker_compose.outputs.yaml }}
@@ -649,7 +705,8 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
-    needs: [context_check, versioned_source]
+    needs: 
+      - versioned_source
 
     outputs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
@@ -770,7 +827,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
-    needs: [context_check, versioned_source, sanitize_inputs]
+    needs:
+      - versioned_source
+      - sanitize_inputs
     if: join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
 
     outputs:
@@ -797,7 +856,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
-    needs: [context_check, versioned_source, sanitize_inputs]
+    needs:
+      - versioned_source
+      - sanitize_inputs
     if: join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
 
     outputs:
@@ -824,7 +885,8 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
-    needs: [context_check, versioned_source]
+    needs:
+      - versioned_source
 
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
@@ -868,7 +930,8 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
-    needs: [context_check, versioned_source]
+    needs: 
+      - versioned_source
     if: inputs.cloudflare_website != ''
 
     outputs:
@@ -895,7 +958,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
-    needs: [context_check]
+    needs: 
+      - is_pr_open
+      - is_pr_merged
+      - is_tag_push
+    if: |
+      !failure() && !cancelled() && (
+        needs.is_pr_open.result == 'success' ||
+        needs.is_pr_merged.result == 'success' ||
+        needs.is_tag_push.result == 'success'
+      )
 
     outputs:
       new_tag: ${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
@@ -942,7 +1014,7 @@ jobs:
           fi
 
       - name: Import GPG key for signing commits
-        if: inputs.disable_versioning != true && needs.context_check.outputs.pr == 'true'
+        if: inputs.disable_versioning != true
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@111c56156bcc6918c056dbef52164cfa583dc549 # v5.2.0
         with:
@@ -953,12 +1025,12 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Install versionist
-        if: inputs.disable_versioning != true && needs.context_check.outputs.pr == 'true'
+        if: inputs.disable_versioning != true
         run: |
           npm install -g balena-versionist@0.14.12 versionist@6.9.2
 
       - name: Generate changelog
-        if: inputs.disable_versioning != true && needs.context_check.outputs.pr == 'true'
+        if: inputs.disable_versioning != true
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
           then
@@ -977,7 +1049,7 @@ jobs:
       - name: Get latest tag for current branch
         continue-on-error: true
         id: old_version
-        if: inputs.disable_versioning != true && needs.context_check.outputs.pr == 'true'
+        if: inputs.disable_versioning != true
         run: |
           tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n1)"
           echo "semver=${tag/v/}" >> $GITHUB_OUTPUT
@@ -985,7 +1057,7 @@ jobs:
 
       # install and run versionist via balena-versionist
       - name: Run versionist
-        if: inputs.disable_versioning != true && needs.context_check.outputs.pr == 'true'
+        if: inputs.disable_versioning != true
         run: |
           balena-versionist
 
@@ -998,7 +1070,7 @@ jobs:
       # TODO: versionist should provide the new version via stdout!
       - name: Inspect versioned files
         id: new_version
-        if: inputs.disable_versioning != true && needs.context_check.outputs.pr == 'true'
+        if: inputs.disable_versioning != true
         run: |
           git status --porcelain
           versions=()
@@ -1031,7 +1103,7 @@ jobs:
 
       # push the versioned commit only if the PR is merged
       - name: Push versioned commit
-        if: inputs.disable_versioning != true && needs.context_check.outputs.pr_merged == 'true'
+        if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
         continue-on-error: true
         run: |
           git push origin HEAD:refs/heads/${{ github.base_ref }}
@@ -1060,9 +1132,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
-    needs: [context_check, npm_preflight, versioned_source]
+    needs: 
+      - npm_preflight
+      - versioned_source
     if: |
-      needs.context_check.outputs.do_draft == 'true' &&
       needs.npm_preflight.outputs.npm == 'true'
 
     strategy:
@@ -1171,11 +1244,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
-    needs: [context_check, npm_preflight, npm_test, custom_test]
+    needs:
+      - npm_preflight
+      - npm_test
+      - do_publish
     if: |
-      !failure() && !cancelled() &&
-      needs.npm_test.result == 'success' &&
-      needs.context_check.outputs.do_draft == 'true' &&
       needs.npm_preflight.outputs.npm_private != 'true'
 
     steps:
@@ -1212,9 +1285,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
-    needs: [context_check, npm_preflight]
+    needs: 
+      - do_final
+      - npm_preflight
     if: |
-      needs.context_check.outputs.do_final == 'true' &&
       needs.npm_preflight.outputs.npm == 'true' &&
       needs.npm_preflight.outputs.npm_private != 'true'
 
@@ -1247,9 +1321,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
-    needs: [context_check, npm_preflight]
+    needs: 
+      - do_final
+      - npm_preflight
     if: |
-      needs.context_check.outputs.do_final == 'true' &&
       needs.npm_preflight.outputs.npm_docs == 'true'
 
     steps:
@@ -1287,11 +1362,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
-    needs: [context_check, docker_preflight, versioned_source, sanitize_inputs]
+    needs:
+      - is_pr_open
+      - docker_preflight
+      - versioned_source
+      - sanitize_inputs
     if: |
-      !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true' &&
-      (join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != '' || needs.docker_preflight.outputs.docker_compose_yaml != '')
+      join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != '' || 
+      needs.docker_preflight.outputs.docker_compose_yaml != ''
 
     strategy:
       fail-fast: false
@@ -1420,9 +1498,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
-    needs: [context_check, docker_preflight, docker_test, sanitize_inputs]
+    needs:
+      - is_pr_open
+      - docker_preflight
+      - docker_test
+      - sanitize_inputs
     if: |
-      !failure() && !cancelled() && needs.context_check.outputs.do_draft == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
 
     services:
@@ -1523,9 +1604,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
-    needs: [context_check, sanitize_inputs, docker_preflight]
+    needs:
+      - do_final
+      - sanitize_inputs
+      - docker_preflight
     if: |
-      needs.context_check.outputs.do_final == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
 
     strategy:
@@ -1634,18 +1717,11 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
     needs:
-      [
-        context_check,
-        balena_preflight,
-        versioned_source,
-        npm_test,
-        docker_test,
-        custom_test,
-        sanitize_inputs,
-      ]
+      - do_publish
+      - balena_preflight
+      - versioned_source
+      - sanitize_inputs
     if: |
-      !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true' &&
       needs.balena_preflight.outputs.balena == 'true'
 
     strategy:
@@ -1663,9 +1739,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
-    needs: [context_check, balena_preflight, versioned_source, sanitize_inputs]
+    needs:
+      - do_final
+      - balena_preflight
+      - versioned_source
+      - sanitize_inputs
     if: |
-      needs.context_check.outputs.do_final == 'true' &&
       needs.balena_preflight.outputs.balena == 'true'
 
     strategy:
@@ -1687,9 +1766,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *customWorkingDirectory
-    needs: [context_check, python_preflight, versioned_source]
+    needs:
+      - is_pr_open
+      - python_preflight
+      - versioned_source
     if: |
-      needs.context_check.outputs.do_draft == 'true' &&
       needs.python_preflight.outputs.python_poetry == 'true'
 
     strategy:
@@ -1774,7 +1855,9 @@ jobs:
     needs:
       - website_preflight
       - versioned_source
-      - context_check
+      - do_final
+    if: |
+      needs.website_preflight.result == 'success'
 
     steps:
       - *downloadSourceArtifact
@@ -1801,7 +1884,7 @@ jobs:
         run: npm run deploy-docs --if-present
 
       - name: Update deploy branch for merged PRs
-        if: needs.context_check.outputs.pr_merged == 'true'
+        if: needs.is_pr_merged.result == 'success'
         run: |
           echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
 
@@ -1822,17 +1905,15 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
     needs:
-      - context_check
-      - versioned_source
+      - is_pr_closed
+      - is_pr_open
     if: |
-      !failure() && !cancelled() &&
-      (needs.context_check.outputs.do_draft == 'true' ||
-      (needs.context_check.outputs.pr_closed == 'true' && needs.context_check.outputs.pr_merged == 'false'))
+      !failure() && !cancelled() && (
+        needs.is_pr_closed.result == 'success' ||
+        needs.is_pr_open.result == 'success'
+      )
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
-
       - name: Delete draft release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -1848,10 +1929,9 @@ jobs:
       - npm_publish
       - cargo_publish
       - custom_publish
-      - context_check
+      - is_pr_open
     if: |
-      !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true'
+      !failure() && !cancelled() && needs.is_pr_open.result == 'success' && needs.github_clean.result == 'success'
 
     steps:
       - name: Download all artifacts
@@ -1887,9 +1967,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
-    needs: [context_check, versioned_source]
-    if: |
-      needs.context_check.outputs.do_final == 'true'
+    needs: 
+      - do_final
+      - versioned_source
 
     steps:
       - *downloadSourceArtifact
@@ -1937,12 +2017,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_open
       - cargo_preflight
       - versioned_source
       - sanitize_inputs
     if: |
-      needs.context_check.outputs.do_draft == 'true' &&
       needs.cargo_preflight.outputs.cargo == 'true'
 
     defaults: *customWorkingDirectory
@@ -2003,14 +2082,10 @@ jobs:
     defaults: *customWorkingDirectory
     needs:
       - versioned_source
+      - do_publish
       - cargo_test
-      - custom_test
-      - context_check
       - sanitize_inputs
     if: |
-      !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true' &&
-      needs.cargo_test.result == 'success' &&
       inputs.rust_binaries == true
 
     strategy:
@@ -2054,9 +2129,11 @@ jobs:
     name: Finalize rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, cargo_preflight, versioned_source]
+    needs: 
+      - do_final
+      - cargo_preflight
+      - versioned_source
     if: |
-      needs.context_check.outputs.do_final == 'true' &&
       needs.cargo_preflight.outputs.cargo == 'true'
 
     defaults: *rootWorkingDirectory
@@ -2085,9 +2162,12 @@ jobs:
     name: Test custom
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, custom_preflight, versioned_source, sanitize_inputs]
+    needs:
+      - is_pr_open
+      - custom_preflight
+      - versioned_source
+      - sanitize_inputs
     if: |
-      needs.context_check.outputs.do_draft == 'true' &&
       needs.custom_preflight.outputs.custom_test == 'true'
 
     strategy:
@@ -2115,19 +2195,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      [
-        context_check,
-        custom_preflight,
-        versioned_source,
-        npm_test,
-        docker_test,
-        cargo_test,
-        custom_test,
-        sanitize_inputs,
-      ]
+      - is_pr_open
+      - custom_preflight
+      - versioned_source
+      - npm_test
+      - docker_test
+      - cargo_test
+      - custom_test
+      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true' &&
+      needs.is_pr_open.result == 'success' &&
       needs.custom_preflight.outputs.custom_publish == 'true'
 
     strategy:
@@ -2154,9 +2232,12 @@ jobs:
     name: Finalize custom
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, custom_preflight, versioned_source, sanitize_inputs]
+    needs:
+      - do_final
+      - custom_preflight
+      - versioned_source
+      - sanitize_inputs
     if: |
-      needs.context_check.outputs.do_final == 'true' &&
       needs.custom_preflight.outputs.custom_finalize == 'true'
 
     strategy:
@@ -2187,9 +2268,9 @@ jobs:
       matrix:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, custom_preflight, versioned_source]
+    needs: [is_pr_closed, custom_preflight, versioned_source]
     if: |
-      needs.context_check.outputs.do_clean == 'true' &&
+      needs.is_pr_closed.result == 'success' &&
       needs.custom_preflight.outputs.custom_clean == 'true'
 
     steps:
@@ -2210,7 +2291,6 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
       - custom_test
       - custom_publish
       - custom_finalize
@@ -2240,26 +2320,21 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     defaults: *rootWorkingDirectory
     needs:
-      [
-        balena_publish,
-        custom_publish,
-        custom_test,
-        python_test,
-        docker_test,
-        context_check,
-        npm_publish,
-        npm_test,
-        cargo_test,
-        cargo_publish,
-        github_publish,
-        versioned_source,
-        website_publish,
-      ]
-    # avoid being skipped when dependencies are skipped
-    # this job must always run so branch protection rules can depend on it
+      - is_pr_open
+      - balena_publish
+      - custom_publish
+      - custom_test
+      - python_test
+      - docker_test
+      - npm_publish
+      - npm_test
+      - cargo_test
+      - cargo_publish
+      - github_publish
+      - versioned_source
+      - website_publish
     if: |
-      always() &&
-      needs.context_check.outputs.do_draft == 'true' &&
+      !failure() && !cancelled() && needs.is_pr_open.result == 'success' &&
       inputs.protect_branch == true &&
       github.event.pull_request.head.repo.full_name == github.repository
 
@@ -2463,9 +2538,15 @@ jobs:
     name: Apply repo settings
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: [context_check, sanitize_inputs]
+    needs:
+      - is_pr_merged
+      - is_tag_push
+      - sanitize_inputs
     if: |
-      needs.context_check.outputs.do_final == 'true' &&
+      !failure() && !cancelled() && (
+        needs.is_pr_merged.result == 'success' ||
+        needs.is_tag_push.result == 'success'
+      ) &&
       inputs.repo_config == true
     steps:
       - name: Configure repository
