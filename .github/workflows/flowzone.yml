@@ -675,7 +675,6 @@ jobs:
         run: |
           test -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" || exit 0
 
-          export COMPOSE_FILE="$(echo $(ls -1 docker-compose.{yml,yaml} docker-compose.test.{yml,yaml} 2>/dev/null) | sed 's/ /:/')"
           if [ -n "${COMPOSE_VARS}" ]
           then
             echo "${COMPOSE_VARS}" | base64 --decode > .env
@@ -687,7 +686,19 @@ jobs:
             done <<< "$(cat < .env)"
           fi
 
-          yaml="$(docker compose config)"
+          files="
+            docker-compose.yml
+            docker-compose.yaml
+            docker-compose.test.yml
+            docker-compose.test.yaml
+          "
+          args=""
+
+          for file in ${files}; do
+            test -f "${file}" && args="${args} -f ${file}"
+          done
+
+          yaml="$(docker compose ${args} config)"
 
           echo "yaml<<EOF" >> $GITHUB_OUTPUT
           echo "${yaml}" >> $GITHUB_OUTPUT
