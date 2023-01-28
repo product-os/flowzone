@@ -1,4 +1,19 @@
 - commits:
+    - subject: Update docker/setup-buildx-action digest to 5e716dc
+      hash: 05658f53d02c41ddf509458990cea4f58df163e9
+      body: |
+        Update docker/setup-buildx-action to
+
+        Update docker/setup-buildx-action from 2 to
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Renovate Bot
+      nested: []
+  version: 0.63.0
+  title: ""
+  date: 2023-01-28T02:17:48.938Z
+- commits:
     - subject: Use -f for multi-docker-compose instead of COMPOSE_FILE
       hash: 76f63f82303066006a67654be0eda4e388aba17a
       body: ""
