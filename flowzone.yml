@@ -401,7 +401,7 @@ jobs:
       npm: ${{ steps.npm.outputs.enabled }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
-      docker_compose_yaml: ${{ steps.docker_compose.outputs.yaml }}
+      docker_compose_base64: ${{ steps.docker_compose.outputs.base64 }}
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
       docker_bake_matrix: ${{ steps.docker_bake.outputs.matrix }}
       balena: ${{ steps.balena.outputs.enabled }}
@@ -802,18 +802,14 @@ jobs:
             test -f "${file}" && args="${args} -f ${file}"
           done
 
-          yaml="$(docker compose ${args} config)"
-          
-          echo "yaml<<EOF" >> $GITHUB_OUTPUT
-          echo "${yaml}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "base64=$(docker compose ${args} config | base64 -w0)" >> $GITHUB_OUTPUT
 
       # generate a custom bake json string from the provided bake targets and any discovered bake files
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
       # in this custom bake json we also set some default cache values, and inherit the docker-metadata-action
       - name: Pre-process Docker bake files
         id: docker_bake
-        if: join(fromJSON(steps.docker_images.outputs.build)) != '' || steps.docker_compose.outputs.yaml != ''
+        if: join(fromJSON(steps.docker_images.outputs.build)) != '' || steps.docker_compose.outputs.base64 != ''
         env:
           BAKE_FILE: /tmp/docker-bake.json
         run: |
@@ -1234,7 +1230,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.event_types.outputs.do_draft == 'true' &&
-      (join(fromJSON(needs.project_types.outputs.docker_images)) != '' || needs.project_types.outputs.docker_compose_yaml != '')
+      (join(fromJSON(needs.project_types.outputs.docker_images)) != '' || needs.project_types.outputs.docker_compose_base64 != '')
 
     defaults:
       run:
@@ -1332,12 +1328,12 @@ jobs:
 
       # run docker compose tests and print the logs from all services
       - name: Run docker compose tests
-        if: needs.project_types.outputs.docker_compose_yaml != ''
+        if: needs.project_types.outputs.docker_compose_base64 != ''
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
           DOCKER_BUILDKIT: "1"
         run: |
-          echo '${{ needs.project_types.outputs.docker_compose_yaml }}' > "${COMPOSE_FILE}"
+          echo '${{ needs.project_types.outputs.docker_compose_base64 }}' | base64 -d > "${COMPOSE_FILE}"
           yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
           yq . "${COMPOSE_FILE}"
 
@@ -1394,7 +1390,7 @@ jobs:
     steps:
 
       - name: Warn if tests skipped
-        if: needs.project_types.outputs.docker_compose_yaml == ''
+        if: needs.project_types.outputs.docker_compose_base64 == ''
         run: echo "::warning::Publishing Docker images without docker compose tests!"
 
       - name: Download all artifacts
