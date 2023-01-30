@@ -1,4 +1,18 @@
 - commits:
+    - subject: Encode docker compose config as base64 to preserve special characters
+      hash: 622705a1be1f060f1cd13c365a4fb304cfccaf8d
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.64.1
+  title: ""
+  date: 2023-01-30T17:53:23.971Z
+- commits:
     - subject: Update docker/setup-buildx-action digest to 15c905b
       hash: 0ffff238e0eab197f84aec78a9a19a87bdd91006
       body: |
