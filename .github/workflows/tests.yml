@@ -70,15 +70,14 @@ jobs:
         # update the branch protection rules on the Flowzone repository settings
         repository:
           [
-            balena-io/balena-cloud,
-            product-os/jellyfish,
-            balena-io/etcher,
-            balena-os/balena-engine,
+            balena-io/balena-api,
+            balena-io/balena-cli,
+            balena-io/docs,
             balena-io/environment-staging,
-            product-os/environment-staging,
+            balena-os/balena-engine,
             balena-os/balena-supervisor,
             balenaltd/handbook,
-            balena-io/balena-api,
+            product-os/environment-staging,
             # balena-os/fatrw,
           ]
 
