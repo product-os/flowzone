@@ -1,4 +1,30 @@
 - commits:
+    - subject: Update list of downstream test repos
+      hash: ac59f034d814d72e521e852fa9d260c6e1ecc562
+      body: |
+        - Remove jellyfish, balena-cloud, and etcher as they are expensive
+        - Add balena-cli and docs
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Fail draft PR check if checks are empty and unchanging
+      hash: 1813416caf5267c521a50a186a889ae1c978ce01
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.65.1
+  title: ""
+  date: 2023-01-31T22:07:28.232Z
+- commits:
     - subject: Open draft PRs in downstream repos for each Flowzone PR
       hash: 87344fc86113238a25472a27d86403026802c5de
       body: |
