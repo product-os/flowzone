@@ -1,4 +1,21 @@
 - commits:
+    - subject: Open draft PRs in downstream repos for each Flowzone PR
+      hash: 87344fc86113238a25472a27d86403026802c5de
+      body: |
+        This doesn't check that all the correct steps were performed
+        of the downstream checks, but it does ensure that the Flowzone
+        PR in question isn't introducing failures.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.65.0
+  title: ""
+  date: 2023-01-31T18:20:48.071Z
+- commits:
     - subject: Encode docker compose config as base64 to preserve special characters
       hash: 622705a1be1f060f1cd13c365a4fb304cfccaf8d
       body: ""
