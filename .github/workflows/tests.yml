@@ -171,8 +171,9 @@ jobs:
       # return failure if any checks were cancelled
       # loop again if any checks are still in progress
       # loop again if no checks have completed yet
-      # loop again if checks have changed since last loop (avoid race conditions)
-      # otherwise, return success
+      # return failure if checks are unchanged since last loop and the checks are empty
+      # return success if checks are unchanged since last loop and at least once check is completed
+      # (else) loop again if checks have changed since last loop (avoid race conditions)
       - name: Wait for all checks to finish
         if: steps.cpr.outputs.pull-request-number != ''
         env:
@@ -199,11 +200,13 @@ jobs:
             jq -r '.[].status' <<< "${checks}" | grep -q '^QUEUED$' && continue
             jq -r '.[].status' <<< "${checks}" | grep -q '^PENDING$' && continue
 
-            jq -r '.[].status' <<< "${checks}" | grep -q '^COMPLETED$' || continue
+            if [ "${prev_checks}" == "${checks}" ]
+            then
+              [ $(jq 'length' <<< "${checks}") -gt 0 ] || exit 1
+              jq -r '.[].status' <<< "${checks}" | grep -q '^COMPLETED$' && exit 0
+            fi
 
-            [ "${prev_checks}" != "${checks}" ] && continue
-
-            exit 0
+            continue
           done
 
       # on closed
