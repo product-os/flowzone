@@ -66,6 +66,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # TODO: changing these currently requires an admin to manually
+        # update the branch protection rules on the Flowzone repository settings
         repository:
           [
             balena-io/balena-cloud,
