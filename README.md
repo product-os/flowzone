@@ -84,15 +84,38 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 
 Open a PR with the following changes to test and enable Flowzone:
 
-1. Create `.github/workflows/flowzone.yml` (see [Usage](#usage)) in a new PR
-2. Set the input `protect_branch: false` until you are certain that the tests are passing
-3. Ensure your `package.json`, `docker-compose.test.yml`, `balena.yml`, etc. contain correct information and Flowzone is passing all tests
-4. Remove the `protect_branch` input to apply new rules automatically. This requires admin access to revert!
-5. Seek approval or self-certify!
+1. Create `.github/workflows/flowzone.yml` (see [Usage](#usage)) in a new Draft Pull Request to avoid changing branch protection rules.
+2. Ensure your `package.json`, `docker-compose.test.yml`, `balena.yml`, etc. contain correct information and all tests are passing.
+3. Mark the Pull Request as Ready for Review and re-run the checks via the Checks or Actions panel. New branch protection rules will be applied and this requires admin access to revert!
+4. Seek approval or self-certify!
 
 ## Usage
 
-Simply add the following to `.github/workflows/flowzone.yml`:
+Workflows that call reusable workflows in the same organization or enterprise can use the inherit keyword to implicitly pass the secrets.
+
+```yml
+# .github/workflows/flowzone.yml
+name: Flowzone
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches: [main, master]
+  # allow external contributions to use secrets within trusted code
+  pull_request_target:
+    types: [opened, synchronize, closed]
+    branches: [main, master]
+
+jobs:
+  flowzone:
+    name: Flowzone
+    uses: product-os/flowzone/.github/workflows/flowzone.yml@master
+    secrets: inherit
+    with:
+      ... # see inputs
+```
+
+Otherwise specify the repository secrets to pass into Flowzone.
 
 ```yml
 name: Flowzone
@@ -119,29 +142,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       BALENA_API_KEY: ${{ secrets.BALENA_API_KEY }}
     with:
-      # Disable branch protection updates whilst testing flowzone, remove before merging
-      protect_branch: false
-```
-
-Workflows that call reusable workflows in the same organization or enterprise can use the inherit keyword to implicitly pass the secrets.
-
-```yml
-name: Flowzone
-
-on:
-  pull_request:
-    types: [opened, synchronize, closed]
-    branches: [main, master]
-  # allow external contributions to use secrets within trusted code
-  pull_request_target:
-    types: [opened, synchronize, closed]
-    branches: [main, master]
-
-jobs:
-  flowzone:
-    name: Flowzone
-    uses: product-os/flowzone/.github/workflows/flowzone.yml@master
-    secrets: inherit
+      ... # see inputs
 ```
 
 Flowzone will automatically select an appropriate runner based on your project's code.
@@ -488,7 +489,7 @@ Default: `true`
 
 #### `protect_branch`
 
-Set to false to disable updating branch protection rules after a successful run.
+Set to false to disable updating branch protection rules after a successful run. Rules are not applied for draft pull requests.
 
 Type: _boolean_
 
