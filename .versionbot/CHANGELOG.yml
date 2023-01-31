@@ -1,4 +1,18 @@
 - commits:
+    - subject: Skip updating branch protection on draft pull requests
+      hash: 37bac60ca0aba22b290dbdd326919dc87012b775
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 0.66.0
+  title: ""
+  date: 2023-01-31T23:32:41.063Z
+- commits:
     - subject: Update list of downstream test repos
       hash: ac59f034d814d72e521e852fa9d260c6e1ecc562
       body: |
