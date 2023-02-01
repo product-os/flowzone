@@ -1,4 +1,28 @@
 - commits:
+    - subject: Break monolithic jobs into smaller services
+      hash: 2224df0955d699877e2e0f42d1f1bdbe02a58278
+      body: |
+        - Add sanitize inputs job
+        - Rename project_types to process_source
+        - Rename event_types to check_context
+
+        This is the first of a set of commits
+        to refactor large jobs into smaller components.
+
+        This will allow more control over dependencies
+        while speeding up runtime since more jobs
+        can run in parallel.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.0.0
+  title: ""
+  date: 2023-02-01T18:08:25.074Z
+- commits:
     - subject: Pin dependencies
       hash: 27915c4e93b1b1e54f6b3e849a4c6e988b3bd15c
       body: |
