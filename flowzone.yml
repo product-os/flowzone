@@ -149,6 +149,11 @@ on:
           arm-unknown-linux-gnueabihf,
           x86_64-unknown-linux-gnu,
           i686-unknown-linux-gnu
+      rust_toolchain:
+        description: "Version specifier (e.g. 1.65, stable, nigthly) for the toolchain to use when building Rust sources"
+        type: string
+        required: false
+        default: stable
       rust_binaries:
         description: "Set to true to publish Rust binary release artifacts to GitHub"
         type: boolean
@@ -2056,8 +2061,9 @@ jobs:
       - *extractSourceArtifact
 
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ inputs.rust_toolchain }}
           targets: ${{ matrix.target }}
           components: rustfmt
 
@@ -2119,8 +2125,9 @@ jobs:
       - *extractSourceArtifact
 
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ inputs.rust_toolchain }}
           targets: ${{ matrix.target }}
 
       - name: Install cross

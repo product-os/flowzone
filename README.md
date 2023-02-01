@@ -49,6 +49,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`balena_slugs`](#balena_slugs)
     - [`cargo_targets`](#cargo_targets)
     - [`rust_binaries`](#rust_binaries)
+    - [`rust_toolchain`](#rust_toolchain)
     - [`protect_branch`](#protect_branch)
     - [`repo_config`](#repo_config)
     - [`repo_allow_forking`](#repo_allow_forking)
@@ -486,6 +487,14 @@ Set to true to publish Rust binary artifacts to GitHub.
 Type: _boolean_
 
 Default: `true`
+
+## `rust_toolchain`
+
+Version specifier (e.g. 1.65, stable, nigthly) for the toolchain to use when building Rust sources.
+
+Type: _string_
+
+Default: `'stable'`
 
 #### `protect_branch`
 
