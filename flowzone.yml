@@ -311,7 +311,6 @@ env:
   CARGO_REGISTRY: crates.io
 
 jobs:
-
   context_check:
     name: Check context
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1212,8 +1211,7 @@ jobs:
     name: Publish npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      [context_check, npm_check, npm_test, custom_test]
+    needs: [context_check, npm_check, npm_test, custom_test]
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
@@ -1477,13 +1475,7 @@ jobs:
     name: Publish docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      [
-        context_check,
-        docker_check,
-        docker_test,
-        sanitize_inputs,
-      ]
+    needs: [context_check, docker_check, docker_test, sanitize_inputs]
     if: |
       needs.context_check.outputs.do_draft == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
