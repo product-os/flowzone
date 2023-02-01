@@ -1,4 +1,18 @@
 - commits:
+    - subject: Make the Rust toolchain version user configurable
+      hash: b915c532115671418c55bcd0059f4fd33e4ceb1c
+      body: |
+        Adds a `rust_toolchain` (defaults to `stable`) to allow users to
+        configure their preferred toolchain to use when building Rust binaries.
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Felipe Lalanne
+      nested: []
+  version: 1.1.0
+  title: ""
+  date: 2023-02-01T20:10:33.510Z
+- commits:
     - subject: Break monolithic jobs into smaller services
       hash: 2224df0955d699877e2e0f42d1f1bdbe02a58278
       body: |
