@@ -42,15 +42,10 @@ jobs:
     name: "Draft PRs"
     runs-on: ubuntu-22.04
     timeout-minutes: 90
-    # ensure that we only use pull_request_target for external PRs
+    # skip e2e for forks
     if: |
-      (
         github.event.pull_request.head.repo.full_name == github.repository &&
         github.event_name == 'pull_request'
-      ) || (
-        github.event.pull_request.head.repo.full_name != github.repository &&
-        github.event_name == 'pull_request_target'
-      )
     # depend on Flowzone passing it's self-checks first before rolling out to other repos
     needs: [flowzone]
     # https://docs.github.com/en/actions/using-jobs/using-concurrency
