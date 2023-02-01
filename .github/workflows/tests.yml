@@ -71,14 +71,13 @@ jobs:
         repository:
           [
             balena-io/balena-api,
-            balena-io/balena-cli,
             balena-io/docs,
             balena-io/environment-staging,
             balena-os/balena-engine,
             balena-os/balena-supervisor,
             balenaltd/handbook,
             product-os/environment-staging,
-            # balena-os/fatrw,
+            balena-os/fatrw,
           ]
 
     env:
