@@ -1,4 +1,19 @@
 - commits:
+    - subject: Pin dependencies
+      hash: 27915c4e93b1b1e54f6b3e849a4c6e988b3bd15c
+      body: |
+        Update actions/checkout to
+
+        Update actions/checkout from 3 to
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Renovate Bot
+      nested: []
+  version: 0.67.0
+  title: ""
+  date: 2023-02-01T14:22:36.240Z
+- commits:
     - subject: Skip updating branch protection on draft pull requests
       hash: 37bac60ca0aba22b290dbdd326919dc87012b775
       body: ""
