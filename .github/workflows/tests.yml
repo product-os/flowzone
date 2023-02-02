@@ -149,17 +149,6 @@ jobs:
           draft: true
           delete-branch: true
 
-      # create a new comment for each unique downstream PR, but only if it doesn't already exist
-      # in case an existing PR is closed and a new one is opened, both will be listed in the comments
-      - name: Create pull request comment
-        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
-        if: steps.cpr.outputs.pull-request-url != ''
-        with:
-          header: draft-${{ matrix.repository }}-${{ steps.cpr.outputs.pull-request-number}}
-          GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-          message: |
-            Created draft PR: ${{ steps.cpr.outputs.pull-request-url }}
-
       # return failure if any checks failed
       # return failure if any checks were cancelled
       # loop again if any checks are still in progress
