@@ -128,7 +128,7 @@ jobs:
           yq '(.jobs.* | select(.uses | contains("flowzone.yml"))).with.protect_branch |= false' -i .github/workflows/flowzone.yml
 
           git add .github/workflows/flowzone.yml
-          git commit -m "patch: ${{ env.pr_title }}"
+          git commit -m "patch: ${{ env.pr_title }}" -m "Updated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
       # create a new pull request if it doesn't already exist
       - name: Create pull request
