@@ -84,7 +84,7 @@ jobs:
       GH_DEBUG: "true"
       GH_PAGER: "cat"
       pr_branch: "flowzone/${{ github.head_ref || github.ref_name }}"
-      pr_title: "Update Flowzone to ${{ github.head_ref || github.ref_name }}"
+      pr_title: "Test Flowzone PR ${{ github.event.pull_request.number }}"
 
     steps:
       - name: Get repo settings
