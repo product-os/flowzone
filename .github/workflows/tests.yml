@@ -42,15 +42,10 @@ jobs:
     name: "Draft PRs"
     runs-on: ubuntu-22.04
     timeout-minutes: 90
-    # ensure that we only use pull_request_target for external PRs
+    # skip e2e for forks
     if: |
-      (
         github.event.pull_request.head.repo.full_name == github.repository &&
         github.event_name == 'pull_request'
-      ) || (
-        github.event.pull_request.head.repo.full_name != github.repository &&
-        github.event_name == 'pull_request_target'
-      )
     # depend on Flowzone passing it's self-checks first before rolling out to other repos
     needs: [flowzone]
     # https://docs.github.com/en/actions/using-jobs/using-concurrency
@@ -89,7 +84,7 @@ jobs:
       GH_DEBUG: "true"
       GH_PAGER: "cat"
       pr_branch: "flowzone/${{ github.head_ref || github.ref_name }}"
-      pr_title: "Update Flowzone to ${{ github.head_ref || github.ref_name }}"
+      pr_title: "Test Flowzone PR ${{ github.event.pull_request.number }}"
 
     steps:
       - name: Get repo settings
@@ -133,7 +128,7 @@ jobs:
           yq '(.jobs.* | select(.uses | contains("flowzone.yml"))).with.protect_branch |= false' -i .github/workflows/flowzone.yml
 
           git add .github/workflows/flowzone.yml
-          git commit -m "patch: ${{ env.pr_title }}"
+          git commit -m "patch: ${{ env.pr_title }}" -m "Updated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
       # create a new pull request if it doesn't already exist
       - name: Create pull request
@@ -153,17 +148,6 @@ jobs:
             draft
           draft: true
           delete-branch: true
-
-      # create a new comment for each unique downstream PR, but only if it doesn't already exist
-      # in case an existing PR is closed and a new one is opened, both will be listed in the comments
-      - name: Create pull request comment
-        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
-        if: steps.cpr.outputs.pull-request-url != ''
-        with:
-          header: draft-${{ matrix.repository }}-${{ steps.cpr.outputs.pull-request-number}}
-          GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-          message: |
-            Created draft PR: ${{ steps.cpr.outputs.pull-request-url }}
 
       # return failure if any checks failed
       # return failure if any checks were cancelled
