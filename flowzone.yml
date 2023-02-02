@@ -2574,15 +2574,15 @@ jobs:
       # and this PR not a draft
       # and required reviewers > 1 OR policy-bot is enabled,
       # then toggle auto-merge to ON for this PR for convenience
-      - name: Enable PR auto-merge
-        if: |
-          steps.pr_view.outputs.is_draft != 'true' &&
-          (fromJSON(steps.apply_branch_protection_rules.outputs.new_required_approving_review_count) > 0 ||
-          steps.parse_prepare_protection_rules.outputs.policy_bot == 'true')
-        run: |
-          if [[ $(gh api '/repos/${{ github.repository }}' | jq -r .allow_auto_merge) =~ true ]]; then
-            gh pr merge ${{ github.event.pull_request.number }} --merge --auto
-          fi
+      # - name: Enable PR auto-merge
+      #   if: |
+      #     steps.pr_view.outputs.is_draft != 'true' &&
+      #     (fromJSON(steps.apply_branch_protection_rules.outputs.new_required_approving_review_count) > 0 ||
+      #     steps.parse_prepare_protection_rules.outputs.policy_bot == 'true')
+      #   run: |
+      #     if [[ $(gh api '/repos/${{ github.repository }}' | jq -r .allow_auto_merge) =~ true ]]; then
+      #       gh pr merge ${{ github.event.pull_request.number }} --merge --auto
+      #     fi
 
   ###################################################
   ## configure standard repository settings
