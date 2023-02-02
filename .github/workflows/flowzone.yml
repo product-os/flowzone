@@ -2390,15 +2390,6 @@ jobs:
           echo "result<<${DELIMITER}" >> $GITHUB_OUTPUT
           echo "${result}" >> $GITHUB_OUTPUT
           echo "${DELIMITER}" >> $GITHUB_OUTPUT
-      - name: Enable PR auto-merge
-        if: |
-          steps.pr_view.outputs.is_draft != 'true' &&
-          (fromJSON(steps.apply_branch_protection_rules.outputs.new_required_approving_review_count) > 0 ||
-          steps.parse_prepare_protection_rules.outputs.policy_bot == 'true')
-        run: |
-          if [[ $(gh api '/repos/${{ github.repository }}' | jq -r .allow_auto_merge) =~ true ]]; then
-            gh pr merge ${{ github.event.pull_request.number }} --merge --auto
-          fi
   repo_config:
     name: Apply repo settings
     runs-on: ${{ fromJSON(inputs.runs_on) }}
