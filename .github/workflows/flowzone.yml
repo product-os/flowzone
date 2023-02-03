@@ -261,67 +261,83 @@ env:
   NPM_REGISTRY: https://registry.npmjs.org
   CARGO_REGISTRY: crates.io
 jobs:
-  context_check:
-    name: Check context
+  is_pr_open:
+    name: Is PR Open
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.disable_versioning == true) ||
-      (github.event.pull_request.head.repo.full_name == github.repository && github.event_name == 'pull_request') ||
-      (github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request_target')
-    outputs:
-      pr: ${{ steps.pr.outcome == 'success' }}
-      pr_opened: ${{ steps.pr_opened.outcome == 'success' }}
-      pr_synchronize: ${{ steps.pr_synchronize.outcome == 'success' }}
-      pr_merged: ${{ steps.pr_merged.outcome == 'success' }}
-      pr_closed: ${{ steps.pr_closed.outcome == 'success' }}
-      tagged: ${{ steps.tagged.outcome == 'success' }}
-      do_draft: ${{ steps.pr_opened.outcome == 'success' || steps.pr_synchronize.outcome == 'success' }}
-      do_final: ${{ steps.pr_merged.outcome == 'success' || steps.tagged.outcome == 'success' }}
-      do_clean: ${{ steps.pr_closed.outcome == 'success' }}
-    defaults:
-      run:
-        working-directory: .
-        shell: bash
-    env:
-      JSON: ${{ toJSON(github) }}
+      (
+        github.event_name == 'pull_request' ||
+        github.event_name == 'pull_request_target'
+      ) && (
+        github.event.action == 'opened' ||
+        github.event.action == 'synchronize'
+      )
     steps:
-      - name: Pull Request
-        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
-        id: pr
-        run: |
-          echo "${JSON}" || true
-      - name: Pull Request opened
-        if: steps.pr.outcome == 'success' && github.event.action == 'opened'
-        id: pr_opened
-        run: |
-          echo "${JSON}" || true
-      - name: Pull Request synchronize
-        if: steps.pr.outcome == 'success' && github.event.action == 'synchronize'
-        id: pr_synchronize
-        run: |
-          echo "${JSON}" || true
-      - name: Pull Request merged
-        if: steps.pr.outcome == 'success' && github.event.pull_request.merged == true
-        id: pr_merged
-        run: |
-          echo "${JSON}" || true
-      - name: Pull Request closed
-        if: steps.pr.outcome == 'success' && github.event.action == 'closed'
-        id: pr_closed
-        run: |
-          echo "${JSON}" || true
-      - name: Tag event
-        if: github.event_name == 'push'
-        id: tagged
-        run: |
-          echo "${JSON}" || true
+      - name: Log GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "${GITHUB_CONTEXT}" || true
+  is_pr_closed:
+    name: Is PR Closed
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    if: |
+      (
+        github.event_name == 'pull_request' ||
+        github.event_name == 'pull_request_target'
+      ) && (
+        github.event.action == 'closed' &&
+        github.event.pull_request.merged == false
+      )
+    steps:
+      - name: Log GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "${GITHUB_CONTEXT}" || true
+  is_pr_merged:
+    name: Is PR Merged
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    if: |
+      (
+        github.event_name == 'pull_request' ||
+        github.event_name == 'pull_request_target'
+      ) && (
+        github.event.action == 'closed' &&
+        github.event.pull_request.merged == true
+      )
+    steps:
+      - name: Log GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "${GITHUB_CONTEXT}" || true
+  is_pushed_tag:
+    name: Is Pushed Tag
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Log GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "${GITHUB_CONTEXT}" || true
   sanitize_inputs:
     name: Sanitize inputs
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_open
+      - is_pr_merged
+      - is_pr_closed
+      - is_pushed_tag
+    if: |
+      !failure() && !cancelled() && (
+        needs.is_pr_merged.result == 'success' ||
+        needs.is_pr_closed.result == 'success' ||
+        needs.is_pr_open.result == 'success' ||
+        needs.is_pushed_tag.result == 'success'
+      )
     defaults:
       run:
         working-directory: .
@@ -403,9 +419,12 @@ jobs:
     name: Versioned source
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs: context_check
+    needs:
+      - is_pr_open
+      - is_pr_merged
     if: |
-      needs.context_check.outputs.tagged == 'false' &&
+      !failure() && !cancelled() &&
+      needs.is_pr_open.result != needs.is_pr_merged.result &&
       inputs.disable_versioning == false
     defaults:
       run:
@@ -532,7 +551,7 @@ jobs:
           git show -1
           git log -n 2
       - name: Push versioned commit
-        if: needs.context_check.outputs.pr_merged == 'true'
+        if: needs.is_pr_merged.result == 'success'
         continue-on-error: true
         run: |
           git push origin HEAD:refs/heads/${{ github.base_ref }}
@@ -553,9 +572,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pushed_tag
+      - is_pr_open
     if: |
-      needs.context_check.outputs.tagged == 'true' ||
+      !failure() && !cancelled() &&
+      needs.is_pushed_tag.result != needs.is_pr_open.result &&
       inputs.disable_versioning == true
     defaults:
       run:
@@ -592,11 +613,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
-      !failure() && !cancelled() && contains(needs.*.result, 'success')
+      !failure() && !cancelled() &&
+      needs.versioned_source.result != needs.tagged_source.result
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -707,12 +729,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - sanitize_inputs
       - versioned_source
       - tagged_source
-      - sanitize_inputs
     if: |
-      !failure() && !cancelled() && contains(needs.*.result, 'success')
+      !failure() && !cancelled() &&
+      needs.versioned_source.result != needs.tagged_source.result
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -782,11 +804,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
-      !failure() && !cancelled() && contains(needs.*.result, 'success')
+      !failure() && !cancelled() &&
+      needs.versioned_source.result != needs.tagged_source.result
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -900,12 +923,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - sanitize_inputs
       - versioned_source
       - tagged_source
-      - sanitize_inputs
     if: |
-      !failure() && !cancelled() && contains(needs.*.result, 'success') &&
+      !failure() && !cancelled() &&
+      needs.versioned_source.result != needs.tagged_source.result &&
       join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
     defaults:
       run:
@@ -938,12 +961,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - sanitize_inputs
       - versioned_source
       - tagged_source
-      - sanitize_inputs
     if: |
-      !failure() && !cancelled() && contains(needs.*.result, 'success') &&
+      !failure() && !cancelled() &&
+      needs.versioned_source.result != needs.tagged_source.result &&
       join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
     defaults:
       run:
@@ -976,11 +999,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
-      !failure() && !cancelled() && contains(needs.*.result, 'success')
+      !failure() && !cancelled() &&
+      needs.versioned_source.result != needs.tagged_source.result
     defaults:
       run:
         working-directory: .
@@ -1030,11 +1054,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
-      !failure() && !cancelled() && contains(needs.*.result, 'success') &&
+      !failure() && !cancelled() &&
+      needs.versioned_source.result != needs.tagged_source.result &&
       inputs.cloudflare_website != ''
     defaults:
       run:
@@ -1068,10 +1093,10 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - npm_check
-      - context_check
+      - is_pr_open
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true' &&
+      needs.is_pr_open.result == 'success' &&
       needs.npm_check.outputs.npm == 'true'
     defaults:
       run:
@@ -1225,11 +1250,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_merged
+      - is_pushed_tag
       - npm_check
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_final == 'true' &&
+      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
       needs.npm_check.outputs.npm == 'true' &&
       needs.npm_check.outputs.npm_private != 'true'
     defaults:
@@ -1262,11 +1288,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_merged
+      - is_pushed_tag
       - npm_check
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_final == 'true' &&
+      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
       needs.npm_check.outputs.npm_docs == 'true'
     defaults:
       run:
@@ -1296,13 +1323,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_open
       - docker_check
       - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
-      needs.docker_check.outputs.docker_bake_json != '' &&
-      needs.context_check.outputs.do_draft == 'true'
+      needs.docker_check.result == 'success' &&
+      needs.is_pr_open.result == 'success' &&
+      needs.docker_check.outputs.docker_bake_json != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1546,13 +1574,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_merged
+      - is_pushed_tag
       - docker_check
       - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.docker_check.result == 'success' &&
-      needs.context_check.outputs.do_final == 'true' &&
+      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
     defaults:
       run:
@@ -1641,7 +1670,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_open
       - balena_check
       - sanitize_inputs
       - npm_test
@@ -1652,7 +1681,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.balena_check.result == 'success' &&
-      needs.context_check.outputs.do_draft == 'true'
+      needs.is_pr_open.result == 'success'
     strategy:
       fail-fast: false
       matrix:
@@ -1683,13 +1712,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_merged
+      - is_pushed_tag
       - balena_check
       - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.balena_check.result == 'success' &&
-      needs.context_check.outputs.do_final == 'true'
+      needs.is_pr_merged.result != needs.is_pushed_tag.result
     strategy:
       fail-fast: false
       matrix:
@@ -1720,11 +1750,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_open
       - python_check
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true' &&
+      needs.is_pr_open.result == 'success' &&
       needs.python_check.outputs.python_poetry == 'true'
     defaults:
       run:
@@ -1807,8 +1837,10 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
+      - is_pr_open
+      - is_pr_merged
+      - is_pushed_tag
       - website_check
-      - context_check
       - npm_test
       - custom_test
       - docker_test
@@ -1845,7 +1877,7 @@ jobs:
           inputs.docusaurus_website == false
         run: npm run deploy-docs --if-present
       - name: Update deploy branch for merged PRs
-        if: needs.context_check.outputs.pr_merged == 'true'
+        if: needs.is_pr_open.result != 'success'
         run: |
           echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
       - name: Cloudflare Pages
@@ -1859,20 +1891,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_closed
     if: |
-      !failure() && !cancelled() && (
-        needs.context_check.outputs.do_draft == 'true' || (
-          needs.context_check.outputs.pr_closed == 'true' &&
-          needs.context_check.outputs.pr_merged == 'false'
-        )
-      )
+      !failure() && !cancelled() &&
+      needs.is_pr_closed.result == 'success'
     defaults:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Delete draft release
+      - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
           GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
@@ -1885,19 +1913,26 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - github_clean
       - npm_publish
       - cargo_publish
       - custom_publish
-      - context_check
+      - is_pr_open
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true'
+      needs.is_pr_open.result == 'success'
     defaults:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Delete draft GitHub release
+        run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
+        env:
+          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+          GH_PROMPT_DISABLED: "true"
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_REPO: ${{ github.repository }}
       - name: Download all artifacts
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
@@ -1927,12 +1962,13 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_merged
+      - is_pushed_tag
       - versioned_source
       - tagged_source
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_final == 'true'
+      needs.is_pr_merged.result != needs.is_pushed_tag.result
     defaults:
       run:
         working-directory: .
@@ -1989,12 +2025,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_open
       - cargo_check
       - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true' &&
+      needs.is_pr_open.result == 'success' &&
       needs.cargo_check.outputs.cargo == 'true'
     defaults:
       run:
@@ -2115,11 +2151,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_merged
+      - is_pushed_tag
       - cargo_check
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_final == 'true' &&
+      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
       needs.cargo_check.outputs.cargo == 'true'
     defaults:
       run:
@@ -2150,12 +2187,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_open
       - custom_check
       - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true' &&
+      needs.is_pr_open.result == 'success' &&
       needs.custom_check.outputs.custom_test == 'true'
     strategy:
       fail-fast: false
@@ -2185,7 +2222,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_open
       - custom_check
       - sanitize_inputs
       - npm_test
@@ -2195,7 +2232,7 @@ jobs:
       - python_test
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_draft == 'true' &&
+      needs.is_pr_open.result == 'success' &&
       needs.custom_check.outputs.custom_publish == 'true'
     strategy:
       fail-fast: false
@@ -2225,12 +2262,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_merged
+      - is_pushed_tag
       - custom_check
       - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_final == 'true' &&
+      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
       needs.custom_check.outputs.custom_finalize == 'true'
     strategy:
       fail-fast: false
@@ -2264,11 +2302,11 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_closed
       - custom_check
     if: |
       !failure() && !cancelled() &&
-      needs.context_check.outputs.do_clean == 'true' &&
+      needs.is_pr_closed.result == 'success' &&
       needs.custom_check.outputs.custom_clean == 'true'
     steps:
       - name: Download source artifact
@@ -2293,7 +2331,6 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
       - custom_test
       - custom_publish
       - custom_finalize
@@ -2326,7 +2363,7 @@ jobs:
       - custom_test
       - python_test
       - docker_test
-      - context_check
+      - is_pr_open
       - npm_publish
       - npm_test
       - cargo_test
@@ -2334,8 +2371,8 @@ jobs:
       - github_publish
       - website_publish
     if: |
-      !failure() && !cancelled() && contains(needs.*.result, 'success') &&
-      needs.context_check.outputs.do_draft == 'true' &&
+      !failure() && !cancelled() &&
+      needs.is_pr_open.result == 'success' &&
       inputs.protect_branch == true &&
       github.event.pull_request.head.repo.full_name == github.repository
     outputs:
@@ -2540,9 +2577,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - context_check
+      - is_pr_merged
     if: |
-      needs.context_check.outputs.do_final == 'true' &&
+      !failure() && !cancelled() &&
+      needs.is_pr_merged.result == 'success' &&
       inputs.repo_config == true
     steps:
       - name: Configure repository
