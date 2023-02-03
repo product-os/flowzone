@@ -1,4 +1,19 @@
 - commits:
+    - subject: Replace supervisor draft PRs with oB registry proxy
+      hash: 6863bc456355940157340cde42154570a8dece84
+      body: |
+        Supervisor is slow to test, and somewhat unreliable.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.3.6
+  title: ""
+  date: 2023-02-03T18:53:39.302Z
+- commits:
     - subject: Avoid extra tagging when merging unversioned PRs
       hash: c632eccfbc52e57bf00711fbdeb948e6536e0032
       body: ""
