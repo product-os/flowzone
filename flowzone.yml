@@ -1258,6 +1258,9 @@ jobs:
     needs:
       - npm_test
       - custom_test
+      - docker_test
+      - cargo_test
+      - python_test
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
@@ -1521,9 +1524,13 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - docker_test
       - docker_check
       - sanitize_inputs
+      - npm_test
+      - custom_test
+      - docker_test
+      - cargo_test
+      - python_test
     if: |
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
@@ -1747,10 +1754,12 @@ jobs:
     needs:
       - context_check
       - balena_check
-      - npm_test
-      - docker_test
-      - custom_test
       - sanitize_inputs
+      - npm_test
+      - custom_test
+      - docker_test
+      - cargo_test
+      - python_test
     if: |
       !failure() && !cancelled() &&
       needs.balena_check.result == 'success' &&
@@ -1892,6 +1901,11 @@ jobs:
     needs:
       - website_check
       - context_check
+      - npm_test
+      - custom_test
+      - docker_test
+      - cargo_test
+      - python_test
     if: |
       !failure() && !cancelled() &&
       needs.website_check.result == 'success'
@@ -2134,9 +2148,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - cargo_test
-      - custom_test
       - sanitize_inputs
+      - npm_test
+      - custom_test
+      - docker_test
+      - cargo_test
+      - python_test
     if: |
       !failure() && !cancelled() &&
       needs.cargo_test.result == 'success' &&
@@ -2256,11 +2273,12 @@ jobs:
     needs:
       - context_check
       - custom_check
+      - sanitize_inputs
       - npm_test
+      - custom_test
       - docker_test
       - cargo_test
-      - custom_test
-      - sanitize_inputs
+      - python_test
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
