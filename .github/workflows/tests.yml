@@ -125,6 +125,8 @@ jobs:
         run: |
           yq '(.jobs.* | select(.uses | contains("flowzone.yml"))).uses |= sub("(?P<uses>.+)@.+"; "$1@${{ github.event.pull_request.head.sha }}")' -i .github/workflows/flowzone.yml
 
+          yq '(.jobs.* | select(.uses | contains("flowzone.yml"))).uses |= . line_comment="${{ github.run_id }}-${{ github.run_attempt }}"' -i .github/workflows/flowzone.yml
+
           yq '(.jobs.* | select(.uses | contains("flowzone.yml"))).with.protect_branch |= false' -i .github/workflows/flowzone.yml
 
           git add .github/workflows/flowzone.yml
