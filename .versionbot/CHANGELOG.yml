@@ -1,4 +1,28 @@
 - commits:
+    - subject: Fix handling of versionist errors
+      hash: b6f7d2579b13b82ade8b850dca7dbb732ca296bf
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Fix parsing of tags when versioning is disabled
+      hash: 9307125ca2ac622f6defd3929441d70786850d9e
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.3.1
+  title: ""
+  date: 2023-02-03T03:47:17.005Z
+- commits:
     - subject: Split tagged and versioned source jobs
       hash: 8174dd72b92f4c0e9da45dc20fc1dac18b6eeb1d
       body: ""
