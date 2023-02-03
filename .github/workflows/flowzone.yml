@@ -425,7 +425,7 @@ jobs:
           token: ${{ secrets.FLOWZONE_TOKEN }}
           ref: refs/pull/${{ github.event.number }}/merge
       - name: Checkout sha
-        if: steps.checkout_merge.outcome == 'skipped'
+        if: github.event_name != 'pull_request_target'
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
         with:
           fetch-depth: 0
@@ -491,7 +491,7 @@ jobs:
       - name: Run versionist
         id: versionist
         run: |
-          out="$(balena-versionist)"
+          out="$(balena-versionist 2>&1)"
           if grep -q "Error:" <<< "${out}"
           then
             echo "::error::${out}"
@@ -550,20 +550,20 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      tag: ${{ steps.git_describe.outputs.tag }}
-      semver: ${{ steps.git_describe.outputs.semver }}
+      tag: ${{ steps.version_tag.outputs.tag }}
+      semver: ${{ steps.version_tag.outputs.semver }}
     steps:
       - name: Checkout sha
-        if: steps.checkout_merge.outcome == 'skipped'
+        if: github.event_name != 'pull_request_target'
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
         with:
           fetch-depth: 0
           submodules: recursive
           token: ${{ secrets.FLOWZONE_TOKEN }}
-      - name: Git describe
-        id: git_describe
+      - name: Get version from tags
+        id: version_tag
         run: |
-          tag="$(git describe --tags --always --dirty | cat)"
+          tag="$(git tag --points-at HEAD | tail -n1)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Compress source
@@ -1266,8 +1266,6 @@ jobs:
       - context_check
       - docker_check
       - sanitize_inputs
-      - versioned_source
-      - tagged_source
     if: |
       !failure() && !cancelled() &&
       needs.docker_check.result == 'success' &&
@@ -1296,11 +1294,12 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - name: Get version strings
-        id: get_version
+      - name: Get version from tags
+        id: version_tag
         run: |
-          echo "semver=${{ needs.versioned_source.outputs.semver || needs.tagged_source.outputs.semver }}" >> $GITHUB_OUTPUT
-          echo "tag=${{ needs.versioned_source.outputs.tag || needs.tagged_source.outputs.tag }}" >> $GITHUB_OUTPUT
+          tag="$(git tag --points-at HEAD | tail -n1)"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Setup QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18
       - name: Setup buildx
@@ -1333,7 +1332,7 @@ jobs:
           tags: |
             type=raw,value=${{ matrix.target }}
             type=raw,value=${{ matrix.platform }}
-          labels: org.opencontainers.image.version=${{ steps.get_version.outputs.semver }}
+          labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=true
       - name: Docker bake
@@ -1484,8 +1483,6 @@ jobs:
       - context_check
       - docker_check
       - sanitize_inputs
-      - versioned_source
-      - tagged_source
     if: |
       !failure() && !cancelled() &&
       needs.docker_check.result == 'success' &&
@@ -1510,11 +1507,12 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - name: Get version strings
-        id: get_version
+      - name: Get version from tags
+        id: version_tag
         run: |
-          echo "semver=${{ needs.versioned_source.outputs.semver || needs.tagged_source.outputs.semver }}" >> $GITHUB_OUTPUT
-          echo "tag=${{ needs.versioned_source.outputs.tag || needs.tagged_source.outputs.tag }}" >> $GITHUB_OUTPUT
+          tag="$(git tag --points-at HEAD | tail -n1)"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Set env vars
         run: |
           if [ ${{ matrix.target }} != 'default' ]
@@ -1529,8 +1527,8 @@ jobs:
             ${{ matrix.image }}
           tags: |
             type=raw,value=${{ github.base_ref || github.ref_name }}
-            type=raw,value=${{ steps.get_version.outputs.tag }}
-            type=raw,value=${{ steps.get_version.outputs.semver }}
+            type=raw,value=${{ steps.version_tag.outputs.tag }}
+            type=raw,value=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=true
             prefix=${{ env.PREFIX }},onlatest=true
@@ -1669,8 +1667,6 @@ jobs:
     needs:
       - context_check
       - python_check
-      - versioned_source
-      - tagged_source
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
@@ -1699,11 +1695,12 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - name: Get version strings
-        id: get_version
+      - name: Get version from tags
+        id: version_tag
         run: |
-          echo "semver=${{ needs.versioned_source.outputs.semver || needs.tagged_source.outputs.semver }}" >> $GITHUB_OUTPUT
-          echo "tag=${{ needs.versioned_source.outputs.tag || needs.tagged_source.outputs.tag }}" >> $GITHUB_OUTPUT
+          tag="$(git tag --points-at HEAD | tail -n1)"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
         with:
@@ -1738,7 +1735,7 @@ jobs:
         id: meta
         run: |
           package="$(grep '^name = \"' pyproject.toml | awk -F[\"\"] '{print $2}')"
-          version="${{ steps.get_version.outputs.semver }}"
+          version="${{ steps.version_tag.outputs.semver }}"
           branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
@@ -1889,13 +1886,13 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - name: Get version strings
-        id: get_version
+      - name: Get version from tags
+        id: version_tag
         run: |
-          echo "semver=${{ needs.versioned_source.outputs.semver || needs.tagged_source.outputs.semver }}" >> $GITHUB_OUTPUT
-          echo "tag=${{ needs.versioned_source.outputs.tag || needs.tagged_source.outputs.tag }}" >> $GITHUB_OUTPUT
+          tag="$(git tag --points-at HEAD | tail -n1)"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Finalize GitHub release (if any)
-        if: needs.versioned_source.outputs.version != '' || needs.tagged_source.outputs.version != ''
         run: |
           set -ea
           # prevent git from existing with 141
@@ -1908,13 +1905,13 @@ jobs:
           if gh release view '${{ github.event.pull_request.head.ref }}'; then
             gh release edit '${{ github.event.pull_request.head.ref }}' \
               --notes-file "${release_notes}" \
-              --title '${{ steps.get_version.outputs.tag }}' \
-              --tag '${{ steps.get_version.outputs.tag || steps.get_version.outputs.tag }}' \
+              --title '${{ steps.version_tag.outputs.tag }}' \
+              --tag '${{ steps.version_tag.outputs.tag }}' \
               --prerelease='${{ inputs.github_prerelease }}' \
               --draft=false
 
             if [[ ${{ inputs.github_prerelease }} =~ false ]]; then
-                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ steps.get_version.outputs.tag }}" \
+                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ steps.version_tag.outputs.tag }}" \
                   -H 'Accept: application/vnd.github+json' | jq -r .id)"
                 gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
                   -H 'Accept: application/vnd.github+json' \
@@ -1932,8 +1929,6 @@ jobs:
     needs:
       - context_check
       - cargo_check
-      - versioned_source
-      - tagged_source
       - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
@@ -1963,11 +1958,12 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - name: Get version strings
-        id: get_version
+      - name: Get version from tags
+        id: version_tag
         run: |
-          echo "semver=${{ needs.versioned_source.outputs.semver || needs.tagged_source.outputs.semver }}" >> $GITHUB_OUTPUT
-          echo "tag=${{ needs.versioned_source.outputs.tag || needs.tagged_source.outputs.tag }}" >> $GITHUB_OUTPUT
+          tag="$(git tag --points-at HEAD | tail -n1)"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:
@@ -1986,7 +1982,7 @@ jobs:
         id: meta
         run: |
           package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
-          version="${{ steps.get_version.outputs.semver }}"
+          version="${{ steps.version_tag.outputs.semver }}"
           branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
