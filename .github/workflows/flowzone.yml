@@ -255,7 +255,7 @@ on:
         default: ""
 concurrency:
   group: flowzone-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != github.base_ref }}
 env:
   GHCR_USER: flowzone
   NPM_REGISTRY: registry.npmjs.org

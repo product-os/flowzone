@@ -312,7 +312,8 @@ on:
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
   group: flowzone-${{ github.ref }}
-  cancel-in-progress: true
+  # cancel jobs in progress as long as it's not a merged PR
+  cancel-in-progress: ${{ github.ref != github.base_ref }}
 
 env:
   GHCR_USER: "flowzone" # does not seem to matter what is used here
