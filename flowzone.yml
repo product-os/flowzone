@@ -17,7 +17,7 @@
     name: Get version from tags
     id: version_tag
     run: |
-      tag="$(git tag --points-at HEAD | tail -n1)"
+      tag="$(git describe --all --tags --always | cat)"
       echo "tag=${tag}" >> $GITHUB_OUTPUT
       echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
 
