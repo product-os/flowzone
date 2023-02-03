@@ -1,4 +1,18 @@
 - commits:
+    - subject: Avoid parsing branches with git describe
+      hash: 69c780077e1bcf83c5de94f6857ad57577054c63
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.3.4
+  title: ""
+  date: 2023-02-03T15:16:00.626Z
+- commits:
     - subject: Restore old tag lookup behaviour
       hash: 3ab41a6d85527b2640ccc8caf46ef2a4669f3754
       body: |
