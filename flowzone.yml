@@ -563,16 +563,26 @@ jobs:
             )
           fi
 
-      # install and run versionist via balena-versionist
+      # run balena-versionist
+      # print the error if anything fails
+      # fail the workflow if the error is anything other than "No such file or directory"
       - name: Run versionist
         id: versionist
         run: |
           out="$(balena-versionist 2>&1)"
-          if grep -q "Error:" <<< "${out}"
-          then
-            echo "::error::${out}"
-            exit 1
-          fi
+          error="$(awk '/Error:/{getline; print}' <<< "${out}")"
+
+          case ${error} in
+            "") # no error
+              ;;
+            'No such file or directory'*)
+              echo "::error::${error}"
+              ;;
+            *)
+              echo "::error::${error}"
+              exit 1
+              ;;
+          esac
 
           git status --porcelain
           
