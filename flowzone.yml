@@ -13,12 +13,13 @@
     working-directory: .
     run: tar -xvf ${{ runner.temp }}/source.tgz
 
-  - &getVersion
-    name: Get version strings
-    id: get_version
+  - &getVersionTag
+    name: Get version from tags
+    id: version_tag
     run: |
-      echo "semver=${{ needs.versioned_source.outputs.semver || needs.tagged_source.outputs.semver }}" >> $GITHUB_OUTPUT
-      echo "tag=${{ needs.versioned_source.outputs.tag || needs.tagged_source.outputs.tag }}" >> $GITHUB_OUTPUT
+      tag="$(git tag --points-at HEAD | tail -n1)"
+      echo "tag=${tag}" >> $GITHUB_OUTPUT
+      echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
 
   - &deployToBalenaAction
     uses: balena-io/deploy-to-balena-action@master
@@ -44,7 +45,7 @@
 
   - &checkoutSha # otherwise use the default checkout behaviour
     name: Checkout sha
-    if: steps.checkout_merge.outcome == 'skipped'
+    if: github.event_name != 'pull_request_target'
     uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3
     with:
       fetch-depth: 0
@@ -391,7 +392,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs: [context_check]
 
-    defaults:
+    defaults: &rootWorkingDirectory
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -488,10 +489,7 @@ jobs:
       needs.context_check.outputs.tagged == 'false' &&
       inputs.disable_versioning == false
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     outputs:
       tag: ${{ steps.versionist.outputs.tag }}
@@ -565,16 +563,26 @@ jobs:
             )
           fi
 
-      # install and run versionist via balena-versionist
+      # run balena-versionist
+      # print the error if anything fails
+      # fail the workflow if the error is anything other than "No such file or directory"
       - name: Run versionist
         id: versionist
         run: |
-          out="$(balena-versionist)"
-          if grep -q "Error:" <<< "${out}"
-          then
-            echo "::error::${out}"
-            exit 1
-          fi
+          out="$(balena-versionist 2>&1)"
+          error="$(awk '/Error:/{getline; print}' <<< "${out}")"
+
+          case ${error} in
+            "") # no error
+              ;;
+            'No such file or directory'*)
+              echo "::error::${error}"
+              ;;
+            *)
+              echo "::error::${error}"
+              exit 1
+              ;;
+          esac
 
           git status --porcelain
           
@@ -632,24 +640,15 @@ jobs:
       needs.context_check.outputs.tagged == 'true' ||
       inputs.disable_versioning == true
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     outputs:
-      tag: ${{ steps.git_describe.outputs.tag }}
-      semver: ${{ steps.git_describe.outputs.semver }}
+      tag: ${{ steps.version_tag.outputs.tag }}
+      semver: ${{ steps.version_tag.outputs.semver }}
 
     steps:
       - *checkoutSha
-
-      - name: Git describe
-        id: git_describe
-        run: |
-          tag="$(git describe --tags --always --dirty | cat)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+      - *getVersionTag
 
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress source
@@ -674,7 +673,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults:
+    defaults: &customWorkingDirectory
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -783,10 +782,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     outputs:
       docker_compose_base64: ${{ steps.docker_compose.outputs.base64 }}
@@ -869,10 +865,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     outputs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
@@ -1001,10 +994,7 @@ jobs:
       !failure() && !cancelled() && contains(needs.*.result, 'success') &&
       join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     outputs:
       cargo: ${{ steps.cargo.outputs.enabled }}
@@ -1038,10 +1028,7 @@ jobs:
       !failure() && !cancelled() && contains(needs.*.result, 'success') &&
       join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     outputs:
       balena: ${{ steps.balena.outputs.enabled }}
@@ -1073,10 +1060,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
@@ -1093,7 +1077,6 @@ jobs:
         # skip custom actions for external contributions by default
         if: github.event.pull_request.head.repo.full_name == github.repository || inputs.restrict_custom_actions == false
         id: custom
-        working-directory: .
         run: |
           if [ -d .github/actions/test ]
           then
@@ -1128,10 +1111,7 @@ jobs:
       !failure() && !cancelled() && contains(needs.*.result, 'success') &&
       inputs.cloudflare_website != ''
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     outputs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
@@ -1168,10 +1148,7 @@ jobs:
       needs.context_check.outputs.do_draft == 'true' &&
       needs.npm_check.outputs.npm == 'true'
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1286,10 +1263,7 @@ jobs:
       needs.npm_test.result == 'success' &&
       needs.npm_check.outputs.npm_private != 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       - name: Download npm artifact
@@ -1333,10 +1307,7 @@ jobs:
       needs.npm_check.outputs.npm == 'true' &&
       needs.npm_check.outputs.npm_private != 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       # https://github.com/dawidd6/action-download-artifact
@@ -1374,10 +1345,7 @@ jobs:
       needs.context_check.outputs.do_final == 'true' &&
       needs.npm_check.outputs.npm_docs == 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       # https://github.com/dawidd6/action-download-artifact
@@ -1415,8 +1383,6 @@ jobs:
       - context_check
       - docker_check
       - sanitize_inputs
-      - versioned_source
-      - tagged_source
     if: |
       !failure() && !cancelled() &&
       needs.docker_check.result == 'success' &&
@@ -1425,10 +1391,7 @@ jobs:
         needs.docker_check.outputs.docker_compose_base64 != ''
       )
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1442,7 +1405,7 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
-      - *getVersion
+      - *getVersionTag
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2
@@ -1499,7 +1462,7 @@ jobs:
           tags: |
             type=raw,value=${{ matrix.target }}
             type=raw,value=${{ matrix.platform }}
-          labels: org.opencontainers.image.version=${{ steps.get_version.outputs.semver }}
+          labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=true
 
@@ -1566,10 +1529,7 @@ jobs:
       needs.docker_test.result == 'success' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     services:
       registry:
@@ -1672,18 +1632,13 @@ jobs:
       - context_check
       - docker_check
       - sanitize_inputs
-      - versioned_source
-      - tagged_source
     if: |
       !failure() && !cancelled() &&
       needs.docker_check.result == 'success' &&
       needs.context_check.outputs.do_final == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1694,7 +1649,7 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
-      - *getVersion
+      - *getVersionTag
 
       - name: Set env vars
         run: |
@@ -1713,8 +1668,8 @@ jobs:
             ${{ matrix.image }}
           tags: |
             type=raw,value=${{ github.base_ref || github.ref_name }}
-            type=raw,value=${{ steps.get_version.outputs.tag }}
-            type=raw,value=${{ steps.get_version.outputs.semver }}
+            type=raw,value=${{ steps.version_tag.outputs.tag }}
+            type=raw,value=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=true
             prefix=${{ env.PREFIX }},onlatest=true
@@ -1806,10 +1761,7 @@ jobs:
       matrix:
         slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -1834,10 +1786,7 @@ jobs:
       matrix:
         slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -1855,17 +1804,12 @@ jobs:
     needs:
       - context_check
       - python_check
-      - versioned_source
-      - tagged_source
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
       needs.python_check.outputs.python_poetry == 'true'
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1882,7 +1826,7 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
-      - *getVersion
+      - *getVersionTag
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4
@@ -1925,7 +1869,7 @@ jobs:
         id: meta
         run: |
           package="$(grep '^name = \"' pyproject.toml | awk -F[\"\"] '{print $2}')"
-          version="${{ steps.get_version.outputs.semver }}"
+          version="${{ steps.version_tag.outputs.semver }}"
           branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
@@ -2006,10 +1950,7 @@ jobs:
         )
       )
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
 
@@ -2036,10 +1977,7 @@ jobs:
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       - name: Download all artifacts
@@ -2082,19 +2020,15 @@ jobs:
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_final == 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
-      - *getVersion
+      - *getVersionTag
 
       # https://docs.github.com/en/rest/releases
       - name: Finalize GitHub release (if any)
-        if: needs.versioned_source.outputs.version != '' || needs.tagged_source.outputs.version != ''
         run: |
           set -ea
           # prevent git from existing with 141
@@ -2107,13 +2041,13 @@ jobs:
           if gh release view '${{ github.event.pull_request.head.ref }}'; then
             gh release edit '${{ github.event.pull_request.head.ref }}' \
               --notes-file "${release_notes}" \
-              --title '${{ steps.get_version.outputs.tag }}' \
-              --tag '${{ steps.get_version.outputs.tag || steps.get_version.outputs.tag }}' \
+              --title '${{ steps.version_tag.outputs.tag }}' \
+              --tag '${{ steps.version_tag.outputs.tag }}' \
               --prerelease='${{ inputs.github_prerelease }}' \
               --draft=false
 
             if [[ ${{ inputs.github_prerelease }} =~ false ]]; then
-                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ steps.get_version.outputs.tag }}" \
+                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ steps.version_tag.outputs.tag }}" \
                   -H 'Accept: application/vnd.github+json' | jq -r .id)"
                 gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
                   -H 'Accept: application/vnd.github+json' \
@@ -2136,18 +2070,13 @@ jobs:
     needs:
       - context_check
       - cargo_check
-      - versioned_source
-      - tagged_source
       - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true' &&
       needs.cargo_check.outputs.cargo == 'true'
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -2164,7 +2093,7 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
-      - *getVersion
+      - *getVersionTag
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -2189,7 +2118,7 @@ jobs:
         id: meta
         run: |
           package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
-          version="${{ steps.get_version.outputs.semver }}"
+          version="${{ steps.version_tag.outputs.semver }}"
           branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
@@ -2213,10 +2142,7 @@ jobs:
       needs.cargo_test.result == 'success' &&
       inputs.rust_binaries == true
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -2268,10 +2194,7 @@ jobs:
       needs.context_check.outputs.do_final == 'true' &&
       needs.cargo_check.outputs.cargo == 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -2481,10 +2404,7 @@ jobs:
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
