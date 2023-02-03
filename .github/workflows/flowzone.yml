@@ -1558,7 +1558,7 @@ jobs:
             type=raw,value=${{ steps.version_tag.outputs.tag }}
             type=raw,value=${{ steps.version_tag.outputs.semver }}
           flavor: |
-            latest=true
+            latest=${{ steps.version_tag.outputs.semver != '' }}
             prefix=${{ env.PREFIX }},onlatest=true
       - name: Login to GitHub Container Registry
         continue-on-error: true
