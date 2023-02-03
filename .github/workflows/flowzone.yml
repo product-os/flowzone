@@ -963,7 +963,7 @@ jobs:
       !failure() && !cancelled() && contains(needs.*.result, 'success')
     defaults:
       run:
-        working-directory: ${{ inputs.working_directory }}
+        working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
@@ -984,7 +984,6 @@ jobs:
       - name: Check for custom actions
         if: github.event.pull_request.head.repo.full_name == github.repository || inputs.restrict_custom_actions == false
         id: custom
-        working-directory: .
         run: |
           if [ -d .github/actions/test ]
           then
@@ -2057,7 +2056,7 @@ jobs:
       needs.cargo_check.outputs.cargo == 'true'
     defaults:
       run:
-        working-directory: .
+        working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download source artifact

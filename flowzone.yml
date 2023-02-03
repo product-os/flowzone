@@ -392,7 +392,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs: [context_check]
 
-    defaults:
+    defaults: &rootWorkingDirectory
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -489,10 +489,7 @@ jobs:
       needs.context_check.outputs.tagged == 'false' &&
       inputs.disable_versioning == false
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     outputs:
       tag: ${{ steps.versionist.outputs.tag }}
@@ -633,10 +630,7 @@ jobs:
       needs.context_check.outputs.tagged == 'true' ||
       inputs.disable_versioning == true
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     outputs:
       tag: ${{ steps.version_tag.outputs.tag }}
@@ -669,7 +663,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults:
+    defaults: &customWorkingDirectory
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -778,10 +772,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     outputs:
       docker_compose_base64: ${{ steps.docker_compose.outputs.base64 }}
@@ -864,10 +855,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     outputs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
@@ -996,10 +984,7 @@ jobs:
       !failure() && !cancelled() && contains(needs.*.result, 'success') &&
       join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     outputs:
       cargo: ${{ steps.cargo.outputs.enabled }}
@@ -1033,10 +1018,7 @@ jobs:
       !failure() && !cancelled() && contains(needs.*.result, 'success') &&
       join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     outputs:
       balena: ${{ steps.balena.outputs.enabled }}
@@ -1068,10 +1050,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
@@ -1088,7 +1067,6 @@ jobs:
         # skip custom actions for external contributions by default
         if: github.event.pull_request.head.repo.full_name == github.repository || inputs.restrict_custom_actions == false
         id: custom
-        working-directory: .
         run: |
           if [ -d .github/actions/test ]
           then
@@ -1123,10 +1101,7 @@ jobs:
       !failure() && !cancelled() && contains(needs.*.result, 'success') &&
       inputs.cloudflare_website != ''
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     outputs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
@@ -1163,10 +1138,7 @@ jobs:
       needs.context_check.outputs.do_draft == 'true' &&
       needs.npm_check.outputs.npm == 'true'
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1281,10 +1253,7 @@ jobs:
       needs.npm_test.result == 'success' &&
       needs.npm_check.outputs.npm_private != 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       - name: Download npm artifact
@@ -1328,10 +1297,7 @@ jobs:
       needs.npm_check.outputs.npm == 'true' &&
       needs.npm_check.outputs.npm_private != 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       # https://github.com/dawidd6/action-download-artifact
@@ -1369,10 +1335,7 @@ jobs:
       needs.context_check.outputs.do_final == 'true' &&
       needs.npm_check.outputs.npm_docs == 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       # https://github.com/dawidd6/action-download-artifact
@@ -1418,10 +1381,7 @@ jobs:
         needs.docker_check.outputs.docker_compose_base64 != ''
       )
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1559,10 +1519,7 @@ jobs:
       needs.docker_test.result == 'success' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     services:
       registry:
@@ -1671,10 +1628,7 @@ jobs:
       needs.context_check.outputs.do_final == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1797,10 +1751,7 @@ jobs:
       matrix:
         slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -1825,10 +1776,7 @@ jobs:
       matrix:
         slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -1851,10 +1799,7 @@ jobs:
       needs.context_check.outputs.do_draft == 'true' &&
       needs.python_check.outputs.python_poetry == 'true'
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1995,10 +1940,7 @@ jobs:
         )
       )
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
 
@@ -2025,10 +1967,7 @@ jobs:
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       - name: Download all artifacts
@@ -2071,10 +2010,7 @@ jobs:
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_final == 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -2130,10 +2066,7 @@ jobs:
       needs.context_check.outputs.do_draft == 'true' &&
       needs.cargo_check.outputs.cargo == 'true'
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -2199,10 +2132,7 @@ jobs:
       needs.cargo_test.result == 'success' &&
       inputs.rust_binaries == true
 
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -2254,10 +2184,7 @@ jobs:
       needs.context_check.outputs.do_final == 'true' &&
       needs.cargo_check.outputs.cargo == 'true'
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *customWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -2467,10 +2394,7 @@ jobs:
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    defaults: *rootWorkingDirectory
 
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
