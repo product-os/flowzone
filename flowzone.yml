@@ -1256,6 +1256,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - npm_check
       - npm_test
       - custom_test
       - docker_test
