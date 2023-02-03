@@ -571,9 +571,10 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --tags --always | cat)"
+          tag="$(git tag --points-at HEAD | tail -n1)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Compress source
         run: tar -acvf ${{ runner.temp }}/source.tgz .
       - name: Upload artifact
@@ -1308,9 +1309,10 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --tags --always | cat)"
+          tag="$(git tag --points-at HEAD | tail -n1)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Setup QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18
       - name: Setup buildx
@@ -1383,7 +1385,7 @@ jobs:
 
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
           docker compose logs
-      - name: Upload arifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: docker-${{ github.event.pull_request.head.sha }}-${{ env.TARGET }}-${{ env.PLATFORM }}
@@ -1525,17 +1527,18 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --tags --always | cat)"
+          tag="$(git tag --points-at HEAD | tail -n1)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Set env vars
         run: |
           if [ ${{ matrix.target }} != 'default' ]
           then
             echo "PREFIX=${{ matrix.target }}-" >> $GITHUB_ENV
           fi
-      - name: Generate versioned labels and tags
-        id: meta1
+      - name: Generate image tags
+        id: meta
         uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
         with:
           images: |
@@ -1546,19 +1549,6 @@ jobs:
             type=raw,value=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=true
-            prefix=${{ env.PREFIX }},onlatest=true
-      - name: Generate labels and tags
-        id: meta2
-        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
-        with:
-          images: |
-            ${{ matrix.image }}
-          tags: |
-            type=raw,value=${{ github.base_ref || github.ref_name }}
-            type=ref,event=tag
-            type=semver,pattern={{version}}
-          flavor: |
-            latest=auto
             prefix=${{ env.PREFIX }},onlatest=true
       - name: Login to GitHub Container Registry
         continue-on-error: true
@@ -1579,8 +1569,7 @@ jobs:
         with:
           src: ${{ matrix.image }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           dst: |
-            ${{ steps.meta1.outputs.tags }}
-            ${{ steps.meta2.outputs.tags }}
+            ${{ steps.meta.outputs.tags }}
       - name: Strip docker.io prefix
         if: |
           startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.')
@@ -1715,9 +1704,10 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --tags --always | cat)"
+          tag="$(git tag --points-at HEAD | tail -n1)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
         with:
@@ -1911,9 +1901,10 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --tags --always | cat)"
+          tag="$(git tag --points-at HEAD | tail -n1)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Finalize GitHub release (if any)
         run: |
           set -ea
@@ -1983,9 +1974,10 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --tags --always | cat)"
+          tag="$(git tag --points-at HEAD | tail -n1)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:

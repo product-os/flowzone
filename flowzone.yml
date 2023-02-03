@@ -17,9 +17,10 @@
     name: Get version from tags
     id: version_tag
     run: |
-      tag="$(git describe --tags --always | cat)"
+      tag="$(git tag --points-at HEAD | tail -n1)"
       echo "tag=${tag}" >> $GITHUB_OUTPUT
       echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+      echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
 
   - &deployToBalenaAction
     uses: balena-io/deploy-to-balena-action@master
@@ -1513,7 +1514,7 @@ jobs:
           docker compose logs
 
       # https://github.com/actions/upload-artifact
-      - name: Upload arifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           name: docker-${{ github.event.pull_request.head.sha }}-${{ env.TARGET }}-${{ env.PLATFORM }}
@@ -1666,10 +1667,11 @@ jobs:
             echo "PREFIX=${{ matrix.target }}-" >> $GITHUB_ENV
           fi
 
-      # merge events with flowzone versioning
+      # for unversioned merges we will use the base branch as the tag
+      # and version tag and semver will be empty
       # https://github.com/docker/metadata-action
-      - name: Generate versioned labels and tags
-        id: meta1
+      - name: Generate image tags
+        id: meta
         uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
         with:
           images: |
@@ -1680,22 +1682,6 @@ jobs:
             type=raw,value=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=true
-            prefix=${{ env.PREFIX }},onlatest=true
-
-      # merge or tag events with versioning disabled
-      # https://github.com/docker/metadata-action
-      - name: Generate labels and tags
-        id: meta2
-        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
-        with:
-          images: |
-            ${{ matrix.image }}
-          tags: |
-            type=raw,value=${{ github.base_ref || github.ref_name }}
-            type=ref,event=tag
-            type=semver,pattern={{version}}
-          flavor: |
-            latest=auto
             prefix=${{ env.PREFIX }},onlatest=true
 
       - name: Login to GitHub Container Registry
@@ -1720,8 +1706,7 @@ jobs:
         with:
           src: ${{ matrix.image }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           dst: |
-            ${{ steps.meta1.outputs.tags }}
-            ${{ steps.meta2.outputs.tags }}
+            ${{ steps.meta.outputs.tags }}
 
       # strip the docker.io prefix if it exists
       - name: Strip docker.io prefix
