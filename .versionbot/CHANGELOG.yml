@@ -1,4 +1,23 @@
 - commits:
+    - subject: Restore old tag lookup behaviour
+      hash: 3ab41a6d85527b2640ccc8caf46ef2a4669f3754
+      body: |
+        If versioning is disabled and a PR is open, there
+        will likely not be a tag on the HEAD commit.
+
+        However we still want to use something to tag
+        our artifacts so use git descibe.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.3.3
+  title: ""
+  date: 2023-02-03T13:33:53.713Z
+- commits:
     - subject: Block publish jobs until all tests are success or skipped
       hash: 54b5388c979343cf16c4482ed20508b66e2dff96
       body: ""
