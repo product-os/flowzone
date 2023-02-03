@@ -571,7 +571,7 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --all --tags --always | cat)"
+          tag="$(git describe --tags --always | cat)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Compress source
@@ -1308,7 +1308,7 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --all --tags --always | cat)"
+          tag="$(git describe --tags --always | cat)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Setup QEMU
@@ -1525,7 +1525,7 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --all --tags --always | cat)"
+          tag="$(git describe --tags --always | cat)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Set env vars
@@ -1715,7 +1715,7 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --all --tags --always | cat)"
+          tag="$(git describe --tags --always | cat)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Set up Python ${{ matrix.python-version }}
@@ -1911,7 +1911,7 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --all --tags --always | cat)"
+          tag="$(git describe --tags --always | cat)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Finalize GitHub release (if any)
@@ -1983,7 +1983,7 @@ jobs:
       - name: Get version from tags
         id: version_tag
         run: |
-          tag="$(git describe --all --tags --always | cat)"
+          tag="$(git describe --tags --always | cat)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       - name: Set up toolchain ${{ matrix.target }}
