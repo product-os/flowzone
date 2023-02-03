@@ -685,6 +685,7 @@ jobs:
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
       node_versions: ${{ steps.node_versions.outputs.json }}
+      npm_access: ${{ steps.access.outputs.access }}
 
     steps:
       - *downloadSourceArtifact
@@ -703,6 +704,22 @@ jobs:
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Set access
+        id: access
+        env:
+          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+          GH_PROMPT_DISABLED: "true"
+          GH_DEBUG: "true"
+          GH_PAGER: "cat"
+          GH_REPO: ${{ github.repository }}
+        run: |
+          access="public"
+          if [ "$(gh repo view --json isPrivate --jq .isPrivate)" = "true" ]
+          then
+            access="restricted"
+          fi
+          echo "access=${access}" >> $GITHUB_OUTPUT
 
       # check which past and current and future Node.js LTS releases meet the engine requirements
       # if there are no engine requirements then the current LTS will be used
@@ -1294,6 +1311,13 @@ jobs:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.npm_check.outputs.node_versions)[0] }}
 
+      - name: Setup Node.js
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
+        with:
+          # use npm v9 or later as the access flag behaviour has changed
+          # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
+          node-version: "18"
+
       - name: Login to registry
         run: |
           echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
@@ -1313,7 +1337,7 @@ jobs:
           if [ ${{ github.run_attempt }} -gt  1 ]; then
             npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$((${{ github.run_attempt }} - 1)) || true
           fi
-          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}"
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}" --access="${{ needs.npm_check.outputs.npm_access }}"
           npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} ${{ needs.npm_test.outputs.branch_tag }}
 
   npm_finalize:
@@ -1343,6 +1367,13 @@ jobs:
           workflow_conclusion: success
           name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.npm_check.outputs.node_versions)[0] }}
 
+      - name: Setup Node.js
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
+        with:
+          # use npm v9 or later as the access flag behaviour has changed
+          # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
+          node-version: "18"
+
       - name: Login to registry
         run: |
           if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
@@ -1353,7 +1384,7 @@ jobs:
       - name: Publish final release
         run: |
           pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
-          npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}"
+          npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.npm_check.outputs.npm_access }}"
 
   npm_docs_finalize:
     name: Finalize npm docs
