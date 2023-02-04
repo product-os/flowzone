@@ -1,4 +1,30 @@
 - commits:
+    - subject: Test with ob base
+      hash: cc3b07d62bb3beb419bceb410ff77a1c3d9648b6
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Add a line comment to downstream e2e commits
+      hash: e19127472cf00b2b19fb849bdd91668de92b2497
+      body: |
+        This will ensure that each push appears unique
+        and retriggers the downstream e2e jobs.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.3.9
+  title: ""
+  date: 2023-02-04T00:18:18.310Z
+- commits:
     - subject: Cancel concurrent jobs with the exception of merged PRs
       hash: 43925e50a442d23bdebd398f68a2817c66f45592
       body: |
