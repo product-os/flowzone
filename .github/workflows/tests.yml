@@ -68,7 +68,7 @@ jobs:
             balena-io/balena-api,
             balena-io/docs,
             balena-io/environment-staging,
-            balena-io/open-balena-registry-proxy,
+            balena-io-modules/open-balena-base,
             balena-os/balena-engine,
             balenaltd/handbook,
             product-os/environment-staging,
@@ -124,6 +124,8 @@ jobs:
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
         run: |
           yq '(.jobs.* | select(.uses | contains("flowzone.yml"))).uses |= sub("(?P<uses>.+)@.+"; "$1@${{ github.event.pull_request.head.sha }}")' -i .github/workflows/flowzone.yml
+
+          yq '(.jobs.* | select(.uses | contains("flowzone.yml"))).uses |= . line_comment="${{ github.run_id }}-${{ github.run_attempt }}"' -i .github/workflows/flowzone.yml
 
           yq '(.jobs.* | select(.uses | contains("flowzone.yml"))).with.protect_branch |= false' -i .github/workflows/flowzone.yml
 
