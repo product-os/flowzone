@@ -5,7 +5,9 @@ const yaml = require('yaml');
 // this means that yaml anchors will be "exploded" and not present in the github workflow
 // we write out, which means we can use anchors when developing flowzone but not have to
 // worry about github actions not supporting them
-const flowzone = yaml.parse(fs.readFileSync('./flowzone.yml', 'utf8'));
+const flowzone = yaml.parse(fs.readFileSync('./flowzone.yml', 'utf8'), {
+	merge: true
+});
 delete flowzone['.flowzone'];
 fs.writeFileSync(
 	'./.github/workflows/flowzone.yml',

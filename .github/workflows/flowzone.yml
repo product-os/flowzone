@@ -1359,6 +1359,22 @@ jobs:
           labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=true
+      - name: Login to GitHub Container Registry
+        continue-on-error: true
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          registry: ghcr.io
+          username: ${{ env.GHCR_USER || github.actor }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
+        if: github.event.repository.private
+      - name: Login to Docker Hub
+        continue-on-error: true
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+        if: github.event.repository.private
       - name: Docker bake
         uses: docker/bake-action@6c87dcca988e4e074e3ab1f976a70f63ec9673fb
         with:
@@ -1502,7 +1518,7 @@ jobs:
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
+          username: ${{ env.GHCR_USER || github.actor }}
           password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
       - name: Login to Docker Hub
         continue-on-error: true
@@ -1581,7 +1597,7 @@ jobs:
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
+          username: ${{ env.GHCR_USER || github.actor }}
           password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
       - name: Login to Docker Hub
         continue-on-error: true
