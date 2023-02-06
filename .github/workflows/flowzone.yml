@@ -1120,6 +1120,7 @@ jobs:
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
+          cache: npm
       - name: Generate metadata
         id: meta
         run: |
