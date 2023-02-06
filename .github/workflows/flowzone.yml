@@ -491,7 +491,7 @@ jobs:
       - name: Run versionist
         id: versionist
         run: |
-          out="$(balena-versionist 2>&1)"
+          out="$(GITHUB_TOKEN=${{ secrets.FLOWZONE_TOKEN }} balena-versionist 2>&1)"
           error="$(awk '/Error:/{getline; print}' <<< "${out}")"
 
           case ${error} in
@@ -773,7 +773,7 @@ jobs:
             ')"
 
           matrix="$(jq -cr '.target | to_entries | { include: map(.value.platforms[] as $p | {target: .key, platform: $p})}' <<< "${json}")"
-            
+
           echo "json=${json}">> $GITHUB_OUTPUT
           echo "matrix=${matrix}">> $GITHUB_OUTPUT
   python_check:
