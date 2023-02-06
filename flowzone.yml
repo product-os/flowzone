@@ -317,7 +317,7 @@ concurrency:
 
 env:
   GHCR_USER: "flowzone" # does not seem to matter what is used here
-  NPM_REGISTRY: registry.npmjs.org
+  NPM_REGISTRY: "https://registry.npmjs.org"
   CARGO_REGISTRY: crates.io
 
 jobs:
@@ -1205,6 +1205,7 @@ jobs:
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
           node-version: "${{ matrix.node_version }}"
+          registry-url: "${{ env.NPM_REGISTRY }}"
 
       - name: Generate metadata
         id: meta
@@ -1221,24 +1222,22 @@ jobs:
           echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
 
-      - name: Login to registry for private dependencies
-        # do not log in for external contributions to avoid leaking secrets
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-            echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-            npm whoami
-          fi
-
       - name: Install native dependencies (if necessary)
         run: |
           npm run flowzone-preinstall --if-present
 
       - name: Install dependencies
+        # private npm dependencies will fail to install unless NODE_AUTH_TOKEN is set in the environment
+        # but to avoid leaking secrets we would also have to disable all scripts, like preinstall and postinstall
+        # so only public npm dependencies supported for now
+        # env:
+        #   # make sure to 'npm config set ignore-scripts true' to avoid leaking secrets
+        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           runner_os="$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')"
           os_count="$(jq '.os | length' package.json)"
           index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
+          
           if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
               if [ -e package-lock.json ] || [ -e npm-shrinkwrap.json ]; then
                 npm ci
@@ -1317,20 +1316,21 @@ jobs:
           # use npm v9 or later as the access flag behaviour has changed
           # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
           node-version: "18"
-
-      - name: Login to registry
-        run: |
-          echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-          npm whoami
+          registry-url: "${{ env.NPM_REGISTRY }}"
 
       # unpack the tarball provided by the tests so we can apply the draft version to package.json
       # before publishing
       - name: Publish draft release
+        env:
+          # make sure to 'npm config set ignore-scripts true' to avoid leaking secrets
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          npm config set ignore-scripts true
+
           pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar xvf "${pack}"
           (cd package
-          npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
+            npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
           )
           tar czvf "${pack}" package
 
@@ -1373,16 +1373,14 @@ jobs:
           # use npm v9 or later as the access flag behaviour has changed
           # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
           node-version: "18"
-
-      - name: Login to registry
-        run: |
-          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-            echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-            npm whoami
-          fi
+          registry-url: "${{ env.NPM_REGISTRY }}"
 
       - name: Publish final release
+        env:
+          # make sure to 'npm config set ignore-scripts true' to avoid leaking secrets
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          npm config set ignore-scripts true
           pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
           npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.npm_check.outputs.npm_access }}"
 

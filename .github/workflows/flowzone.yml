@@ -258,7 +258,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != github.base_ref }}
 env:
   GHCR_USER: flowzone
-  NPM_REGISTRY: registry.npmjs.org
+  NPM_REGISTRY: https://registry.npmjs.org
   CARGO_REGISTRY: crates.io
 jobs:
   context_check:
@@ -1119,6 +1119,7 @@ jobs:
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
           node-version: ${{ matrix.node_version }}
+          registry-url: ${{ env.NPM_REGISTRY }}
       - name: Generate metadata
         id: meta
         run: |
@@ -1133,13 +1134,6 @@ jobs:
           echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
           echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
-      - name: Login to registry for private dependencies
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-            echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-            npm whoami
-          fi
       - name: Install native dependencies (if necessary)
         run: |
           npm run flowzone-preinstall --if-present
@@ -1148,6 +1142,7 @@ jobs:
           runner_os="$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')"
           os_count="$(jq '.os | length' package.json)"
           index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
+
           if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
               if [ -e package-lock.json ] || [ -e npm-shrinkwrap.json ]; then
                 npm ci
@@ -1216,16 +1211,17 @@ jobs:
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
           node-version: "18"
-      - name: Login to registry
-        run: |
-          echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-          npm whoami
+          registry-url: ${{ env.NPM_REGISTRY }}
       - name: Publish draft release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          npm config set ignore-scripts true
+
           pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar xvf "${pack}"
           (cd package
-          npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
+            npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
           )
           tar czvf "${pack}" package
 
@@ -1263,14 +1259,12 @@ jobs:
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
           node-version: "18"
-      - name: Login to registry
-        run: |
-          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-            echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-            npm whoami
-          fi
+          registry-url: ${{ env.NPM_REGISTRY }}
       - name: Publish final release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          npm config set ignore-scripts true
           pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
           npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.npm_check.outputs.npm_access }}"
   npm_docs_finalize:
