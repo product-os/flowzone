@@ -1098,9 +1098,12 @@ jobs:
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Setup Node.js
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         with:
           node-version: ${{ matrix.node_version }}
           cache: npm
+          registry-url: ${{ env.NPM_REGISTRY }}
       - name: Generate metadata
         id: meta
         run: |
@@ -1115,13 +1118,6 @@ jobs:
           echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
           echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
-      - name: Login to registry for private dependencies
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-            echo '//${{ env.NPM_REGISTRY }}/:_authToken=${{ secrets.NPM_TOKEN }}' > ~/.npmrc
-            npm whoami
-          fi
       - name: Install native dependencies (if necessary)
         run: |
           npm run flowzone-preinstall --if-present
@@ -1139,6 +1135,10 @@ jobs:
           else
               echo "${runner_os} is not supported in package.json"
           fi
+      - name: Remove cached npm token
+        run: |
+          npm config delete '//${{ env.NPM_REGISTRY }}/:_authToken'
+          yarn config delete '//${{ env.NPM_REGISTRY }}/:_authToken'
       - name: Run build
         run: npm run build --if-present
       - name: Run tests
