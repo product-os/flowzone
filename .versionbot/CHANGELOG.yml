@@ -1,4 +1,16 @@
 - commits:
+    - subject: Use credentials for versionist, enabling private nested changelogs
+      hash: f2273835cbdf8803214c3a18f75694b8a62f1d3c
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 1.4.1
+  title: ""
+  date: 2023-02-06T17:54:46.821Z
+- commits:
     - subject: Update docker/setup-buildx-action digest to f03ac48
       hash: a624cd395f3e82872b6c85390d50f22ad351313e
       body: |
