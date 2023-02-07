@@ -803,6 +803,8 @@ jobs:
         run: |
           test -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" || exit 0
 
+          shell_attrs="$-"
+          set +x
           if [ -n "${COMPOSE_VARS}" ]
           then
             echo "${COMPOSE_VARS}" | base64 --decode > .env
@@ -813,6 +815,7 @@ jobs:
               echo "::add-mask::${secret}"
             done <<< "$(cat < .env)"
           fi
+          [[ $shell_attrs =~ x ]] && set -x
 
           files="
             docker-compose.yml
@@ -1513,6 +1516,8 @@ jobs:
           yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
           yq . "${COMPOSE_FILE}"
 
+          shell_attrs="$-"
+          set +x
           if [ -n "${COMPOSE_VARS}" ]
           then
             echo "${COMPOSE_VARS}" | base64 --decode > .env
@@ -1523,6 +1528,7 @@ jobs:
               echo "::add-mask::${secret}"
             done <<< "$(cat < .env)"
           fi
+          [[ $shell_attrs =~ x ]] && set -x
 
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
           docker compose logs
