@@ -1,4 +1,41 @@
 - commits:
+    - subject: Enable npm cache via github actions
+      hash: bef54ec25e5a5cc2a03523786919cdb73c4940f3
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Login to npm registry with setup-node action
+      hash: 0fff2c53b532b2f8eea3351ae500a5a6973b4f58
+      body: |
+        Steps requiring registry access will have to set
+        the NODE_AUTH_TOKEN env var, and set ignore-scripts
+        to avoid leaking secrets.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Set npm publish access based on repo visibility
+      hash: 91683ad8db8d6391702137641f23e2e4c0cd04f9
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.4.3
+  title: ""
+  date: 2023-02-07T20:03:38.673Z
+- commits:
     - subject: Don't leak compose secrets
       hash: f5040a5aa32930de185f39f8884604a0c73afbc9
       body: ""
