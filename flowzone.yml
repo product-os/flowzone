@@ -506,6 +506,10 @@ jobs:
         if: github.event.pull_request.head.repo.full_name != github.repository
         env:
           GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+          GH_PROMPT_DISABLED: "true"
+          GH_DEBUG: "true"
+          GH_PAGER: "cat"
+          GH_REPO: ${{ github.repository }}
         run: |
           if [ -n "${{ secrets.COMPOSE_VARS }}" ]
           then
@@ -804,7 +808,7 @@ jobs:
     defaults: *customWorkingDirectory
 
     outputs:
-      docker_compose_base64: ${{ steps.docker_compose.outputs.base64 }}
+      docker_compose_tests: ${{ steps.docker_compose_tests.outputs.found }}
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
       docker_bake_matrix: ${{ steps.docker_bake.outputs.matrix }}
 
@@ -812,41 +816,15 @@ jobs:
       - *downloadSourceArtifact
       - *extractSourceArtifact
 
-      # merge all compose files in the project and record the merged config as a multiline yaml output
-      - name: Pre-process Docker compose files
-        id: docker_compose
-        env:
-          COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
+      - name: Check for docker compose test files
+        id: docker_compose_tests
         run: |
-          test -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" || exit 0
-
-          shell_attrs="$-"
-          set +x
-          if [ -n "${COMPOSE_VARS}" ]
+          if [ -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" ]
           then
-            echo "${COMPOSE_VARS}" | base64 --decode > .env
-
-            # mask secrets
-            while read -r line; do
-              secret="$(echo "${line}" | awk -F'=' '{print $2}')"
-              echo "::add-mask::${secret}"
-            done <<< "$(cat < .env)"
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
           fi
-          [[ $shell_attrs =~ x ]] && set -x
-
-          files="
-            docker-compose.yml
-            docker-compose.yaml
-            docker-compose.test.yml
-            docker-compose.test.yaml
-          "
-          args=""
-
-          for file in ${files}; do
-            test -f "${file}" && args="${args} -f ${file}"
-          done
-
-          echo "base64=$(docker compose ${args} config | base64 -w0)" >> $GITHUB_OUTPUT
 
       - name: Setup buildx
         uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7 # v2
@@ -860,6 +838,9 @@ jobs:
       # in this custom bake json we also set some default cache values, and inherit the docker-metadata-action
       - name: Pre-process Docker bake files
         id: docker_bake
+        if: |
+          join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != '' ||
+          steps.docker_compose_tests.outputs.found == 'true'
         env:
           BAKE_FILE: /tmp/docker-bake.json
         run: |
@@ -1437,11 +1418,8 @@ jobs:
       - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
-      needs.docker_check.result == 'success' &&
-      needs.context_check.outputs.do_draft == 'true' && (
-        join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != '' ||
-        needs.docker_check.outputs.docker_compose_base64 != ''
-      )
+      needs.docker_check.outputs.docker_bake_json != '' &&
+      needs.context_check.outputs.do_draft == 'true'
 
     defaults: *customWorkingDirectory
 
@@ -1537,28 +1515,41 @@ jobs:
 
       # run docker compose tests and print the logs from all services
       - name: Run docker compose tests
-        if: needs.docker_check.outputs.docker_compose_base64 != ''
+        if: needs.docker_check.outputs.docker_compose_tests == 'true'
+        # do not use shell tracing to avoid leaking secrets
+        shell: bash
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
           DOCKER_BUILDKIT: "1"
+          COMPOSE_FILE: docker-compose.override.yml
         run: |
-          echo '${{ needs.docker_check.outputs.docker_compose_base64 }}' | base64 -d > "${COMPOSE_FILE}"
-          yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
-          yq . "${COMPOSE_FILE}"
-
-          shell_attrs="$-"
-          set +x
           if [ -n "${COMPOSE_VARS}" ]
           then
             echo "${COMPOSE_VARS}" | base64 --decode > .env
 
-            # mask secrets
-            while read -r line; do
+            while read -r line
+            do
               secret="$(echo "${line}" | awk -F'=' '{print $2}')"
               echo "::add-mask::${secret}"
-            done <<< "$(cat < .env)"
+            done < .env
           fi
-          [[ $shell_attrs =~ x ]] && set -x
+
+          files="
+            docker-compose.yml
+            docker-compose.yaml
+            docker-compose.test.yml
+            docker-compose.test.yaml
+          "
+
+          args=""
+          for file in ${files}; do
+            test -f "${file}" && args="${args} -f ${file}"
+          done
+
+          docker compose ${args} config > "${COMPOSE_FILE}"
+          
+          yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
+          yq . "${COMPOSE_FILE}"
 
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
           docker compose logs
@@ -1606,7 +1597,7 @@ jobs:
 
     steps:
       - name: Warn if tests skipped
-        if: needs.docker_check.outputs.docker_compose_base64 == ''
+        if: needs.docker_check.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
 
       - name: Download all artifacts
@@ -2731,3 +2722,7 @@ jobs:
 
         env:
           GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+          GH_PROMPT_DISABLED: "true"
+          GH_DEBUG: "true"
+          GH_PAGER: "cat"
+          GH_REPO: ${{ github.repository }}
