@@ -53,6 +53,42 @@
       submodules: "recursive"
       token: ${{ secrets.FLOWZONE_TOKEN }}
 
+  - &ifInternalPullRequest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+  - &ifPrivateRepository
+    if: github.event.repository.private
+
+  - &loginWithDockerHub
+    name: Login to Docker Hub
+    continue-on-error: true
+    uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
+    with:
+      registry: docker.io
+      username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
+      password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+
+  - &loginWithGitHubContainerRegistry
+    name: Login to GitHub Container Registry
+    continue-on-error: true
+    uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
+    with:
+      registry: ghcr.io
+      username: ${{ env.GHCR_USER || github.actor }}
+      password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
+
+  - &customWorkingDirectory
+    defaults: 
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+
+  - &rootWorkingDirectory
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+
 name: Flowzone
 
 on:
@@ -394,10 +430,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs: [context_check]
 
-    defaults: &rootWorkingDirectory
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    <<: *rootWorkingDirectory
 
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
@@ -491,7 +524,7 @@ jobs:
       needs.context_check.outputs.tagged == 'false' &&
       inputs.disable_versioning == false
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     outputs:
       tag: ${{ steps.versionist.outputs.tag }}
@@ -646,7 +679,7 @@ jobs:
       needs.context_check.outputs.tagged == 'true' ||
       inputs.disable_versioning == true
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     outputs:
       tag: ${{ steps.version_tag.outputs.tag }}
@@ -679,10 +712,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults: &customWorkingDirectory
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
+    <<: *customWorkingDirectory
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
@@ -805,7 +835,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     outputs:
       docker_compose_tests: ${{ steps.docker_compose_tests.outputs.found }}
@@ -881,7 +911,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     outputs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
@@ -1010,7 +1040,7 @@ jobs:
       !failure() && !cancelled() && contains(needs.*.result, 'success') &&
       join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     outputs:
       cargo: ${{ steps.cargo.outputs.enabled }}
@@ -1044,7 +1074,7 @@ jobs:
       !failure() && !cancelled() && contains(needs.*.result, 'success') &&
       join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     outputs:
       balena: ${{ steps.balena.outputs.enabled }}
@@ -1076,7 +1106,7 @@ jobs:
     if: |
       !failure() && !cancelled() && contains(needs.*.result, 'success')
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
@@ -1127,7 +1157,7 @@ jobs:
       !failure() && !cancelled() && contains(needs.*.result, 'success') &&
       inputs.cloudflare_website != ''
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     outputs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
@@ -1164,7 +1194,7 @@ jobs:
       needs.context_check.outputs.do_draft == 'true' &&
       needs.npm_check.outputs.npm == 'true'
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1283,7 +1313,7 @@ jobs:
       needs.npm_test.result == 'success' &&
       needs.npm_check.outputs.npm_private != 'true'
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     steps:
       - name: Download npm artifact
@@ -1335,7 +1365,7 @@ jobs:
       needs.npm_check.outputs.npm == 'true' &&
       needs.npm_check.outputs.npm_private != 'true'
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     steps:
       # https://github.com/dawidd6/action-download-artifact
@@ -1378,7 +1408,7 @@ jobs:
       needs.context_check.outputs.do_final == 'true' &&
       needs.npm_check.outputs.npm_docs == 'true'
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     steps:
       # https://github.com/dawidd6/action-download-artifact
@@ -1421,7 +1451,7 @@ jobs:
       needs.docker_check.outputs.docker_bake_json != '' &&
       needs.context_check.outputs.do_draft == 'true'
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1495,6 +1525,15 @@ jobs:
           labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=true
+
+      # allow access to private base images for private repositories only
+      # to avoid leaking secrets
+      - <<:
+          - *loginWithGitHubContainerRegistry
+          - *ifPrivateRepository
+      - <<:
+          - *loginWithDockerHub
+          - *ifPrivateRepository
 
       # https://github.com/docker/bake-action
       - name: Docker bake
@@ -1579,7 +1618,7 @@ jobs:
       needs.docker_test.result == 'success' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     services:
       registry:
@@ -1650,21 +1689,8 @@ jobs:
               docker buildx imagetools create -t ${LOCAL_TAG} "${platform_tag}"
           done
 
-      - name: Login to GitHub Container Registry
-        continue-on-error: true
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
-
-      - name: Login to Docker Hub
-        continue-on-error: true
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+      - *loginWithGitHubContainerRegistry
+      - *loginWithDockerHub
 
       - name: Publish draft tags
         if: join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
@@ -1688,7 +1714,7 @@ jobs:
       needs.context_check.outputs.do_final == 'true' &&
       join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1725,21 +1751,8 @@ jobs:
             latest=${{ steps.version_tag.outputs.semver != '' }}
             prefix=${{ env.PREFIX }},onlatest=true
 
-      - name: Login to GitHub Container Registry
-        continue-on-error: true
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
-        with:
-          registry: ghcr.io
-          username: ${{ env.GHCR_USER }}
-          password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
-
-      - name: Login to Docker Hub
-        continue-on-error: true
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+      - *loginWithGitHubContainerRegistry
+      - *loginWithDockerHub
 
       # only one of the destination lines should have values based on the meta restrictions above
       - name: Publish final tags
@@ -1797,7 +1810,7 @@ jobs:
       matrix:
         slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -1822,7 +1835,7 @@ jobs:
       matrix:
         slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -1845,7 +1858,7 @@ jobs:
       needs.context_check.outputs.do_draft == 'true' &&
       needs.python_check.outputs.python_poetry == 'true'
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -1991,7 +2004,7 @@ jobs:
         )
       )
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     steps:
 
@@ -2018,7 +2031,7 @@ jobs:
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_draft == 'true'
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     steps:
       - name: Download all artifacts
@@ -2061,7 +2074,7 @@ jobs:
       !failure() && !cancelled() &&
       needs.context_check.outputs.do_final == 'true'
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -2117,7 +2130,7 @@ jobs:
       needs.context_check.outputs.do_draft == 'true' &&
       needs.cargo_check.outputs.cargo == 'true'
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -2186,7 +2199,7 @@ jobs:
       needs.cargo_test.result == 'success' &&
       inputs.rust_binaries == true
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     strategy:
       fail-fast: false
@@ -2238,7 +2251,7 @@ jobs:
       needs.context_check.outputs.do_final == 'true' &&
       needs.cargo_check.outputs.cargo == 'true'
 
-    defaults: *customWorkingDirectory
+    <<: *customWorkingDirectory
 
     steps:
       - *downloadSourceArtifact
@@ -2449,7 +2462,7 @@ jobs:
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
 
-    defaults: *rootWorkingDirectory
+    <<: *rootWorkingDirectory
 
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
