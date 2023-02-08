@@ -632,15 +632,9 @@ jobs:
           fi
       - name: Set access
         id: access
-        env:
-          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-          GH_PROMPT_DISABLED: "true"
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_REPO: ${{ github.repository }}
         run: |
           access="public"
-          if [ "$(gh repo view --json isPrivate --jq .isPrivate)" = "true" ]
+          if [ "${{ github.event.repository.private }}" = "true" ]
           then
             access="restricted"
           fi
@@ -2531,6 +2525,12 @@ jobs:
       inputs.repo_config == true
     steps:
       - name: Configure repository
+        env:
+          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
+          GH_PROMPT_DISABLED: "true"
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_REPO: ${{ github.repository }}
         run: |
           # only change repository visibility if explicitly set to one of the permissible values
           visibility=''
@@ -2576,9 +2576,3 @@ jobs:
           gh api --method PATCH '/repos/${{ github.repository }}' \
             -H "Accept: application/vnd.github+json" \
             -F allow_update_branch='${{ inputs.repo_allow_update_branch }}'
-        env:
-          GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-          GH_PROMPT_DISABLED: "true"
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_REPO: ${{ github.repository }}
