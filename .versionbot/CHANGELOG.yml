@@ -1,4 +1,18 @@
 - commits:
+    - subject: Avoid leaking secrets from COMPOSE_VARS
+      hash: 69171c9cc61c0fd9c1c6ac0936c1336ffa656345
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.4.4
+  title: ""
+  date: 2023-02-08T13:41:40.590Z
+- commits:
     - subject: Enable npm cache via github actions
       hash: bef54ec25e5a5cc2a03523786919cdb73c4940f3
       body: ""
