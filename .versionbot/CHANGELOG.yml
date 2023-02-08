@@ -1,4 +1,18 @@
 - commits:
+    - subject: Allow pulling private base images for private repositories
+      hash: 980f12dee43204ce38436ef581192bc12c9b045c
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.4.5
+  title: ""
+  date: 2023-02-08T15:23:31.491Z
+- commits:
     - subject: Avoid leaking secrets from COMPOSE_VARS
       hash: 69171c9cc61c0fd9c1c6ac0936c1336ffa656345
       body: ""
