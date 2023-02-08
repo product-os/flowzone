@@ -1,4 +1,19 @@
 - commits:
+    - subject: Check if npm lock file exists
+      hash: df3a1573127d3cd01752d068839fe321365f0074
+      body: |
+        Use npm lock file exists flag for chached node setup
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: fisehara <harald@balena.io>
+        signed-off-by: fisehara <harald@balena.io>
+      author: fisehara
+      nested: []
+  version: 1.5.0
+  title: ""
+  date: 2023-02-08T20:11:16.899Z
+- commits:
     - subject: Use anchors to set the GitHub CLI environment
       hash: d73f6424f8d25bfc5a0c542f22a80964d70ed3b5
       body: ""
