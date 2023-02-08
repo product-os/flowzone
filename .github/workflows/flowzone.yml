@@ -603,6 +603,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
+      has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
       npm_private: ${{ steps.npm.outputs.private }}
       npm_docs: ${{ steps.npm.outputs.docs }}
       node_versions: ${{ steps.node_versions.outputs.json }}
@@ -630,6 +631,11 @@ jobs:
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
+      - name: Check for package locks
+        id: npm_lock
+        run: |
+          has_npm_lockfile="$([ -e package-lock.json ] || [ -e npm-shrinkwrap.json ] && echo true || echo false)"
+          echo "has_npm_lockfile=${has_npm_lockfile}" >> $GITHUB_OUTPUT
       - name: Set access
         id: access
         run: |
@@ -1091,12 +1097,19 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - name: Setup Node.js
+      - name: Setup Node.js - Cached
+        if: needs.npm_check.outputs.has_npm_lockfile == 'true'
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
           cache: npm
+      - name: Setup Node.js
+        if: needs.npm_check.outputs.has_npm_lockfile != 'true'
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
+        with:
+          node-version: ${{ matrix.node_version }}
+          registry-url: ${{ env.NPM_REGISTRY }}
       - name: Generate metadata
         id: meta
         run: |
@@ -1121,7 +1134,7 @@ jobs:
           index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
 
           if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
-              if [ -e package-lock.json ] || [ -e npm-shrinkwrap.json ]; then
+              if [ ${{ needs.npm_check.outputs.has_npm_lockfile }} == 'true' ]; then
                 npm ci
               else
                 npm i
