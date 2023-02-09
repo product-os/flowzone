@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix source checkout for merged PRs from forks
+      hash: 3e9a7119d7c53e2779bd3957333e2bc648af8fec
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.5.1
+  title: ""
+  date: 2023-02-09T18:28:56.174Z
+- commits:
     - subject: Check if npm lock file exists
       hash: df3a1573127d3cd01752d068839fe321365f0074
       body: |
