@@ -2461,10 +2461,8 @@ jobs:
       - cargo_publish
       - github_publish
       - website_publish
-    # avoid being skipped when dependencies are skipped
-    # this job must always run so branch protection rules can depend on it
     if: |
-      always() &&
+      !failure() && !cancelled() && contains(needs.*.result, 'success') &&
       needs.context_check.outputs.do_draft == 'true' &&
       inputs.protect_branch == true &&
       github.event.pull_request.head.repo.full_name == github.repository
@@ -2481,17 +2479,6 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
-
-      # loop over all needed jobs and fail this job if any of them failed
-      - name: Check needed jobs
-        run: |
-          for result in $(echo '${{ toJSON(needs.*.result) }}' | jq -cr '.[]')
-          do
-            test "${result}" = "success" && continue
-            test "${result}" = "skipped" && continue
-            echo "Needed job returned result: ${result}"
-            exit 1
-          done
 
       - name: Get protection rules
         id: get_protection_rules
@@ -2522,7 +2509,8 @@ jobs:
 
           required_status_checks__strict=$(echo $jsondata | jq ".required_status_checks.strict // true")
 
-          echo "old_required_approving_review_count=$(echo $jsondata | jq '.required_pull_request_reviews.required_approving_review_count // 0')" >> $GITHUB_OUTPUT
+          old_required_approving_review_count="$(echo $jsondata | jq '.required_pull_request_reviews.required_approving_review_count // 0')"
+          echo "old_required_approving_review_count=$old_required_approving_review_count" >> $GITHUB_OUTPUT
 
           # Get the pass/fail/pending Flowzone and PolicyBot checks from the current PR
           # so we can mark them as required
@@ -2554,6 +2542,20 @@ jobs:
               )) |
               . + ${running_status_checks} | unique
             ")
+
+          if [ $(echo ${required_status_checks__contexts} | jq 'length') -lt 1 ]
+          then
+            echo "::error::Not enough required status checks to apply branch protection"
+            exit 0
+          fi
+
+          code="$(diff -Z <(echo ${required_status_checks__contexts} | jq 'sort_by(.)') <(echo ${jsondata} | jq '.required_status_checks.contexts // [] | sort_by(.)') ; echo $?)"
+
+          if [ ${code} -eq 0 ] && [ ${old_required_approving_review_count} -eq ${{ inputs.required_approving_review_count }} ]
+          then
+            echo "::debug::Branch protection rules are unchanged, skipping update"
+            exit 0
+          fi
 
           required_pull_request_reviews__dismiss_stale_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.dismiss_stale_reviews // false")
           required_pull_request_reviews__require_code_owner_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.require_code_owner_reviews // false")
@@ -2636,7 +2638,7 @@ jobs:
         id: apply_branch_protection_rules
         if: |
           steps.pr_view.outputs.is_draft != 'true' &&
-          steps.parse_prepare_protection_rules.conclusion == 'success'
+          steps.parse_prepare_protection_rules.outputs.result != ''
         run: |
           result="$(echo '${{ fromJSON(steps.parse_prepare_protection_rules.outputs.result) }}' \
             | gh api --method PUT ${{ env.BRANCH_PROTECTION_URI }} --input -)"
@@ -2647,6 +2649,8 @@ jobs:
             echo "::error::Failed to apply branch protection rules with ${message} ${result} "
             exit 1
           fi
+
+          echo "::notice::Branch protection rules have been updated"
 
           new_required_approving_review_count="$(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count')"
           echo "new_required_approving_review_count=${new_required_approving_review_count}" >> $GITHUB_OUTPUT
