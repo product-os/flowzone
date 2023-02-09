@@ -425,7 +425,7 @@ jobs:
           token: ${{ secrets.FLOWZONE_TOKEN }}
           ref: refs/pull/${{ github.event.number }}/merge
       - name: Checkout sha
-        if: github.event_name != 'pull_request_target'
+        if: github.event_name != 'pull_request_target' || github.event.action == 'closed'
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
         with:
           fetch-depth: 0
@@ -566,7 +566,7 @@ jobs:
       semver: ${{ steps.version_tag.outputs.semver }}
     steps:
       - name: Checkout sha
-        if: github.event_name != 'pull_request_target'
+        if: github.event_name != 'pull_request_target' || github.event.action == 'closed'
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
         with:
           fetch-depth: 0
