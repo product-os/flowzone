@@ -65,21 +65,51 @@ jobs:
         # update the branch protection rules on the Flowzone repository settings
         repository:
           [
+            balena-io-modules/open-balena-base,
             balena-io/balena-api,
             balena-io/docs,
             balena-io/environment-staging,
-            balena-io-modules/open-balena-base,
             balena-os/balena-engine,
+            balena-os/fatrw,
             balenaltd/handbook,
             product-os/environment-staging,
-            balena-os/fatrw,
           ]
+        include:
+          - token_scope: >-
+              {
+                "actions": "read",
+                "administration": "write",
+                "checks": "read",
+                "contents": "write",
+                "members": "read",
+                "metadata": "read",
+                "pull_requests": "write",
+                "statuses": "read",
+                "workflows": "write"
+              }
+          - app_id: "${{ vars.APP_ID || '291899' }}"
+          - installation_id: 34046903
+            repository: balena-io-modules/open-balena-base
+          - installation_id: 34046749
+            repository: balena-io/balena-api
+          - installation_id: 34046749
+            repository: balena-io/docs
+          - installation_id: 34046749
+            repository: balena-io/environment-staging
+          - installation_id: 34046907
+            repository: balena-os/balena-engine
+          - installation_id: 34046907
+            repository: balena-os/fatrw
+          - installation_id: 34046911
+            repository: balenaltd/handbook
+          # (e.g. https://github.com/organizations/product-os/settings/installations/34040165)
+          - installation_id: 34040165
+            repository: product-os/environment-staging
 
     env:
       # environment variables used by gh CLI
       # https://cli.github.com/manual/gh_help_environment
       GH_REPO: ${{ matrix.repository }}
-      GH_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
       GH_PROMPT_DISABLED: "true"
       GH_DEBUG: "true"
       GH_PAGER: "cat"
@@ -87,9 +117,37 @@ jobs:
       pr_title: "Test Flowzone PR ${{ github.event.pull_request.number }}"
 
     steps:
+      - name: Check secrets
+        id: private_key
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'available=true' >> $GITHUB_OUTPUT
+          else
+              echo 'available=false' >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate token
+        uses: tibdex/github-app-token@v1.8.0
+        if: steps.private_key.outputs.available == 'true'
+        id: gh_token
+        with:
+          app_id: ${{ matrix.app_id }}
+          installation_id: ${{ matrix.installation_id }}
+          permissions: ${{ matrix.token_scope }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          repository: ${{ matrix.repository }}
+
       - name: Get repo settings
         if: github.event.action != 'closed'
         id: repo
+        env:
+          GH_TOKEN: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           echo "default_branch=$(gh api repos/{owner}/{repo} --jq '.default_branch')" >> $GITHUB_OUTPUT
 
@@ -97,7 +155,7 @@ jobs:
         if: github.event.action != 'closed'
         with:
           repository: ${{ matrix.repository }}
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           ref: ${{ steps.repo.outputs.default_branch }}
 
       # import gpg key for signed commits
@@ -122,6 +180,7 @@ jobs:
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          GH_TOKEN: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           yq '(.jobs.* | select(.uses | contains("flowzone.yml"))).uses |= sub("(?P<uses>.+)@.+"; "$1@${{ github.event.pull_request.head.sha }}")' -i .github/workflows/flowzone.yml
 
@@ -138,7 +197,7 @@ jobs:
         uses: peter-evans/create-pull-request@2b011faafdcbc9ceb11414d64d0573f37c774b04 # v4.2.3
         id: cpr
         with:
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           branch: ${{ env.pr_branch }}
           title: "${{ env.pr_title }}"
           body: |
@@ -151,52 +210,41 @@ jobs:
           draft: true
           delete-branch: true
 
-      # return failure if any checks failed
-      # return failure if any checks were cancelled
-      # loop again if any checks are still in progress
-      # loop again if no checks have completed yet
-      # return failure if checks are unchanged since last loop and the checks are empty
-      # return success if checks are unchanged since last loop and at least once check is completed
-      # (else) loop again if checks have changed since last loop (avoid race conditions)
+      # wait for checks register, complete and fail if any required checks failed
       - name: Wait for all checks to finish
         if: steps.cpr.outputs.pull-request-number != ''
         env:
           flowzone_re: "^Flowzone"
+          filter_re: "^policy-?bot"
+          GH_TOKEN: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
-          while true
-          do
-            sleep 30
-
-            prev_checks="${checks}"
-
-            checks="$(gh pr status --json statusCheckRollup,number --jq '[.createdBy[] |
-              select(.number == ${{ steps.cpr.outputs.pull-request-number}}) | .statusCheckRollup[] |
-              select(.__typename == "CheckRun") |
-              select(.name | startswith("Flowzone")) |
-              {conclusion,status,name}]' || true)"
-
-            echo "${checks}" | jq
-
-            jq -r '.[].conclusion' <<< "${checks}" | grep -q '^FAILURE$' && exit 1
-            jq -r '.[].conclusion' <<< "${checks}" | grep -q '^CANCELLED$' && exit 1
-
-            jq -r '.[].status' <<< "${checks}" | grep -q '^IN_PROGRESS$' && continue
-            jq -r '.[].status' <<< "${checks}" | grep -q '^QUEUED$' && continue
-            jq -r '.[].status' <<< "${checks}" | grep -q '^PENDING$' && continue
-
-            if [ "${prev_checks}" == "${checks}" ]
-            then
-              [ $(jq 'length' <<< "${checks}") -gt 0 ] || exit 1
-              jq -r '.[].status' <<< "${checks}" | grep -q '^COMPLETED$' && exit 0
-            fi
-
-            continue
+          while ! gh pr checks --required \
+            --repo ${{ matrix.repository }} \
+            ${{ steps.cpr.outputs.pull-request-number}} | grep -qE "${flowzone_re}"; do
+              echo '::info::waiting for required checks to register'
+              sleep $(((RANDOM % 5) + 5))
           done
+          sleep $(((RANDOM % 15) + 15))
+
+          while gh pr checks --required \
+            --repo ${{ matrix.repository }} \
+            ${{ steps.cpr.outputs.pull-request-number}} \
+            | grep -vE "${filter_re}" \
+            | grep -E '\s+pending\s+'; do
+              echo '::info::waiting for required checks to complete'
+              sleep $(((RANDOM % 15) + 15))
+          done
+
+          ! gh pr checks --required \
+            --repo ${{ matrix.repository }} \
+            ${{ steps.cpr.outputs.pull-request-number}} | grep -E '\s+fail\s+'
 
       # on closed
       - name: Get PR number
         if: github.event.action == 'closed'
         id: pr
+        env:
+          GH_TOKEN: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           echo "number=$(gh pr list --head ${{ env.pr_branch }} --draft --json number --jq '.[0].number')" >> $GITHUB_OUTPUT
 
@@ -205,7 +253,7 @@ jobs:
         if: github.event.action == 'closed' && steps.pr.outputs.number != ''
         uses: peter-evans/close-pull@f47e95b46e45ebf8a3a792e3a60e831ec2563f81 # v2.0.1
         with:
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           repository: ${{ matrix.repository }}
           pull-request-number: ${{ steps.pr.outputs.number }}
           comment: Auto-closing pull request

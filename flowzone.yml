@@ -1,4 +1,17 @@
 .flowzone:
+
+  - &getEphemeralToken
+    # https://github.com/marketplace/actions/github-app-token
+    name: Generate token
+    uses: tibdex/github-app-token@v1.8.0
+    if: needs.context_check.outputs.ephemeral_tokens
+    id: gh_token
+    with:
+      app_id: ${{ inputs.app_id }}
+      installation_id: ${{ inputs.installation_id }}
+      private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      permissions: ${{ inputs.token_scope }}
+
   - &downloadSourceArtifact
     name: Download source artifact
     uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
@@ -41,8 +54,8 @@
     with:
       fetch-depth: 0
       submodules: "recursive"
-      token: ${{ secrets.FLOWZONE_TOKEN }}
       ref: "refs/pull/${{ github.event.number }}/merge"
+      token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &checkoutSha # otherwise use the default checkout behaviour
     name: Checkout sha
@@ -51,7 +64,7 @@
     with:
       fetch-depth: 0
       submodules: "recursive"
-      token: ${{ secrets.FLOWZONE_TOKEN }}
+      token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &ifInternalPullRequest
     if: github.event.pull_request.head.repo.full_name == github.repository
@@ -75,10 +88,10 @@
     with:
       registry: ghcr.io
       username: ${{ env.GHCR_USER || github.actor }}
-      password: ${{ secrets.GHCR_TOKEN || secrets.FLOWZONE_TOKEN }}
+      password: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &customWorkingDirectory
-    defaults: 
+    defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -92,11 +105,11 @@
   - &gitHubCliEnvironment
     # environment variables used by gh CLI
     # https://cli.github.com/manual/gh_help_environment
-    GH_TOKEN: "${{ secrets.FLOWZONE_TOKEN }}"
-    GH_PROMPT_DISABLED: "true"
     GH_DEBUG: "true"
     GH_PAGER: "cat"
+    GH_PROMPT_DISABLED: "true"
     GH_REPO: "${{ github.repository }}"
+    GH_TOKEN: "${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
 
   - &logGitHubContext
     name: Log GitHub context
@@ -114,6 +127,8 @@
     # check both the github context (static) and via the gh cli (dynamic)
     name: Check if PR is draft
     id: is_draft
+    env:
+      <<: *gitHubCliEnvironment
     run: |
       if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
       then
@@ -134,9 +149,13 @@ name: Flowzone
 on:
   workflow_call:
     secrets:
+      # https://github.com/organizations/product-os/settings/secrets/actions/GH_APP_PRIVATE_KEY
+      GH_APP_PRIVATE_KEY:
+        description: "GitHub App to generate ephemeral access tokens"
+        required: false
       FLOWZONE_TOKEN:
-        description: "Personal access token (PAT) for the GitHub service account with admin/owner permissions"
-        required: true
+        description: ".. or Personal Access Token (PAT) with admin/owner permissions in the org."
+        required: false
       GPG_PRIVATE_KEY:
         description: "GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits"
         required: false
@@ -145,9 +164,6 @@ on:
         required: false
       NPM_TOKEN:
         description: "The npm auth token to use for publishing"
-        required: false
-      GHCR_TOKEN:
-        description: "A personal access token to publish to the GitHub Container Registry, will use FLOWZONE_TOKEN if unset"
         required: false
       DOCKERHUB_USER:
         description: "Username to publish to the Docker Hub container registry"
@@ -188,7 +204,45 @@ on:
       CUSTOM_JOB_SECRET_3:
         description: "Optional secret for using with custom jobs"
         required: false
+
     inputs:
+      app_id:
+        description: "GitHub App id to impersonate"
+        type: string
+        required: false
+        # https://github.com/organizations/product-os/settings/apps/flowzone-app
+        # https://github.com/organizations/product-os/settings/variables/actions/APP_ID
+        default: "${{ vars.APP_ID || '291899' }}"
+      # not needed if installed on this current org/repo
+      installation_id:
+        description: "GitHub App installation id"
+        type: string
+        required: false
+        # https://github.com/organizations/product-os/settings/installations
+        # https://github.com/organizations/product-os/settings/variables/actions/INSTALLATION_ID
+        default: "${{ vars.INSTALLATION_ID || '34040165' }}"
+      token_scope:
+        description: "Ephemeral token scope(s)"
+        type: string
+        required: false
+        # https://github.com/organizations/product-os/settings/installations/34040165
+        # https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-a-scoped-access-token
+        default: >-
+          {
+            "actions": "read",
+            "administration": "write",
+            "checks": "read",
+            "contents": "write",
+            "members": "read",
+            "metadata": "read",
+            "organization_secrets": "read",
+            "packages": "write",
+            "pages": "write",
+            "pull_requests": "read",
+            "secrets": "read",
+            "statuses": "read",
+            "workflows": "read"
+          }
       runs_on:
         description: "GitHub Actions runner type."
         type: string
@@ -578,6 +632,7 @@ jobs:
       semver: ${{ steps.versionist.outputs.semver }}
 
     steps:
+      - *getEphemeralToken
       - *checkoutMergeBranch
       - *checkoutSha
 
@@ -641,7 +696,7 @@ jobs:
             echo "a1097c74b81a2ef255583d9718bf4be6  yq" | md5sum -c -
             chmod +x yq
 
-            PATH="${PWD}:${PATH}" GH_TOKEN=${{ secrets.FLOWZONE_TOKEN }} $(npm root -g)/versionist/scripts/generate-changelog.sh "${GITHUB_WORKSPACE}"
+            PATH="${PWD}:${PATH}" $(npm root -g)/versionist/scripts/generate-changelog.sh "${GITHUB_WORKSPACE}"
             )
           fi
 
@@ -651,7 +706,7 @@ jobs:
       - name: Run versionist
         id: versionist
         run: |
-          out="$(GITHUB_TOKEN=${{ secrets.FLOWZONE_TOKEN }} balena-versionist 2>&1)"
+          out="$(balena-versionist 2>&1)"
           error="$(awk '/Error:/{getline; print}' <<< "${out}")"
 
           case ${error} in
@@ -731,6 +786,7 @@ jobs:
       semver: ${{ steps.version_tag.outputs.semver }}
 
     steps:
+      - *getEphemeralToken
       - *checkoutSha
       - *getVersionTag
 
@@ -1261,7 +1317,7 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
-    
+
       - name: Setup Node.js - Cached
         if: needs.npm_check.outputs.has_npm_lockfile == 'true'
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
@@ -1269,7 +1325,7 @@ jobs:
           node-version: "${{ matrix.node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
           cache: "npm"
-      
+
       - name: Setup Node.js
         if: needs.npm_check.outputs.has_npm_lockfile != 'true'
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
@@ -1307,7 +1363,7 @@ jobs:
           runner_os="$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')"
           os_count="$(jq '.os | length' package.json)"
           index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
-          
+
           if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
               if [ ${{ needs.npm_check.outputs.has_npm_lockfile }} == 'true' ]; then
                 npm ci
@@ -1427,12 +1483,14 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
+      - *getEphemeralToken
+
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@b59d8c6a6c5c6c6437954f470d963c0b20ea7415 # v2
         with:
-          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          github_token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
@@ -1471,12 +1529,14 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
+      - *getEphemeralToken
+
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm docs artifact from last run
         uses: dawidd6/action-download-artifact@b59d8c6a6c5c6c6437954f470d963c0b20ea7415 # v2
         with:
-          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          github_token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
@@ -1490,7 +1550,7 @@ jobs:
       - name: Publish generated docs to GitHub Pages
         uses: peaceiris/actions-gh-pages@bd8c6b06eba6b3d25d72b7a1767993c0aeee42e7 # v3
         with:
-          github_token: ${{ secrets.FLOWZONE_TOKEN }}
+          github_token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           publish_dir: docs
           publish_branch: docs
 
@@ -1658,7 +1718,7 @@ jobs:
           done
 
           docker compose ${args} config > "${COMPOSE_FILE}"
-          
+
           yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
           yq . "${COMPOSE_FILE}"
 
@@ -2075,10 +2135,10 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_closed.result == 'success'
-
     <<: *rootWorkingDirectory
 
     steps:
+      - *getEphemeralToken
       - *deleteDraftGitHubRelease
 
   github_publish:
@@ -2106,6 +2166,8 @@ jobs:
 
       - name: Check if any release artifacts exist
         id: gh_artifacts
+        env:
+          GH_ARTIFACTS: ${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
         run: |
           set -ea
 
@@ -2113,8 +2175,6 @@ jobs:
           [ -d "$GH_ARTIFACTS" ] && \
               artifact_count=$(ls "$GH_ARTIFACTS" | wc -l | sed 's/^ *//;s/ *$//')
           echo "count=$artifact_count" >> $GITHUB_OUTPUT
-        env:
-          GH_ARTIFACTS: ${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
 
       # https://github.com/softprops/action-gh-release
       - name: Publish artifacts
@@ -2145,6 +2205,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
+      - *getEphemeralToken
       - *downloadSourceArtifact
       - *extractSourceArtifact
       - *getVersionTag
@@ -2178,8 +2239,6 @@ jobs:
           else
             echo "No release found for the current PR"
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
 
   ###################################################
   # rust
@@ -2330,13 +2389,13 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
+        env:
+          CARGO_REGISTRY_DEFAULT: ${{ env.CARGO_REGISTRY }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
             cargo publish
           fi
-        env:
-          CARGO_REGISTRY_DEFAULT: ${{ env.CARGO_REGISTRY }}
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
   ###################################################
   ## custom
@@ -2530,14 +2589,15 @@ jobs:
 
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
-      <<: *gitHubCliEnvironment
 
     steps:
-
+      - *getEphemeralToken
       - *isDraftPullRequest
 
       - name: Get protection rules
         id: get_protection_rules
+        env:
+          <<: *gitHubCliEnvironment
         run: |
           result="$(gh api ${{ env.BRANCH_PROTECTION_URI }} || true)"
           message="$(echo "${result}" | jq -r .message)"
@@ -2555,6 +2615,7 @@ jobs:
       - name: Parse and prepare protection rules
         id: parse_prepare_protection_rules
         env:
+          <<: *gitHubCliEnvironment
           # the regex matching will be case insensitive, so no need to account for that here
           policybot_re: "^policy-?bot"
           resinci_re: "^resinci"
@@ -2672,6 +2733,8 @@ jobs:
         if: |
           steps.is_draft.outputs.dynamic != 'true' &&
           fromJSON(steps.parse_prepare_protection_rules.outputs.old_required_approving_review_count) > fromJSON(inputs.required_approving_review_count)
+        env:
+          <<: *gitHubCliEnvironment
         run: |
           for pr in $(gh pr list --state=open --draft=false --json=number | jq -r '.[].number')
           do
@@ -2684,28 +2747,24 @@ jobs:
         if: |
           steps.is_draft.outputs.dynamic != 'true' &&
           steps.parse_prepare_protection_rules.outputs.result != ''
+        env:
+          <<: *gitHubCliEnvironment
         run: |
           result="$(echo '${{ fromJSON(steps.parse_prepare_protection_rules.outputs.result) }}' \
             | gh api --method PUT ${{ env.BRANCH_PROTECTION_URI }} --input -)"
-
           message="$(echo "${result}" | jq -r .message)"
-
           if ! [[ $message =~ null ]]; then
             echo "::error::Failed to apply branch protection rules with ${message} ${result} "
             exit 1
           fi
-
           echo "::notice::Branch protection rules have been updated"
-
           new_required_approving_review_count="$(echo "$result" | jq '.required_pull_request_reviews.required_approving_review_count')"
           echo "new_required_approving_review_count=${new_required_approving_review_count}" >> $GITHUB_OUTPUT
-
           # here the number of required approvals sent to the gh API is checked back from the PUT response from GH api
           # Specifies the number of reviewers required to approve pull requests. Use a number between 1 and 6 or 0 to not require reviewers (successful checks => merge) .
           if [[  ${new_required_approving_review_count} -ne ${{ inputs.required_approving_review_count }} ]]; then
             echo "::warning::Failed to set required approvers count. Check that branch protection is enabled on your repo and try again."
           fi
-
           DELIMITER=$(echo $RANDOM | md5sum | head -c 32)
           echo "result<<${DELIMITER}" >> $GITHUB_OUTPUT
           echo "${result}" >> $GITHUB_OUTPUT
@@ -2720,6 +2779,8 @@ jobs:
       #     steps.is_draft.outputs.dynamic != 'true' &&
       #     (fromJSON(steps.apply_branch_protection_rules.outputs.new_required_approving_review_count) > 0 ||
       #     steps.parse_prepare_protection_rules.outputs.policy_bot == 'true')
+      #   env:
+      #     <<: *gitHubCliEnvironment
       #   run: |
       #     if [[ $(gh api '/repos/${{ github.repository }}' | jq -r .allow_auto_merge) =~ true ]]; then
       #       gh pr merge ${{ github.event.pull_request.number }} --merge --auto
@@ -2740,6 +2801,8 @@ jobs:
       needs.is_pr_merged.result == 'success' &&
       inputs.repo_config == true
     steps:
+      - *getEphemeralToken
+
       - name: Configure repository
         env:
           <<: *gitHubCliEnvironment
