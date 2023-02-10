@@ -1,4 +1,18 @@
 - commits:
+    - subject: Skip applying branch protection if rules are unchanged
+      hash: 5880d49d620283cada63a0545521338509076edd
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.6.0
+  title: ""
+  date: 2023-02-10T16:36:13.658Z
+- commits:
     - subject: Fix source checkout for merged PRs from forks
       hash: 3e9a7119d7c53e2779bd3957333e2bc648af8fec
       body: ""
