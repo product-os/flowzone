@@ -1264,7 +1264,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download npm artifact from last run
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@b59d8c6a6c5c6c6437954f470d963c0b20ea7415
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -1301,7 +1301,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download npm docs artifact from last run
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@b59d8c6a6c5c6c6437954f470d963c0b20ea7415
         with:
           github_token: ${{ secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
