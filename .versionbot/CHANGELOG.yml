@@ -1,4 +1,20 @@
 - commits:
+    - subject: Remove versioned source from protect branch steps
+      hash: 9d60ad6f4888c13c5e18c5b47c02682654ccf791
+      body: |
+        Also move check for draft PR to an anchor, and remove
+        redundant dependencies.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.8.1
+  title: ""
+  date: 2023-02-13T20:34:53.532Z
+- commits:
     - subject: Pin dawidd6/action-download-artifact action to b59d8c6
       hash: d40cc8c8bd4808a9175972ea6f4999114fbd8ace
       body: |
