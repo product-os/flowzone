@@ -110,6 +110,25 @@
     env:
       <<: *gitHubCliEnvironment
 
+  - &isDraftPullRequest
+    # check both the github context (static) and via the gh cli (dynamic)
+    name: Check if PR is draft
+    id: is_draft
+    run: |
+      if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
+      then
+        echo "dynamic=true" >> $GITHUB_OUTPUT
+      else
+        echo "dynamic=false" >> $GITHUB_OUTPUT
+      fi
+
+      if [ "${{ github.event.pull_request.draft }}" = "true" ]
+      then
+        echo "static=true" >> $GITHUB_OUTPUT
+      else
+        echo "static=false" >> $GITHUB_OUTPUT
+      fi
+
 name: Flowzone
 
 on:
@@ -2471,18 +2490,15 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - is_pr_open
+      - docker_publish
       - balena_publish
       - custom_publish
-      - custom_test
-      - python_test
-      - docker_test
-      - is_pr_open
       - npm_publish
-      - npm_test
-      - cargo_test
       - cargo_publish
       - github_publish
       - website_publish
+      - custom_always
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2499,8 +2515,8 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+
+      - *isDraftPullRequest
 
       - name: Get protection rules
         id: get_protection_rules
@@ -2520,7 +2536,6 @@ jobs:
 
       - name: Parse and prepare protection rules
         id: parse_prepare_protection_rules
-        if: ${{ steps.get_protection_rules.conclusion == 'success' }}
         env:
           # the regex matching will be case insensitive, so no need to account for that here
           policybot_re: "^policy-?bot"
@@ -2632,22 +2647,12 @@ jobs:
           result=$(echo "${newjson}" | jq '. | @json' )
           echo "result=${result}" >> $GITHUB_OUTPUT
 
-      # use the GH API to check draft status of the current PR
-      # rather than the GH workflow context that doesn't change with a re-run
-      - name: Check if current PR is draft
-        id: pr_view
-        run: |
-          if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
-          then
-            echo "is_draft=true" >> $GITHUB_OUTPUT
-          fi
-
       # Disable auto-merge on any existing PRs if the current repo required reviewer count is
       # greater than the required reviewer count being applied by Flowzone, likely a one-time change
       # This should be done BEFORE applying the new rules
       - name: Disable PR auto-merge
         if: |
-          steps.pr_view.outputs.is_draft != 'true' &&
+          steps.is_draft.outputs.dynamic != 'true' &&
           fromJSON(steps.parse_prepare_protection_rules.outputs.old_required_approving_review_count) > fromJSON(inputs.required_approving_review_count)
         run: |
           for pr in $(gh pr list --state=open --draft=false --json=number | jq -r '.[].number')
@@ -2659,7 +2664,7 @@ jobs:
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
         if: |
-          steps.pr_view.outputs.is_draft != 'true' &&
+          steps.is_draft.outputs.dynamic != 'true' &&
           steps.parse_prepare_protection_rules.outputs.result != ''
         run: |
           result="$(echo '${{ fromJSON(steps.parse_prepare_protection_rules.outputs.result) }}' \
@@ -2694,7 +2699,7 @@ jobs:
       # then toggle auto-merge to ON for this PR for convenience
       # - name: Enable PR auto-merge
       #   if: |
-      #     steps.pr_view.outputs.is_draft != 'true' &&
+      #     steps.is_draft.outputs.dynamic != 'true' &&
       #     (fromJSON(steps.apply_branch_protection_rules.outputs.new_required_approving_review_count) > 0 ||
       #     steps.parse_prepare_protection_rules.outputs.policy_bot == 'true')
       #   run: |
