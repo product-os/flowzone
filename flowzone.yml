@@ -2022,7 +2022,7 @@ jobs:
         if: |
           needs.website_check.outputs.has_readme == 'true' &&
           inputs.docusaurus_website != false
-        uses: product-os/docusaurus-builder@c44214ff7bc25e1b511cf4c5c0e7c56737f5e437 # v1.5.0
+        uses: product-os/docusaurus-builder@6e1630dcc9fa09b8a7400429b4734976135fac41 # v1.5.1
         with:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
