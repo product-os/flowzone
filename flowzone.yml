@@ -2116,10 +2116,12 @@ jobs:
         env:
           GH_ARTIFACTS: ${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
 
+      # https://github.com/softprops/action-gh-release
       - name: Publish artifacts
         if: steps.gh_artifacts.outputs.count != '0'
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
+          token: ${{ secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
