@@ -391,6 +391,11 @@ concurrency:
   # cancel jobs in progress as long as it's not a merged PR
   cancel-in-progress: ${{ github.ref != github.base_ref }}
 
+# remove all permissions from the default token
+# https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
+permissions: {}
+
 env:
   GHCR_USER: "flowzone" # does not seem to matter what is used here
   NPM_REGISTRY: "https://registry.npmjs.org"

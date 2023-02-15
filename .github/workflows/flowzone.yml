@@ -256,6 +256,7 @@ on:
 concurrency:
   group: flowzone-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != github.base_ref }}
+permissions: {}
 env:
   GHCR_USER: flowzone
   NPM_REGISTRY: https://registry.npmjs.org
