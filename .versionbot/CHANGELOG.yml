@@ -1,4 +1,40 @@
 - commits:
+    - subject: Publish GitHub Release artifacts with Flowzone token
+      hash: 278229a062ee5b44e2ec17e3316829286c72298d
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Expose a github token with no permissions to docker build
+      hash: 87988ee40f8b1d8baec5805b3a6ce3e83775bc8f
+      body: |
+        This token can be used to avoid GitHub API rate limiting but
+        nothing else.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Remove all permissions from the default github token
+      hash: 07baf35291fda02304ecabfd411355defbdd55fa
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.8.5
+  title: ""
+  date: 2023-02-15T22:13:12.842Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v1.5.3
       hash: 26a3c38aae81da1718d11e100b37f531d20cc8af
       body: |
