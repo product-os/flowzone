@@ -1339,6 +1339,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.docker_check.outputs.docker_bake_matrix) }}
+    permissions: {}
     env:
       DOCKER_BAKE_FILE: /tmp/docker-bake.json
       COMPOSE_FILE: docker-compose.yml
@@ -1413,6 +1414,8 @@ jobs:
         if: github.event.repository.private
       - name: Docker bake
         uses: docker/bake-action@6c87dcca988e4e074e3ab1f976a70f63ec9673fb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
