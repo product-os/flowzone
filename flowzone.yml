@@ -85,6 +85,9 @@
   - &ifInternalPullRequest
     if: github.event.pull_request.head.repo.full_name == github.repository
 
+  - &ifExternalPullRequest
+    if: github.event.pull_request.head.repo.full_name != github.repository
+
   - &ifPrivateRepository
     if: github.event.repository.private
 
@@ -126,6 +129,29 @@
     GH_PROMPT_DISABLED: "true"
     GH_REPO: "${{ github.repository }}"
     GH_TOKEN: "${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
+
+  - &rejectExternalWorkflowChanges
+    name: Reject external workflow changes
+    <<: *ifExternalPullRequest
+    env:
+      <<: *gitHubCliEnvironment
+    run: |
+      if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
+      then
+        echo "::error::Modifications to workflow files are not supported for external contributions. \
+          Please contact a member of the organization for assistance."
+        exit 1
+      fi
+
+  - &rejectExternalCustomActions
+    name: Reject external custom actions
+    if: |
+      github.event.pull_request.head.repo.full_name != github.repository &&
+      inputs.restrict_custom_actions == true
+    run: |
+      echo "::error::Custom actions are disabled for external contributors and will be skipped. \
+        Please contact a member of the organization for assistance."
+      exit 1
 
   - &logGitHubContext
     name: Log GitHub context
@@ -479,13 +505,19 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        github.event_name == 'pull_request' ||
-        github.event_name == 'pull_request_target'
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        ) || (
+          github.event_name == 'pull_request_target' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        )
       ) && (
         github.event.action == 'opened' ||
         github.event.action == 'synchronize'
       )
     steps:
+      - *rejectExternalWorkflowChanges
       - *logGitHubContext
 
   # in our context closed does not include merged
@@ -495,13 +527,19 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        github.event_name == 'pull_request' ||
-        github.event_name == 'pull_request_target'
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        ) || (
+          github.event_name == 'pull_request_target' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        )
       ) && (
         github.event.action == 'closed' &&
         github.event.pull_request.merged == false
       )
     steps:
+      - *rejectExternalWorkflowChanges
       - *logGitHubContext
 
   is_pr_merged:
@@ -510,13 +548,19 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        github.event_name == 'pull_request' ||
-        github.event_name == 'pull_request_target'
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        ) || (
+          github.event_name == 'pull_request_target' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        )
       ) && (
         github.event.action == 'closed' &&
         github.event.pull_request.merged == true
       )
     steps:
+      - *rejectExternalWorkflowChanges
       - *logGitHubContext
 
   is_pushed_tag:
@@ -652,33 +696,6 @@ jobs:
       - *getEphemeralToken
       - *checkoutMergeBranch
       - *checkoutSha
-
-      # reject external contribution workflow in certain conditions to prevent leaking secrets
-      - name: Check external contributor limitations
-        if: github.event.pull_request.head.repo.full_name != github.repository
-        env:
-          <<: *gitHubCliEnvironment
-        run: |
-          if [ -n "${{ secrets.COMPOSE_VARS }}" ]
-          then
-            echo "::notice::COMPOSE_VARS secrets are not currently supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-
-          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
-          then
-            echo "::notice::Modifications to workflow files are not supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-
-          if [ "${{ inputs.restrict_custom_actions }}" == "true" ]
-          then
-            echo "::notice::Custom actions are disabled for external contributors and will be skipped. \
-              Please contact a member of the organization for assistance."
-            exit 0
-          fi
 
       # fail on merge commits (ones with more than one parent)
       - name: Reject merge commits
@@ -1704,15 +1721,12 @@ jobs:
         run: |
           docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ env.IMAGE_TAR }}
 
-      # run docker compose tests and print the logs from all services
-      - name: Run docker compose tests
-        if: needs.docker_check.outputs.docker_compose_tests == 'true'
-        # do not use shell tracing to avoid leaking secrets
-        shell: bash
+      - name: Inject COMPOSE_VARS
+        <<: *ifInternalPullRequest
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
-          DOCKER_BUILDKIT: "1"
-          COMPOSE_FILE: docker-compose.override.yml
+        # do not use shell tracing to avoid leaking secrets
+        shell: bash
         run: |
           if [ -n "${COMPOSE_VARS}" ]
           then
@@ -1725,6 +1739,15 @@ jobs:
             done < .env
           fi
 
+      # run docker compose tests and print the logs from all services
+      - name: Run docker compose tests
+        if: needs.docker_check.outputs.docker_compose_tests == 'true'
+        # do not use shell tracing to avoid leaking secrets
+        shell: bash
+        env:
+          DOCKER_BUILDKIT: "1"
+          COMPOSE_FILE: docker-compose.override.yml
+        run: |
           files="
             docker-compose.yml
             docker-compose.yaml
@@ -2443,6 +2466,7 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
 
     steps:
+      - *rejectExternalCustomActions
       - *downloadSourceArtifact
       - *extractSourceArtifact
 
@@ -2481,6 +2505,7 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
 
     steps:
+      - *rejectExternalCustomActions
       - *downloadSourceArtifact
       - *extractSourceArtifact
 
@@ -2515,6 +2540,7 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on) }}
 
     steps:
+      - *rejectExternalCustomActions
       - *downloadSourceArtifact
       - *extractSourceArtifact
 
@@ -2545,6 +2571,7 @@ jobs:
       needs.custom_check.outputs.custom_clean == 'true'
 
     steps:
+      - *rejectExternalCustomActions
       - *downloadSourceArtifact
       - *extractSourceArtifact
 
@@ -2572,6 +2599,7 @@ jobs:
       needs.custom_check.outputs.custom_always == 'true'
 
     steps:
+      - *rejectExternalCustomActions
       - *downloadSourceArtifact
       - *extractSourceArtifact
 

@@ -298,13 +298,33 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        github.event_name == 'pull_request' ||
-        github.event_name == 'pull_request_target'
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        ) || (
+          github.event_name == 'pull_request_target' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        )
       ) && (
         github.event.action == 'opened' ||
         github.event.action == 'synchronize'
       )
     steps:
+      - name: Reject external workflow changes
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
+          then
+            echo "::error::Modifications to workflow files are not supported for external contributions. \
+              Please contact a member of the organization for assistance."
+            exit 1
+          fi
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
@@ -315,13 +335,33 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        github.event_name == 'pull_request' ||
-        github.event_name == 'pull_request_target'
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        ) || (
+          github.event_name == 'pull_request_target' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        )
       ) && (
         github.event.action == 'closed' &&
         github.event.pull_request.merged == false
       )
     steps:
+      - name: Reject external workflow changes
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
+          then
+            echo "::error::Modifications to workflow files are not supported for external contributions. \
+              Please contact a member of the organization for assistance."
+            exit 1
+          fi
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
@@ -332,13 +372,33 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        github.event_name == 'pull_request' ||
-        github.event_name == 'pull_request_target'
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        ) || (
+          github.event_name == 'pull_request_target' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        )
       ) && (
         github.event.action == 'closed' &&
         github.event.pull_request.merged == true
       )
     steps:
+      - name: Reject external workflow changes
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
+          then
+            echo "::error::Modifications to workflow files are not supported for external contributions. \
+              Please contact a member of the organization for assistance."
+            exit 1
+          fi
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
@@ -504,35 +564,6 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Check external contributor limitations
-        if: github.event.pull_request.head.repo.full_name != github.repository
-        env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ -n "${{ secrets.COMPOSE_VARS }}" ]
-          then
-            echo "::notice::COMPOSE_VARS secrets are not currently supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-
-          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
-          then
-            echo "::notice::Modifications to workflow files are not supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-
-          if [ "${{ inputs.restrict_custom_actions }}" == "true" ]
-          then
-            echo "::notice::Custom actions are disabled for external contributors and will be skipped. \
-              Please contact a member of the organization for assistance."
-            exit 0
-          fi
       - name: Reject merge commits
         run: |
           if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep '^parent ' | wc -l)" -gt 1 ]
@@ -1550,13 +1581,11 @@ jobs:
       - name: Save image to file
         run: |
           docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ env.IMAGE_TAR }}
-      - name: Run docker compose tests
-        if: needs.docker_check.outputs.docker_compose_tests == 'true'
-        shell: bash
+      - name: Inject COMPOSE_VARS
+        if: github.event.pull_request.head.repo.full_name == github.repository
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
-          DOCKER_BUILDKIT: "1"
-          COMPOSE_FILE: docker-compose.override.yml
+        shell: bash
         run: |
           if [ -n "${COMPOSE_VARS}" ]
           then
@@ -1568,7 +1597,13 @@ jobs:
               echo "::add-mask::${secret}"
             done < .env
           fi
-
+      - name: Run docker compose tests
+        if: needs.docker_check.outputs.docker_compose_tests == 'true'
+        shell: bash
+        env:
+          DOCKER_BUILDKIT: "1"
+          COMPOSE_FILE: docker-compose.override.yml
+        run: |
           files="
             docker-compose.yml
             docker-compose.yaml
@@ -2371,6 +2406,14 @@ jobs:
         value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_test_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
+      - name: Reject external custom actions
+        if: |
+          github.event.pull_request.head.repo.full_name != github.repository &&
+          inputs.restrict_custom_actions == true
+        run: |
+          echo "::error::Custom actions are disabled for external contributors and will be skipped. \
+            Please contact a member of the organization for assistance."
+          exit 1
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
@@ -2411,6 +2454,14 @@ jobs:
         value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_publish_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
+      - name: Reject external custom actions
+        if: |
+          github.event.pull_request.head.repo.full_name != github.repository &&
+          inputs.restrict_custom_actions == true
+        run: |
+          echo "::error::Custom actions are disabled for external contributors and will be skipped. \
+            Please contact a member of the organization for assistance."
+          exit 1
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
@@ -2447,6 +2498,14 @@ jobs:
         value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_finalize_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on) }}
     steps:
+      - name: Reject external custom actions
+        if: |
+          github.event.pull_request.head.repo.full_name != github.repository &&
+          inputs.restrict_custom_actions == true
+        run: |
+          echo "::error::Custom actions are disabled for external contributors and will be skipped. \
+            Please contact a member of the organization for assistance."
+          exit 1
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
@@ -2480,6 +2539,14 @@ jobs:
       needs.is_pr_closed.result == 'success' &&
       needs.custom_check.outputs.custom_clean == 'true'
     steps:
+      - name: Reject external custom actions
+        if: |
+          github.event.pull_request.head.repo.full_name != github.repository &&
+          inputs.restrict_custom_actions == true
+        run: |
+          echo "::error::Custom actions are disabled for external contributors and will be skipped. \
+            Please contact a member of the organization for assistance."
+          exit 1
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
@@ -2511,6 +2578,14 @@ jobs:
       always() &&
       needs.custom_check.outputs.custom_always == 'true'
     steps:
+      - name: Reject external custom actions
+        if: |
+          github.event.pull_request.head.repo.full_name != github.repository &&
+          inputs.restrict_custom_actions == true
+        run: |
+          echo "::error::Custom actions are disabled for external contributors and will be skipped. \
+            Please contact a member of the organization for assistance."
+          exit 1
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
