@@ -25,11 +25,11 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [Website](#Website)
 - [Customization](#customization)
   - [Secrets](#secrets)
+    - [`GH_APP_PRIVATE_KEY`](#gh_app_private_key)
     - [`FLOWZONE_TOKEN`](#flowzone_token)
     - [`GPG_PRIVATE_KEY`](#gpg_private_key)
     - [`GPG_PASSPHRASE`](#gpg_passphrase)
     - [`NPM_TOKEN`](#npm_token)
-    - [`GHCR_TOKEN`](#ghcr_token)
     - [`DOCKERHUB_USER`](#dockerhub_user)
     - [`DOCKERHUB_TOKEN`](#dockerhub_token)
     - [`BALENA_API_KEY`](#balena_api_key)
@@ -39,6 +39,9 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`CUSTOM_JOB_SECRET_2`](#custom_job_secret_2)
     - [`CUSTOM_JOB_SECRET_3`](#custom_job_secret_3)
   - [Inputs](#inputs)
+    - [`app_id`](#app_id)
+    - [`installation_id`](#installation_id)
+    - [`token_scope`](#token_scope)
     - [`runs_on`](#runs_on)
     - [`tests_run_on`](#tests_run_on)
     - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
@@ -316,9 +319,9 @@ If you have an `npm run doc` script then it will automatically be run and the ge
 
 ### Website
 
-If you have docs that you intend to publish on a website, checkout the [Getting Started](https://docusaurus-builder.pages.dev/) section of the Docusaurus builder. The docs will be built using the Docusaurus framework and published on Cloudflare Pages. 
+If you have docs that you intend to publish on a website, checkout the [Getting Started](https://docusaurus-builder.pages.dev/) section of the Docusaurus builder. The docs will be built using the Docusaurus framework and published on Cloudflare Pages.
 
-If you intend to use a custom framework for your docs build, then you can make use of the custom website build option by adding your desired build command in a input called `custom_website_build`. This command should generate your static site into a folder called `build` which will then be deployed to Cloudflare Pages. 
+If you intend to use a custom framework for your docs build, then you can make use of the custom website build option by adding your desired build command in a input called `custom_website_build`. This command should generate your static site into a folder called `build` which will then be deployed to Cloudflare Pages.
 
 
 ## Customization
@@ -330,11 +333,17 @@ but they can also be [configured for personal repositories](https://docs.github.
 
 These secrets can also be found at the top of [flowzone.yml](./.github/workflows/flowzone.yml).
 
+#### `GH_APP_PRIVATE_KEY`
+
+GitHub App's private key to generate ephemeral access tokens.
+
+Not required, but preferred.
+
 #### `FLOWZONE_TOKEN`
 
 Personal access token (PAT) for the GitHub service account with admin/owner permissions.
 
-Always required.
+Required if `GH_APP_PRIVATE_KEY` is not used.
 
 #### `GPG_PRIVATE_KEY`
 
@@ -353,12 +362,6 @@ Required for [versioned](#versioning) projects.
 The npm auth token to use for publishing.
 
 Required for [npm](#npm) projects.
-
-#### `GHCR_TOKEN`
-
-A personal access token to publish to the GitHub Container Registry, will use [`FLOWZONE_TOKEN`](#flowzone_token) if unset.
-
-Required for [Docker](#docker) projects.
 
 #### `DOCKERHUB_USER`
 
@@ -407,6 +410,47 @@ Optional secret for use with [Custom](#custom) jobs.
 
 These inputs are all optional and include some opinionated defaults.
 They can also be found at the top of [flowzone.yml](./.github/workflows/flowzone.yml).
+
+#### `app_id`
+
+GitHub App id to generate ephemeral access tokens.
+
+Type: _string_
+
+Default: `"${{ vars.APP_ID || '291899' }}"`
+
+#### `installation_id`
+
+GitHub App installation id, if installed in a different organisation.
+
+Type: _string_
+
+Default: `"${{ vars.INSTALLATION_ID || '34040165' }}"`
+
+#### `token_scope`
+
+Subset from permissions granted to the GitHub App, see [list](https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-a-scoped-access-token).
+
+Type: _string_
+
+Default:
+```
+{
+  "actions": "read",
+  "administration": "write",
+  "checks": "read",
+  "contents": "write",
+  "members": "read",
+  "metadata": "read",
+  "organization_secrets": "read",
+  "packages": "write",
+  "pages": "write",
+  "pull_requests": "read",
+  "secrets": "read",
+  "statuses": "read",
+  "workflows": "read"
+}
+```
 
 #### `runs_on`
 
