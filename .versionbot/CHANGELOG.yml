@@ -1,4 +1,18 @@
 - commits:
+    - subject: Ephemeral access tokens
+      hash: 451718178e232c88929a5c57e2fa31e9beee7a7f
+      body: |
+        * generate short-lived GH_TOKENs (FLOWZONE_TOKEN)
+        * fall back to FLOWZONE_TOKEN secret
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: ab77
+      nested: []
+  version: 1.9.0
+  title: ""
+  date: 2023-02-16T20:15:56.562Z
+- commits:
     - subject: Publish GitHub Release artifacts with Flowzone token
       hash: 278229a062ee5b44e2ec17e3316829286c72298d
       body: ""
