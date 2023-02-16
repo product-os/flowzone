@@ -1,10 +1,26 @@
 .flowzone:
 
+  - &checkSecrets
+    name: Check secrets
+    id: check_secrets
+    run: |
+      if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+        && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+          echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+          false
+      fi
+
+      if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+          echo 'private_key=true' >> $GITHUB_OUTPUT
+      else
+          echo 'private_key=false' >> $GITHUB_OUTPUT
+      fi
+
   - &getEphemeralToken
     # https://github.com/marketplace/actions/github-app-token
     name: Generate token
     uses: tibdex/github-app-token@v1.8.0
-    if: needs.context_check.outputs.ephemeral_tokens
+    if: steps.check_secrets.outputs.private_key == 'true'
     id: gh_token
     with:
       app_id: ${{ inputs.app_id }}
@@ -632,6 +648,7 @@ jobs:
       semver: ${{ steps.versionist.outputs.semver }}
 
     steps:
+      - *checkSecrets
       - *getEphemeralToken
       - *checkoutMergeBranch
       - *checkoutSha
@@ -786,6 +803,7 @@ jobs:
       semver: ${{ steps.version_tag.outputs.semver }}
 
     steps:
+      - *checkSecrets
       - *getEphemeralToken
       - *checkoutSha
       - *getVersionTag
@@ -1483,6 +1501,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
+      - *checkSecrets
       - *getEphemeralToken
 
       # https://github.com/dawidd6/action-download-artifact
@@ -1529,6 +1548,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
+      - *checkSecrets
       - *getEphemeralToken
 
       # https://github.com/dawidd6/action-download-artifact
@@ -2138,6 +2158,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
+      - *checkSecrets
       - *getEphemeralToken
       - *deleteDraftGitHubRelease
 
@@ -2205,6 +2226,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
+      - *checkSecrets
       - *getEphemeralToken
       - *downloadSourceArtifact
       - *extractSourceArtifact
@@ -2591,6 +2613,7 @@ jobs:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
 
     steps:
+      - *checkSecrets
       - *getEphemeralToken
       - *isDraftPullRequest
 
@@ -2801,6 +2824,7 @@ jobs:
       needs.is_pr_merged.result == 'success' &&
       inputs.repo_config == true
     steps:
+      - *checkSecrets
       - *getEphemeralToken
 
       - name: Configure repository
