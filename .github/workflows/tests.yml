@@ -118,7 +118,7 @@ jobs:
 
     steps:
       - name: Check secrets
-        id: private_key
+        id: check_secrets
         run: |
           if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
             && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
@@ -127,14 +127,14 @@ jobs:
           fi
 
           if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
-              echo 'available=true' >> $GITHUB_OUTPUT
+              echo 'private_key=true' >> $GITHUB_OUTPUT
           else
-              echo 'available=false' >> $GITHUB_OUTPUT
+              echo 'private_key=false' >> $GITHUB_OUTPUT
           fi
 
       - name: Generate token
         uses: tibdex/github-app-token@v1.8.0
-        if: steps.private_key.outputs.available == 'true'
+        if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
           app_id: ${{ matrix.app_id }}

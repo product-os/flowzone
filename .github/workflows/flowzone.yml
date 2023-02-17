@@ -465,9 +465,23 @@ jobs:
       tag: ${{ steps.versionist.outputs.tag }}
       semver: ${{ steps.versionist.outputs.semver }}
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
       - name: Generate token
         uses: tibdex/github-app-token@v1.8.0
-        if: needs.context_check.outputs.ephemeral_tokens
+        if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
           app_id: ${{ inputs.app_id }}
@@ -626,9 +640,23 @@ jobs:
       tag: ${{ steps.version_tag.outputs.tag }}
       semver: ${{ steps.version_tag.outputs.semver }}
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
       - name: Generate token
         uses: tibdex/github-app-token@v1.8.0
-        if: needs.context_check.outputs.ephemeral_tokens
+        if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
           app_id: ${{ inputs.app_id }}
@@ -1312,9 +1340,23 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
       - name: Generate token
         uses: tibdex/github-app-token@v1.8.0
-        if: needs.context_check.outputs.ephemeral_tokens
+        if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
           app_id: ${{ inputs.app_id }}
@@ -1358,9 +1400,23 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
       - name: Generate token
         uses: tibdex/github-app-token@v1.8.0
-        if: needs.context_check.outputs.ephemeral_tokens
+        if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
           app_id: ${{ inputs.app_id }}
@@ -1970,9 +2026,23 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
       - name: Generate token
         uses: tibdex/github-app-token@v1.8.0
-        if: needs.context_check.outputs.ephemeral_tokens
+        if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
           app_id: ${{ inputs.app_id }}
@@ -2054,9 +2124,23 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
       - name: Generate token
         uses: tibdex/github-app-token@v1.8.0
-        if: needs.context_check.outputs.ephemeral_tokens
+        if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
           app_id: ${{ inputs.app_id }}
@@ -2468,9 +2552,23 @@ jobs:
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
       - name: Generate token
         uses: tibdex/github-app-token@v1.8.0
-        if: needs.context_check.outputs.ephemeral_tokens
+        if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
           app_id: ${{ inputs.app_id }}
@@ -2693,9 +2791,23 @@ jobs:
       needs.is_pr_merged.result == 'success' &&
       inputs.repo_config == true
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
       - name: Generate token
         uses: tibdex/github-app-token@v1.8.0
-        if: needs.context_check.outputs.ephemeral_tokens
+        if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
           app_id: ${{ inputs.app_id }}
