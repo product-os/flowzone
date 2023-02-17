@@ -540,7 +540,7 @@ jobs:
               echo 'private_key=false' >> $GITHUB_OUTPUT
           fi
       - name: Generate token
-        uses: tibdex/github-app-token@v1.8.0
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
@@ -686,7 +686,7 @@ jobs:
               echo 'private_key=false' >> $GITHUB_OUTPUT
           fi
       - name: Generate token
-        uses: tibdex/github-app-token@v1.8.0
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
@@ -1386,7 +1386,7 @@ jobs:
               echo 'private_key=false' >> $GITHUB_OUTPUT
           fi
       - name: Generate token
-        uses: tibdex/github-app-token@v1.8.0
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
@@ -1446,7 +1446,7 @@ jobs:
               echo 'private_key=false' >> $GITHUB_OUTPUT
           fi
       - name: Generate token
-        uses: tibdex/github-app-token@v1.8.0
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
@@ -2076,7 +2076,7 @@ jobs:
               echo 'private_key=false' >> $GITHUB_OUTPUT
           fi
       - name: Generate token
-        uses: tibdex/github-app-token@v1.8.0
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
@@ -2174,7 +2174,7 @@ jobs:
               echo 'private_key=false' >> $GITHUB_OUTPUT
           fi
       - name: Generate token
-        uses: tibdex/github-app-token@v1.8.0
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
@@ -2642,7 +2642,7 @@ jobs:
               echo 'private_key=false' >> $GITHUB_OUTPUT
           fi
       - name: Generate token
-        uses: tibdex/github-app-token@v1.8.0
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
@@ -2881,7 +2881,7 @@ jobs:
               echo 'private_key=false' >> $GITHUB_OUTPUT
           fi
       - name: Generate token
-        uses: tibdex/github-app-token@v1.8.0
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.check_secrets.outputs.private_key == 'true'
         id: gh_token
         with:
