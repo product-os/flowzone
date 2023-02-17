@@ -288,7 +288,6 @@ concurrency:
   cancel-in-progress: ${{ github.ref != github.base_ref }}
 permissions: {}
 env:
-  GHCR_USER: flowzone
   NPM_REGISTRY: https://registry.npmjs.org
   CARGO_REGISTRY: crates.io
 jobs:
@@ -1514,6 +1513,29 @@ jobs:
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
           echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.check_secrets.outputs.private_key == 'true'
+        id: gh_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Setup QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18
       - name: Setup buildx
@@ -1554,7 +1576,7 @@ jobs:
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           registry: ghcr.io
-          username: ${{ env.GHCR_USER || github.actor }}
+          username: ${{ github.actor }}
           password: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         if: github.event.repository.private
       - name: Login to Docker Hub
@@ -1661,6 +1683,29 @@ jobs:
     env:
       LOCAL_TAG: localhost:5000/sut:latest
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.check_secrets.outputs.private_key == 'true'
+        id: gh_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Warn if tests skipped
         if: needs.docker_check.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
@@ -1714,7 +1759,7 @@ jobs:
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           registry: ghcr.io
-          username: ${{ env.GHCR_USER || github.actor }}
+          username: ${{ github.actor }}
           password: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Login to Docker Hub
         continue-on-error: true
@@ -1754,6 +1799,29 @@ jobs:
         image: ${{ fromJSON(needs.sanitize_inputs.outputs.docker_images) }}
         target: ${{ fromJSON(needs.sanitize_inputs.outputs.bake_targets) }}
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.check_secrets.outputs.private_key == 'true'
+        id: gh_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
@@ -1794,7 +1862,7 @@ jobs:
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           registry: ghcr.io
-          username: ${{ env.GHCR_USER || github.actor }}
+          username: ${{ github.actor }}
           password: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Login to Docker Hub
         continue-on-error: true
@@ -2109,6 +2177,29 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Check secrets
+        id: check_secrets
+        run: |
+          if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
+            && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+              false
+          fi
+
+          if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
+              echo 'private_key=true' >> $GITHUB_OUTPUT
+          else
+              echo 'private_key=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.check_secrets.outputs.private_key == 'true'
+        id: gh_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -2136,7 +2227,7 @@ jobs:
         if: steps.gh_artifacts.outputs.count != '0'
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true

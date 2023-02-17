@@ -106,7 +106,7 @@
     uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
     with:
       registry: ghcr.io
-      username: ${{ env.GHCR_USER || github.actor }}
+      username: ${{ github.actor }}
       password: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &customWorkingDirectory
@@ -493,7 +493,6 @@ concurrency:
 permissions: {}
 
 env:
-  GHCR_USER: "flowzone" # does not seem to matter what is used here
   NPM_REGISTRY: "https://registry.npmjs.org"
   CARGO_REGISTRY: crates.io
 
@@ -1629,6 +1628,8 @@ jobs:
       - *downloadSourceArtifact
       - *extractSourceArtifact
       - *getVersionTag
+      - *checkSecrets
+      - *getEphemeralToken
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2
@@ -1810,6 +1811,9 @@ jobs:
       LOCAL_TAG: localhost:5000/sut:latest
 
     steps:
+      - *checkSecrets
+      - *getEphemeralToken
+
       - name: Warn if tests skipped
         if: needs.docker_check.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
@@ -1899,6 +1903,8 @@ jobs:
         target: ${{ fromJSON(needs.sanitize_inputs.outputs.bake_targets) }}
 
     steps:
+      - *checkSecrets
+      - *getEphemeralToken
       - *downloadSourceArtifact
       - *extractSourceArtifact
       - *getVersionTag
@@ -2201,6 +2207,8 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
+      - *checkSecrets
+      - *getEphemeralToken
       - *deleteDraftGitHubRelease
 
       - name: Download all artifacts
@@ -2225,7 +2233,7 @@ jobs:
         if: steps.gh_artifacts.outputs.count != '0'
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
-          token: ${{ secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
