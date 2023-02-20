@@ -1,4 +1,28 @@
 - commits:
+    - subject: Use GITHUB_TOKEN to push images to gh.cr
+      hash: 80e19c1c1aeb9173173bdd45fcee92e5f16e02e1
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Add missing ephemeral token steps
+      hash: 645069d1431fcc7efd261a88314eb6e081aafebd
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.10.1
+  title: ""
+  date: 2023-02-20T20:47:34.762Z
+- commits:
     - subject: Pin tibdex/github-app-token action to b625283
       hash: 47011f206189a68a1a956554d3c5f8c4813e0967
       body: |
