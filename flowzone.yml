@@ -107,7 +107,7 @@
     with:
       registry: ghcr.io
       username: ${{ github.actor }}
-      password: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      password: ${{ secrets.FLOWZONE_TOKEN || steps.gh_token.outputs.token }}
 
   - &customWorkingDirectory
     defaults:
