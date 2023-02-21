@@ -1,4 +1,20 @@
 - commits:
+    - subject: Use docker secrets to inject GitHub tokens
+      hash: a3baeb8ce9c9e728a36a89483f1e7525b23c5bb0
+      body: |
+        Allow Docker projects to use secrets to access
+        GITHUB_TOKEN and GH_TOKEN via Dockerfiles.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.11.1
+  title: ""
+  date: 2023-02-21T23:42:59.550Z
+- commits:
     - subject: Update dawidd6/action-download-artifact digest to 5e780fc
       hash: 9ce16e821b8ec78659629524d5e28460a625423d
       body: |
