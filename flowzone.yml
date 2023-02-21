@@ -1,5 +1,16 @@
 .flowzone:
 
+  - &ifInternalPullRequest
+    # check if the PR is from a fork by comparing the repository name
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+  - &ifExternalPullRequest
+    # check if the PR is from a fork by comparing the repository name
+    if: github.event.pull_request.head.repo.full_name != github.repository
+
+  - &ifPrivateRepository
+    if: github.event.repository.private
+
   - &checkSecrets
     name: Check secrets
     id: check_secrets
@@ -27,6 +38,33 @@
       installation_id: ${{ inputs.installation_id }}
       private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
       permissions: ${{ inputs.token_scope }}
+
+  - &filterGitHubTokens
+    # for external PRs
+    # - untrusted: auto token (rw for internal, ro for external)
+    # - trusted: input token (controlled via inputs)
+    # for internal PRs
+    # - untrusted: input token (controlled via inputs)
+    # - trusted: input token (controlled via inputs)
+    name: Split tokens to trusted/untrusted cases
+    id: gh_token_filter
+    env:
+      # check if the PR is from a fork by comparing the repository name
+      IS_EXTERNAL: "${{ github.event.pull_request.head.repo.full_name != github.repository }}"
+      # auto token can be rw or ro depending on whether the PR is internal or external
+      # https://docs.github.com/en/actions/security-guides/automatic-token-authentication
+      AUTO_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      # input token is provided via inputs, either an ephemeral token or a personal access token
+      INPUT_TOKEN: "${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
+    run: |
+      if [ "${IS_EXTERNAL}" = "true" ]
+      then
+        echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
+        echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
+      else
+        echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
+        echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
+      fi
 
   - &downloadSourceArtifact
     name: Download source artifact
@@ -82,15 +120,6 @@
       submodules: "recursive"
       token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
-  - &ifInternalPullRequest
-    if: github.event.pull_request.head.repo.full_name == github.repository
-
-  - &ifExternalPullRequest
-    if: github.event.pull_request.head.repo.full_name != github.repository
-
-  - &ifPrivateRepository
-    if: github.event.repository.private
-
   - &loginWithDockerHub
     name: Login to Docker Hub
     continue-on-error: true
@@ -107,6 +136,9 @@
     with:
       registry: ghcr.io
       username: ${{ github.actor }}
+      # FIXME: as per GitHub support:
+      # "You cannot authenticate with a GitHub App token on the GitHub Package Registry"
+      # so this will fail for external PRs as the automatic actions token will be read-only
       password: ${{ secrets.GITHUB_TOKEN }}
 
   - &customWorkingDirectory
@@ -1620,6 +1652,7 @@ jobs:
       - *getVersionTag
       - *checkSecrets
       - *getEphemeralToken
+      - *filterGitHubTokens
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2
@@ -1698,14 +1731,18 @@ jobs:
             ${{ env.DOCKER_BAKE_FILE }}
             ${{ steps.meta.outputs.bake-file }}
           targets: ${{ matrix.target }}
+          # inject github token pre-designated for untrusted code
           set: |
             *.platform=${{ matrix.platform }}
+            *.args.GITHUB_TOKEN=${{ steps.gh_token_filter.outputs.untrusted }}
+            *.args.GH_TOKEN=${{ steps.gh_token_filter.outputs.untrusted }}
           load: true
 
       - name: Save image to file
         run: |
           docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ env.IMAGE_TAR }}
 
+      # these secrets are being used in untrusted user code so only allow for internal PRs
       - name: Inject COMPOSE_VARS
         <<: *ifInternalPullRequest
         env:
@@ -1724,11 +1761,22 @@ jobs:
             done < .env
           fi
 
+      # inject github token pre-designated for untrusted code
+      - name: Inject GITHUB_TOKEN
+        run: |
+          if ! grep -q '^GH_TOKEN=' .env
+          then
+            echo "GH_TOKEN=${{ steps.gh_token_filter.outputs.untrusted }}" >> .env
+          fi
+          
+          if ! grep -q '^GITHUB_TOKEN=' .env
+          then
+            echo "GITHUB_TOKEN=${{ steps.gh_token_filter.outputs.untrusted }}" >> .env
+          fi
+
       # run docker compose tests and print the logs from all services
       - name: Run docker compose tests
         if: needs.docker_check.outputs.docker_compose_tests == 'true'
-        # do not use shell tracing to avoid leaking secrets
-        shell: bash
         env:
           DOCKER_BUILDKIT: "1"
           COMPOSE_FILE: docker-compose.override.yml
