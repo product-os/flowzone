@@ -11,43 +11,38 @@
   - &ifPrivateRepository
     if: github.event.repository.private
 
-  - &checkSecrets
-    name: Check secrets
-    id: check_secrets
+  - &checkGitHubAppPrivateKey
+    name: Check for GitHub App private key
+    id: gh_app_private_key
     run: |
-      if [[ -z '${{ secrets.FLOWZONE_TOKEN }}' ]] \
-        && [[ -z '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
-          echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
-          false
-      fi
-
-      if [[ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]]; then
-          echo 'private_key=true' >> $GITHUB_OUTPUT
+      if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+      then
+          echo 'found=true' >> $GITHUB_OUTPUT
       else
-          echo 'private_key=false' >> $GITHUB_OUTPUT
+          echo 'found=false' >> $GITHUB_OUTPUT
       fi
 
-  - &getEphemeralToken
+  - &getGitHubAppInstallationToken
     # https://github.com/marketplace/actions/github-app-token
-    name: Generate token
+    name: Generate GitHub App installation token
     uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # v1.8.0
-    if: steps.check_secrets.outputs.private_key == 'true'
-    id: gh_token
+    if: steps.gh_app_private_key.outputs.found == 'true'
+    id: gh_app_installation_token
     with:
       app_id: ${{ inputs.app_id }}
       installation_id: ${{ inputs.installation_id }}
       private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
       permissions: ${{ inputs.token_scope }}
 
-  - &filterGitHubTokens
+  - &mapGitHubTokens
     # for external PRs
     # - untrusted: auto token (rw for internal, ro for external)
     # - trusted: input token (controlled via inputs)
     # for internal PRs
     # - untrusted: input token (controlled via inputs)
     # - trusted: input token (controlled via inputs)
-    name: Split tokens to trusted/untrusted cases
-    id: gh_token_filter
+    name: Map GitHub tokens to trusted/untrusted
+    id: github_tokens
     env:
       # check if the PR is from a fork by comparing the repository name
       IS_EXTERNAL: "${{ github.event.pull_request.head.repo.full_name != github.repository }}"
@@ -55,7 +50,7 @@
       # https://docs.github.com/en/actions/security-guides/automatic-token-authentication
       AUTO_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
       # input token is provided via inputs, either an ephemeral token or a personal access token
-      INPUT_TOKEN: "${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
+      INPUT_TOKEN: "${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
     run: |
       if [ "${IS_EXTERNAL}" = "true" ]
       then
@@ -109,7 +104,7 @@
       fetch-depth: 0
       submodules: "recursive"
       ref: "refs/pull/${{ github.event.number }}/merge"
-      token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      token: ${{ steps.github_tokens.outputs.trusted || false }}
 
   - &checkoutSha # otherwise use the default checkout behaviour
     name: Checkout sha
@@ -118,7 +113,7 @@
     with:
       fetch-depth: 0
       submodules: "recursive"
-      token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      token: ${{ steps.github_tokens.outputs.trusted || false }}
 
   - &loginWithDockerHub
     name: Login to Docker Hub
@@ -160,7 +155,8 @@
     GH_PAGER: "cat"
     GH_PROMPT_DISABLED: "true"
     GH_REPO: "${{ github.repository }}"
-    GH_TOKEN: "${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
+    # default to automatic actions token
+    GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
   - &rejectExternalWorkflowChanges
     name: Reject external workflow changes
@@ -196,6 +192,8 @@
     run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
     env:
       <<: *gitHubCliEnvironment
+      # elevate this request to a trusted token
+      GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
 
   - &isDraftPullRequest
     # check both the github context (static) and via the gh cli (dynamic)
@@ -628,6 +626,14 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
 
     steps:
+      - name: Check secrets
+        run: |
+          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+            false
+          fi
+
       - name: Convert balena_slugs to json
         id: balena_slugs
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
@@ -718,8 +724,9 @@ jobs:
       semver: ${{ steps.versionist.outputs.semver }}
 
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppInstallationToken
+      - *mapGitHubTokens
       - *checkoutMergeBranch
       - *checkoutSha
 
@@ -747,6 +754,8 @@ jobs:
           npm install -g balena-versionist@0.14.12 versionist@6.9.2
 
       - name: Generate changelog
+        env:
+          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
           then
@@ -765,6 +774,8 @@ jobs:
       # fail the workflow if the error is anything other than "No such file or directory"
       - name: Run versionist
         id: versionist
+        env:
+          GITHUB_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
         run: |
           out="$(balena-versionist 2>&1)"
           error="$(awk '/Error:/{getline; print}' <<< "${out}")"
@@ -846,8 +857,9 @@ jobs:
       semver: ${{ steps.version_tag.outputs.semver }}
 
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppInstallationToken
+      - *mapGitHubTokens
       - *checkoutSha
       - *getVersionTag
 
@@ -1544,15 +1556,16 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppInstallationToken
+      - *mapGitHubTokens
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@b59d8c6a6c5c6c6437954f470d963c0b20ea7415 # v2
         with:
-          github_token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          github_token: ${{ steps.github_tokens.outputs.trusted || false }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
@@ -1591,15 +1604,16 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppInstallationToken
+      - *mapGitHubTokens
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm docs artifact from last run
         uses: dawidd6/action-download-artifact@b59d8c6a6c5c6c6437954f470d963c0b20ea7415 # v2
         with:
-          github_token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          github_token: ${{ steps.github_tokens.outputs.trusted || false }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
@@ -1613,7 +1627,7 @@ jobs:
       - name: Publish generated docs to GitHub Pages
         uses: peaceiris/actions-gh-pages@bd8c6b06eba6b3d25d72b7a1767993c0aeee42e7 # v3
         with:
-          github_token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          github_token: ${{ steps.github_tokens.outputs.trusted || false }}
           publish_dir: docs
           publish_branch: docs
 
@@ -1650,9 +1664,9 @@ jobs:
       - *downloadSourceArtifact
       - *extractSourceArtifact
       - *getVersionTag
-      - *checkSecrets
-      - *getEphemeralToken
-      - *filterGitHubTokens
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppInstallationToken
+      - *mapGitHubTokens
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2
@@ -1734,8 +1748,8 @@ jobs:
           # inject github token pre-designated for untrusted code
           set: |
             *.platform=${{ matrix.platform }}
-            *.args.GITHUB_TOKEN=${{ steps.gh_token_filter.outputs.untrusted }}
-            *.args.GH_TOKEN=${{ steps.gh_token_filter.outputs.untrusted }}
+            *.args.GITHUB_TOKEN=${{ steps.github_tokens.outputs.untrusted || false }}
+            *.args.GH_TOKEN=${{ steps.github_tokens.outputs.untrusted || false }}
           load: true
 
       - name: Save image to file
@@ -1766,12 +1780,12 @@ jobs:
         run: |
           if ! grep -q '^GH_TOKEN=' .env
           then
-            echo "GH_TOKEN=${{ steps.gh_token_filter.outputs.untrusted }}" >> .env
+            echo "GH_TOKEN=${{ steps.github_tokens.outputs.untrusted || false }}" >> .env
           fi
           
           if ! grep -q '^GITHUB_TOKEN=' .env
           then
-            echo "GITHUB_TOKEN=${{ steps.gh_token_filter.outputs.untrusted }}" >> .env
+            echo "GITHUB_TOKEN=${{ steps.github_tokens.outputs.untrusted || false }}" >> .env
           fi
 
       # run docker compose tests and print the logs from all services
@@ -1843,9 +1857,6 @@ jobs:
       LOCAL_TAG: localhost:5000/sut:latest
 
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
-
       - name: Warn if tests skipped
         if: needs.docker_check.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
@@ -1935,8 +1946,6 @@ jobs:
         target: ${{ fromJSON(needs.sanitize_inputs.outputs.bake_targets) }}
 
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
       - *downloadSourceArtifact
       - *extractSourceArtifact
       - *getVersionTag
@@ -2219,8 +2228,9 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppInstallationToken
+      - *mapGitHubTokens
       - *deleteDraftGitHubRelease
 
   github_publish:
@@ -2239,8 +2249,9 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppInstallationToken
+      - *mapGitHubTokens
       - *deleteDraftGitHubRelease
 
       - name: Download all artifacts
@@ -2265,7 +2276,7 @@ jobs:
         if: steps.gh_artifacts.outputs.count != '0'
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
-          token: ${{ steps.gh_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.github_tokens.outputs.trusted || false }}
           name: ${{ github.event.pull_request.head.ref }}
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
@@ -2289,14 +2300,19 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
       - *downloadSourceArtifact
       - *extractSourceArtifact
       - *getVersionTag
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppInstallationToken
+      - *mapGitHubTokens
 
       # https://docs.github.com/en/rest/releases
       - name: Finalize GitHub release (if any)
+        env:
+            <<: *gitHubCliEnvironment
+            # elevate this request to a trusted token
+            GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
         run: |
           set -ea
           # prevent git from existing with 141
@@ -2681,14 +2697,17 @@ jobs:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
 
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppInstallationToken
+      - *mapGitHubTokens
       - *isDraftPullRequest
 
       - name: Get protection rules
         id: get_protection_rules
         env:
           <<: *gitHubCliEnvironment
+          # elevate this request to a trusted token
+          GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
         run: |
           result="$(gh api ${{ env.BRANCH_PROTECTION_URI }} || true)"
           message="$(echo "${result}" | jq -r .message)"
@@ -2707,6 +2726,8 @@ jobs:
         id: parse_prepare_protection_rules
         env:
           <<: *gitHubCliEnvironment
+          # elevate this request to a trusted token
+          GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
           # the regex matching will be case insensitive, so no need to account for that here
           policybot_re: "^policy-?bot"
           resinci_re: "^resinci"
@@ -2826,6 +2847,8 @@ jobs:
           fromJSON(steps.parse_prepare_protection_rules.outputs.old_required_approving_review_count) > fromJSON(inputs.required_approving_review_count)
         env:
           <<: *gitHubCliEnvironment
+          # elevate this request to a trusted token
+          GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
         run: |
           for pr in $(gh pr list --state=open --draft=false --json=number | jq -r '.[].number')
           do
@@ -2840,6 +2863,8 @@ jobs:
           steps.parse_prepare_protection_rules.outputs.result != ''
         env:
           <<: *gitHubCliEnvironment
+          # elevate this request to a trusted token
+          GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
         run: |
           result="$(echo '${{ fromJSON(steps.parse_prepare_protection_rules.outputs.result) }}' \
             | gh api --method PUT ${{ env.BRANCH_PROTECTION_URI }} --input -)"
@@ -2861,10 +2886,10 @@ jobs:
           echo "${result}" >> $GITHUB_OUTPUT
           echo "${DELIMITER}" >> $GITHUB_OUTPUT
 
-      # If auto-merge is enabled at the repository level,
-      # and this PR not a draft
-      # and required reviewers > 1 OR policy-bot is enabled,
-      # then toggle auto-merge to ON for this PR for convenience
+      # # If auto-merge is enabled at the repository level,
+      # # and this PR not a draft
+      # # and required reviewers > 1 OR policy-bot is enabled,
+      # # then toggle auto-merge to ON for this PR for convenience
       # - name: Enable PR auto-merge
       #   if: |
       #     steps.is_draft.outputs.dynamic != 'true' &&
@@ -2872,6 +2897,8 @@ jobs:
       #     steps.parse_prepare_protection_rules.outputs.policy_bot == 'true')
       #   env:
       #     <<: *gitHubCliEnvironment
+      #     # elevate this request to a trusted token
+      #     GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
       #   run: |
       #     if [[ $(gh api '/repos/${{ github.repository }}' | jq -r .allow_auto_merge) =~ true ]]; then
       #       gh pr merge ${{ github.event.pull_request.number }} --merge --auto
@@ -2892,12 +2919,15 @@ jobs:
       needs.is_pr_merged.result == 'success' &&
       inputs.repo_config == true
     steps:
-      - *checkSecrets
-      - *getEphemeralToken
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppInstallationToken
+      - *mapGitHubTokens
 
       - name: Configure repository
         env:
           <<: *gitHubCliEnvironment
+          # elevate this request to a trusted token
+          GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
         run: |
           # only change repository visibility if explicitly set to one of the permissible values
           visibility=''
