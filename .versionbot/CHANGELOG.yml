@@ -1,4 +1,18 @@
 - commits:
+    - subject: Merge github token logic and populate missing references
+      hash: 81b6298940aca759924bd7105b71412d8387bb09
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.10.3
+  title: ""
+  date: 2023-02-21T20:15:05.228Z
+- commits:
     - subject: Inject github tokens to docker build and test
       hash: e97515ee9566db4c3244f831e9ecddcc1d2524c3
       body: |
