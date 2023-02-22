@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix conditional when branch rules have changed
+      hash: c38332151256f658bd824281e71891157c59b9d3
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.11.2
+  title: ""
+  date: 2023-02-22T18:35:46.573Z
+- commits:
     - subject: Use docker secrets to inject GitHub tokens
       hash: a3baeb8ce9c9e728a36a89483f1e7525b23c5bb0
       body: |
