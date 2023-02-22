@@ -1,4 +1,21 @@
 - commits:
+    - subject: Require 3 passing loops of required checks for draft PRs
+      hash: e89c8cc718af94deada0914c4cc5c6cdf7400187
+      body: |
+        This should avoid the race conditions where some required
+        checks haven't populated yet, without adding significant
+        time to drafts that are actually complete.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 1.11.3
+  title: ""
+  date: 2023-02-22T19:28:15.185Z
+- commits:
     - subject: Fix conditional when branch rules have changed
       hash: c38332151256f658bd824281e71891157c59b9d3
       body: ""
