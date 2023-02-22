@@ -1576,10 +1576,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.docker_check.outputs.docker_bake_matrix) }}
-    env:
-      DOCKER_BAKE_FILE: /tmp/docker-bake.json
-      COMPOSE_FILE: docker-compose.yml
-      IMAGE_TAR: /tmp/docker.tar
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -1658,10 +1654,6 @@ jobs:
           then
             echo "platform=$(echo "${raw_platform}" | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_OUTPUT
           fi
-      - name: Write docker bake file
-        run: |
-          echo '${{ needs.docker_check.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
-          jq . "${DOCKER_BAKE_FILE}"
       - name: Generate image labels and sut tags
         id: meta
         uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
@@ -1693,6 +1685,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
         if: github.event.repository.private
+      - name: Write docker bake file
+        run: |
+          echo '${{ needs.docker_check.outputs.docker_bake_json }}' > docker-bake.json
+          jq . docker-bake.json
       - name: Docker bake
         id: docker_bake
         uses: docker/bake-action@6c87dcca988e4e074e3ab1f976a70f63ec9673fb
@@ -1702,7 +1698,7 @@ jobs:
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
-            ${{ env.DOCKER_BAKE_FILE }}
+            docker-bake.json
             ${{ steps.meta.outputs.bake-file }}
           targets: ${{ matrix.target }}
           set: |
@@ -1710,9 +1706,6 @@ jobs:
             *.secrets=id=GITHUB_TOKEN
             *.secrets=id=GH_TOKEN
           load: true
-      - name: Save image to file
-        run: |
-          docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ env.IMAGE_TAR }}
       - name: Inject COMPOSE_VARS
         if: github.event.pull_request.head.repo.full_name == github.repository
         env:
@@ -1770,6 +1763,10 @@ jobs:
           docker compose down --rmi local --volumes
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
           docker compose logs
+      - name: Save image to file
+        run: |
+          docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ runner.temp }}/docker.tar
+          gzip -v ${{ runner.temp }}/docker.tar
       - name: Cleanup docker
         if: always()
         env:
@@ -1781,7 +1778,7 @@ jobs:
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${{ steps.strings.outputs.platform }}
-          path: ${{ env.IMAGE_TAR }}
+          path: ${{ runner.temp }}/docker.tar.gz
           retention-days: 1
   docker_publish:
     name: Publish docker
@@ -1841,6 +1838,12 @@ jobs:
           then
             echo "platform=$(echo "${raw_platform}" | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_OUTPUT
           fi
+      - name: Decompress artifacts
+        run: |
+          for file in ${{ runner.temp }}/*/docker.tar.gz
+          do
+            gzip -vd "${file}"
+          done
       - name: Generate image tags
         id: meta
         uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
