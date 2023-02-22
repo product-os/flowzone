@@ -224,15 +224,20 @@ jobs:
               echo '::info::waiting for required checks to register'
               sleep $(((RANDOM % 5) + 5))
           done
-          sleep $(((RANDOM % 15) + 15))
 
-          while gh pr checks --required \
-            --repo ${{ matrix.repository }} \
-            ${{ steps.cpr.outputs.pull-request-number}} \
-            | grep -vE "${filter_re}" \
-            | grep -E '\s+pending\s+'; do
-              echo '::info::waiting for required checks to complete'
-              sleep $(((RANDOM % 15) + 15))
+          count=0
+          while [ ${count} -lt 3 ]
+          do
+            sleep $(((RANDOM % 15) + 15))
+            while gh pr checks --required \
+              --repo ${{ matrix.repository }} \
+              ${{ steps.cpr.outputs.pull-request-number}} \
+              | grep -vE "${filter_re}" \
+              | grep -E '\s+pending\s+'; do
+                echo '::info::waiting for required checks to complete'
+                sleep $(((RANDOM % 15) + 15))
+            done
+            count=$((count+1))
           done
 
           ! gh pr checks --required \
