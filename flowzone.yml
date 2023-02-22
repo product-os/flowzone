@@ -2785,7 +2785,7 @@ jobs:
             exit 0
           fi
 
-          code="$(diff -Z <(echo ${required_status_checks__contexts} | jq 'sort_by(.)') <(echo ${jsondata} | jq '.required_status_checks.contexts // [] | sort_by(.)') ; echo $?)"
+          code="$(diff -Z <(echo ${required_status_checks__contexts} | jq 'sort_by(.)') <(echo ${jsondata} | jq '.required_status_checks.contexts // [] | sort_by(.)') 1>/dev/null 2>&1; echo $?)"
 
           if [ ${code} -eq 0 ] && [ ${old_required_approving_review_count} -eq ${{ inputs.required_approving_review_count }} ]
           then
