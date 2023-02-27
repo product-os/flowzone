@@ -2580,6 +2580,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          variables: ${{ toJSON(vars) }}
 
   custom_publish:
     name: Publish custom
@@ -2619,6 +2620,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          variables: ${{ toJSON(vars) }}
 
   custom_finalize:
     name: Finalize custom
@@ -2654,6 +2656,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          variables: ${{ toJSON(vars) }}
 
   custom_clean:
     name: Clean custom
@@ -2680,6 +2683,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          variables: ${{ toJSON(vars) }}
 
   custom_always:
     name: Always custom
@@ -2708,6 +2712,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          variables: ${{ toJSON(vars) }}
 
   ###################################################
   ## protect branch
