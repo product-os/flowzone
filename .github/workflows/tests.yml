@@ -37,6 +37,8 @@ jobs:
         aarch64-unknown-linux-gnu
       cloudflare_website: "flowzone"
       bake_targets: default,multiarch
+      docker_runs_on: '["self-hosted", "Linux", "distro:jammy"]'
+      custom_runs_on: '[["ubuntu-22.04"],["ubuntu-20.04"],["self-hosted", "Linux", "distro:jammy"]]'
 
   draft:
     name: "Draft PRs"
@@ -225,7 +227,7 @@ jobs:
               sleep $(((RANDOM % 5) + 5))
           done
 
-          count=0
+          count=1
           while [ ${count} -lt 3 ]
           do
             sleep $(((RANDOM % 15) + 15))

@@ -43,7 +43,8 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`installation_id`](#installation_id)
     - [`token_scope`](#token_scope)
     - [`runs_on`](#runs_on)
-    - [`tests_run_on`](#tests_run_on)
+    - [`custom_runs_on`](#custom_runs_on)
+    - [`docker_runs_on`](#docker_runs_on)
     - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
     - [`working_directory`](#working_directory)
     - [`docker_images`](#docker_images)
@@ -454,19 +455,27 @@ Default:
 
 #### `runs_on`
 
-GitHub actions runner for core jobs (e.g. `["self-hosted"]` for self-hosted runners.)
+JSON-formatted array of runner labels for generic jobs.
 
 Type: _string_
 
-Default: `["ubuntu-latest"]`
+Default: `["ubuntu-22.04"]`
 
-#### `tests_run_on`
+#### `custom_runs_on`
 
-GitHub Actions runner type for tests (e.g. multiple OS platforms, multiple Linux versions, etc.)
+JSON-formatted 2-dimensional matrix of runner labels for custom jobs.
 
 Type: _string_
 
-Default: `["ubuntu-latest"]`
+Default: `[[\"ubuntu-22.04\"]]`
+
+#### `docker_runs_on`
+
+JSON-formatted array of runner labels for docker jobs.
+
+Type: _string_
+
+Default: `["ubuntu-22.04"]`
 
 #### `jobs_timeout_minutes`
 

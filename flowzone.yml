@@ -218,6 +218,33 @@
         echo "static=false" >> $GITHUB_OUTPUT
       fi
 
+  - &isJsonArray
+    name: Check if INPUT is a JSON array
+    id: is_json_array
+    run: |
+      if echo "${INPUT}" | jq 'type == "array"' | grep -q true
+      then
+          echo "result=true" >> $GITHUB_OUTPUT
+      else
+          echo "result=false" >> $GITHUB_OUTPUT
+      fi
+
+  - &jsonArrayBuilder
+    name: Build JSON array from comma-separated list
+    id: to_json_array
+    uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+    with:
+      cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+      separator: ","
+
+  - &newlineListBuilder
+    name: Build newline-separated list from JSON array
+    run: |
+      build="$(echo "${{ join(fromJSON(env.INPUT),' ') }}" | tr " " "\n")"
+      echo "build<<EOF" >> $GITHUB_OUTPUT
+      echo "${build}" >> $GITHUB_OUTPUT
+      echo "EOF" >> $GITHUB_OUTPUT
+
 name: Flowzone
 
 on:
@@ -317,11 +344,6 @@ on:
             "statuses": "read",
             "workflows": "read"
           }
-      runs_on:
-        description: "GitHub Actions runner type."
-        type: string
-        required: false
-        default: '["ubuntu-22.04"]'
       jobs_timeout_minutes:
         description: "Timeout for the job(s)."
         type: number
@@ -472,8 +494,23 @@ on:
         type: number
         required: false
         default: 1
+      runs_on:
+        description: "JSON-formatted array of runner labels for generic jobs."
+        type: string
+        required: false
+        default: '["ubuntu-22.04"]'
       tests_run_on:
-        description: GitHub Actions runner type for custom jobs.
+        description: "Deprecated, use 'custom_runs_on' input instead."
+        type: string
+        required: false
+        default: ""
+      custom_runs_on:
+        description: "JSON-formatted 2-dimensional matrix of runner labels for custom jobs."
+        type: string
+        required: false
+        default: "[[\"ubuntu-22.04\"]]"
+      docker_runs_on:
+        description: "JSON-formatted array of runner labels for docker jobs."
         type: string
         required: false
         default: '["ubuntu-22.04"]'
@@ -488,7 +525,7 @@ on:
         required: false
         default: true
       github_prerelease:
-        description: "Finalise releases on merge."
+        description: "Finalize releases on merge."
         type: boolean
         required: false
         default: false
@@ -636,76 +673,45 @@ jobs:
             false
           fi
 
-      - name: Convert balena_slugs to json
-        id: balena_slugs
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+      - id: balena_slugs
+        <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.balena_slugs }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
 
-      - name: Convert docker_images to json
-        id: docker_images
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+      - id: docker_images
+        <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.docker_images }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
 
-      - name: Convert bake_targets to json
-        id: bake_targets
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+      - id: bake_targets
+        <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.bake_targets }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
 
-      - name: Convert cargo_targets to json
-        id: cargo_targets
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+      - id: cargo_targets
+        <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.cargo_targets }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
 
-      - name: Convert docker_images to a newline list
-        id: docker_images_crlf
-        run: |
-          build="$(echo "${{ join(fromJSON(steps.docker_images.outputs.build),' ') }}" | tr " " "\n")"
-          echo "build<<EOF" >> $GITHUB_OUTPUT
-          echo "${build}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Convert custom_test_matrix to json
-        id: custom_test_matrix
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+      - id: custom_test_matrix
+        <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_test_matrix }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
 
-      - name: Convert custom_publish_matrix to json
-        id: custom_publish_matrix
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+      - id: custom_publish_matrix
+        <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
 
-      - name: Convert custom_finalize_matrix to json
-        id: custom_finalize_matrix
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
+      - id: custom_finalize_matrix
+        <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
+
+      - id: docker_images_crlf
+        <<: *newlineListBuilder
+        env:
+          INPUT: ${{ steps.docker_images.outputs.build }}
 
   versioned_source:
     name: Versioned source
@@ -1073,7 +1079,17 @@ jobs:
               if .group == {} then del(.group) else . end
             ')"
 
-          matrix="$(jq -cr '.target | to_entries | { include: map(.value.platforms[] as $p | {target: .key, platform: $p})}' <<< "${json}")"
+          matrix="$(jq -cr '.target | 
+            to_entries |
+            { include: map(.value.platforms[] as $p |
+            {target: .key, platform: $p, runs_on: ${{ inputs.docker_runs_on }} })}' <<< "${json}")"
+
+          if [ "${{ contains(inputs.docker_runs_on, 'self-hosted') }}" = "true" ]
+          then
+            matrix="$(jq -cr '.include |= map((select((.platform == "linux/arm64")) | .runs_on += ["linux/arm64"]) // .)' <<< "${matrix}")"
+            matrix="$(jq -cr '.include |= map((select((.platform == "linux/arm/v7")) | .runs_on += ["linux/arm"]) // .)' <<< "${matrix}")"
+            # matrix="$(jq -cr '.include |= map((select((.platform == "linux/amd64")) | .runs_on += ["linux/amd64"]) // .)' <<< "${matrix}")"
+          fi
 
           echo "json=${json}">> $GITHUB_OUTPUT
           echo "matrix=${matrix}">> $GITHUB_OUTPUT
@@ -1639,7 +1655,7 @@ jobs:
 
   docker_test:
     name: Test docker
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.runs_on }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_open
@@ -1686,7 +1702,7 @@ jobs:
       # write docker bake json to file
       - name: Set env vars
         run: |
-          echo "TARGET=$(echo ${{ matrix.TARGET }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
+          echo "TARGET=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
 
           if [ ${{ matrix.target }} != 'default' ]
           then
@@ -1740,6 +1756,7 @@ jobs:
 
       # https://github.com/docker/bake-action
       - name: Docker bake
+        id: docker_bake
         uses: docker/bake-action@6c87dcca988e4e074e3ab1f976a70f63ec9673fb # v2
         env:
           GITHUB_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
@@ -1820,8 +1837,17 @@ jobs:
 
           yq . "${COMPOSE_FILE}"
 
+          docker compose down --rmi local --volumes
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
           docker compose logs
+
+      - name: Cleanup docker
+        if: always()
+        env:
+          DOCKER_BUILDKIT: "1"
+          COMPOSE_FILE: docker-compose.override.yml
+        run: |
+          docker compose down --rmi local --volumes || true
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
@@ -1898,7 +1924,7 @@ jobs:
       - name: Create manifest
         id: manifest
         run: |
-          target="$(echo ${{ matrix.TARGET }} | sed 's/[^[:alnum:]]/-/g')"
+          target="$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')"
 
           platforms="$(echo '${{ needs.docker_check.outputs.docker_bake_matrix }}' | \
             jq -r '.include[] | select(.target == "${{ matrix.target}}") | .platform' | \
@@ -2527,7 +2553,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_test_matrix) }}
-        os: ${{ fromJSON(inputs.tests_run_on) }}
+        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
 
     steps:
       - *rejectExternalCustomActions
@@ -2566,7 +2592,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_publish_matrix) }}
-        os: ${{ fromJSON(inputs.tests_run_on) }}
+        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
 
     steps:
       - *rejectExternalCustomActions
@@ -2601,7 +2627,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_finalize_matrix) }}
-        os: ${{ fromJSON(inputs.tests_run_on) }}
+        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
 
     steps:
       - *rejectExternalCustomActions
@@ -2624,7 +2650,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: ${{ fromJSON(inputs.tests_run_on) }}
+        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_closed
@@ -2650,7 +2676,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: ${{ fromJSON(inputs.tests_run_on) }}
+        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - custom_test
