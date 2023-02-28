@@ -1,4 +1,18 @@
 - commits:
+    - subject: Use self-hosted runners for docker builds
+      hash: db71283be1d7cf2eac4e335bf94c120295d46000
+      body: ""
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.0.0
+  title: ""
+  date: 2023-02-28T19:55:48.565Z
+- commits:
     - subject: Require 3 passing loops of required checks for draft PRs
       hash: e89c8cc718af94deada0914c4cc5c6cdf7400187
       body: |
