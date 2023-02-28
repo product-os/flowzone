@@ -505,26 +505,32 @@ on:
         type: number
         required: false
         default: 1
-      runs_on:
-        description: "JSON-formatted array of runner labels for generic jobs."
-        type: string
-        required: false
-        default: '["ubuntu-22.04"]'
       tests_run_on:
         description: "Deprecated, use 'custom_runs_on' input instead."
         type: string
         required: false
         default: ""
+      runs_on:
+        description: "JSON array of runner label strings for generic jobs."
+        type: string
+        required: false
+        default: >
+          [
+            "ubuntu-22.04"
+          ]
       custom_runs_on:
-        description: "JSON-formatted 2-dimensional matrix of runner labels for custom jobs."
+        description: "JSON 2-dimensional matrix of runner label strings for custom jobs."
         type: string
         required: false
-        default: "[[\"ubuntu-22.04\"]]"
+        default: >
+          [
+            ["ubuntu-22.04"]
+          ]
       docker_runs_on:
-        description: "JSON-formatted array of runner labels for docker jobs."
+        description: "JSON key-value pairs mapping platforms to arrays of runner labels. Unlisted platforms will use `runs_on`."
         type: string
         required: false
-        default: '["ubuntu-22.04"]'
+        default: "{}"
       cloudflare_website:
         description: "Setting this to your existing CF pages project name will generate and deploy a website. Skipped if empty."
         type: string
@@ -1068,6 +1074,8 @@ jobs:
           steps.docker_compose_tests.outputs.found == 'true'
         env:
           BAKE_FILE: /tmp/docker-bake.json
+          RUNS_ON: "${{ inputs.runs_on }}"
+          DOCKER_RUNS_ON: "${{ inputs.docker_runs_on }}"
         run: |
           if [ -n "$(ls docker-bake{.override,}.{json,hcl} 2>/dev/null)" ]
           then
@@ -1090,17 +1098,14 @@ jobs:
               if .group == {} then del(.group) else . end
             ')"
 
-          matrix="$(jq -cr '.target | 
-            to_entries |
-            { include: map(.value.platforms[] as $p |
-            {target: .key, platform: $p, runs_on: ${{ inputs.docker_runs_on }} })}' <<< "${json}")"
+          matrix="$(jq -cr '.target | to_entries |
+            {include: map(.value.platforms[] as $p |
+            {target: .key, platform: $p}
+          )}' <<< "${json}")"
 
-          if [ "${{ contains(inputs.docker_runs_on, 'self-hosted') }}" = "true" ]
-          then
-            matrix="$(jq -cr '.include |= map((select((.platform == "linux/arm64")) | .runs_on += ["linux/arm64"]) // .)' <<< "${matrix}")"
-            matrix="$(jq -cr '.include |= map((select((.platform == "linux/arm/v7")) | .runs_on += ["linux/arm"]) // .)' <<< "${matrix}")"
-            # matrix="$(jq -cr '.include |= map((select((.platform == "linux/amd64")) | .runs_on += ["linux/amd64"]) // .)' <<< "${matrix}")"
-          fi
+          matrix="$(jq -cr --argjson in "$DOCKER_RUNS_ON" --argjson default "$RUNS_ON" '.include |=
+            map(.platform as $p |
+            .runs_on = if ($in | has($p)) then $in[$p] else $default end)' <<< "${matrix}")"
 
           echo "json=${json}">> $GITHUB_OUTPUT
           echo "matrix=${matrix}">> $GITHUB_OUTPUT
