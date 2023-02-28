@@ -94,6 +94,17 @@
       fleet: ${{ matrix.slug }}
       versionbot: false # disable the included versionbot branch checkout
       source: ${{ inputs.working_directory }}
+      registry_secrets: |
+        {
+          "ghcr.io": {
+            "username": "${{ github.actor }}",
+            "password": "${{ secrets.GITHUB_TOKEN }}"
+          },
+          "docker.io": {
+            "username": "${{ secrets.DOCKERHUB_USER }}",
+            "password": "${{ secrets.DOCKERHUB_TOKEN }}"
+          }
+        }
 
   - &checkoutMergeBranch
     # for pull_request_target events that are not closed we need to specify the merge branch manually
@@ -1806,7 +1817,7 @@ jobs:
           then
             echo "GH_TOKEN=${GH_TOKEN}" >> .env
           fi
-          
+
           if ! grep -q '^GITHUB_TOKEN=' .env
           then
             echo "GITHUB_TOKEN=${GITHUB_TOKEN}" >> .env

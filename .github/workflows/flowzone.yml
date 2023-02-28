@@ -2007,6 +2007,17 @@ jobs:
           fleet: ${{ matrix.slug }}
           versionbot: false
           source: ${{ inputs.working_directory }}
+          registry_secrets: |
+            {
+              "ghcr.io": {
+                "username": "${{ github.actor }}",
+                "password": "${{ secrets.GITHUB_TOKEN }}"
+              },
+              "docker.io": {
+                "username": "${{ secrets.DOCKERHUB_USER }}",
+                "password": "${{ secrets.DOCKERHUB_TOKEN }}"
+              }
+            }
   balena_finalize:
     name: Finalize balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -2045,6 +2056,17 @@ jobs:
           fleet: ${{ matrix.slug }}
           versionbot: false
           source: ${{ inputs.working_directory }}
+          registry_secrets: |
+            {
+              "ghcr.io": {
+                "username": "${{ github.actor }}",
+                "password": "${{ secrets.GITHUB_TOKEN }}"
+              },
+              "docker.io": {
+                "username": "${{ secrets.DOCKERHUB_USER }}",
+                "password": "${{ secrets.DOCKERHUB_TOKEN }}"
+              }
+            }
   python_test:
     name: Test python poetry
     runs-on: ${{ fromJSON(inputs.runs_on) }}
