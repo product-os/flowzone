@@ -2657,6 +2657,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          variables: ${{ toJSON(vars) }}
   custom_publish:
     name: Publish custom
     runs-on: ${{ matrix.os }}
@@ -2705,6 +2706,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          variables: ${{ toJSON(vars) }}
   custom_finalize:
     name: Finalize custom
     runs-on: ${{ matrix.os }}
@@ -2749,6 +2751,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          variables: ${{ toJSON(vars) }}
   custom_clean:
     name: Clean custom
     runs-on: ${{ matrix.os }}
@@ -2786,6 +2789,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          variables: ${{ toJSON(vars) }}
   custom_always:
     name: Always custom
     runs-on: ${{ matrix.os }}
@@ -2825,6 +2829,7 @@ jobs:
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
+          variables: ${{ toJSON(vars) }}
   protect_branch:
     name: Protect branch
     runs-on: ${{ fromJSON(inputs.runs_on) }}
