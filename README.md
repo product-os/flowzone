@@ -455,7 +455,7 @@ Default:
 
 #### `runs_on`
 
-JSON-formatted array of runner labels for generic jobs.
+JSON array of runner label strings for generic jobs.
 
 Type: _string_
 
@@ -463,19 +463,19 @@ Default: `["ubuntu-22.04"]`
 
 #### `custom_runs_on`
 
-JSON-formatted 2-dimensional matrix of runner labels for custom jobs.
+JSON 2-dimensional matrix of runner label strings for custom jobs.
 
 Type: _string_
 
-Default: `[[\"ubuntu-22.04\"]]`
+Default: `[["ubuntu-22.04"]]`
 
 #### `docker_runs_on`
 
-JSON-formatted array of runner labels for docker jobs.
+JSON key-value pairs mapping platforms to arrays of runner labels. Unlisted platforms will use `runs_on`.
 
 Type: _string_
 
-Default: `["ubuntu-22.04"]`
+Default: `{}`
 
 #### `jobs_timeout_minutes`
 
