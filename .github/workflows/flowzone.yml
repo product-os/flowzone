@@ -1639,17 +1639,27 @@ jobs:
         with:
           driver-opts: network=host
           install: true
-      - name: Set env vars
+      - name: Sanitize target strings
+        id: strings
+        env:
+          raw_target: ${{ matrix.target }}
+          raw_platform: ${{ matrix.platform }}
         run: |
-          echo "TARGET=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
+          target="$(echo "${raw_target}" | sed 's/[^[:alnum:]]/-/g')"
+          echo "target=${target}" >> $GITHUB_OUTPUT
 
-          if [ ${{ matrix.target }} != 'default' ]
+          if [ "${target}" != 'default' ]
           then
-            echo "PREFIX=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')-" >> $GITHUB_ENV
+            echo "prefix=${target}-" >> $GITHUB_OUTPUT
+            echo "suffix=-${target}" >> $GITHUB_OUTPUT
           fi
 
-          echo "PLATFORM=$(echo ${{ matrix.platform }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
-
+          if [ -n "${raw_platform}" ]
+          then
+            echo "platform=$(echo "${raw_platform}" | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_OUTPUT
+          fi
+      - name: Write docker bake file
+        run: |
           echo '${{ needs.docker_check.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
           jq . "${DOCKER_BAKE_FILE}"
       - name: Generate image labels and sut tags
@@ -1662,8 +1672,8 @@ jobs:
             ${{ needs.sanitize_inputs.outputs.docker_images_crlf }}
             ${{ github.repository }}
           tags: |
-            type=raw,value=${{ matrix.target }}
-            type=raw,value=${{ matrix.platform }}
+            type=raw,value=${{ steps.strings.outputs.target }}
+            type=raw,value=${{ steps.strings.outputs.platform }}
           labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=true
@@ -1770,7 +1780,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
-          name: docker-${{ github.event.pull_request.head.sha }}-${{ env.TARGET }}-${{ env.PLATFORM }}
+          name: docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${{ steps.strings.outputs.platform }}
           path: ${{ env.IMAGE_TAR }}
           retention-days: 1
   docker_publish:
@@ -1812,11 +1822,24 @@ jobs:
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
           path: ${{ runner.temp }}
-      - name: Set env vars
+      - name: Sanitize target strings
+        id: strings
+        env:
+          raw_target: ${{ matrix.target }}
+          raw_platform: ${{ matrix.platform }}
         run: |
-          if [ ${{ matrix.target }} != 'default' ]
+          target="$(echo "${raw_target}" | sed 's/[^[:alnum:]]/-/g')"
+          echo "target=${target}" >> $GITHUB_OUTPUT
+
+          if [ "${target}" != 'default' ]
           then
-            echo "PREFIX=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')-" >> $GITHUB_ENV
+            echo "prefix=${target}-" >> $GITHUB_OUTPUT
+            echo "suffix=-${target}" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -n "${raw_platform}" ]
+          then
+            echo "platform=$(echo "${raw_platform}" | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_OUTPUT
           fi
       - name: Generate image tags
         id: meta
@@ -1829,19 +1852,17 @@ jobs:
             type=raw,value=build-${{ github.event.pull_request.head.ref }}
           flavor: |
             latest=false
-            prefix=${{ env.PREFIX }}
+            prefix=${{ steps.strings.outputs.prefix }}
       - name: Create manifest
         id: manifest
         run: |
-          target="$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')"
-
           platforms="$(echo '${{ needs.docker_check.outputs.docker_bake_matrix }}' | \
             jq -r '.include[] | select(.target == "${{ matrix.target}}") | .platform' | \
             sed 's/[^[:alnum:]]/-/g')"
 
           for platform in ${platforms}
           do
-            tar=${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${target}-${platform}/docker.tar
+            tar=${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${platform}/docker.tar
             platform_tag="localhost:5000/sut:${platform}"
 
             loaded="$(docker load -i "${tar}" | grep '^Loaded image:' | awk '{print $NF}')"
@@ -1914,11 +1935,24 @@ jobs:
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
           echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
-      - name: Set env vars
+      - name: Sanitize target strings
+        id: strings
+        env:
+          raw_target: ${{ matrix.target }}
+          raw_platform: ${{ matrix.platform }}
         run: |
-          if [ ${{ matrix.target }} != 'default' ]
+          target="$(echo "${raw_target}" | sed 's/[^[:alnum:]]/-/g')"
+          echo "target=${target}" >> $GITHUB_OUTPUT
+
+          if [ "${target}" != 'default' ]
           then
-            echo "PREFIX=${{ matrix.target }}-" >> $GITHUB_ENV
+            echo "prefix=${target}-" >> $GITHUB_OUTPUT
+            echo "suffix=-${target}" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -n "${raw_platform}" ]
+          then
+            echo "platform=$(echo "${raw_platform}" | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_OUTPUT
           fi
       - name: Generate image tags
         id: meta
@@ -1932,7 +1966,7 @@ jobs:
             type=raw,value=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=${{ steps.version_tag.outputs.semver != '' }}
-            prefix=${{ env.PREFIX }},onlatest=true
+            prefix=${{ steps.strings.outputs.prefix }},onlatest=true
       - name: Login to GitHub Container Registry
         continue-on-error: true
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
@@ -1950,7 +1984,7 @@ jobs:
       - name: Publish final tags
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
         with:
-          src: ${{ matrix.image }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          src: ${{ matrix.image }}:${{ steps.strings.outputs.prefix }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           dst: |
             ${{ steps.meta.outputs.tags }}
       - name: Strip docker.io prefix
