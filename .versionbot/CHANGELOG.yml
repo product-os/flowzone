@@ -1,4 +1,28 @@
 - commits:
+    - subject: Remove handbook from e2e tests
+      hash: 80acc2bd41d29b17f6e333eb3f4f59ef1936a9e7
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Refactor generation of sanitized docker strings
+      hash: cfda1454e188877b23f13a1a1b82f3b3aaaabffa
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.3.1
+  title: ""
+  date: 2023-03-06T17:38:15.637Z
+- commits:
     - subject: "chore(deps): update peter-evans/dockerhub-description digest to 79b6345"
       hash: 6e316d16131b02db2800dad5d591cd6024d1fd48
       body: |
