@@ -256,6 +256,28 @@
       echo "${build}" >> $GITHUB_OUTPUT
       echo "EOF" >> $GITHUB_OUTPUT
 
+  - &sanitizeTargetStrings
+    name: Sanitize target strings
+    id: strings
+    env:
+      raw_target: ${{ matrix.target }}
+      raw_platform: ${{ matrix.platform }}
+    run: |
+      target="$(echo "${raw_target}" | sed 's/[^[:alnum:]]/-/g')"
+      echo "target=${target}" >> $GITHUB_OUTPUT
+
+      if [ "${target}" != 'default' ]
+      then
+        echo "prefix=${target}-" >> $GITHUB_OUTPUT
+        echo "suffix=-${target}" >> $GITHUB_OUTPUT
+      fi
+
+      if [ -n "${raw_platform}" ]
+      then
+        echo "platform=$(echo "${raw_platform}" | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_OUTPUT
+      fi
+
+
 name: Flowzone
 
 on:
@@ -1711,22 +1733,10 @@ jobs:
           driver-opts: network=host
           install: true
 
-      # set env var TARGET that is just a sanitized matrix.target
-      # set env var PREFIX if target is not 'default'
-      # set env var PLATFORM that is just a sanitized matrix.platform
-      # write compose yaml to file and set platform={{matrix.platform}} on any services with the 'build' directive
-      # write docker bake json to file
-      - name: Set env vars
+      - *sanitizeTargetStrings
+
+      - name: Write docker bake file
         run: |
-          echo "TARGET=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
-
-          if [ ${{ matrix.target }} != 'default' ]
-          then
-            echo "PREFIX=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')-" >> $GITHUB_ENV
-          fi
-
-          echo "PLATFORM=$(echo ${{ matrix.platform }} | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_ENV
-
           echo '${{ needs.docker_check.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
           jq . "${DOCKER_BAKE_FILE}"
 
@@ -1755,8 +1765,8 @@ jobs:
             ${{ needs.sanitize_inputs.outputs.docker_images_crlf }}
             ${{ github.repository }}
           tags: |
-            type=raw,value=${{ matrix.target }}
-            type=raw,value=${{ matrix.platform }}
+            type=raw,value=${{ steps.strings.outputs.target }}
+            type=raw,value=${{ steps.strings.outputs.platform }}
           labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=true
@@ -1869,7 +1879,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
-          name: docker-${{ github.event.pull_request.head.sha }}-${{ env.TARGET }}-${{ env.PLATFORM }}
+          name: docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${{ steps.strings.outputs.platform }}
           path: ${{ env.IMAGE_TAR }}
           retention-days: 1
 
@@ -1916,12 +1926,7 @@ jobs:
         with:
           path: ${{ runner.temp }}
 
-      - name: Set env vars
-        run: |
-          if [ ${{ matrix.target }} != 'default' ]
-          then
-            echo "PREFIX=$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')-" >> $GITHUB_ENV
-          fi
+      - *sanitizeTargetStrings
 
       # https://github.com/docker/metadata-action
       - name: Generate image tags
@@ -1935,20 +1940,18 @@ jobs:
             type=raw,value=build-${{ github.event.pull_request.head.ref }}
           flavor: |
             latest=false
-            prefix=${{ env.PREFIX }}
+            prefix=${{ steps.strings.outputs.prefix }}
 
       - name: Create manifest
         id: manifest
         run: |
-          target="$(echo ${{ matrix.target }} | sed 's/[^[:alnum:]]/-/g')"
-
           platforms="$(echo '${{ needs.docker_check.outputs.docker_bake_matrix }}' | \
             jq -r '.include[] | select(.target == "${{ matrix.target}}") | .platform' | \
             sed 's/[^[:alnum:]]/-/g')"
 
           for platform in ${platforms}
           do
-            tar=${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${target}-${platform}/docker.tar
+            tar=${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${platform}/docker.tar
             platform_tag="localhost:5000/sut:${platform}"
 
             loaded="$(docker load -i "${tar}" | grep '^Loaded image:' | awk '{print $NF}')"
@@ -2000,12 +2003,7 @@ jobs:
       - *extractSourceArtifact
       - *getVersionTag
 
-      - name: Set env vars
-        run: |
-          if [ ${{ matrix.target }} != 'default' ]
-          then
-            echo "PREFIX=${{ matrix.target }}-" >> $GITHUB_ENV
-          fi
+      - *sanitizeTargetStrings
 
       # for unversioned merges we will use the base branch as the tag
       # and version tag and semver will be empty
@@ -2022,7 +2020,7 @@ jobs:
             type=raw,value=${{ steps.version_tag.outputs.semver }}
           flavor: |
             latest=${{ steps.version_tag.outputs.semver != '' }}
-            prefix=${{ env.PREFIX }},onlatest=true
+            prefix=${{ steps.strings.outputs.prefix }},onlatest=true
 
       - *loginWithGitHubContainerRegistry
       - *loginWithDockerHub
@@ -2031,7 +2029,7 @@ jobs:
       - name: Publish final tags
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37 # v2.1.0
         with:
-          src: ${{ matrix.image }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          src: ${{ matrix.image }}:${{ steps.strings.outputs.prefix }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           dst: |
             ${{ steps.meta.outputs.tags }}
 
