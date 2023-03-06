@@ -1998,7 +1998,7 @@ jobs:
       - name: Update DockerHub Description
         if: steps.dockerhub.outputs.repository != '' && github.base_ref == github.event.repository.default_branch
         continue-on-error: true
-        uses: peter-evans/dockerhub-description@79b63455c04d4412f475a17a67ccf57919bd3590
+        uses: peter-evans/dockerhub-description@202973a37c8a723405c0c5f0a71b6d99db470dae
         with:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
