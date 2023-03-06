@@ -81,7 +81,6 @@ jobs:
             balena-io/environment-staging,
             balena-os/balena-engine,
             balena-os/fatrw,
-            balenaltd/handbook,
             product-os/environment-staging,
           ]
         include:
@@ -110,8 +109,6 @@ jobs:
             repository: balena-os/balena-engine
           - installation_id: 34046907
             repository: balena-os/fatrw
-          - installation_id: 34046911
-            repository: balenaltd/handbook
           # (e.g. https://github.com/organizations/product-os/settings/installations/34040165)
           - installation_id: 34040165
             repository: product-os/environment-staging
