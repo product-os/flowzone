@@ -1,4 +1,18 @@
 - commits:
+    - subject: Compress docker artifacts before uploading
+      hash: 88db3915a8a0c844644b89a5cf07e02ada6e830e
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.4.1
+  title: ""
+  date: 2023-03-07T21:06:51.563Z
+- commits:
     - subject: "chore(deps): update peter-evans/dockerhub-description digest to 202973a"
       hash: 3bb9d431d27867a716132768eee697265b373b6b
       body: |
