@@ -1711,11 +1711,6 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.docker_check.outputs.docker_bake_matrix) }}
 
-    env:
-      DOCKER_BAKE_FILE: /tmp/docker-bake.json
-      COMPOSE_FILE: docker-compose.yml
-      IMAGE_TAR: /tmp/docker.tar
-
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
@@ -1734,11 +1729,6 @@ jobs:
           install: true
 
       - *sanitizeTargetStrings
-
-      - name: Write docker bake file
-        run: |
-          echo '${{ needs.docker_check.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
-          jq . "${DOCKER_BAKE_FILE}"
 
       # https://github.com/docker/metadata-action
       # generate a bunch of useful tags that can be referenced in docker-compose.test.yml
@@ -1780,6 +1770,11 @@ jobs:
           - *loginWithDockerHub
           - *ifPrivateRepository
 
+      - name: Write docker bake file
+        run: |
+          echo '${{ needs.docker_check.outputs.docker_bake_json }}' > docker-bake.json
+          jq . docker-bake.json
+
       # https://github.com/docker/bake-action
       - name: Docker bake
         id: docker_bake
@@ -1790,7 +1785,7 @@ jobs:
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
-            ${{ env.DOCKER_BAKE_FILE }}
+            docker-bake.json
             ${{ steps.meta.outputs.bake-file }}
           targets: ${{ matrix.target }}
           set: |
@@ -1798,10 +1793,6 @@ jobs:
             *.secrets=id=GITHUB_TOKEN
             *.secrets=id=GH_TOKEN
           load: true
-
-      - name: Save image to file
-        run: |
-          docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ env.IMAGE_TAR }}
 
       # these secrets are being used in untrusted user code so only allow for internal PRs
       - name: Inject COMPOSE_VARS
@@ -1867,6 +1858,11 @@ jobs:
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
           docker compose logs
 
+      - name: Save image to file
+        run: |
+          docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ runner.temp }}/docker.tar
+          gzip -v ${{ runner.temp }}/docker.tar
+
       - name: Cleanup docker
         if: always()
         env:
@@ -1880,7 +1876,7 @@ jobs:
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           name: docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${{ steps.strings.outputs.platform }}
-          path: ${{ env.IMAGE_TAR }}
+          path: ${{ runner.temp }}/docker.tar.gz
           retention-days: 1
 
   docker_publish:
@@ -1927,6 +1923,13 @@ jobs:
           path: ${{ runner.temp }}
 
       - *sanitizeTargetStrings
+
+      - name: Decompress artifacts
+        run: |
+          for file in ${{ runner.temp }}/*/docker.tar.gz
+          do
+            gzip -vd "${file}"
+          done
 
       # https://github.com/docker/metadata-action
       - name: Generate image tags
