@@ -2052,6 +2052,7 @@ jobs:
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - uses: balena-io/deploy-to-balena-action@master
+        id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
           environment: ${{ inputs.balena_environment }}
@@ -2069,6 +2070,33 @@ jobs:
                 "password": "${{ secrets.DOCKERHUB_TOKEN }}"
               }
             }
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          set -ea
+          # prevent git from existing with 141
+          set +o pipefail
+          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n2 | tail -n1)"
+          release_notes_file="$(mktemp)"
+          git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes_file}"
+          echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
+      - name: Update balena release notes
+        run: |
+          set -ea
+          release_notes="$(cat < '${{ steps.release_notes.outputs.file }}' | jq -R -s .)"
+          app_id="$(curl --silent --retry 3 --fail \
+            "https://api.${{ inputs.balena_environment }}/v6/application?\$filter=slug%20eq%20%27${{ matrix.slug }}%27&\$select=id" \
+            -H 'Content-Type: application/json' \
+            -H 'Authorization: Bearer ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}' \
+            | jq -r '.d[].id')"
+          release_id='${{ steps.balena_deploy.outputs.release_id }}'
+          if [[ -n $release_notes ]] && [[ -n $app_id ]] && [[ -n $release_id ]]; then
+              curl --silent --retry 3 --fail \
+                -X PATCH "https://api.${{ inputs.balena_environment }}/v6/release?\$filter=belongs_to__application%20eq%20${app_id}%20and%20id%20eq%20${release_id}" \
+                -H 'Content-Type: application/json' \
+                -H 'Authorization: Bearer ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}' \
+                -d "{\"note\":${release_notes}}"
+          fi
   balena_finalize:
     name: Finalize balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -2101,6 +2129,7 @@ jobs:
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - uses: balena-io/deploy-to-balena-action@master
+        id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
           environment: ${{ inputs.balena_environment }}
@@ -2118,6 +2147,33 @@ jobs:
                 "password": "${{ secrets.DOCKERHUB_TOKEN }}"
               }
             }
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          set -ea
+          # prevent git from existing with 141
+          set +o pipefail
+          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n2 | tail -n1)"
+          release_notes_file="$(mktemp)"
+          git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes_file}"
+          echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
+      - name: Update balena release notes
+        run: |
+          set -ea
+          release_notes="$(cat < '${{ steps.release_notes.outputs.file }}' | jq -R -s .)"
+          app_id="$(curl --silent --retry 3 --fail \
+            "https://api.${{ inputs.balena_environment }}/v6/application?\$filter=slug%20eq%20%27${{ matrix.slug }}%27&\$select=id" \
+            -H 'Content-Type: application/json' \
+            -H 'Authorization: Bearer ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}' \
+            | jq -r '.d[].id')"
+          release_id='${{ steps.balena_deploy.outputs.release_id }}'
+          if [[ -n $release_notes ]] && [[ -n $app_id ]] && [[ -n $release_id ]]; then
+              curl --silent --retry 3 --fail \
+                -X PATCH "https://api.${{ inputs.balena_environment }}/v6/release?\$filter=belongs_to__application%20eq%20${app_id}%20and%20id%20eq%20${release_id}" \
+                -H 'Content-Type: application/json' \
+                -H 'Authorization: Bearer ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}' \
+                -d "{\"note\":${release_notes}}"
+          fi
   python_test:
     name: Test python poetry
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -2471,6 +2527,16 @@ jobs:
             echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
             echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
           fi
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          set -ea
+          # prevent git from existing with 141
+          set +o pipefail
+          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n2 | tail -n1)"
+          release_notes_file="$(mktemp)"
+          git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes_file}"
+          echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
       - name: Finalize GitHub release (if any)
         env:
           GH_DEBUG: "true"
@@ -2480,16 +2546,10 @@ jobs:
           GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
         run: |
           set -ea
-          # prevent git from existing with 141
-          set +o pipefail
-          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n2 | tail -n1)"
-          release_notes="$(mktemp)"
-
-          git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes}"
 
           if gh release view '${{ github.event.pull_request.head.ref }}'; then
             gh release edit '${{ github.event.pull_request.head.ref }}' \
-              --notes-file "${release_notes}" \
+              --notes-file '${{ steps.release_notes.outputs.file }}' \
               --title '${{ steps.version_tag.outputs.tag }}' \
               --tag '${{ steps.version_tag.outputs.tag }}' \
               --prerelease='${{ inputs.github_prerelease }}' \
