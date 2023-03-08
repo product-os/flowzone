@@ -283,6 +283,7 @@
 
   - &newlineListBuilder
     name: Build newline-separated list from JSON array
+    id: to_newline_list
     run: |
       build="$(echo "${{ join(fromJSON(env.INPUT),' ') }}" | tr " " "\n")"
       echo "build<<EOF" >> $GITHUB_OUTPUT
@@ -749,10 +750,7 @@ jobs:
 
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
-      docker_images: ${{ steps.docker_images.outputs.build }}
-      bake_targets: ${{ steps.bake_targets.outputs.build }}
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
-      docker_images_crlf: ${{ steps.docker_images_crlf.outputs.build }}
 
       custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
@@ -763,16 +761,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.balena_slugs }}
-
-      - id: docker_images
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.docker_images }}
-
-      - id: bake_targets
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.bake_targets }}
 
       - id: cargo_targets
         <<: *jsonArrayBuilder
@@ -793,11 +781,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
-
-      - id: docker_images_crlf
-        <<: *newlineListBuilder
-        env:
-          INPUT: ${{ steps.docker_images.outputs.build }}
 
   versioned_source:
     name: Versioned source
@@ -1098,7 +1081,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
@@ -1108,13 +1090,31 @@ jobs:
     <<: *customWorkingDirectory
 
     outputs:
+      docker_images: ${{ steps.docker_images_json.outputs.build }}
+      docker_images_crlf: ${{ steps.docker_images_crlf.outputs.build }}
       docker_compose_tests: ${{ steps.docker_compose_tests.outputs.found }}
+      bake_targets: ${{ steps.bake_targets_json.outputs.build }}
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
       docker_bake_matrix: ${{ steps.docker_bake.outputs.matrix }}
 
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
+
+      - id: docker_images_json
+        <<: *jsonArrayBuilder
+        env:
+          INPUT: ${{ inputs.docker_images }}
+
+      - id: docker_images_crlf
+        <<: *newlineListBuilder
+        env:
+          INPUT: ${{ steps.docker_images_json.outputs.build }}
+
+      - id: bake_targets_json
+        <<: *jsonArrayBuilder
+        env:
+          INPUT: ${{ inputs.bake_targets }}
 
       - name: Check for docker compose test files
         id: docker_compose_tests
@@ -1139,7 +1139,7 @@ jobs:
       - name: Pre-process Docker bake files
         id: docker_bake
         if: |
-          join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != '' ||
+          join(fromJSON(steps.docker_images_json.outputs.build)) != '' ||
           steps.docker_compose_tests.outputs.found == 'true'
         env:
           BAKE_FILE: /tmp/docker-bake.json
@@ -1150,14 +1150,14 @@ jobs:
           then
             files="$(echo $(ls -1 docker-bake{.override,}.{json,hcl} 2>/dev/null) | sed 's/ / -f /')"
           else
-            echo '${{ needs.sanitize_inputs.outputs.bake_targets }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
+            echo '${{ steps.bake_targets_json.outputs.build }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
             files="${BAKE_FILE}"
           fi
 
           # log merged files and targets
-          docker buildx bake --print ${{ join(fromJSON(needs.sanitize_inputs.outputs.bake_targets),' ') }} -f ${files}
+          docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.build),' ') }} -f ${files}
 
-          json="$(docker buildx bake --print ${{ join(fromJSON(needs.sanitize_inputs.outputs.bake_targets),' ') }} -f ${files} \
+          json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.build),' ') }} -f ${files} \
             | jq -cr '
               .target |= map_values(."inherits" += ["docker-metadata-action"]) |
               .target |= map_values(."cache-to" //= ["type=gha"]) |
@@ -1745,7 +1745,6 @@ jobs:
     needs:
       - is_pr_open
       - docker_check
-      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.docker_check.result == 'success' &&
@@ -1799,7 +1798,7 @@ jobs:
           images: |
             sut
             localhost:5000/sut
-            ${{ needs.sanitize_inputs.outputs.docker_images_crlf }}
+            ${{ needs.docker_check.outputs.docker_images_crlf }}
             ${{ github.repository }}
           tags: |
             type=raw,value=${{ steps.strings.outputs.target }}
@@ -1932,7 +1931,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - docker_check
-      - sanitize_inputs
       - npm_test
       - custom_test
       - docker_test
@@ -1941,7 +1939,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
-      join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
+      join(fromJSON(needs.docker_check.outputs.docker_images)) != ''
 
     <<: *rootWorkingDirectory
 
@@ -1954,7 +1952,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.sanitize_inputs.outputs.bake_targets) }}
+        target: ${{ fromJSON(needs.docker_check.outputs.bake_targets) }}
 
     env:
       LOCAL_TAG: localhost:5000/sut:latest
@@ -1984,7 +1982,7 @@ jobs:
         uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
         with:
           images: |
-            ${{ needs.sanitize_inputs.outputs.docker_images_crlf }}
+            ${{ needs.docker_check.outputs.docker_images_crlf }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.sha }}
             type=raw,value=build-${{ github.event.pull_request.head.ref }}
@@ -2018,7 +2016,7 @@ jobs:
       - *loginWithDockerHub
 
       - name: Publish draft tags
-        if: join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
+        if: join(fromJSON(needs.docker_check.outputs.docker_images)) != ''
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37 # v2.1.0
         with:
           src: ${{ env.LOCAL_TAG }}
@@ -2033,20 +2031,19 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - docker_check
-      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.docker_check.result == 'success' &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
-      join(fromJSON(needs.sanitize_inputs.outputs.docker_images)) != ''
+      join(fromJSON(needs.docker_check.outputs.docker_images)) != ''
 
     <<: *rootWorkingDirectory
 
     strategy:
       fail-fast: false
       matrix:
-        image: ${{ fromJSON(needs.sanitize_inputs.outputs.docker_images) }}
-        target: ${{ fromJSON(needs.sanitize_inputs.outputs.bake_targets) }}
+        image: ${{ fromJSON(needs.docker_check.outputs.docker_images) }}
+        target: ${{ fromJSON(needs.docker_check.outputs.bake_targets) }}
 
     steps:
       - *downloadSourceArtifact
