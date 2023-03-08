@@ -702,8 +702,8 @@ jobs:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/source.tgz
           retention-days: 1
-  npm_check:
-    name: Check npm
+  is_npm:
+    name: Is npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -817,8 +817,8 @@ jobs:
           then
             echo "json=${NODE_VERSIONS}" >> $GITHUB_OUTPUT
           fi
-  docker_check:
-    name: Check docker
+  is_docker:
+    name: Is docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -928,8 +928,8 @@ jobs:
 
           echo "json=${json}">> $GITHUB_OUTPUT
           echo "matrix=${matrix}">> $GITHUB_OUTPUT
-  python_check:
-    name: Check python
+  is_python:
+    name: Is python
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1046,8 +1046,8 @@ jobs:
           then
             echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
           fi
-  cargo_check:
-    name: Check rust
+  is_cargo:
+    name: Is rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1092,8 +1092,8 @@ jobs:
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
-  balena_check:
-    name: Check balena
+  is_balena:
+    name: Is balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1138,8 +1138,8 @@ jobs:
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
-  custom_check:
-    name: Check custom
+  is_custom:
+    name: Is custom
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1219,8 +1219,8 @@ jobs:
           then
             echo "always=true" >> $GITHUB_OUTPUT
           fi
-  website_check:
-    name: Check website
+  is_website:
+    name: Is website
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1261,12 +1261,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - npm_check
+      - is_npm
       - is_pr_open
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
-      needs.npm_check.outputs.npm == 'true'
+      needs.is_npm.outputs.npm == 'true'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1274,7 +1274,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node_version: ${{ fromJSON(needs.npm_check.outputs.node_versions) }}
+        node_version: ${{ fromJSON(needs.is_npm.outputs.node_versions) }}
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -1292,14 +1292,14 @@ jobs:
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
       - name: Setup Node.js - Cached
-        if: needs.npm_check.outputs.has_npm_lockfile == 'true'
+        if: needs.is_npm.outputs.has_npm_lockfile == 'true'
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
           cache: npm
       - name: Setup Node.js
-        if: needs.npm_check.outputs.has_npm_lockfile != 'true'
+        if: needs.is_npm.outputs.has_npm_lockfile != 'true'
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
           node-version: ${{ matrix.node_version }}
@@ -1328,7 +1328,7 @@ jobs:
           index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
 
           if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
-              if [ ${{ needs.npm_check.outputs.has_npm_lockfile }} == 'true' ]; then
+              if [ ${{ needs.is_npm.outputs.has_npm_lockfile }} == 'true' ]; then
                 npm ci
               else
                 npm i
@@ -1353,14 +1353,14 @@ jobs:
           path: ${{ runner.temp }}/npm-pack/*.tgz
           retention-days: 90
       - name: Generate docs (if present)
-        if: needs.npm_check.outputs.npm_docs == 'true'
+        if: needs.is_npm.outputs.npm_docs == 'true'
         shell: bash
         run: npm run doc
       - name: Compress docs
-        if: needs.npm_check.outputs.npm_docs == 'true'
+        if: needs.is_npm.outputs.npm_docs == 'true'
         run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
       - name: Upload artifact
-        if: needs.npm_check.outputs.npm_docs == 'true'
+        if: needs.is_npm.outputs.npm_docs == 'true'
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1371,7 +1371,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - npm_check
+      - is_npm
       - npm_test
       - custom_test
       - docker_test
@@ -1380,7 +1380,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
-      needs.npm_check.outputs.npm_private != 'true'
+      needs.is_npm.outputs.npm_private != 'true'
     defaults:
       run:
         working-directory: .
@@ -1390,7 +1390,7 @@ jobs:
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.npm_check.outputs.node_versions)[0] }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
       - name: Setup Node.js
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
@@ -1412,7 +1412,7 @@ jobs:
           if [ ${{ github.run_attempt }} -gt  1 ]; then
             npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$((${{ github.run_attempt }} - 1)) || true
           fi
-          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}" --access="${{ needs.npm_check.outputs.npm_access }}"
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
           npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} ${{ needs.npm_test.outputs.branch_tag }}
   npm_finalize:
     name: Finalize npm
@@ -1421,12 +1421,12 @@ jobs:
     needs:
       - is_pr_merged
       - is_pushed_tag
-      - npm_check
+      - is_npm
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
-      needs.npm_check.outputs.npm == 'true' &&
-      needs.npm_check.outputs.npm_private != 'true'
+      needs.is_npm.outputs.npm == 'true' &&
+      needs.is_npm.outputs.npm_private != 'true'
     defaults:
       run:
         working-directory: .
@@ -1474,7 +1474,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.npm_check.outputs.node_versions)[0] }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
       - name: Setup Node.js
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
@@ -1486,7 +1486,7 @@ jobs:
         run: |
           npm config set ignore-scripts true
           pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
-          npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.npm_check.outputs.npm_access }}"
+          npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
   npm_docs_finalize:
     name: Finalize npm docs
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1494,11 +1494,11 @@ jobs:
     needs:
       - is_pr_merged
       - is_pushed_tag
-      - npm_check
+      - is_npm
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
-      needs.npm_check.outputs.npm_docs == 'true'
+      needs.is_npm.outputs.npm_docs == 'true'
     defaults:
       run:
         working-directory: .
@@ -1546,7 +1546,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.npm_check.outputs.node_versions)[0] }}
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
       - name: Extract docs artifact
         run: |
           docs="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
@@ -1563,19 +1563,19 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_open
-      - docker_check
+      - is_docker
     if: |
       !failure() && !cancelled() &&
-      needs.docker_check.result == 'success' &&
+      needs.is_docker.result == 'success' &&
       needs.is_pr_open.result == 'success' &&
-      needs.docker_check.outputs.docker_bake_json != ''
+      needs.is_docker.outputs.docker_bake_json != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.docker_check.outputs.docker_bake_matrix) }}
+      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_bake_matrix) }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -1661,7 +1661,7 @@ jobs:
           images: |
             sut
             localhost:5000/sut
-            ${{ needs.docker_check.outputs.docker_images_crlf }}
+            ${{ needs.is_docker.outputs.docker_images_crlf }}
             ${{ github.repository }}
           tags: |
             type=raw,value=${{ steps.strings.outputs.target }}
@@ -1687,7 +1687,7 @@ jobs:
         if: github.event.repository.private
       - name: Write docker bake file
         run: |
-          echo '${{ needs.docker_check.outputs.docker_bake_json }}' > docker-bake.json
+          echo '${{ needs.is_docker.outputs.docker_bake_json }}' > docker-bake.json
           jq . docker-bake.json
       - name: Docker bake
         id: docker_bake
@@ -1737,7 +1737,7 @@ jobs:
             echo "GITHUB_TOKEN=${GITHUB_TOKEN}" >> .env
           fi
       - name: Run docker compose tests
-        if: needs.docker_check.outputs.docker_compose_tests == 'true'
+        if: needs.is_docker.outputs.docker_compose_tests == 'true'
         env:
           DOCKER_BUILDKIT: "1"
           COMPOSE_FILE: docker-compose.override.yml
@@ -1785,7 +1785,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - docker_check
+      - is_docker
       - npm_test
       - custom_test
       - docker_test
@@ -1794,7 +1794,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
-      join(fromJSON(needs.docker_check.outputs.docker_images)) != ''
+      join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
     defaults:
       run:
         working-directory: .
@@ -1807,12 +1807,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.docker_check.outputs.bake_targets) }}
+        target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
     env:
       LOCAL_TAG: localhost:5000/sut:latest
     steps:
       - name: Warn if tests skipped
-        if: needs.docker_check.outputs.docker_compose_tests != 'true'
+        if: needs.is_docker.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
       - name: Download all artifacts
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -1848,7 +1848,7 @@ jobs:
         uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96
         with:
           images: |
-            ${{ needs.docker_check.outputs.docker_images_crlf }}
+            ${{ needs.is_docker.outputs.docker_images_crlf }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.sha }}
             type=raw,value=build-${{ github.event.pull_request.head.ref }}
@@ -1858,7 +1858,7 @@ jobs:
       - name: Create manifest
         id: manifest
         run: |
-          platforms="$(echo '${{ needs.docker_check.outputs.docker_bake_matrix }}' | \
+          platforms="$(echo '${{ needs.is_docker.outputs.docker_bake_matrix }}' | \
             jq -r '.include[] | select(.target == "${{ matrix.target}}") | .platform' | \
             sed 's/[^[:alnum:]]/-/g')"
 
@@ -1891,7 +1891,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
       - name: Publish draft tags
-        if: join(fromJSON(needs.docker_check.outputs.docker_images)) != ''
+        if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
         with:
           src: ${{ env.LOCAL_TAG }}
@@ -1904,12 +1904,12 @@ jobs:
     needs:
       - is_pr_merged
       - is_pushed_tag
-      - docker_check
+      - is_docker
     if: |
       !failure() && !cancelled() &&
-      needs.docker_check.result == 'success' &&
+      needs.is_docker.result == 'success' &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
-      join(fromJSON(needs.docker_check.outputs.docker_images)) != ''
+      join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
     defaults:
       run:
         working-directory: .
@@ -1917,8 +1917,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ${{ fromJSON(needs.docker_check.outputs.docker_images) }}
-        target: ${{ fromJSON(needs.docker_check.outputs.bake_targets) }}
+        image: ${{ fromJSON(needs.is_docker.outputs.docker_images) }}
+        target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -2011,7 +2011,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_open
-      - balena_check
+      - is_balena
       - npm_test
       - custom_test
       - docker_test
@@ -2019,12 +2019,12 @@ jobs:
       - python_test
     if: |
       !failure() && !cancelled() &&
-      needs.balena_check.result == 'success' &&
+      needs.is_balena.result == 'success' &&
       needs.is_pr_open.result == 'success'
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.balena_check.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2092,15 +2092,15 @@ jobs:
     needs:
       - is_pr_merged
       - is_pushed_tag
-      - balena_check
+      - is_balena
     if: |
       !failure() && !cancelled() &&
-      needs.balena_check.result == 'success' &&
+      needs.is_balena.result == 'success' &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.balena_check.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2167,11 +2167,11 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_open
-      - python_check
+      - is_python
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
-      needs.python_check.outputs.python_poetry == 'true'
+      needs.is_python.outputs.python_poetry == 'true'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2179,7 +2179,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ fromJSON(needs.python_check.outputs.python_versions) }}
+        python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -2256,7 +2256,7 @@ jobs:
       - is_pr_open
       - is_pr_merged
       - is_pushed_tag
-      - website_check
+      - is_website
       - npm_test
       - custom_test
       - docker_test
@@ -2264,7 +2264,7 @@ jobs:
       - python_test
     if: |
       !failure() && !cancelled() &&
-      needs.website_check.result == 'success'
+      needs.is_website.result == 'success'
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -2280,7 +2280,7 @@ jobs:
           node-version: 18
       - name: Docusaurus Builder
         if: |
-          needs.website_check.outputs.has_readme == 'true' &&
+          needs.is_website.outputs.has_readme == 'true' &&
           inputs.docusaurus_website != false
         uses: product-os/docusaurus-builder@3db0af63d585b2daa4d4bb38b004914804761221
         with:
@@ -2558,11 +2558,11 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_open
-      - cargo_check
+      - is_cargo
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
-      needs.cargo_check.outputs.cargo == 'true'
+      needs.is_cargo.outputs.cargo == 'true'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2570,7 +2570,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.cargo_check.outputs.cargo_targets) }}
+        target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -2643,7 +2643,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.cargo_check.outputs.cargo_targets) }}
+        target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -2683,11 +2683,11 @@ jobs:
     needs:
       - is_pr_merged
       - is_pushed_tag
-      - cargo_check
+      - is_cargo
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
-      needs.cargo_check.outputs.cargo == 'true'
+      needs.is_cargo.outputs.cargo == 'true'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2718,15 +2718,15 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_open
-      - custom_check
+      - is_custom
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
-      needs.custom_check.outputs.custom_test == 'true'
+      needs.is_custom.outputs.custom_test == 'true'
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.custom_check.outputs.custom_test_matrix) }}
+        value: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
     steps:
       - name: Reject external custom actions
@@ -2761,7 +2761,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_open
-      - custom_check
+      - is_custom
       - npm_test
       - custom_test
       - docker_test
@@ -2770,11 +2770,11 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
-      needs.custom_check.outputs.custom_publish == 'true'
+      needs.is_custom.outputs.custom_publish == 'true'
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.custom_check.outputs.custom_publish_matrix) }}
+        value: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
     steps:
       - name: Reject external custom actions
@@ -2810,15 +2810,15 @@ jobs:
     needs:
       - is_pr_merged
       - is_pushed_tag
-      - custom_check
+      - is_custom
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
-      needs.custom_check.outputs.custom_finalize == 'true'
+      needs.is_custom.outputs.custom_finalize == 'true'
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.custom_check.outputs.custom_finalize_matrix) }}
+        value: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
     steps:
       - name: Reject external custom actions
@@ -2857,11 +2857,11 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_closed
-      - custom_check
+      - is_custom
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_closed.result == 'success' &&
-      needs.custom_check.outputs.custom_clean == 'true'
+      needs.is_custom.outputs.custom_clean == 'true'
     steps:
       - name: Reject external custom actions
         if: |
@@ -2898,10 +2898,10 @@ jobs:
       - custom_publish
       - custom_finalize
       - custom_clean
-      - custom_check
+      - is_custom
     if: |
       always() &&
-      needs.custom_check.outputs.custom_always == 'true'
+      needs.is_custom.outputs.custom_always == 'true'
     steps:
       - name: Reject external custom actions
         if: |
