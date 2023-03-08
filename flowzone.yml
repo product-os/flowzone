@@ -310,6 +310,15 @@
         echo "platform=$(echo "${raw_platform}" | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_OUTPUT
       fi
 
+  - &rejectConflictingSecrets
+    name: Check secrets
+    run: |
+      if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+      then
+        echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+        false
+      fi
+
 
 name: Flowzone
 
@@ -661,6 +670,7 @@ jobs:
         github.event.action == 'synchronize'
       )
     steps:
+      - *rejectConflictingSecrets
       - *rejectExternalWorkflowChanges
       - *logGitHubContext
 
@@ -683,6 +693,7 @@ jobs:
         github.event.pull_request.merged == false
       )
     steps:
+      - *rejectConflictingSecrets
       - *rejectExternalWorkflowChanges
       - *logGitHubContext
 
@@ -704,6 +715,7 @@ jobs:
         github.event.pull_request.merged == true
       )
     steps:
+      - *rejectConflictingSecrets
       - *rejectExternalWorkflowChanges
       - *logGitHubContext
 
@@ -713,6 +725,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
+      - *rejectConflictingSecrets
       - *logGitHubContext
 
   sanitize_inputs:
@@ -746,14 +759,6 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
 
     steps:
-      - name: Check secrets
-        run: |
-          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
-          then
-            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
-            false
-          fi
-
       - id: balena_slugs
         <<: *jsonArrayBuilder
         env:

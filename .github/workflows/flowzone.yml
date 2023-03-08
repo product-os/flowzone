@@ -333,6 +333,13 @@ jobs:
         github.event.action == 'synchronize'
       )
     steps:
+      - name: Check secrets
+        run: |
+          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+            false
+          fi
       - name: Reject external workflow changes
         if: github.event.pull_request.head.repo.full_name != github.repository
         env:
@@ -370,6 +377,13 @@ jobs:
         github.event.pull_request.merged == false
       )
     steps:
+      - name: Check secrets
+        run: |
+          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+            false
+          fi
       - name: Reject external workflow changes
         if: github.event.pull_request.head.repo.full_name != github.repository
         env:
@@ -407,6 +421,13 @@ jobs:
         github.event.pull_request.merged == true
       )
     steps:
+      - name: Check secrets
+        run: |
+          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+            false
+          fi
       - name: Reject external workflow changes
         if: github.event.pull_request.head.repo.full_name != github.repository
         env:
@@ -432,6 +453,13 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
+      - name: Check secrets
+        run: |
+          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+            false
+          fi
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
@@ -466,13 +494,6 @@ jobs:
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
     steps:
-      - name: Check secrets
-        run: |
-          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
-          then
-            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
-            false
-          fi
       - id: balena_slugs
         name: Build JSON array from comma-separated list
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
