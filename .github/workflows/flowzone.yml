@@ -138,11 +138,6 @@ on:
         type: boolean
         required: false
         default: false
-      protect_branch:
-        description: Set to false to disable updating branch protection rules after a successful run
-        type: boolean
-        required: false
-        default: true
       repo_config:
         description: Set to true to standardise repository settings after a successful run
         type: boolean
@@ -223,11 +218,6 @@ on:
         type: boolean
         required: false
         default: false
-      required_approving_review_count:
-        description: Count of GitHub approved reviews required for Pull Requests to be merged. Set to 0 if using palantir/policy-bot for PR merge conditions.
-        type: string
-        required: false
-        default: "0"
       job_name:
         description: The name of the job, necessary for branch protection if not using the default of 'Flowzone'
         type: string
@@ -285,20 +275,39 @@ on:
         required: false
         default: true
       custom_test_matrix:
-        description: Comma-delimited string of values that will be passed to the custom test action
+        description: Comma-delimited string of values that will be passed to the custom test action.
         type: string
         required: false
         default: ""
       custom_publish_matrix:
-        description: Comma-delimited string of values that will be passed to the custom publish action
+        description: Comma-delimited string of values that will be passed to the custom publish action.
         type: string
         required: false
         default: ""
       custom_finalize_matrix:
-        description: Comma-delimited string of values that will be passed to the custom finalize action
+        description: Comma-delimited string of values that will be passed to the custom finalize action.
         type: string
         required: false
         default: ""
+      protect_branch:
+        description: Set to false to disable updating branch protection rules after a successful run.
+        type: boolean
+        required: false
+        default: true
+      required_approving_review_count:
+        description: Count of GitHub approved reviews required for Pull Requests to be merged. Set to 0 if using palantir/policy-bot for PR merge conditions.
+        type: string
+        required: false
+        default: "0"
+      required_status_checks:
+        description: JSON array of status checks that must pass before a Pull Requests can be merged. Skipped if `protect_branch` is false.
+        type: string
+        required: false
+        default: |
+          [
+            "Flowzone / Protect branch",
+            "policy-bot: ${{ github.event.repository.default_branch }}"
+          ]
 concurrency:
   group: flowzone-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != github.base_ref }}
@@ -2983,14 +2992,7 @@ jobs:
       - name: Parse and prepare protection rules
         id: parse_prepare_protection_rules
         env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
-          policybot_re: ^policy-?bot
-          resinci_re: ^resinci
-          flowzone_re: ^${{ inputs.job_name }}
+          REQUIRED_STATUS_CHECKS: ${{ inputs.required_status_checks }}
         run: |
           jsondata=${{ steps.get_protection_rules.outputs.result }}
 
@@ -2999,35 +3001,17 @@ jobs:
           old_required_approving_review_count="$(echo $jsondata | jq '.required_pull_request_reviews.required_approving_review_count // 0')"
           echo "old_required_approving_review_count=$old_required_approving_review_count" >> $GITHUB_OUTPUT
 
-          # Get the pass/fail/pending Flowzone and PolicyBot checks from the current PR
-          # so we can mark them as required
-          running_status_checks="$((gh pr checks ${{ github.event.pull_request.number }} || true) | \
-            awk -F'\t' '$2 ~ /^(pass|fail|pending)$/ { print $1 }' | \
-            jq -cRs "split(\"\n\") |
-              map(select(
-                test(\"${{ env.flowzone_re }}\";\"i\") or
-                test(\"${{ env.policybot_re }}\";\"i\")
-              ))
-            ")"
-
-          if jq -e "map(select(test(\"${{ env.policybot_re }}\";\"i\")))" <<<"${running_status_checks}"
-          then
-            echo "policy_bot=true" >> $GITHUB_OUTPUT
-          fi
-
-          # Remove any existing required Flowzone or ResinCI or PolicyBot checks from the repo settings
+          # Remove any existing required Flowzone or ResinCI checks from the repo settings
           # Leave other required checks (eg. Jenkins, CircleCI)
-          # Re-add the Flowzone and PolicyBot checks from the current PR to the required checks
+          # Add the current required status checks from the input to the required checks
           # This avoids blocking PRs when jobs are renamed and the old name was marked as required
-          # It also ensures that PolicyBot is marked as required
           required_status_checks__contexts=$(echo $jsondata | \
             jq ".required_status_checks.contexts // [] |
               map(select(
-                test(\"${{ env.flowzone_re }}\";\"i\") or
-                test(\"${{ env.policybot_re }}\";\"i\") or
-                test(\"${{ env.resinci_re }}\";\"i\") | not
+                test(\"^${{ inputs.job_name }}\";\"i\") or
+                test(\"^resinci\";\"i\") | not
               )) |
-              . + ${running_status_checks} | unique
+              . + ${REQUIRED_STATUS_CHECKS} | unique
             ")
 
           if [ $(echo ${required_status_checks__contexts} | jq 'length') -lt 1 ]
@@ -3036,12 +3020,14 @@ jobs:
             exit 0
           fi
 
-          code="$(diff -Z <(echo ${required_status_checks__contexts} | jq 'sort_by(.)') <(echo ${jsondata} | jq '.required_status_checks.contexts // [] | sort_by(.)') 1>/dev/null 2>&1; echo $?)"
+          code="$(diff -Z <(echo ${required_status_checks__contexts} | jq 'sort_by(.)') <(echo ${jsondata} | jq '.required_status_checks.contexts // [] | sort_by(.)') > required_checks.diff; echo $?)"
 
           if [ ${code} -eq 0 ] && [ ${old_required_approving_review_count} -eq ${{ inputs.required_approving_review_count }} ]
           then
             echo "::debug::Branch protection rules are unchanged, skipping update"
             exit 0
+          else
+            cat required_checks.diff
           fi
 
           required_pull_request_reviews__dismiss_stale_reviews=$(echo $jsondata | jq ".required_pull_request_reviews.dismiss_stale_reviews // false")

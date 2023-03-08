@@ -22,8 +22,9 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [Custom](#custom)
   - [Versioning](#versioning)
   - [Docs](#docs)
-  - [Website](#Website)
+  - [Website](#website)
 - [Customization](#customization)
+
   - [Secrets](#secrets)
     - [`GH_APP_PRIVATE_KEY`](#gh_app_private_key)
     - [`FLOWZONE_TOKEN`](#flowzone_token)
@@ -72,6 +73,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`repo_visibility`](#repo_visibility)
     - [`disable_versioning`](#disable_versioning)
     - [`required_approving_review_count`](#required_approving_review_count)
+    - [`required_status_checks](#required_status_checks)
     - [`github_prerelease`](#github_prerelease)
     - [`restrict_custom_actions`](#restrict_custom_actions)
     - [`custom_test_matrix`](#custom_test_matrix)
@@ -116,8 +118,7 @@ jobs:
     name: Flowzone
     uses: product-os/flowzone/.github/workflows/flowzone.yml@master
     secrets: inherit
-    with:
-      ... # see inputs
+    with: ... # see inputs
 ```
 
 Otherwise specify the repository secrets to pass into Flowzone.
@@ -146,8 +147,7 @@ jobs:
       DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       BALENA_API_KEY: ${{ secrets.BALENA_API_KEY }}
-    with:
-      ... # see inputs
+    with: ... # see inputs
 ```
 
 Flowzone will automatically select an appropriate runner based on your project's code.
@@ -249,7 +249,6 @@ Examples:
 1. Start with something simple, [balena-python-hello-world](https://github.com/balena-io-examples/balena-python-hello-world/blob/master/.github/workflows/flowzone.yml)
 2. Push to multiple fleets, check out [balena-supervisor](https://github.com/balena-os/balena-supervisor/blob/master/.github/workflows/flowzone.yml).
 
-
 ### Python (with Poetry)
 
 Python tests will be run if a `pyproject.toml` file is found in the root of the repository and Poetry is used as a package manager.
@@ -323,7 +322,6 @@ If you have an `npm run doc` script then it will automatically be run and the ge
 If you have docs that you intend to publish on a website, checkout the [Getting Started](https://docusaurus-builder.pages.dev/) section of the Docusaurus builder. The docs will be built using the Docusaurus framework and published on Cloudflare Pages.
 
 If you intend to use a custom framework for your docs build, then you can make use of the custom website build option by adding your desired build command in a input called `custom_website_build`. This command should generate your static site into a folder called `build` which will then be deployed to Cloudflare Pages.
-
 
 ## Customization
 
@@ -435,7 +433,8 @@ Subset from permissions granted to the GitHub App, see [list](https://docs.githu
 Type: _string_
 
 Default:
-```
+
+```plain
 {
   "actions": "read",
   "administration": "write",
@@ -533,7 +532,7 @@ Type: _string_
 
 Default: `'aarch64-unknown-linux-gnu,armv7-unknown-linux-gnueabi,arm-unknown-linux-gnueabihf,x86_64-unknown-linux-gnu,i686-unknown-linux-gnu'`
 
-### `rust_binaries`
+#### `rust_binaries`
 
 Set to true to publish Rust binary artifacts to GitHub.
 
@@ -541,7 +540,7 @@ Type: _boolean_
 
 Default: `true`
 
-## `rust_toolchain`
+#### `rust_toolchain`
 
 Version specifier (e.g. 1.65, stable, nigthly) for the toolchain to use when building Rust sources.
 
@@ -687,11 +686,22 @@ Default: `false`
 
 #### `required_approving_review_count`
 
-Count of GitHub approved reviews required for Pull Requests to be merged. Set to 0 if using [policy-bot](https://github.com/palantir/policy-bot) for PR merge conditions.
+Count of GitHub approved reviews required for Pull Requests to be merged.
+Set to 0 if using [policy-bot](https://github.com/palantir/policy-bot) for PR merge conditions.
+Skipped if [protect_branch](#protect_branch) is false.
 
 Type: _string_
 
 Default: `'0'`
+
+#### `required_status_checks`
+
+JSON array of status checks that must pass before a Pull Requests can be merged.
+Skipped if [protect_branch](#protect_branch) is false.
+
+Type: _string_
+
+Default: `["Flowzone / Protect branch","policy-bot: master"]`
 
 #### `github_prerelease`
 
