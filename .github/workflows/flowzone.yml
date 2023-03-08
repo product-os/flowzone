@@ -484,35 +484,6 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    outputs:
-      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
-    steps:
-      - id: custom_test_matrix
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
-        env:
-          INPUT: ${{ inputs.custom_test_matrix }}
-      - id: custom_publish_matrix
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
-        env:
-          INPUT: ${{ inputs.custom_publish_matrix }}
-      - id: custom_finalize_matrix
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
-        env:
-          INPUT: ${{ inputs.custom_finalize_matrix }}
   versioned_source:
     name: Versioned source
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1194,7 +1165,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
@@ -1210,6 +1180,9 @@ jobs:
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_clean: ${{ steps.custom.outputs.clean }}
       custom_always: ${{ steps.custom.outputs.always }}
+      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
+      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
+      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -1220,6 +1193,30 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
+      - id: custom_test_matrix
+        name: Build JSON array from comma-separated list
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+        env:
+          INPUT: ${{ inputs.custom_test_matrix }}
+      - id: custom_publish_matrix
+        name: Build JSON array from comma-separated list
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+        env:
+          INPUT: ${{ inputs.custom_publish_matrix }}
+      - id: custom_finalize_matrix
+        name: Build JSON array from comma-separated list
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+        env:
+          INPUT: ${{ inputs.custom_finalize_matrix }}
       - name: Check for custom actions
         if: github.event.pull_request.head.repo.full_name == github.repository || inputs.restrict_custom_actions == false
         id: custom
@@ -2745,7 +2742,6 @@ jobs:
     needs:
       - is_pr_open
       - custom_check
-      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2753,7 +2749,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_test_matrix) }}
+        value: ${{ fromJSON(needs.custom_check.outputs.custom_test_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
     steps:
       - name: Reject external custom actions
@@ -2789,7 +2785,6 @@ jobs:
     needs:
       - is_pr_open
       - custom_check
-      - sanitize_inputs
       - npm_test
       - custom_test
       - docker_test
@@ -2802,7 +2797,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_publish_matrix) }}
+        value: ${{ fromJSON(needs.custom_check.outputs.custom_publish_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
     steps:
       - name: Reject external custom actions
@@ -2839,7 +2834,6 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - custom_check
-      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -2847,7 +2841,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_finalize_matrix) }}
+        value: ${{ fromJSON(needs.custom_check.outputs.custom_finalize_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
     steps:
       - name: Reject external custom actions

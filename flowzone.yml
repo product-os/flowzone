@@ -748,26 +748,7 @@ jobs:
 
     <<: *rootWorkingDirectory
 
-    outputs:
-      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
-
-    steps:
-      - id: custom_test_matrix
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.custom_test_matrix }}
-
-      - id: custom_publish_matrix
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.custom_publish_matrix }}
-
-      - id: custom_finalize_matrix
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.custom_finalize_matrix }}
+    
 
   versioned_source:
     name: Versioned source
@@ -1377,7 +1358,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
@@ -1393,9 +1373,28 @@ jobs:
       custom_clean: ${{ steps.custom.outputs.clean }}
       custom_always: ${{ steps.custom.outputs.always }}
 
+      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
+      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
+      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
+
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
+
+      - id: custom_test_matrix
+        <<: *jsonArrayBuilder
+        env:
+          INPUT: ${{ inputs.custom_test_matrix }}
+
+      - id: custom_publish_matrix
+        <<: *jsonArrayBuilder
+        env:
+          INPUT: ${{ inputs.custom_publish_matrix }}
+
+      - id: custom_finalize_matrix
+        <<: *jsonArrayBuilder
+        env:
+          INPUT: ${{ inputs.custom_finalize_matrix }}
 
       - name: Check for custom actions
         # skip custom actions for external contributions by default
@@ -2598,7 +2597,6 @@ jobs:
     needs:
       - is_pr_open
       - custom_check
-      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2607,7 +2605,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_test_matrix) }}
+        value: ${{ fromJSON(needs.custom_check.outputs.custom_test_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
 
     steps:
@@ -2633,7 +2631,6 @@ jobs:
     needs:
       - is_pr_open
       - custom_check
-      - sanitize_inputs
       - npm_test
       - custom_test
       - docker_test
@@ -2647,7 +2644,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_publish_matrix) }}
+        value: ${{ fromJSON(needs.custom_check.outputs.custom_publish_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
 
     steps:
@@ -2674,7 +2671,6 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - custom_check
-      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -2683,7 +2679,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.sanitize_inputs.outputs.custom_finalize_matrix) }}
+        value: ${{ fromJSON(needs.custom_check.outputs.custom_finalize_matrix) }}
         os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
 
     steps:
