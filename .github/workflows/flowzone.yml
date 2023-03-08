@@ -485,20 +485,11 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
     steps:
-      - id: balena_slugs
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
-        env:
-          INPUT: ${{ inputs.balena_slugs }}
       - id: cargo_targets
         name: Build JSON array from comma-separated list
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
@@ -1158,19 +1149,19 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
       !failure() && !cancelled() &&
       needs.versioned_source.result != needs.tagged_source.result &&
-      join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
+      inputs.balena_slugs != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      balena: ${{ steps.balena.outputs.enabled }}
+      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
+      balena_yml: ${{ steps.balena_yml.outputs.enabled }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -1181,8 +1172,16 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
+      - id: balena_slugs
+        name: Build JSON array from comma-separated list
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+        env:
+          INPUT: ${{ inputs.balena_slugs }}
       - name: Check for balena.yml
-        id: balena
+        id: balena_yml
         run: |
           if test -f balena.yml
           then
@@ -2040,7 +2039,6 @@ jobs:
     needs:
       - is_pr_open
       - balena_check
-      - sanitize_inputs
       - npm_test
       - custom_test
       - docker_test
@@ -2053,7 +2051,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.balena_check.outputs.balena_slugs) }}
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2122,7 +2120,6 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - balena_check
-      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.balena_check.result == 'success' &&
@@ -2130,7 +2127,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.balena_check.outputs.balena_slugs) }}
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}

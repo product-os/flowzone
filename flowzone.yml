@@ -749,7 +749,6 @@ jobs:
     <<: *rootWorkingDirectory
 
     outputs:
-      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
 
       custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
@@ -757,11 +756,6 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
 
     steps:
-      - id: balena_slugs
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.balena_slugs }}
-
       - id: cargo_targets
         <<: *jsonArrayBuilder
         env:
@@ -1346,25 +1340,30 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
       !failure() && !cancelled() &&
       needs.versioned_source.result != needs.tagged_source.result &&
-      join(fromJSON(needs.sanitize_inputs.outputs.balena_slugs)) != ''
+      inputs.balena_slugs != ''
 
     <<: *customWorkingDirectory
 
     outputs:
-      balena: ${{ steps.balena.outputs.enabled }}
+      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
+      balena_yml: ${{ steps.balena_yml.outputs.enabled }}
 
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
 
+      - id: balena_slugs
+        <<: *jsonArrayBuilder
+        env:
+          INPUT: ${{ inputs.balena_slugs }}
+
       - name: Check for balena.yml
-        id: balena
+        id: balena_yml
         run: |
           if test -f balena.yml
           then
@@ -2112,7 +2111,6 @@ jobs:
     needs:
       - is_pr_open
       - balena_check
-      - sanitize_inputs
       - npm_test
       - custom_test
       - docker_test
@@ -2126,7 +2124,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.balena_check.outputs.balena_slugs) }}
 
     <<: *customWorkingDirectory
 
@@ -2145,7 +2143,6 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - balena_check
-      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.balena_check.result == 'success' &&
@@ -2154,7 +2151,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.sanitize_inputs.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.balena_check.outputs.balena_slugs) }}
 
     <<: *customWorkingDirectory
 
