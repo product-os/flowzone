@@ -1,4 +1,20 @@
 - commits:
+    - subject: Make required checks for branch protection configurable
+      hash: 55b785d8c070ae80dcd075cafa954d761bc077e9
+      body: |
+        This also replaces the old behaviour of inspecting the running
+        checks to determine which should be applied to branch protection.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.5.0
+  title: ""
+  date: 2023-03-08T16:26:00.706Z
+- commits:
     - subject: Compress docker artifacts before uploading
       hash: 88db3915a8a0c844644b89a5cf07e02ada6e830e
       body: ""
