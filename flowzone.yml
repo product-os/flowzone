@@ -749,18 +749,11 @@ jobs:
     <<: *rootWorkingDirectory
 
     outputs:
-      cargo_targets: ${{ steps.cargo_targets.outputs.build }}
-
       custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
 
     steps:
-      - id: cargo_targets
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.cargo_targets }}
-
       - id: custom_test_matrix
         <<: *jsonArrayBuilder
         env:
@@ -1306,25 +1299,30 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
       !failure() && !cancelled() &&
       needs.versioned_source.result != needs.tagged_source.result &&
-      join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
+      inputs.cargo_targets != ''
 
     <<: *customWorkingDirectory
 
     outputs:
-      cargo: ${{ steps.cargo.outputs.enabled }}
+      cargo_targets: ${{ steps.cargo_targets.outputs.build }}
+      cargo: ${{ steps.cargo_yml.outputs.enabled }}
 
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
 
+      - id: cargo_targets
+        <<: *jsonArrayBuilder
+        env:
+          INPUT: ${{ inputs.cargo_targets }}
+
       - name: Check Cargo.toml
-        id: cargo
+        id: cargo_yml
         run: |
           if test -f "Cargo.toml"
           then
@@ -2445,7 +2443,6 @@ jobs:
     needs:
       - is_pr_open
       - cargo_check
-      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2456,7 +2453,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.sanitize_inputs.outputs.cargo_targets) }}
+        target: ${{ fromJSON(needs.cargo_check.outputs.cargo_targets) }}
 
     outputs:
       package: ${{ steps.meta.outputs.package }}
@@ -2509,7 +2506,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - sanitize_inputs
       - npm_test
       - custom_test
       - docker_test
@@ -2525,7 +2521,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.sanitize_inputs.outputs.cargo_targets) }}
+        target: ${{ fromJSON(needs.cargo_check.outputs.cargo_targets) }}
 
     steps:
       - *downloadSourceArtifact

@@ -485,19 +485,10 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
     steps:
-      - id: cargo_targets
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
-        env:
-          INPUT: ${{ inputs.cargo_targets }}
       - id: custom_test_matrix
         name: Build JSON array from comma-separated list
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
@@ -1111,19 +1102,19 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - sanitize_inputs
       - versioned_source
       - tagged_source
     if: |
       !failure() && !cancelled() &&
       needs.versioned_source.result != needs.tagged_source.result &&
-      join(fromJSON(needs.sanitize_inputs.outputs.cargo_targets)) != ''
+      inputs.cargo_targets != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      cargo: ${{ steps.cargo.outputs.enabled }}
+      cargo_targets: ${{ steps.cargo_targets.outputs.build }}
+      cargo: ${{ steps.cargo_yml.outputs.enabled }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -1134,8 +1125,16 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
+      - id: cargo_targets
+        name: Build JSON array from comma-separated list
+        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
+        with:
+          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+          separator: ","
+        env:
+          INPUT: ${{ inputs.cargo_targets }}
       - name: Check Cargo.toml
-        id: cargo
+        id: cargo_yml
         run: |
           if test -f "Cargo.toml"
           then
@@ -2586,7 +2585,6 @@ jobs:
     needs:
       - is_pr_open
       - cargo_check
-      - sanitize_inputs
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2598,7 +2596,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.sanitize_inputs.outputs.cargo_targets) }}
+        target: ${{ fromJSON(needs.cargo_check.outputs.cargo_targets) }}
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -2655,7 +2653,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - sanitize_inputs
       - npm_test
       - custom_test
       - docker_test
@@ -2672,7 +2669,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.sanitize_inputs.outputs.cargo_targets) }}
+        target: ${{ fromJSON(needs.cargo_check.outputs.cargo_targets) }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
