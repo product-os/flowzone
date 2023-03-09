@@ -1,4 +1,28 @@
 - commits:
+    - subject: Use anchors for trusted gh cli env vars
+      hash: 53cedea92eaa1e5c7712e7959df6e476540d1255
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Do not apply branch protection for PRs between branches
+      hash: 162527a6a8581538a613dc88bbfafa167568bc8d
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.6.1
+  title: ""
+  date: 2023-03-09T15:06:34.567Z
+- commits:
     - subject: Rename project type checks to booleans
       hash: 2c72c57527a3b2f4bc3ec6a8752b0ba46feac559
       body: ""
