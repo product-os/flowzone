@@ -1732,6 +1732,9 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_bake_matrix) }}
 
+    env:
+      DOCKER_BUILDKIT: '1'
+
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
@@ -1791,29 +1794,15 @@ jobs:
           - *loginWithDockerHub
           - *ifPrivateRepository
 
-      - name: Write docker bake file
+      - name: Export common env vars
         run: |
-          echo '${{ needs.is_docker.outputs.docker_bake_json }}' > docker-bake.json
-          jq . docker-bake.json
+          echo "DOCKER_BAKE_FILE=${{ runner.temp }}/docker-bake.json" >> $GITHUB_ENV
+          echo "DOCKER_TAR=${{ runner.temp }}/docker.tar" >> $GITHUB_ENV
 
-      # https://github.com/docker/bake-action
-      - name: Docker bake
-        id: docker_bake
-        uses: docker/bake-action@6c87dcca988e4e074e3ab1f976a70f63ec9673fb # v2
-        env:
-          GITHUB_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
-        with:
-          workdir: ${{ inputs.working_directory }}
-          files: |
-            docker-bake.json
-            ${{ steps.meta.outputs.bake-file }}
-          targets: ${{ matrix.target }}
-          set: |
-            *.platform=${{ matrix.platform }}
-            *.secrets=id=GITHUB_TOKEN
-            *.secrets=id=GH_TOKEN
-          load: true
+          echo "COMPOSE_PROJECT_NAME=${{ github.run_id }}" >> $GITHUB_ENV
+          echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> $GITHUB_ENV
+          echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> $GITHUB_ENV
+          echo "COMPOSE_ARGS=--env-file=${{ runner.temp }}/.env --project-directory=$(pwd)" >> $GITHUB_ENV
 
       # these secrets are being used in untrusted user code so only allow for internal PRs
       - name: Inject COMPOSE_VARS
@@ -1825,13 +1814,13 @@ jobs:
         run: |
           if [ -n "${COMPOSE_VARS}" ]
           then
-            echo "${COMPOSE_VARS}" | base64 --decode > .env
+            echo "${COMPOSE_VARS}" | base64 --decode > ${COMPOSE_ENV_FILE}
 
             while read -r line
             do
               secret="$(echo "${line}" | awk -F'=' '{print $2}')"
               echo "::add-mask::${secret}"
-            done < .env
+            done < ${COMPOSE_ENV_FILE}
           fi
 
       # inject github token pre-designated for untrusted code
@@ -1839,23 +1828,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
           GH_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
+        # do not use shell tracing to avoid leaking secrets
+        shell: bash
         run: |
-          if ! grep -q '^GH_TOKEN=' .env
+          if ! grep -q '^GH_TOKEN=' ${COMPOSE_ENV_FILE}
           then
-            echo "GH_TOKEN=${GH_TOKEN}" >> .env
+            echo "GH_TOKEN=${GH_TOKEN}" >> ${COMPOSE_ENV_FILE}
           fi
 
-          if ! grep -q '^GITHUB_TOKEN=' .env
+          if ! grep -q '^GITHUB_TOKEN=' ${COMPOSE_ENV_FILE}
           then
-            echo "GITHUB_TOKEN=${GITHUB_TOKEN}" >> .env
+            echo "GITHUB_TOKEN=${GITHUB_TOKEN}" >> ${COMPOSE_ENV_FILE}
           fi
 
-      # run docker compose tests and print the logs from all services
-      - name: Run docker compose tests
+      - name: Write docker bake file
+        run: |
+          echo '${{ needs.is_docker.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
+          jq . "${DOCKER_BAKE_FILE}"
+
+      - name: Write docker compose file
         if: needs.is_docker.outputs.docker_compose_tests == 'true'
-        env:
-          DOCKER_BUILDKIT: "1"
-          COMPOSE_FILE: docker-compose.override.yml
         run: |
           files="
             docker-compose.yml
@@ -1872,32 +1864,51 @@ jobs:
           docker compose ${args} config > "${COMPOSE_FILE}"
 
           yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
-
           yq . "${COMPOSE_FILE}"
 
-          docker compose down --rmi local --volumes
-          docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
-          docker compose logs
+      # https://github.com/docker/bake-action
+      - name: Docker bake
+        id: docker_bake
+        uses: docker/bake-action@6c87dcca988e4e074e3ab1f976a70f63ec9673fb # v2
+        env:
+          GITHUB_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
+          GH_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
+        with:
+          workdir: ${{ inputs.working_directory }}
+          files: |
+            ${{ env.DOCKER_BAKE_FILE }}
+            ${{ steps.meta.outputs.bake-file }}
+          targets: ${{ matrix.target }}
+          set: |
+            *.platform=${{ matrix.platform }}
+            *.secrets=id=GITHUB_TOKEN
+            *.secrets=id=GH_TOKEN
+          load: true
+
+      # run docker compose tests and print the logs from all services
+      - name: Run docker compose tests
+        if: needs.is_docker.outputs.docker_compose_tests == 'true'
+        run: |
+          docker compose ${COMPOSE_ARGS} down --rmi local --volumes || true
+          docker compose ${COMPOSE_ARGS} up sut --exit-code-from sut || { docker compose ${COMPOSE_ARGS} logs ; exit 1 ; }
+          docker compose ${COMPOSE_ARGS} logs
 
       - name: Save image to file
         run: |
-          docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${{ runner.temp }}/docker.tar
-          gzip -v ${{ runner.temp }}/docker.tar
+          docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${DOCKER_TAR}
+          gzip -v ${DOCKER_TAR}
 
       - name: Cleanup docker
         if: always()
-        env:
-          DOCKER_BUILDKIT: "1"
-          COMPOSE_FILE: docker-compose.override.yml
         run: |
-          docker compose down --rmi local --volumes || true
+          docker compose ${COMPOSE_ARGS} down --rmi local --volumes || true
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           name: docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${{ steps.strings.outputs.platform }}
-          path: ${{ runner.temp }}/docker.tar.gz
+          path: ${{ env.DOCKER_TAR }}.gz
           retention-days: 1
 
   docker_publish:
