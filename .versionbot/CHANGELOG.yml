@@ -1,4 +1,19 @@
 - commits:
+    - subject: Avoid writing files to the docker project directory
+      hash: c28f9b40028972f4ab89538d26c7f4b4393186e9
+      body: |
+        A modified workspace can invalidate cached layers.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.6.2
+  title: ""
+  date: 2023-03-09T17:08:50.084Z
+- commits:
     - subject: Use anchors for trusted gh cli env vars
       hash: 53cedea92eaa1e5c7712e7959df6e476540d1255
       body: ""
