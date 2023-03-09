@@ -1,4 +1,78 @@
 - commits:
+    - subject: Rename project type checks to booleans
+      hash: 2c72c57527a3b2f4bc3ec6a8752b0ba46feac559
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Remove sanitize inputs job
+      hash: 49b155cb438d45268fab77d06894ca93691f484c
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Move custom sanitized inputs to custom check
+      hash: a435100bdbd5c914f5d0681e04509f7af3d43a5a
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Move cargo sanitized inputs to cargo check
+      hash: fc8548ef872a3e2fb937b3208994ce2db794a49a
+      body: ""
+      footer:
+        CHange-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Move balena sanitized inputs to balena check
+      hash: ef96307a425d59e8ef35a7c37810c9ea3ecbce2b
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Move docker sanitized inputs to docker check
+      hash: 1d6efa7a936dde3d711ab505941a3ad6cb4ddcaa
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Reject conflicting secrets during context checks
+      hash: 157060f6f9a9dd1eb1bd15606cb174901bf3d996
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.6.0
+  title: ""
+  date: 2023-03-09T14:04:16.402Z
+- commits:
     - subject: Add balena release notes
       hash: 119f07b6c9fb7108366d6b29e087f8a3560218e2
       body: ""
