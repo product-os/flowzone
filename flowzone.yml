@@ -194,7 +194,7 @@
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
-  - &gitHubCliEnvironment
+  - &gitHubCliEnvironmentBase
     # environment variables used by gh CLI
     # https://cli.github.com/manual/gh_help_environment
     GH_DEBUG: "true"
@@ -204,11 +204,16 @@
     # default to automatic actions token
     GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
+  - &gitHubCliEnvironmentTrusted
+    <<: *gitHubCliEnvironmentBase
+    # elevate this request to a trusted token
+    GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
+
   - &rejectExternalWorkflowChanges
     name: Reject external workflow changes
     <<: *ifExternalPullRequest
     env:
-      <<: *gitHubCliEnvironment
+      <<: *gitHubCliEnvironmentBase
     run: |
       if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
       then
@@ -237,16 +242,14 @@
     name: Delete draft GitHub release
     run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
     env:
-      <<: *gitHubCliEnvironment
-      # elevate this request to a trusted token
-      GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
+      <<: *gitHubCliEnvironmentTrusted
 
   - &isDraftPullRequest
     # check both the github context (static) and via the gh cli (dynamic)
     name: Check if PR is draft
     id: is_draft
     env:
-      <<: *gitHubCliEnvironment
+      <<: *gitHubCliEnvironmentBase
     run: |
       if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
       then
@@ -2382,9 +2385,7 @@ jobs:
       # https://docs.github.com/en/rest/releases
       - name: Finalize GitHub release (if any)
         env:
-            <<: *gitHubCliEnvironment
-            # elevate this request to a trusted token
-            GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
+          <<: *gitHubCliEnvironmentTrusted
         run: |
           set -ea
 
@@ -2752,7 +2753,8 @@ jobs:
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
       inputs.protect_branch == true &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.repository.default_branch == github.event.pull_request.base.ref
 
     outputs:
       result: ${{ steps.apply_branch_protection_rules.outputs.result }}
@@ -2771,9 +2773,7 @@ jobs:
       - name: Get protection rules
         id: get_protection_rules
         env:
-          <<: *gitHubCliEnvironment
-          # elevate this request to a trusted token
-          GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
+          <<: *gitHubCliEnvironmentTrusted
         run: |
           result="$(gh api ${{ env.BRANCH_PROTECTION_URI }} || true)"
           message="$(echo "${result}" | jq -r .message)"
@@ -2890,9 +2890,7 @@ jobs:
           steps.is_draft.outputs.dynamic != 'true' &&
           fromJSON(steps.parse_prepare_protection_rules.outputs.old_required_approving_review_count) > fromJSON(inputs.required_approving_review_count)
         env:
-          <<: *gitHubCliEnvironment
-          # elevate this request to a trusted token
-          GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
+          <<: *gitHubCliEnvironmentTrusted
         run: |
           for pr in $(gh pr list --state=open --draft=false --json=number | jq -r '.[].number')
           do
@@ -2906,9 +2904,7 @@ jobs:
           steps.is_draft.outputs.dynamic != 'true' &&
           steps.parse_prepare_protection_rules.outputs.result != ''
         env:
-          <<: *gitHubCliEnvironment
-          # elevate this request to a trusted token
-          GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
+          <<: *gitHubCliEnvironmentTrusted
         run: |
           result="$(echo '${{ fromJSON(steps.parse_prepare_protection_rules.outputs.result) }}' \
             | gh api --method PUT ${{ env.BRANCH_PROTECTION_URI }} --input -)"
@@ -2940,9 +2936,7 @@ jobs:
       #     (fromJSON(steps.apply_branch_protection_rules.outputs.new_required_approving_review_count) > 0 ||
       #     steps.parse_prepare_protection_rules.outputs.policy_bot == 'true')
       #   env:
-      #     <<: *gitHubCliEnvironment
-      #     # elevate this request to a trusted token
-      #     GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
+      #     <<: *gitHubCliEnvironmentTrusted
       #   run: |
       #     if [[ $(gh api '/repos/${{ github.repository }}' | jq -r .allow_auto_merge) =~ true ]]; then
       #       gh pr merge ${{ github.event.pull_request.number }} --merge --auto
@@ -2969,9 +2963,7 @@ jobs:
 
       - name: Configure repository
         env:
-          <<: *gitHubCliEnvironment
-          # elevate this request to a trusted token
-          GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
+          <<: *gitHubCliEnvironmentTrusted
         run: |
           # only change repository visibility if explicitly set to one of the permissible values
           visibility=''
