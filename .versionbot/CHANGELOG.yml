@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fix missing env_file when parsing docker-compose
+      hash: 0f448b741f6888cc28149276f92fce3984afccfd
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.6.3
+  title: ""
+  date: 2023-03-09T19:45:40.385Z
+- commits:
     - subject: Avoid writing files to the docker project directory
       hash: c28f9b40028972f4ab89538d26c7f4b4393186e9
       body: |
