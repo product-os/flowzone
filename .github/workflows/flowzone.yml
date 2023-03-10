@@ -1632,6 +1632,9 @@ jobs:
           fi
       - name: Setup QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18
+        with:
+          platforms: all
+          image: tonistiigi/binfmt:qemu-v6.2.0
       - name: Setup buildx
         uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7
         with:
