@@ -1,4 +1,20 @@
 - commits:
+    - subject: Make sure protect branch always runs and cannot be skipped
+      hash: 788b66f32ba83f6c294bd554529561fd09395b41
+      body: |
+        A skipped or cancelled result will not prevent a PR from being
+        merged.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.6.4
+  title: ""
+  date: 2023-03-10T20:51:41.438Z
+- commits:
     - subject: Fix missing env_file when parsing docker-compose
       hash: 0f448b741f6888cc28149276f92fce3984afccfd
       body: ""
