@@ -2944,16 +2944,21 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_open
+      - npm_test
+      - npm_publish
+      - docker_test
       - docker_publish
       - balena_publish
-      - custom_publish
-      - npm_publish
-      - cargo_publish
-      - github_publish
+      - python_test
       - website_publish
+      - github_publish
+      - cargo_test
+      - cargo_publish
+      - custom_test
+      - custom_publish
       - custom_always
     if: |
-      !failure() && !cancelled() &&
+      always() &&
       needs.is_pr_open.result == 'success' &&
       inputs.protect_branch == true &&
       github.event.pull_request.head.repo.full_name == github.repository &&
@@ -3023,6 +3028,18 @@ jobs:
             echo "static=true" >> $GITHUB_OUTPUT
           else
             echo "static=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Check needed jobs
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') }}" = "true" ]
+          then
+            echo "One or more jobs have a status of failure"
+            exit 1
+          fi
+          if [ "${{ contains(needs.*.result, 'cancelled') }}" = "true" ]
+          then
+            echo "One or more jobs have a status of cancelled"
+            exit 1
           fi
       - name: Get protection rules
         id: get_protection_rules
