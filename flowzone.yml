@@ -1747,6 +1747,7 @@ jobs:
       # https://hub.docker.com/r/tonistiigi/binfmt
       - name: Setup QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2
+        if: contains(matrix.runs_on, 'self-hosted') != true
         with:
           platforms: all
           image: tonistiigi/binfmt:qemu-v6.2.0
