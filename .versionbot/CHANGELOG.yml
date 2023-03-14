@@ -1,4 +1,18 @@
 - commits:
+    - subject: Do not setup QEMU on self-hosted runners
+      hash: ee764ecc52d27a8ea601373b2ac9e2afd4b65fc4
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.6.7
+  title: ""
+  date: 2023-03-14T11:12:41.755Z
+- commits:
     - subject: Update docker/setup-buildx-action digest to 4b4e9c3
       hash: 095784c38cdecb92109fbc8ed217c970659f623d
       body: |
