@@ -36,16 +36,19 @@ jobs:
         armv7-unknown-linux-gnueabi,
         aarch64-unknown-linux-gnu
       cloudflare_website: "flowzone"
-      bake_targets: default,multiarch
+      bake_targets: default,amd64,arm64,armv7
       docker_runs_on: >
         {
-          "linux/arm64": ["self-hosted","distro:jammy","platform:linux/arm64"]
+          "linux/amd64": ["self-hosted","distro:jammy","platform:linux/amd64"],
+          "linux/arm64": ["self-hosted","distro:jammy","platform:linux/arm64"],
+          "linux/arm/v7": ["self-hosted","distro:jammy","platform:linux/arm/v7"]
         }
       custom_runs_on: >
         [
           ["ubuntu-22.04"],
-          ["self-hosted","distro:jammy"]
+          ["self-hosted"]
         ]
+      jobs_timeout_minutes: 30
 
   draft:
     name: "Draft PRs"
