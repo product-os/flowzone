@@ -1,4 +1,18 @@
 - commits:
+    - subject: Re-enable self-tests on armv7 and x86 self-hosted runners
+      hash: 417cc23e0fd2d8631345eebae11b4fa49d39d210
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.7.1
+  title: ""
+  date: 2023-03-15T13:42:40.468Z
+- commits:
     - subject: Add checkpoints to evaluate result of multiple jobs
       hash: 59e017e18ed4b50100bf0b5a47c5891fee3c9c6f
       body: |
