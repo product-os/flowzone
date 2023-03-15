@@ -117,6 +117,15 @@ jobs:
   flowzone:
     name: Flowzone
     uses: product-os/flowzone/.github/workflows/flowzone.yml@master
+    # prevent duplicate workflow executions for pull_request and pull_request_target
+    if: |
+      (
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        github.event_name == 'pull_request'
+      ) || (
+        github.event.pull_request.head.repo.full_name != github.repository &&
+        github.event_name == 'pull_request_target'
+      )
     secrets: inherit
     with: ... # see inputs
 ```
@@ -139,6 +148,15 @@ jobs:
   flowzone:
     name: Flowzone
     uses: product-os/flowzone/.github/workflows/flowzone.yml@master
+    # prevent duplicate workflow executions for pull_request and pull_request_target
+    if: |
+      (
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        github.event_name == 'pull_request'
+      ) || (
+        github.event.pull_request.head.repo.full_name != github.repository &&
+        github.event_name == 'pull_request_target'
+      )
     secrets:
       FLOWZONE_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}

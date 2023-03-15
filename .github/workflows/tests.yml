@@ -12,8 +12,7 @@ jobs:
   flowzone:
     name: Flowzone
     uses: ./.github/workflows/flowzone.yml
-    # ensure that we only use pull_request_target for external PRs
-    # this logic also exists in Flowzone core, but having it here cleans up the checks output
+    # prevent duplicate workflow executions for pull_request and pull_request_target
     if: |
       (
         github.event.pull_request.head.repo.full_name == github.repository &&
