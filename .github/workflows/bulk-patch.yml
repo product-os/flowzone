@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       repositories:
-        description: A comma or newline-separated list of repositories to patch
+        description: Comma-separated repositories to patch
         required: true
         type: string
       patches_base64:
@@ -13,47 +13,44 @@ on:
         required: true
         type: string
       pr_branch:
-        description: Branch name of the pull request
+        description: Branch name for the pull request
         required: false
         type: string
         default: user/bulk-patch
       pr_title:
-        description: The title of the pull request
+        description: The title for the pull request
         required: true
         type: string
       pr_body:
-        description: The body of the pull request
+        description: The body for the pull request
         required: false
         type: string
       pr_labels:
-        description: A comma or newline-separated list of labels for the pull request
+        description: Comma-separated labels for the pull request
         required: false
         type: string
-        default: |
-          bulk-patch
+        default: bulk-patch
       pr_draft:
-        description: Whether to create the pull request as a draft
+        description: Create draft pull request
         required: false
         type: boolean
         default: false
       dry_run:
-        description: Whether to skip pushing changes to the remote repositories
+        description: Patch files but do not push changes
         required: false
         type: boolean
         default: true
       token_app_id:
-        description: "GitHub App id to request a temporary token"
+        description: GitHub App id to request a temporary token
         type: string
         required: false
         # https://github.com/organizations/product-os/settings/apps/flowzone-app
-        # https://github.com/organizations/product-os/settings/variables/actions/APP_ID
         default: "291899"
       token_installation_id:
-        description: "GitHub App installation id to request a temporary token"
+        description: GitHub App installation id to request a temporary token
         type: string
         required: false
         # https://github.com/organizations/product-os/settings/installations
-        # https://github.com/organizations/product-os/settings/variables/actions/INSTALLATION_ID
         default: "34040165"
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
@@ -86,9 +83,9 @@ jobs:
         env:
           INPUT: ${{ inputs.repositories }}
         run: |
-          IFS=$',\n'
-          while read -r item
+          while IFS=',' read -r item
           do
+            item="$(echo "${item}" | tr -d '[:space:]')"
             if [ -n "${item}" ]
             then
               out="${out},${item}"
@@ -182,7 +179,8 @@ jobs:
         env:
           PATCHES_B64: ${{ inputs.patches_base64 }}
         run: |
-          echo "${{ env.PATCHES_B64 }}" | base64 -d | git am | cat | tee -a $GITHUB_STEP_SUMMARY
+          echo "${{ env.PATCHES_B64 }}" | base64 -d | git am | awk 'BEGIN{print "```"}; {print}; END{print "```"}' | tee -a $GITHUB_STEP_SUMMARY || 
+            { git am --show-current-patch=diff | awk 'BEGIN{print "```"}; {print}; END{print "```"}' | tee -a $GITHUB_STEP_SUMMARY ; exit 1 ; }
 
       # https://github.com/peter-evans/create-pull-request
       - name: Create pull request
@@ -200,7 +198,7 @@ jobs:
           draft: ${{ inputs.pr_draft}}
           delete-branch: true
 
-      - name: Enable auto-merge
+      - name: Update summary
         if: steps.cpr.outputs.pull-request-number != ''
         env:
           GH_TOKEN: ${{ steps.gh_token.outputs.token }}
@@ -209,4 +207,10 @@ jobs:
           echo "Pull Request URL: ${{ steps.cpr.outputs.pull-request-url }}" | tee -a $GITHUB_STEP_SUMMARY
           echo "Pull Request Operation: ${{ steps.cpr.outputs.pull-request-operation }}" | tee -a $GITHUB_STEP_SUMMARY
           echo "Pull Request Head SHA: ${{ steps.cpr.outputs.pull-request-head-sha }}" | tee -a $GITHUB_STEP_SUMMARY
-          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --merge --auto || true
+
+      # - name: Enable auto-merge
+      #   if: steps.cpr.outputs.pull-request-number != ''
+      #   env:
+      #     GH_TOKEN: ${{ steps.gh_token.outputs.token }}
+      #   run: |
+      #     gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --merge --auto || true
