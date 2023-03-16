@@ -39,8 +39,7 @@ jobs:
       docker_runs_on: >
         {
           "linux/amd64": ["self-hosted","distro:jammy","platform:linux/amd64"],
-          "linux/arm64": ["self-hosted","distro:jammy","platform:linux/arm64"],
-          "linux/arm/v7": ["self-hosted","distro:jammy","platform:linux/arm/v7"]
+          "linux/arm64": ["self-hosted","distro:jammy","platform:linux/arm64"]
         }
       custom_runs_on: >
         [
