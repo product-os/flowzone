@@ -160,7 +160,7 @@ jobs:
 
       # https://github.com/actions/checkout
       - name: Checkout base branch
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3
+        uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3
         with:
           repository: ${{ matrix.repository }}
           token: ${{ steps.gh_token.outputs.token }}
