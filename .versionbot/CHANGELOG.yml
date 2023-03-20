@@ -1,4 +1,19 @@
 - commits:
+    - subject: Remove manual docker cleanup steps
+      hash: 536a0802562dff010f673645387d4be95d2d5f89
+      body: |
+        Runners should be ephemeral and these steps just add to build time.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 2.8.3
+  title: ""
+  date: 2023-03-20T18:53:43.316Z
+- commits:
     - subject: Disable testing on self-hosted armv7 until we fix the rate limiting
       hash: 355f07234f1a2e0b562a65fb8c690328309ae4ff
       body: ""
