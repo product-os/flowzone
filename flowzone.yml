@@ -1919,7 +1919,6 @@ jobs:
       - name: Run docker compose tests
         if: needs.is_docker.outputs.docker_compose_tests == 'true'
         run: |
-          docker compose down --rmi local --volumes || true
           docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
           docker compose logs
 
@@ -1927,11 +1926,6 @@ jobs:
         run: |
           docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${DOCKER_TAR}
           gzip -v ${DOCKER_TAR}
-
-      - name: Cleanup docker
-        if: always()
-        run: |
-          docker compose down --rmi local --volumes || true
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
