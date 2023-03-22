@@ -327,18 +327,21 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        (
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        ) || (
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        )
+        github.event_name == 'pull_request' ||
+        github.event_name == 'pull_request_target'
       ) && (
         github.event.action == 'opened' ||
         github.event.action == 'synchronize'
       )
     steps:
+      - name: Reject external pull_request events
+        if: |
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::error:External workflows can not be used with `pull_request` events. \
+            Please contact a member of the organization for assistance."
+          exit 1
       - name: Check secrets
         run: |
           if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
@@ -371,18 +374,21 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        (
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        ) || (
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        )
+        github.event_name == 'pull_request' ||
+        github.event_name == 'pull_request_target'
       ) && (
         github.event.action == 'closed' &&
         github.event.pull_request.merged == false
       )
     steps:
+      - name: Reject external pull_request events
+        if: |
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::error:External workflows can not be used with `pull_request` events. \
+            Please contact a member of the organization for assistance."
+          exit 1
       - name: Check secrets
         run: |
           if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
@@ -415,18 +421,21 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        (
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        ) || (
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        )
+        github.event_name == 'pull_request' ||
+        github.event_name == 'pull_request_target'
       ) && (
         github.event.action == 'closed' &&
         github.event.pull_request.merged == true
       )
     steps:
+      - name: Reject external pull_request events
+        if: |
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::error:External workflows can not be used with `pull_request` events. \
+            Please contact a member of the organization for assistance."
+          exit 1
       - name: Check secrets
         run: |
           if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
@@ -3307,7 +3316,7 @@ jobs:
       - custom_test
     if: |
       always() &&
-      needs.is_pr_open.result == 'success'
+      needs.is_pr_open.result != 'skipped'
     steps:
       - name: Reject failed jobs
         run: |
@@ -3350,7 +3359,7 @@ jobs:
       - protect_branch
     if: |
       always() &&
-      needs.is_pr_open.result == 'success'
+      needs.is_pr_open.result != 'skipped'
     steps:
       - name: Reject failed jobs
         run: |
