@@ -265,17 +265,6 @@
         echo "static=false" >> $GITHUB_OUTPUT
       fi
 
-  - &isJsonArray
-    name: Check if INPUT is a JSON array
-    id: is_json_array
-    run: |
-      if echo "${INPUT}" | jq 'type == "array"' | grep -q true
-      then
-          echo "result=true" >> $GITHUB_OUTPUT
-      else
-          echo "result=false" >> $GITHUB_OUTPUT
-      fi
-
   - &jsonArrayBuilder
     name: Build JSON array from comma-separated list
     id: to_json_array
@@ -344,6 +333,16 @@
         echo "One or more jobs were cancelled"
         exit 1
       fi
+
+  - &rejectExternalPullRequest
+    name: Reject external pull_request events
+    if: |
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.full_name != github.repository
+    run: |
+      echo "::error:External workflows can not be used with `pull_request` events. \
+        Please contact a member of the organization for assistance."
+      exit 1
 
 name: Flowzone
 
@@ -689,18 +688,14 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        (
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        ) || (
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        )
+        github.event_name == 'pull_request' ||
+        github.event_name == 'pull_request_target'
       ) && (
         github.event.action == 'opened' ||
         github.event.action == 'synchronize'
       )
     steps:
+      - *rejectExternalPullRequest
       - *rejectConflictingSecrets
       - *rejectExternalWorkflowChanges
       - *logGitHubContext
@@ -712,18 +707,14 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        (
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        ) || (
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        )
+        github.event_name == 'pull_request' ||
+        github.event_name == 'pull_request_target'
       ) && (
         github.event.action == 'closed' &&
         github.event.pull_request.merged == false
       )
     steps:
+      - *rejectExternalPullRequest
       - *rejectConflictingSecrets
       - *rejectExternalWorkflowChanges
       - *logGitHubContext
@@ -734,18 +725,14 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        (
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        ) || (
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        )
+        github.event_name == 'pull_request' ||
+        github.event_name == 'pull_request_target'
       ) && (
         github.event.action == 'closed' &&
         github.event.pull_request.merged == true
       )
     steps:
+      - *rejectExternalPullRequest
       - *rejectConflictingSecrets
       - *rejectExternalWorkflowChanges
       - *logGitHubContext
@@ -3058,7 +3045,7 @@ jobs:
       - custom_test
     if: |
       always() &&
-      needs.is_pr_open.result == 'success'
+      needs.is_pr_open.result != 'skipped'
     steps:
       - *rejectFailedJobs
       - *rejectCancelledJobs
@@ -3090,7 +3077,7 @@ jobs:
       - protect_branch
     if: |
       always() &&
-      needs.is_pr_open.result == 'success'
+      needs.is_pr_open.result != 'skipped'
     steps:
       - *rejectFailedJobs
       - *rejectCancelledJobs
