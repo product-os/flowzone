@@ -1,4 +1,20 @@
 - commits:
+    - subject: Reject duplicate workflow calls
+      hash: c5ccd8bd3e22935e7f1a48f3a83bbfadcf9eca61
+      body: |
+        This will force users to update their workflows
+        to avoid duplicate runs that could break branch protection.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.2.0
+  title: ""
+  date: 2023-03-22T22:31:47.369Z
+- commits:
     - subject: Run protect branch early in the workflow
       hash: 817f6ff10a3a63328193e11a38503222b35b74c0
       body: |
