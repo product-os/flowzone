@@ -925,8 +925,6 @@ jobs:
           json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.build),' ') }} -f ${files} \
             | jq -cr '
               .target |= map_values(."inherits" += ["docker-metadata-action"]) |
-              .target |= map_values(."cache-to" //= ["type=gha,mode=max"]) |
-              .target |= map_values(."cache-from" //= ["type=gha"]) |
               .target |= map_values(."platforms" //= ["linux/amd64"]) |
               del(.group."default") |
               if .group == {} then del(.group) else . end
@@ -1795,6 +1793,8 @@ jobs:
             *.platform=${{ matrix.platform }}
             *.secrets=id=GITHUB_TOKEN
             *.secrets=id=GH_TOKEN
+            *.cache-to=type=gha,mode=min,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
+            *.cache-from=type=gha,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
           load: true
       - name: Run docker compose tests
         if: needs.is_docker.outputs.docker_compose_tests == 'true'
