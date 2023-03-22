@@ -1,4 +1,21 @@
 - commits:
+    - subject: Run protect branch early in the workflow
+      hash: 817f6ff10a3a63328193e11a38503222b35b74c0
+      body: |
+        Since we don't rely on Protect Branch as a required check
+        anymore it actually saves time to run it early in the workflow,
+        before jobs like All Tests and All Jobs have queued.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.1.0
+  title: ""
+  date: 2023-03-22T21:07:14.862Z
+- commits:
     - subject: Default to max gha cache for docker builds
       hash: e15ad734bf178c290fbff58b1456abf69fc5e983
       body: |
