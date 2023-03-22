@@ -108,6 +108,11 @@ on:
         type: string
         required: false
         default: default
+      docker_invert_tags:
+        description: Invert the tags for the Docker images (e.g. `{tag}-{variant}` becomes `{variant}-{tag}`)
+        type: boolean
+        required: false
+        default: false
       balena_environment:
         description: balenaCloud environment
         type: string
@@ -1653,8 +1658,12 @@ jobs:
 
           if [ "${target}" != 'default' ]
           then
-            echo "prefix=${target}-" >> $GITHUB_OUTPUT
-            echo "suffix=-${target}" >> $GITHUB_OUTPUT
+            if [ "${{ inputs.docker_invert_tags }}" = "true" ]
+            then
+              echo "prefix=${target}-" >> $GITHUB_OUTPUT
+            else
+              echo "suffix=-${target}" >> $GITHUB_OUTPUT
+            fi
           fi
 
           if [ -n "${raw_platform}" ]
@@ -1842,8 +1851,12 @@ jobs:
 
           if [ "${target}" != 'default' ]
           then
-            echo "prefix=${target}-" >> $GITHUB_OUTPUT
-            echo "suffix=-${target}" >> $GITHUB_OUTPUT
+            if [ "${{ inputs.docker_invert_tags }}" = "true" ]
+            then
+              echo "prefix=${target}-" >> $GITHUB_OUTPUT
+            else
+              echo "suffix=-${target}" >> $GITHUB_OUTPUT
+            fi
           fi
 
           if [ -n "${raw_platform}" ]
@@ -1868,6 +1881,7 @@ jobs:
           flavor: |
             latest=false
             prefix=${{ steps.strings.outputs.prefix }}
+            suffix=${{ steps.strings.outputs.suffix }}
       - name: Create manifest
         id: manifest
         run: |
@@ -1960,8 +1974,12 @@ jobs:
 
           if [ "${target}" != 'default' ]
           then
-            echo "prefix=${target}-" >> $GITHUB_OUTPUT
-            echo "suffix=-${target}" >> $GITHUB_OUTPUT
+            if [ "${{ inputs.docker_invert_tags }}" = "true" ]
+            then
+              echo "prefix=${target}-" >> $GITHUB_OUTPUT
+            else
+              echo "suffix=-${target}" >> $GITHUB_OUTPUT
+            fi
           fi
 
           if [ -n "${raw_platform}" ]
@@ -1981,6 +1999,7 @@ jobs:
           flavor: |
             latest=${{ steps.version_tag.outputs.semver != '' }}
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
+            suffix=${{ steps.strings.outputs.suffix }},onlatest=true
       - name: Login to GitHub Container Registry
         continue-on-error: true
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
@@ -1998,7 +2017,7 @@ jobs:
       - name: Publish final tags
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
         with:
-          src: ${{ matrix.image }}:${{ steps.strings.outputs.prefix }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          src: ${{ matrix.image }}:${{ steps.strings.outputs.prefix }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}${{ steps.strings.outputs.suffix }}
           dst: |
             ${{ steps.meta.outputs.tags }}
       - name: Strip docker.io prefix

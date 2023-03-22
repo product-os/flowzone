@@ -50,6 +50,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`working_directory`](#working_directory)
     - [`docker_images`](#docker_images)
     - [`bake_targets`](#bake_targets)
+    - [`docker_invert_tags`](#docker_invert_tags)
     - [`balena_environment`](#balena_environment)
     - [`balena_slugs`](#balena_slugs)
     - [`cargo_targets`](#cargo_targets)
@@ -525,6 +526,14 @@ Comma-delimited string of Docker buildx bake targets to publish (skipped if empt
 Type: _string_
 
 Default: `default`
+
+#### `docker_invert_tags`
+
+Invert the tags for the Docker images (e.g. `{tag}-{variant}` becomes `{variant}-{tag}`)
+
+Type: _boolean_
+
+Default: `false`
 
 #### `balena_environment`
 

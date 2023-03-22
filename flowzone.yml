@@ -305,8 +305,12 @@
 
       if [ "${target}" != 'default' ]
       then
-        echo "prefix=${target}-" >> $GITHUB_OUTPUT
-        echo "suffix=-${target}" >> $GITHUB_OUTPUT
+        if [ "${{ inputs.docker_invert_tags }}" = "true" ]
+        then
+          echo "prefix=${target}-" >> $GITHUB_OUTPUT
+        else
+          echo "suffix=-${target}" >> $GITHUB_OUTPUT
+        fi
       fi
 
       if [ -n "${raw_platform}" ]
@@ -460,6 +464,11 @@ on:
         type: string
         required: false
         default: "default"
+      docker_invert_tags:
+        description: "Invert the tags for the Docker images (e.g. `{tag}-{variant}` becomes `{variant}-{tag}`)"
+        type: boolean
+        required: false
+        default: false
       balena_environment:
         description: "balenaCloud environment"
         type: string
@@ -1999,6 +2008,7 @@ jobs:
           flavor: |
             latest=false
             prefix=${{ steps.strings.outputs.prefix }}
+            suffix=${{ steps.strings.outputs.suffix }}
 
       - name: Create manifest
         id: manifest
@@ -2078,6 +2088,7 @@ jobs:
           flavor: |
             latest=${{ steps.version_tag.outputs.semver != '' }}
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
+            suffix=${{ steps.strings.outputs.suffix }},onlatest=true
 
       - *loginWithGitHubContainerRegistry
       - *loginWithDockerHub
@@ -2086,7 +2097,7 @@ jobs:
       - name: Publish final tags
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37 # v2.1.0
         with:
-          src: ${{ matrix.image }}:${{ steps.strings.outputs.prefix }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          src: ${{ matrix.image }}:${{ steps.strings.outputs.prefix }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}${{ steps.strings.outputs.suffix }}
           dst: |
             ${{ steps.meta.outputs.tags }}
 
