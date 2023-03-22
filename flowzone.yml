@@ -1136,7 +1136,7 @@ jobs:
           json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.build),' ') }} -f ${files} \
             | jq -cr '
               .target |= map_values(."inherits" += ["docker-metadata-action"]) |
-              .target |= map_values(."cache-to" //= ["type=gha"]) |
+              .target |= map_values(."cache-to" //= ["type=gha,mode=max"]) |
               .target |= map_values(."cache-from" //= ["type=gha"]) |
               .target |= map_values(."platforms" //= ["linux/amd64"]) |
               del(.group."default") |
