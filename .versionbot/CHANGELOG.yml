@@ -1,4 +1,22 @@
 - commits:
+    - subject: Change default docker tag format to {tag}-{variant}
+      hash: e64f20bfa5391506945b918e099a7d04596a4287
+      body: |
+        This is a breaking change for any repositories expecting
+        image tags in the format {variant}-{tag}.
+
+        The old behaviour can be restored with docker_invert_tags: true.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.0.0
+  title: ""
+  date: 2023-03-22T15:43:23.903Z
+- commits:
     - subject: Remove manual docker cleanup steps
       hash: 536a0802562dff010f673645387d4be95d2d5f89
       body: |
