@@ -2783,14 +2783,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_open
-      - all_tests
-      - npm_publish
-      - docker_publish
-      - balena_publish
-      - website_publish
-      - github_publish
-      - cargo_publish
-      - custom_publish
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
