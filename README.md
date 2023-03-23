@@ -24,7 +24,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [Docs](#docs)
   - [Website](#website)
 - [Customization](#customization)
-
   - [Secrets](#secrets)
     - [`GH_APP_PRIVATE_KEY`](#gh_app_private_key)
     - [`FLOWZONE_TOKEN`](#flowzone_token)
@@ -51,6 +50,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`docker_images`](#docker_images)
     - [`bake_targets`](#bake_targets)
     - [`docker_invert_tags`](#docker_invert_tags)
+    - [`docker_publish_platform_tags`](#docker_publish_platform_tags)
     - [`balena_environment`](#balena_environment)
     - [`balena_slugs`](#balena_slugs)
     - [`cargo_targets`](#cargo_targets)
@@ -530,6 +530,14 @@ Default: `default`
 #### `docker_invert_tags`
 
 Invert the tags for the Docker images (e.g. `{tag}-{variant}` becomes `{variant}-{tag}`)
+
+Type: _boolean_
+
+Default: `false`
+
+#### `docker_publish_platform_tags`
+
+Publish platform-specific tags in addition to multi-arch manifests (e.g. `product-os/flowzone:latest-amd64`)
 
 Type: _boolean_
 
