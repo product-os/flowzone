@@ -1,4 +1,23 @@
 - commits:
+    - subject: Change e2e tests to an optional dispatch job
+      hash: 73da089a61318ac80b582999265ec1d29247e7c9
+      body: |
+        By making e2e tests a manual step we can speed up Flowzone
+        development and reduce noise on production repositories.
+
+        The downside being the default tests could miss things
+        but it's rare that things fail in e2e and pass in Flowzone self-tests.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.2.3
+  title: ""
+  date: 2023-03-23T16:32:18.658Z
+- commits:
     - subject: Assign unique gha cache scopes for each docker target/platform
       hash: 19b3545dd4c63c0e2505ef183d72e061eb58004c
       body: ""
