@@ -1,4 +1,18 @@
 - commits:
+    - subject: Assign unique gha cache scopes for each docker target/platform
+      hash: 19b3545dd4c63c0e2505ef183d72e061eb58004c
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.2.2
+  title: ""
+  date: 2023-03-23T11:09:50.215Z
+- commits:
     - subject: Add missing job dependency in cargo_publish
       hash: 5e4cf8c972256572790c618ae33291c2f7d5f5bb
       body: ""
