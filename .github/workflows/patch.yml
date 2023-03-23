@@ -1,5 +1,5 @@
 # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
-name: Bulk Patch
+name: Patch
 
 on:
   workflow_dispatch:
@@ -50,8 +50,7 @@ on:
         description: GitHub App installation id to request a temporary token
         type: string
         required: false
-        # https://github.com/organizations/product-os/settings/installations
-        default: "34040165"
+        default: ""
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -64,13 +63,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
-    defaults:
-      run:
-        working-directory: .
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-
     outputs:
-      repositories: ${{ steps.repositories_json.outputs.build }}
+      matrix: ${{ steps.matrix.outputs.build }}
+
+    env:
+      # https://github.com/organizations/product-os/settings/installations
+      # https://github.com/organizations/balena-os/settings/installations
+      # https://github.com/organizations/balena-io/settings/installations
+      # https://github.com/organizations/balena-io-modules/settings/installations
+      KNOWN_INSTALLATION_IDS: >
+        {
+          "balena-io-modules": 34046903,
+          "balena-io": 34046749,
+          "balena-os": 34046907,
+          "product-os": 34040165
+        }
 
     steps:
       - name: Log GitHub context
@@ -100,6 +107,19 @@ jobs:
         with:
           str: ${{ steps.repositories_csv.outputs.build }}
           separator: ","
+
+      - name: Create JSON matrix
+        id: matrix
+        env:
+          REPOS: ${{ steps.repositories_json.outputs.build }}
+          INSTALLATION_IDS: ${{ env.KNOWN_INSTALLATION_IDS }}
+        run: |
+          echo "build=$(jq -cr --argjson installation_ids "${INSTALLATION_IDS}" '{
+            include: map({
+                repository: .,
+                installation_id: $installation_ids[split("/")[0]] | tostring
+            })
+          }' <<< "${REPOS}")" >> $GITHUB_OUTPUT
 
   patch_repo:
     name: Patch repository
@@ -131,7 +151,7 @@ jobs:
         id: gh_token
         with:
           app_id: ${{ inputs.token_app_id }}
-          installation_id: ${{ inputs.token_installation_id }}
+          installation_id: ${{ inputs.token_installation_id || matrix.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           repository: ${{ matrix.repository }}
           permissions: >-
@@ -200,8 +220,6 @@ jobs:
 
       - name: Update summary
         if: steps.cpr.outputs.pull-request-number != ''
-        env:
-          GH_TOKEN: ${{ steps.gh_token.outputs.token }}
         run: |
           echo "Pull Request Number: ${{ steps.cpr.outputs.pull-request-number }}" | tee -a $GITHUB_STEP_SUMMARY
           echo "Pull Request URL: ${{ steps.cpr.outputs.pull-request-url }}" | tee -a $GITHUB_STEP_SUMMARY

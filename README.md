@@ -786,6 +786,12 @@ Type: _string_
 
 Default: true
 
+## Testing
+
+There is a dispatch workflow to test development branches of Flowzone with a range of repositories to ensure breaking changes aren't introduced.
+
+See [docs/workflow-dispatch.md#e2e](docs/workflow-dispatch.md#e2e) for more information.
+
 ## Maintenance
 
 ### Generate GPG keys
