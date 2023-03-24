@@ -145,7 +145,7 @@
     name: Checkout merge branch
     if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
     id: checkout_merge
-    uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3
+    uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3
     with:
       fetch-depth: 0
       submodules: "recursive"
@@ -155,7 +155,7 @@
   - &checkoutSha # otherwise use the default checkout behaviour
     name: Checkout sha
     if: github.event_name != 'pull_request_target' || github.event.action == 'closed'
-    uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3
+    uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3
     with:
       fetch-depth: 0
       submodules: "recursive"
