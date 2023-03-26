@@ -343,6 +343,16 @@
         Please contact a member of the organization for assistance."
       exit 1
 
+  - &rejectInternalPullRequestTarget
+    name: Reject external pull_request events
+    if: |
+        github.event_name == 'pull_request_target' &&
+        github.event.pull_request.head.repo.full_name == github.repository
+    run: |
+      echo "::error:Internal workflows should not be used with `pull_request_target` events. \
+        Please consult the documentation for more information."
+      exit 1
+
   - &rejectSelfHostedRunners
     name: Reject self-hosted runners
     if: |
@@ -710,6 +720,7 @@ jobs:
       )
     steps:
       - *rejectExternalPullRequest
+      - *rejectInternalPullRequestTarget
       - *rejectConflictingSecrets
       - *rejectExternalWorkflowChanges
       - *rejectSelfHostedRunners
@@ -730,6 +741,7 @@ jobs:
       )
     steps:
       - *rejectExternalPullRequest
+      - *rejectInternalPullRequestTarget
       - *rejectConflictingSecrets
       - *rejectExternalWorkflowChanges
       - *rejectSelfHostedRunners
@@ -749,6 +761,7 @@ jobs:
       )
     steps:
       - *rejectExternalPullRequest
+      - *rejectInternalPullRequestTarget
       - *rejectConflictingSecrets
       - *logGitHubContext
 
