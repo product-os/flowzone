@@ -344,6 +344,21 @@
         Please contact a member of the organization for assistance."
       exit 1
 
+  - &rejectSelfHostedRunners
+    name: Reject self-hosted runners
+    if: |
+      github.event.pull_request.head.repo.full_name != github.repository &&
+      (
+        contains(fromJSON(inputs.runs_on), 'self-hosted') ||
+        contains(fromJSON(inputs.custom_runs_on), 'self-hosted') ||
+        contains(fromJSON(inputs.custom_runs_on).*, 'self-hosted') ||
+        contains(fromJSON(inputs.docker_runs_on).*, 'self-hosted')
+      )
+    run: |
+      echo "::error:External workflows can not be used with self-hosted runners. \
+        Please contact a member of the organization for assistance."
+      exit 1
+
 name: Flowzone
 
 on:
@@ -698,6 +713,7 @@ jobs:
       - *rejectExternalPullRequest
       - *rejectConflictingSecrets
       - *rejectExternalWorkflowChanges
+      - *rejectSelfHostedRunners
       - *logGitHubContext
 
   # in our context closed does not include merged
@@ -717,6 +733,7 @@ jobs:
       - *rejectExternalPullRequest
       - *rejectConflictingSecrets
       - *rejectExternalWorkflowChanges
+      - *rejectSelfHostedRunners
       - *logGitHubContext
 
   is_pr_merged:
@@ -734,7 +751,6 @@ jobs:
     steps:
       - *rejectExternalPullRequest
       - *rejectConflictingSecrets
-      - *rejectExternalWorkflowChanges
       - *logGitHubContext
 
   is_pushed_tag:
