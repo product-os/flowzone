@@ -1,4 +1,18 @@
 - commits:
+    - subject: Reject use of self-hosted runners for external pull requests
+      hash: e97a075dd29e55f46f50d3d92b345abfda88a61f
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.2.5
+  title: ""
+  date: 2023-03-26T19:53:23.311Z
+- commits:
     - subject: Update actions/checkout digest to 8f4b7f8
       hash: 6144e46443114663125707cf96d7b287bc5c681f
       body: |
