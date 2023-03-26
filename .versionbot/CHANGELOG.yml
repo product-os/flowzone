@@ -1,4 +1,20 @@
 - commits:
+    - subject: Reject internal pull requests using pull_request_target
+      hash: 748de29c8a29d8c0e80f6428dcb53d78e6e7daae
+      body: |
+        This will prevent duplicate runs when both triggers
+        are enabled.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.2.7
+  title: ""
+  date: 2023-03-26T23:57:47.917Z
+- commits:
     - subject: Pin deploy-to-balena action to a release
       hash: 38dee1a8c2eab1578e3dbef441c5f4bbd8401298
       body: ""
