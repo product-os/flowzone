@@ -2091,13 +2091,12 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - uses: balena-io/deploy-to-balena-action@master
+      - uses: balena-io/deploy-to-balena-action@v0.26.2
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
           environment: ${{ inputs.balena_environment }}
           fleet: ${{ matrix.slug }}
-          versionbot: false
           source: ${{ inputs.working_directory }}
           registry_secrets: |
             {
@@ -2167,13 +2166,12 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - uses: balena-io/deploy-to-balena-action@master
+      - uses: balena-io/deploy-to-balena-action@v0.26.2
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
           environment: ${{ inputs.balena_environment }}
           fleet: ${{ matrix.slug }}
-          versionbot: false
           source: ${{ inputs.working_directory }}
           registry_secrets: |
             {
