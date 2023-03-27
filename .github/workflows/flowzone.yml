@@ -2219,6 +2219,9 @@ jobs:
             latest=${{ steps.version_tag.outputs.semver != '' }}
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
+      - uses: imjasonh/setup-crane@v0.3
+        with:
+          version: v0.14.0
       - name: Login to GitHub Container Registry
         continue-on-error: true
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
