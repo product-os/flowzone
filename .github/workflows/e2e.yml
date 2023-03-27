@@ -5,29 +5,33 @@ on:
   workflow_dispatch:
     inputs:
       repositories:
-        description: Comma-separated repositories to patch
+        description: JSON array of repositories
         required: false
         type: string
-        default: |
-          balena-io-modules/open-balena-base,
-          balena-io/balena-api,
-          balena-io/docs,
-          balena-io/environment-staging,
-          balena-os/balena-engine,
-          balena-os/fatrw,
-          product-os/environment-staging
+        default: >
+          [
+            "balena-io-modules/open-balena-base",
+            "balena-io/balena-api",
+            "balena-io/docs",
+            "balena-io/environment-staging",
+            "balena-os/balena-engine",
+            "balena-os/fatrw",
+            "product-os/environment-staging"
+          ]
       flowzone_ref:
         description: Flowzone branch, or tag, or commit SHA
         required: false
         type: string
         default: master
       required_checks:
-        description: Comma-separated list of required successful checks
+        description: JSON array of status checks
         required: false
         type: string
-        default: |
-          Flowzone / All tests,
-          Flowzone / All jobs
+        default: >
+          [
+            "Flowzone / All tests",
+            "Flowzone / All jobs"
+          ]
       dry_run:
         description: Patch files but do not push changes
         required: false
@@ -64,55 +68,29 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.build }}
 
-    env:
-      # https://github.com/organizations/product-os/settings/installations
-      # https://github.com/organizations/balena-os/settings/installations
-      # https://github.com/organizations/balena-io/settings/installations
-      # https://github.com/organizations/balena-io-modules/settings/installations
-      KNOWN_INSTALLATION_IDS: >
-        {
-          "balena-io-modules": 34046903,
-          "balena-io": 34046749,
-          "balena-os": 34046907,
-          "product-os": 34040165
-        }
-
     steps:
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
         run: echo "${GITHUB_CONTEXT}" || true
 
-      - name: Process repositories list
-        id: repositories_csv
-        env:
-          INPUT: ${{ inputs.repositories }}
-        run: |
-          while IFS=',' read -r item
-          do
-            item="$(echo "${item}" | awk '{$1=$1};NF')"
-            if [ -n "${item}" ]
-            then
-              out="${out},${item}"
-            fi
-          done <<< "${INPUT}"
-          echo "build=${out:1}" >> $GITHUB_OUTPUT
-
-      # https://github.com/kanga333/json-array-builder
-      - name: Build JSON array
-        id: repositories_json
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
-        with:
-          str: ${{ steps.repositories_csv.outputs.build }}
-          separator: ","
-
-      - name: Create JSON matrix
+      - name: Create repositories matrix
         id: matrix
         env:
-          REPOS: ${{ steps.repositories_json.outputs.build }}
-          INSTALLATION_IDS: ${{ env.KNOWN_INSTALLATION_IDS }}
+          REPOS: ${{ inputs.repositories }}
+          # https://github.com/organizations/product-os/settings/installations
+          # https://github.com/organizations/balena-os/settings/installations
+          # https://github.com/organizations/balena-io/settings/installations
+          # https://github.com/organizations/balena-io-modules/settings/installations
+          KNOWN_INSTALLATION_IDS: >
+            {
+              "balena-io-modules": 34046903,
+              "balena-io": 34046749,
+              "balena-os": 34046907,
+              "product-os": 34040165
+            }
         run: |
-          echo "build=$(jq -cr --argjson installation_ids "${INSTALLATION_IDS}" '{
+          echo "build=$(jq -cr --argjson installation_ids "${KNOWN_INSTALLATION_IDS}" '{
             include: map({
                 repository: .,
                 installation_id: $installation_ids[split("/")[0]] | tostring
@@ -261,11 +239,11 @@ jobs:
 
             done <<< "${all_checks}"
 
-            while IFS=',' read -r required
-            do
-              required="$(echo "${required}" | awk '{$1=$1};NF')"
-              test -n "${required}" || continue 1
+            mapfile -t items < <(echo "${REQUIRED_CHECKS}" | jq -r '.[]')
 
+            for required in "${items[@]}"
+            do
+              test -n "${required}" || continue 1
               status="$(echo "${all_checks}" | awk -vCHECK="${required}" -F'\t' '$1 == CHECK {print $2}')"
 
               case ${status} in
@@ -283,7 +261,7 @@ jobs:
                   exit 1
                   ;;
               esac
-            done <<< "${REQUIRED_CHECKS}"
+            done
 
             break
           done

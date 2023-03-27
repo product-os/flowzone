@@ -16,8 +16,8 @@ or via the [GitHub CLI](https://docs.github.com/en/actions/managing-workflow-run
 ```bash
 # https://cli.github.com/manual/gh_workflow_run
 gh workflow run e2e.yml \
-  -f repositories="balena-io-modules/open-balena-base,balena-io/docs"
-  -f flowzone_ref="kyle/dispatch-e2e"
+  -f repositories='["balena-io-modules/open-balena-base","balena-io/docs"]' \
+  -f flowzone_ref="kyle/dispatch-e2e" \
   -f dry_run=true
 ```
 
@@ -39,8 +39,8 @@ or via the [GitHub CLI](https://docs.github.com/en/actions/managing-workflow-run
 ```bash
 # https://cli.github.com/manual/gh_workflow_run
 gh workflow run patch.yml \
+    -f repositories='["balena-io-modules/open-balena-base","balena-io/docs"]' \
     -f patches_base64="$(cat /tmp/patches.b64)" \
-    -f repositories="balena-os/balena-raspberrypi,balena-os/balena-generic" \
     -f pr_branch="kyle/patch" \
     -f pr_title="Prevent duplicate Flowzone workflow executions" \
     -f pr_body="[skip ci]" \

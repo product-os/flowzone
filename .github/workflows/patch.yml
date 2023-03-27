@@ -5,16 +5,18 @@ on:
   workflow_dispatch:
     inputs:
       repositories:
-        description: Comma-separated repositories to patch
+        description: JSON array of repositories
         required: true
         type: string
+        default: >
+          []
       patches_base64:
         description: One or more patches encoded to base64
         required: true
         type: string
       pr_branch:
         description: Branch name for the pull request
-        required: false
+        required: true
         type: string
         default: user/bulk-patch
       pr_title:
@@ -66,55 +68,29 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.build }}
 
-    env:
-      # https://github.com/organizations/product-os/settings/installations
-      # https://github.com/organizations/balena-os/settings/installations
-      # https://github.com/organizations/balena-io/settings/installations
-      # https://github.com/organizations/balena-io-modules/settings/installations
-      KNOWN_INSTALLATION_IDS: >
-        {
-          "balena-io-modules": 34046903,
-          "balena-io": 34046749,
-          "balena-os": 34046907,
-          "product-os": 34040165
-        }
-
     steps:
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
         run: echo "${GITHUB_CONTEXT}" || true
 
-      - name: Process repositories list
-        id: repositories_csv
-        env:
-          INPUT: ${{ inputs.repositories }}
-        run: |
-          while IFS=',' read -r item
-          do
-            item="$(echo "${item}" | tr -d '[:space:]')"
-            if [ -n "${item}" ]
-            then
-              out="${out},${item}"
-            fi
-          done <<< "${INPUT}"
-          echo "build=${out:1}" >> $GITHUB_OUTPUT
-
-      # https://github.com/kanga333/json-array-builder
-      - name: Build JSON array
-        id: repositories_json
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
-        with:
-          str: ${{ steps.repositories_csv.outputs.build }}
-          separator: ","
-
-      - name: Create JSON matrix
+      - name: Create repositories matrix
         id: matrix
         env:
-          REPOS: ${{ steps.repositories_json.outputs.build }}
-          INSTALLATION_IDS: ${{ env.KNOWN_INSTALLATION_IDS }}
+          REPOS: ${{ inputs.repositories }}
+          # https://github.com/organizations/product-os/settings/installations
+          # https://github.com/organizations/balena-os/settings/installations
+          # https://github.com/organizations/balena-io/settings/installations
+          # https://github.com/organizations/balena-io-modules/settings/installations
+          KNOWN_INSTALLATION_IDS: >
+            {
+              "balena-io-modules": 34046903,
+              "balena-io": 34046749,
+              "balena-os": 34046907,
+              "product-os": 34040165
+            }
         run: |
-          echo "build=$(jq -cr --argjson installation_ids "${INSTALLATION_IDS}" '{
+          echo "build=$(jq -cr --argjson installation_ids "${KNOWN_INSTALLATION_IDS}" '{
             include: map({
                 repository: .,
                 installation_id: $installation_ids[split("/")[0]] | tostring
