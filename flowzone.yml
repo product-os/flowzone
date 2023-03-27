@@ -1,11 +1,8 @@
 .flowzone:
-
-  - &ifInternalPullRequest
-    # check if the PR is from a fork by comparing the repository name
+  - &ifInternalPullRequest # check if the PR is from a fork by comparing the repository name
     if: github.event.pull_request.head.repo.full_name == github.repository
 
-  - &ifExternalPullRequest
-    # check if the PR is from a fork by comparing the repository name
+  - &ifExternalPullRequest # check if the PR is from a fork by comparing the repository name
     if: github.event.pull_request.head.repo.full_name != github.repository
 
   - &ifPrivateRepository
@@ -23,8 +20,7 @@
           echo 'found=false' >> $GITHUB_OUTPUT
       fi
 
-  - &getGitHubAppInstallationToken
-    # https://github.com/marketplace/actions/github-app-token
+  - &getGitHubAppInstallationToken # https://github.com/marketplace/actions/github-app-token
     name: Generate GitHub App installation token
     uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # v1.8.0
     if: steps.gh_app_private_key.outputs.found == 'true'
@@ -243,8 +239,7 @@
     env:
       <<: *gitHubCliEnvironmentTrusted
 
-  - &isDraftPullRequest
-    # check both the github context (static) and via the gh cli (dynamic)
+  - &isDraftPullRequest # check both the github context (static) and via the gh cli (dynamic)
     name: Check if PR is draft
     id: is_draft
     env:
@@ -281,30 +276,125 @@
       echo "${build}" >> $GITHUB_OUTPUT
       echo "EOF" >> $GITHUB_OUTPUT
 
-  - &sanitizeTargetStrings
-    name: Sanitize target strings
+  - &dockerPlatformSlugMap
+    PLATFORM_SLUG_MAP: >
+      {
+        "linux/386": "i386",
+        "linux/amd64": "amd64",
+        "linux/arm64": "arm64v8",
+        "linux/arm/v7": "arm32v7",
+        "linux/arm/v6": "arm32v6",
+        "linux/arm/v5": "arm32v5",
+        "linux/s390x": "s390x",
+        "linux/mips64le": "mips64le",
+        "linux/ppc64le": "ppc64le",
+        "linux/riscv64": "riscv64",
+        "windows/amd64": "windows-amd64"
+      }
+
+  - &sanitizeDockerStrings
+    name: Sanitize docker strings
     id: strings
     env:
-      raw_target: ${{ matrix.target }}
-      raw_platform: ${{ matrix.platform }}
+      <<: *dockerPlatformSlugMap
+      TARGET: ${{ matrix.target }}
+      PLATFORM: ${{ matrix.platform }}
+      IMAGE: ${{ matrix.image }}
     run: |
-      target="$(echo "${raw_target}" | sed 's/[^[:alnum:]]/-/g')"
-      echo "target=${target}" >> $GITHUB_OUTPUT
+      target_slug="$(echo "${TARGET}" | sed 's/[^[:alnum:]]/-/g')"
 
-      if [ "${target}" != 'default' ]
+      if [ -n "${TARGET}" ] && [ -z "${target_slug}" ]
+      then
+        echo "::error::Unsupported platform: ${TARGET}"
+      fi
+
+      if [ "${TARGET}" != "default" ]
       then
         if [ "${{ inputs.docker_invert_tags }}" = "true" ]
         then
-          echo "prefix=${target}-" >> $GITHUB_OUTPUT
+          prefix_slug="${target_slug}-"
         else
-          echo "suffix=-${target}" >> $GITHUB_OUTPUT
+          suffix_slug="-${target_slug}"
         fi
       fi
 
-      if [ -n "${raw_platform}" ]
+      platform_slug="$(jq -cr --arg platform "${PLATFORM}" '.[$platform] // ""' <<< "${PLATFORM_SLUG_MAP}")"
+
+      if [ -n "${PLATFORM}" ] && [ -z "${platform_slug}" ]
       then
-        echo "platform=$(echo "${raw_platform}" | sed 's/[^[:alnum:]]/-/g')" >> $GITHUB_OUTPUT
+        echo "::error::Unsupported platform: ${PLATFORM}"
       fi
+
+      if [ -n "${IMAGE}" ]
+      then
+        if [[ "${IMAGE}" =~ ^(.*\/)?([^\/]+)\/([^\/\:]+)(\:.+)?$ ]]
+        then
+          image_slug="${IMAGE}"
+        else
+          image_slug="docker.io/${IMAGE}"
+        fi
+      fi
+
+      echo "image=${image_slug}" >> $GITHUB_OUTPUT
+      echo "target=${target_slug}" >> $GITHUB_OUTPUT
+      echo "platform=${platform_slug}" >> $GITHUB_OUTPUT
+      echo "prefix=${prefix_slug}" >> $GITHUB_OUTPUT
+      echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
+
+  - &dockerTestMetadata # https://github.com/docker/metadata-action
+    name: Generate metadata for draft docker images
+    id: test_meta
+    uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
+    with:
+      images: |
+        sut
+        localhost:5000/sut
+        ${{ needs.is_docker.outputs.docker_images_crlf }}
+      labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+      tags: |
+        type=raw,value=build-${{ github.event.pull_request.head.sha }}
+        type=raw,value=build-${{ github.event.pull_request.head.ref }}
+      flavor: |
+        latest=true
+        prefix=${{ steps.strings.outputs.prefix }}
+        suffix=${{ steps.strings.outputs.suffix }}
+
+  - &dockerDraftMetadata # https://github.com/docker/metadata-action
+    name: Generate metadata for draft docker images
+    id: draft_meta
+    uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
+    with:
+      images: |
+        ${{ matrix.image }}
+      labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+      tags: |
+        type=raw,value=${{ github.event.pull_request.head.sha }}
+        type=raw,value=build-${{ github.event.pull_request.head.sha }}
+        type=raw,value=build-${{ github.event.pull_request.head.ref }}
+      flavor: |
+        latest=false
+        prefix=${{ steps.strings.outputs.prefix }}
+        suffix=${{ steps.strings.outputs.suffix }}
+
+  - &dockerFinalMetadata
+    # for unversioned merges we will use the base branch as the tag
+    # and version tag and semver will be empty
+    # https://github.com/docker/metadata-action
+    name: Generate image tags
+    id: final_meta
+    uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
+    with:
+      images: |
+        ${{ matrix.image }}
+      labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+      tags: |
+        type=raw,value=${{ github.base_ref || github.ref_name }}
+        type=raw,value=${{ steps.version_tag.outputs.tag }}
+        type=raw,value=${{ steps.version_tag.outputs.semver }}
+      flavor: |
+        latest=${{ steps.version_tag.outputs.semver != '' }}
+        prefix=${{ steps.strings.outputs.prefix }},onlatest=true
+        suffix=${{ steps.strings.outputs.suffix }},onlatest=true
 
   - &rejectConflictingSecrets
     name: Check secrets
@@ -336,8 +426,8 @@
   - &rejectExternalPullRequest
     name: Reject external pull_request events
     if: |
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.full_name != github.repository
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name != github.repository
     run: |
       echo "::error:External workflows can not be used with `pull_request` events. \
         Please contact a member of the organization for assistance."
@@ -346,8 +436,8 @@
   - &rejectInternalPullRequestTarget
     name: Reject external pull_request events
     if: |
-        github.event_name == 'pull_request_target' &&
-        github.event.pull_request.head.repo.full_name == github.repository
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     run: |
       echo "::error:Internal workflows should not be used with `pull_request_target` events. \
         Please consult the documentation for more information."
@@ -367,6 +457,27 @@
       echo "::error:External workflows can not be used with self-hosted runners. \
         Please contact a member of the organization for assistance."
       exit 1
+
+  - &setupQemuBinfmt # https://github.com/docker/setup-qemu-action
+    name: Setup QEMU
+    uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2
+    if: contains(matrix.runs_on, 'self-hosted') != true
+    with:
+      platforms: all
+      # https://hub.docker.com/r/tonistiigi/binfmt
+      image: tonistiigi/binfmt:qemu-v6.2.0
+
+  - &setupBuildx # https://github.com/docker/setup-buildx-action
+    name: Setup buildx
+    uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # v2
+    with:
+      driver-opts: network=host
+      install: true
+
+  - &setupCrane # https://github.com/imjasonh/setup-crane
+    uses: imjasonh/setup-crane@v0.3
+    with:
+      version: v0.14.0
 
 name: Flowzone
 
@@ -489,6 +600,11 @@ on:
         default: "default"
       docker_invert_tags:
         description: "Invert the tags for the Docker images (e.g. `{tag}-{variant}` becomes `{variant}-{tag}`)"
+        type: boolean
+        required: false
+        default: false
+      docker_publish_platform_tags:
+        description: "Publish platform-specific tags in addition to multi-arch manifests (e.g. `product-os/flowzone:latest-amd64`)"
         type: boolean
         required: false
         default: false
@@ -705,7 +821,6 @@ env:
   CARGO_REGISTRY: crates.io
 
 jobs:
-
   is_pr_open:
     name: Is PR Open
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -959,7 +1074,7 @@ jobs:
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
-      has_npm_lockfile:  ${{ steps.npm_lock.outputs.has_npm_lockfile }}
+      has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
       node_versions: ${{ steps.node_versions.outputs.json }}
@@ -1086,7 +1201,7 @@ jobs:
       docker_compose_tests: ${{ steps.docker_compose_tests.outputs.found }}
       bake_targets: ${{ steps.bake_targets_json.outputs.build }}
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
-      docker_bake_matrix: ${{ steps.docker_bake.outputs.matrix }}
+      docker_test_matrix: ${{ steps.docker_test.outputs.build }}
 
     steps:
       - *downloadSourceArtifact
@@ -1134,8 +1249,6 @@ jobs:
           steps.docker_compose_tests.outputs.found == 'true'
         env:
           BAKE_FILE: /tmp/docker-bake.json
-          RUNS_ON: "${{ inputs.runs_on }}"
-          DOCKER_RUNS_ON: "${{ inputs.docker_runs_on }}"
         run: |
           if [ -n "$(ls docker-bake{.override,}.{json,hcl} 2>/dev/null)" ]
           then
@@ -1156,17 +1269,26 @@ jobs:
               if .group == {} then del(.group) else . end
             ')"
 
+          echo "json=${json}">> $GITHUB_OUTPUT
+
+      - name: Build docker test matrix
+        id: docker_test
+        if: steps.docker_bake.outputs.json != ''
+        env:
+          BAKE_JSON: "${{ steps.docker_bake.outputs.json }}"
+          RUNS_ON: "${{ inputs.runs_on }}"
+          DOCKER_RUNS_ON: "${{ inputs.docker_runs_on }}"
+        run: |
           matrix="$(jq -cr '.target | to_entries |
             {include: map(.value.platforms[] as $p |
             {target: .key, platform: $p}
-          )}' <<< "${json}")"
+          )}' <<< "${BAKE_JSON}")"
 
           matrix="$(jq -cr --argjson in "$DOCKER_RUNS_ON" --argjson default "$RUNS_ON" '.include |=
             map(.platform as $p |
             .runs_on = if ($in | has($p)) then $in[$p] else $default end)' <<< "${matrix}")"
 
-          echo "json=${json}">> $GITHUB_OUTPUT
-          echo "matrix=${matrix}">> $GITHUB_OUTPUT
+          echo "build=${matrix}">> $GITHUB_OUTPUT
 
   is_python:
     name: Is python
@@ -1770,10 +1892,10 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_bake_matrix) }}
+      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_test_matrix) }}
 
     env:
-      DOCKER_BUILDKIT: '1'
+      DOCKER_BUILDKIT: "1"
 
     steps:
       - *downloadSourceArtifact
@@ -1782,54 +1904,10 @@ jobs:
       - *checkGitHubAppPrivateKey
       - *getGitHubAppInstallationToken
       - *mapGitHubTokens
-
-      # https://github.com/docker/setup-qemu-action
-      # https://hub.docker.com/r/tonistiigi/binfmt
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2
-        if: contains(matrix.runs_on, 'self-hosted') != true
-        with:
-          platforms: all
-          image: tonistiigi/binfmt:qemu-v6.2.0
-
-      - name: Setup buildx
-        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # v2
-        with:
-          driver-opts: network=host
-          install: true
-
-      - *sanitizeTargetStrings
-
-      # https://github.com/docker/metadata-action
-      # generate a bunch of useful tags that can be referenced in docker-compose.test.yml
-      # - sut:default
-      # - sut:linux-amd64
-      # - sut:latest
-      # - localhost:5000/sut:default
-      # - localhost:5000/sut:linux-amd64
-      # - localhost:5000/sut:latest
-      # - ghcr.io/product-os/flowzone:default
-      # - ghcr.io/product-os/flowzone:linux-amd64
-      # - ghcr.io/product-os/flowzone:latest
-      # - product-os/flowzone:default
-      # - product-os/flowzone:linux-amd64
-      # - product-os/flowzone:latest
-      # ... etc
-      - name: Generate image labels and sut tags
-        id: meta
-        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
-        with:
-          images: |
-            sut
-            localhost:5000/sut
-            ${{ needs.is_docker.outputs.docker_images_crlf }}
-            ${{ github.repository }}
-          tags: |
-            type=raw,value=${{ steps.strings.outputs.target }}
-            type=raw,value=${{ steps.strings.outputs.platform }}
-          labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
-          flavor: |
-            latest=true
+      - *sanitizeDockerStrings
+      - *dockerTestMetadata
+      - *setupQemuBinfmt
+      - *setupBuildx
 
       # allow access to private base images for private repositories only
       # to avoid leaking secrets
@@ -1929,7 +2007,7 @@ jobs:
           workdir: ${{ inputs.working_directory }}
           files: |
             ${{ env.DOCKER_BAKE_FILE }}
-            ${{ steps.meta.outputs.bake-file }}
+            ${{ steps.test_meta.outputs.bake-file }}
           targets: ${{ matrix.target }}
           set: |
             *.platform=${{ matrix.platform }}
@@ -1948,13 +2026,14 @@ jobs:
 
       - name: Save image to file
         run: |
-          docker save ${{ fromJSON(steps.meta.outputs.json).tags[0] }} > ${DOCKER_TAR}
+          docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
           gzip -v ${DOCKER_TAR}
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
+          # this docker-{sha}-{target}-{platform} naming scheme is used by docker_publish to find the correct artifact
           name: docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${{ steps.strings.outputs.platform }}
           path: ${{ env.DOCKER_TAR }}.gz
           retention-days: 1
@@ -1986,77 +2065,97 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        image: ${{ fromJSON(needs.is_docker.outputs.docker_images) }}
         target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
 
     env:
       LOCAL_TAG: localhost:5000/sut:latest
 
     steps:
+      - *sanitizeDockerStrings
+      - *dockerDraftMetadata
+      - *setupBuildx
+      - *setupCrane
+
       - name: Warn if tests skipped
         if: needs.is_docker.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
 
+      # https://github.com/actions/download-artifact
       - name: Download all artifacts
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           path: ${{ runner.temp }}
 
-      - *sanitizeTargetStrings
-
       - name: Decompress artifacts
         run: |
-          for file in ${{ runner.temp }}/*/docker.tar.gz
+          for gz in ${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-*/docker.tar.gz
           do
-            gzip -vd "${file}"
+            gzip -vd "${gz}"
           done
 
-      # https://github.com/docker/metadata-action
-      - name: Generate image tags
-        id: meta
-        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
-        with:
-          images: |
-            ${{ needs.is_docker.outputs.docker_images_crlf }}
-          tags: |
-            type=raw,value=${{ github.event.pull_request.head.sha }}
-            type=raw,value=build-${{ github.event.pull_request.head.ref }}
-          flavor: |
-            latest=false
-            prefix=${{ steps.strings.outputs.prefix }}
-            suffix=${{ steps.strings.outputs.suffix }}
-
-      - name: Create manifest
-        id: manifest
+      - name: Create local manifest
         run: |
-          platforms="$(echo '${{ needs.is_docker.outputs.docker_bake_matrix }}' | \
-            jq -r '.include[] | select(.target == "${{ matrix.target}}") | .platform' | \
-            sed 's/[^[:alnum:]]/-/g')"
-
-          for platform in ${platforms}
+          for tar in "${{ runner.temp }}"/*/docker.tar
           do
-            tar=${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${platform}/docker.tar
-            platform_tag="localhost:5000/sut:${platform}"
+            artifact_name="$(basename "$(dirname "${tar}")")"
+            sha="$(echo "${artifact_name}" | awk -F- '{print $2}')"
+            target="$(echo "${artifact_name}" | awk -F- '{print $3}')"
+            platform="$(echo "${artifact_name}" | awk -F- '{print $4}')"
 
-            loaded="$(docker load -i "${tar}" | grep '^Loaded image:' | awk '{print $NF}')"
-            echo "${loaded}" | xargs -I{} docker tag {} "${platform_tag}"
+            platform_tag="${LOCAL_TAG}-${platform}"
 
-            docker inspect "${platform_tag}"
-            docker push "${platform_tag}"
+            skopeo copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
 
             docker buildx imagetools create -t ${LOCAL_TAG} --append "${platform_tag}" || \
               docker buildx imagetools create -t ${LOCAL_TAG} "${platform_tag}"
+            docker buildx imagetools inspect --raw "${LOCAL_TAG}" > "${{ runner.temp }}/manifest.json"
           done
 
       - *loginWithGitHubContainerRegistry
       - *loginWithDockerHub
 
-      - name: Publish draft tags
-        if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+      # https://github.com/akhilerm/tag-push-action
+      - name: Publish manifest to remote(s)
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37 # v2.1.0
         with:
           src: ${{ env.LOCAL_TAG }}
           dst: |
-            ${{ steps.meta.outputs.tags }}
+            ${{ steps.draft_meta.outputs.tags }}
+
+      - &dockerPublishPlatformTags
+        name: Publish tags for each platform
+        if: inputs.docker_publish_platform_tags == true
+        env:
+          <<: *dockerPlatformSlugMap
+          REMOTE_TAGS: ${{ steps.draft_meta.outputs.tags }}
+        run: |
+          for remote_tag in ${REMOTE_TAGS}
+          do
+            for b64 in $(jq -r '.manifests[].platform | @base64' <<< "$(docker buildx imagetools inspect --raw "${remote_tag}")")
+            do
+              json="$(echo "${b64}" | base64 --decode)"
+              os="$(echo "${json}" | jq -r '.os')"
+              arch="$(echo "${json}" | jq -r '.architecture')"
+              variant="$(echo "${json}" | jq -r '.variant // ""')"
+
+              if [ -z "${variant}" ]
+              then
+                platform="${os}/${arch}"
+              else
+                platform="${os}/${arch}/${variant}"
+              fi
+
+              platform_slug="$(jq -cr --arg platform "${platform}" '.[$platform] // ""' <<< "${PLATFORM_SLUG_MAP}")"
+
+              if [ -z "{platform_slug}" ]
+              then
+                echo "::error::Unsupported platform: ${PLATFORM}"
+              fi
+
+              crane copy "${remote_tag}" "${remote_tag}-${platform_slug}" --platform "${platform}"
+            done
+          done
 
   docker_finalize:
     name: Finalize docker
@@ -2084,51 +2183,27 @@ jobs:
       - *downloadSourceArtifact
       - *extractSourceArtifact
       - *getVersionTag
-
-      - *sanitizeTargetStrings
-
-      # for unversioned merges we will use the base branch as the tag
-      # and version tag and semver will be empty
-      # https://github.com/docker/metadata-action
-      - name: Generate image tags
-        id: meta
-        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
-        with:
-          images: |
-            ${{ matrix.image }}
-          tags: |
-            type=raw,value=${{ github.base_ref || github.ref_name }}
-            type=raw,value=${{ steps.version_tag.outputs.tag }}
-            type=raw,value=${{ steps.version_tag.outputs.semver }}
-          flavor: |
-            latest=${{ steps.version_tag.outputs.semver != '' }}
-            prefix=${{ steps.strings.outputs.prefix }},onlatest=true
-            suffix=${{ steps.strings.outputs.suffix }},onlatest=true
-
+      - *sanitizeDockerStrings
+      - *dockerFinalMetadata
       - *loginWithGitHubContainerRegistry
       - *loginWithDockerHub
 
-      # only one of the destination lines should have values based on the meta restrictions above
+      # https://github.com/akhilerm/tag-push-action
       - name: Publish final tags
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37 # v2.1.0
         with:
-          src: ${{ matrix.image }}:${{ steps.strings.outputs.prefix }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}${{ steps.strings.outputs.suffix }}
+          src: ${{ matrix.image }}:${{ steps.strings.outputs.prefix }}build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}${{ steps.strings.outputs.suffix }}
           dst: |
-            ${{ steps.meta.outputs.tags }}
+            ${{ steps.final_meta.outputs.tags }}
 
-      # strip the docker.io prefix if it exists
-      - name: Strip docker.io prefix
-        if: |
-          startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.')
-        id: dockerhub
+      - <<: *dockerPublishPlatformTags
         env:
-          IMAGE: ${{ matrix.image }}
-        run: |
-          echo "repository=${IMAGE#*/}" >> $GITHUB_OUTPUT
+          <<: *dockerPlatformSlugMap
+          REMOTE_TAGS: ${{ steps.final_meta.outputs.tags }}
 
       # attempt to update the dockerhub description, but do not abort on failure
       - name: Update DockerHub Description
-        if: steps.dockerhub.outputs.repository != '' && github.base_ref == github.event.repository.default_branch
+        if: contains(steps.strings.outputs.image, 'docker.io') && github.base_ref == github.event.repository.default_branch
         continue-on-error: true
         uses: peter-evans/dockerhub-description@202973a37c8a723405c0c5f0a71b6d99db470dae # v3
         with:
@@ -2343,7 +2418,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: '2.12.0' # latest - https://www.npmjs.com/package/wrangler
+          wranglerVersion: "2.12.0" # latest - https://www.npmjs.com/package/wrangler
           preCommands: wrangler --version
           command: pages publish --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ | tee -a $GITHUB_STEP_SUMMARY
 
@@ -2361,7 +2436,6 @@ jobs:
       !failure() && !cancelled() &&
       needs.is_pr_closed.result == 'success'
     <<: *rootWorkingDirectory
-
     steps:
       - *checkGitHubAppPrivateKey
       - *getGitHubAppInstallationToken
