@@ -2007,7 +2007,7 @@ jobs:
         with:
           driver-opts: network=host
           install: true
-      - uses: imjasonh/setup-crane@v0.3
+      - uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
         with:
           version: v0.14.0
       - name: Warn if tests skipped
@@ -2219,7 +2219,7 @@ jobs:
             latest=${{ steps.version_tag.outputs.semver != '' }}
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
-      - uses: imjasonh/setup-crane@v0.3
+      - uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
         with:
           version: v0.14.0
       - name: Login to GitHub Container Registry
