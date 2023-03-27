@@ -1,4 +1,17 @@
 - commits:
+    - subject: Pin balena-io/deploy-to-balena-action action to af84925
+      hash: 4b000ae291884c77dcc1896f3118df25c3b8301c
+      body: |
+        Pin balena-io/deploy-to-balena-action
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Renovate Bot
+      nested: []
+  version: 3.2.8
+  title: ""
+  date: 2023-03-27T02:07:20.122Z
+- commits:
     - subject: Reject internal pull requests using pull_request_target
       hash: 748de29c8a29d8c0e80f6428dcb53d78e6e7daae
       body: |
