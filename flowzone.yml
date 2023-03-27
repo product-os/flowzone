@@ -2185,6 +2185,7 @@ jobs:
       - *getVersionTag
       - *sanitizeDockerStrings
       - *dockerFinalMetadata
+      - *setupCrane
       - *loginWithGitHubContainerRegistry
       - *loginWithDockerHub
 
