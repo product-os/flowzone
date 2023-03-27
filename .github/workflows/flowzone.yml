@@ -2115,7 +2115,7 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - uses: balena-io/deploy-to-balena-action@af849256a515991a5aa5b5bc12b2a8961834e062
+      - uses: balena-io/deploy-to-balena-action@37a5bffc1bc94c70d04fe71ddf3bb19f54d0dab6
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
@@ -2190,7 +2190,7 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xvf ${{ runner.temp }}/source.tgz
-      - uses: balena-io/deploy-to-balena-action@af849256a515991a5aa5b5bc12b2a8961834e062
+      - uses: balena-io/deploy-to-balena-action@37a5bffc1bc94c70d04fe71ddf3bb19f54d0dab6
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
