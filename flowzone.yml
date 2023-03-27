@@ -87,7 +87,7 @@
       echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
 
   - &deployToBalenaAction
-    uses: balena-io/deploy-to-balena-action@37a5bffc1bc94c70d04fe71ddf3bb19f54d0dab6 # v0.26.4
+    uses: balena-io/deploy-to-balena-action@e7041b7ca6dd85f47a3eb5ce141178bf77d85920 # v0.27.0
     id: balena_deploy
     with:
       balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
