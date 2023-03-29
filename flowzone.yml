@@ -342,16 +342,19 @@
       echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
 
   - &dockerTestMetadata # https://github.com/docker/metadata-action
-    name: Generate metadata for draft docker images
+    name: Generate docker metadata
     id: test_meta
     uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
-    with:
+    with: &dockerTestMetaWith
       images: |
         sut
         localhost:5000/sut
         ${{ needs.is_docker.outputs.docker_images_crlf }}
-      labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+      labels: |
+        org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+        org.opencontainers.image.ref.name=${{ matrix.target }}
       tags: |
+        type=raw,value=${{ github.event.pull_request.head.sha }}
         type=raw,value=build-${{ github.event.pull_request.head.sha }}
         type=raw,value=build-${{ github.event.pull_request.head.ref }}
       flavor: |
@@ -359,34 +362,27 @@
         prefix=${{ steps.strings.outputs.prefix }}
         suffix=${{ steps.strings.outputs.suffix }}
 
-  - &dockerDraftMetadata # https://github.com/docker/metadata-action
-    name: Generate metadata for draft docker images
+  - &dockerDraftMetadata
+    <<: *dockerTestMetadata
     id: draft_meta
-    uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
     with:
+      <<: *dockerTestMetaWith
       images: |
         ${{ matrix.image }}
-      labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
-      tags: |
-        type=raw,value=${{ github.event.pull_request.head.sha }}
-        type=raw,value=build-${{ github.event.pull_request.head.sha }}
-        type=raw,value=build-${{ github.event.pull_request.head.ref }}
       flavor: |
         latest=false
         prefix=${{ steps.strings.outputs.prefix }}
         suffix=${{ steps.strings.outputs.suffix }}
 
   - &dockerFinalMetadata
-    # for unversioned merges we will use the base branch as the tag
-    # and version tag and semver will be empty
-    # https://github.com/docker/metadata-action
-    name: Generate image tags
+    <<: *dockerTestMetadata
     id: final_meta
-    uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4
     with:
+      <<: *dockerTestMetaWith
       images: |
         ${{ matrix.image }}
-      labels: org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+      # for unversioned merges we will use the base branch as the tag
+      # and version tag and semver will be empty
       tags: |
         type=raw,value=${{ github.base_ref || github.ref_name }}
         type=raw,value=${{ steps.version_tag.outputs.tag }}
