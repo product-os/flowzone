@@ -82,6 +82,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`custom_finalize_matrix`](#custom_finalize_matrix)
     - [`cloudflare_website`](#cloudflare_website)
     - [`docusaurus_website`](#docusaurus_website)
+    - [`toggle_auto_merge`](#toggle_auto_merge)
 
 - [Maintenance](#maintenance)
   - [Generate GPG keys](#generate-gpg-keys)
@@ -791,6 +792,14 @@ Default: `""`
 Set to false to disable building a docusaurus website. If false the script `npm run deploy-docs` will be run if it exists.
 
 Type: _string_
+
+Default: true
+
+#### `toggle_auto_merge`
+
+Set to false to disable toggling auto-merge on PRs.
+
+Type: _boolean_
 
 Default: true
 
