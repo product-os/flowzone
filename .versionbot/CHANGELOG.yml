@@ -1,4 +1,18 @@
 - commits:
+    - subject: Restore missing checkout step for unversioned external pull requests
+      hash: baae15f7ab54ff4a0438a9eefca5f17ac47cda80
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.4.5
+  title: ""
+  date: 2023-03-30T17:20:26.212Z
+- commits:
     - subject: Use the bake target for the ref.name docker image label
       hash: 125695b7ab7e66ff1cd84a03667814ac9f8f821a
       body: ""
