@@ -1040,6 +1040,7 @@ jobs:
       - *checkGitHubAppPrivateKey
       - *getGitHubAppInstallationToken
       - *mapGitHubTokens
+      - *checkoutMergeBranch
       - *checkoutSha
       - *getVersionTag
 
