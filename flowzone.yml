@@ -835,7 +835,7 @@ on:
         description: "Set to false to disable toggling auto-merge on PRs."
         type: boolean
         required: false
-        default: true
+        default: false
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
