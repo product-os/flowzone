@@ -323,7 +323,7 @@ on:
         description: Set to false to disable toggling auto-merge on PRs.
         type: boolean
         required: false
-        default: true
+        default: false
 concurrency:
   group: flowzone-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != github.base_ref }}
