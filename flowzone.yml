@@ -829,13 +829,14 @@ on:
           [
             "Flowzone / All tests",
             "Flowzone / All jobs",
+            "Flowzone / Required checks",
             "policy-bot: ${{ github.event.repository.default_branch }}"
           ]
       toggle_auto_merge:
         description: "Set to false to disable toggling auto-merge on PRs."
         type: boolean
         required: false
-        default: false
+        default: true
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -3179,6 +3180,20 @@ jobs:
       - *mapGitHubTokens
       - *getBranchProtectionRules
 
+      # do not use automatic github token to enable auto-merge as it will not trigger merge events
+      - name: Toggle auto-merge
+        if: |
+          inputs.toggle_auto_merge == true &&
+          github.event.pull_request.draft == false &&
+          steps.branch_protection.outputs.json != '' &&
+          steps.branch_protection.outputs.required_status_checks__contexts != '[]'
+        env:
+          <<: *gitHubCliEnvironmentTrusted
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
+
+      # use automatic github token to wait for required checks to register
+      # because an ephemeral app token will expire in an hour
       - name: Wait for required checks to register
         if: |
           steps.branch_protection.outputs.json != '' &&
@@ -3219,14 +3234,3 @@ jobs:
 
             break
           done
-
-      - name: Toggle auto-merge
-        if: |
-          inputs.toggle_auto_merge == true &&
-          github.event.pull_request.draft == false &&
-          steps.branch_protection.outputs.json != '' &&
-          steps.branch_protection.outputs.required_status_checks__contexts != '[]'
-        env:
-          <<: *gitHubCliEnvironmentBase
-        run: |
-          gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
