@@ -317,13 +317,14 @@ on:
           [
             "Flowzone / All tests",
             "Flowzone / All jobs",
+            "Flowzone / Required checks",
             "policy-bot: ${{ github.event.repository.default_branch }}"
           ]
       toggle_auto_merge:
         description: Set to false to disable toggling auto-merge on PRs.
         type: boolean
         required: false
-        default: false
+        default: true
 concurrency:
   group: flowzone-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != github.base_ref }}
@@ -3716,6 +3717,20 @@ jobs:
           echo "required_signatures__enabled=$(jq -cr '.required_signatures.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
           echo "enforce_admins__enabled=$(jq -cr '.enforce_admins.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
           echo "block_creations__enabled=$(jq -cr '.block_creations.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
+      - name: Toggle auto-merge
+        if: |
+          inputs.toggle_auto_merge == true &&
+          github.event.pull_request.draft == false &&
+          steps.branch_protection.outputs.json != '' &&
+          steps.branch_protection.outputs.required_status_checks__contexts != '[]'
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
       - name: Wait for required checks to register
         if: |
           steps.branch_protection.outputs.json != '' &&
@@ -3760,17 +3775,3 @@ jobs:
 
             break
           done
-      - name: Toggle auto-merge
-        if: |
-          inputs.toggle_auto_merge == true &&
-          github.event.pull_request.draft == false &&
-          steps.branch_protection.outputs.json != '' &&
-          steps.branch_protection.outputs.required_status_checks__contexts != '[]'
-        env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
