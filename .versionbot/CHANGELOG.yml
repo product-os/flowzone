@@ -1,4 +1,18 @@
 - commits:
+    - subject: Restore missing dependency to tagged source job
+      hash: 9d960e4fb6c1ca92dbec99b241ae1282caf7af2f
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.5.2
+  title: ""
+  date: 2023-04-03T19:32:05.849Z
+- commits:
     - subject: Do not use automatic GHA token to enable auto-merge
       hash: 5e7f75b6b922c9909841d130d64c36b5c7402401
       body: |
