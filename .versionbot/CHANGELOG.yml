@@ -1,4 +1,21 @@
 - commits:
+    - subject: Do not use automatic GHA token to enable auto-merge
+      hash: 5e7f75b6b922c9909841d130d64c36b5c7402401
+      body: |
+        The automatic GHA token intentionally does not trigger
+        additional actions events, so using it to enable auto-merge
+        causes PR merge events not to trigger any actions.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.5.1
+  title: ""
+  date: 2023-04-03T18:55:49.804Z
+- commits:
     - subject: Disable auto-merge by default
       hash: 9b2c4f70ffcd194b7becab2c75b6430174547507
       body: |
