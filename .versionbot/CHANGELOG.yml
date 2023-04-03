@@ -1,4 +1,42 @@
 - commits:
+    - subject: Disable auto-merge by default
+      hash: 9b2c4f70ffcd194b7becab2c75b6430174547507
+      body: |
+        This seems to be blocking PR close events due to some kind
+        of race condition.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Fix run conditions for tagged source
+      hash: 07108331e95a781928bbee3bdf1f412c99eb2d18
+      body: ""
+      footer:
+        CHange-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Toggle auto-merge after required checks have registered
+      hash: 1f89da1dac456f0e0848e9f4a8b928f5221e9187
+      body: |
+        This does not wait for required checks to finish, it only
+        waits until they are returned via the GH API.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.5.0
+  title: ""
+  date: 2023-04-03T18:20:57.270Z
+- commits:
     - subject: "chore(deps): update peaceiris/actions-gh-pages digest to 373f7f2"
       hash: 5ac13aabd98799d8033e0e746a242999b4b36de2
       body: |
