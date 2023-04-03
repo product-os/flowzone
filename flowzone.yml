@@ -1057,6 +1057,7 @@ jobs:
     needs:
       - is_pushed_tag
       - is_pr_open
+      - is_pr_merged
     if: |
       !failure() && !cancelled() &&
       inputs.disable_versioning == true && (
