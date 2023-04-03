@@ -501,7 +501,6 @@
       echo "enforce_admins__enabled=$(jq -cr '.enforce_admins.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
       echo "block_creations__enabled=$(jq -cr '.block_creations.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
 
-
 name: Flowzone
 
 on:
@@ -1059,8 +1058,11 @@ jobs:
       - is_pr_open
     if: |
       !failure() && !cancelled() &&
-      needs.is_pushed_tag.result != needs.is_pr_open.result &&
-      inputs.disable_versioning == true
+      inputs.disable_versioning == true && (
+        needs.is_pushed_tag.result == 'success' ||
+        needs.is_pr_open.result == 'success' ||
+        needs.is_pr_merged.result == 'success'
+      )
 
     <<: *rootWorkingDirectory
 
@@ -2533,8 +2535,15 @@ jobs:
       - versioned_source
       - tagged_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result
+      !failure() && !cancelled() && (
+        (
+          needs.is_pr_merged.result == 'success' &&
+          inputs.disable_versioning == false
+        ) || (
+          needs.is_pushed_tag.result == 'success' &&
+          inputs.disable_versioning == true
+        )
+      )
 
     <<: *rootWorkingDirectory
 
