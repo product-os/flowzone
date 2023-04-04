@@ -239,6 +239,19 @@
     env:
       <<: *gitHubCliEnvironmentTrusted
 
+  - &isDraftPullRequest # check both the github context (static) and via the gh cli (dynamic)
+    name: Check if PR is draft
+    id: is_draft_pr
+    env:
+      <<: *gitHubCliEnvironmentBase
+    run: |
+      if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
+      then
+        echo "result=true" >> $GITHUB_OUTPUT
+      else
+        echo "result=false" >> $GITHUB_OUTPUT
+      fi
+
   - &jsonArrayBuilder
     name: Build JSON array from comma-separated list
     id: to_json_array
@@ -740,8 +753,8 @@ on:
         type: boolean
         required: false
         default: false
-      workflow_name:
-        description: "The name of the workflow, necessary for branch protection if not using the default of 'Flowzone'"
+      job_name:
+        description: "The name of the job, necessary for branch protection if not using the default of 'Flowzone'"
         type: string
         required: false
         default: "Flowzone"
@@ -829,7 +842,6 @@ on:
           [
             "Flowzone / All tests",
             "Flowzone / All jobs",
-            "Flowzone / Required checks",
             "policy-bot: ${{ github.event.repository.default_branch }}"
           ]
       toggle_auto_merge:
@@ -2894,6 +2906,7 @@ jobs:
       - *getGitHubAppInstallationToken
       - *mapGitHubTokens
       - *getBranchProtectionRules
+      - *isDraftPullRequest
 
       - name: Prepare protection rules
         id: prepare_protection_rules
@@ -2921,7 +2934,7 @@ jobs:
           new_required_status_checks__contexts="$(echo $required_status_checks__contexts | \
             jq -r "map(
               select(
-                test(\"^${{ inputs.workflow_name }} /\";\"i\") | not
+                test(\"^${{ inputs.job_name }} /\";\"i\") | not
               )
             ) | . + ${REQUIRED_STATUS_CHECKS_INPUT} | unique"
           )"
@@ -2984,7 +2997,7 @@ jobs:
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
         if: |
-          github.event.pull_request.draft == false &&
+          steps.is_draft_pr.outputs.result == 'false' &&
           steps.prepare_protection_rules.outputs.result != ''
         env:
           <<: *gitHubCliEnvironmentTrusted
@@ -3117,13 +3130,8 @@ jobs:
       - *rejectFailedJobs
       - *rejectCancelledJobs
 
-  # this job is used to wait for all required checks to register,
-  # especially checks that are not part of the workflow, like Jenkins, CirlceCI, etc.
-
-  # DO NOT make any other required job depend on this one
-  # or you will create a circular dependency
-  required_checks:
-    name: Required checks
+  auto-merge:
+    name: Auto-merge
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -3131,7 +3139,9 @@ jobs:
       - protect_branch
     if: |
       !failure() && !cancelled() &&
-      needs.is_pr_open.result != 'skipped'
+      needs.is_pr_open.result != 'skipped' &&
+      inputs.toggle_auto_merge == true &&
+      github.event.pull_request.draft == false
 
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection
@@ -3141,62 +3151,15 @@ jobs:
       - *getGitHubAppInstallationToken
       - *mapGitHubTokens
       - *getBranchProtectionRules
+      - *isDraftPullRequest
 
       # do not use automatic github token to enable auto-merge as it will not trigger merge events
       - name: Toggle auto-merge
         if: |
-          inputs.toggle_auto_merge == true &&
-          github.event.pull_request.draft == false &&
+          steps.is_draft_pr.outputs.result == 'false' &&
           steps.branch_protection.outputs.json != '' &&
           steps.branch_protection.outputs.required_status_checks__contexts != '[]'
         env:
           <<: *gitHubCliEnvironmentTrusted
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
-
-      # use automatic github token to wait for required checks to register
-      # because an ephemeral app token will expire in an hour
-      - name: Wait for required checks to register
-        if: |
-          steps.branch_protection.outputs.json != '' &&
-          steps.branch_protection.outputs.required_status_checks__contexts != '[]'
-        env:
-          <<: *gitHubCliEnvironmentBase
-          REQUIRED_STATUS_CHECKS: ${{ steps.branch_protection.outputs.required_status_checks__contexts }}
-        run: |
-          while true
-          do
-            sleep $(((RANDOM % 5) + 5))
-
-            registered_checks="$(gh pr checks --required ${{ github.event.pull_request.number }} || true)"
-
-            mapfile -t required_checks < <(echo "${REQUIRED_STATUS_CHECKS}" | jq -r 'map(
-              select(
-                test("^${{ inputs.workflow_name }} /";"i") | not
-              )
-            ) | .[]' )
-
-            for required in "${required_checks[@]}"
-            do
-              test -n "${required}" || continue 1
-              status="$(echo "${registered_checks}" | awk -vCHECK="${required}" -F'\t' '$1 == CHECK {print $2}')"
-
-              case ${status} in
-                pass|queued|pending)
-                  continue 1
-                  ;;
-                "")
-                  echo "Waiting for ${required} to register..."
-                  echo "${registered_checks}" | awk -vSTATUS="pending" -F'\t' '$2 == STATUS'
-                  continue 2
-                  ;;
-                *)
-                  echo "::error::A required job finished with status ${status}"
-                  echo "${registered_checks}" | awk -vSTATUS="${status}" -F'\t' '$2 == STATUS'
-                  exit 1
-                  ;;
-              esac
-            done
-
-            break
-          done

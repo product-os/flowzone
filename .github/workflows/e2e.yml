@@ -30,8 +30,7 @@ on:
         default: >
           [
             "Flowzone / All tests",
-            "Flowzone / All jobs",
-            "Flowzone / Required checks"
+            "Flowzone / All jobs"
           ]
       dry_run:
         description: Patch files but do not push changes
