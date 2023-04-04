@@ -1420,12 +1420,14 @@ jobs:
       - name: Run tests
         run: npm test
       - name: Run pack
+        if: needs.is_npm.outputs.npm_private != 'true'
         run: |
           mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
       - name: Upload artifact
+        if: needs.is_npm.outputs.npm_private != 'true'
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
