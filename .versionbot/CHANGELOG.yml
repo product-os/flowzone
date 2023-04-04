@@ -1,4 +1,22 @@
 - commits:
+    - subject: Remove wait for required checks
+      hash: 32dbfcd88871e7b93e4ac91c478f7851011bebe9
+      body: |
+        This job was causing dependency loops for any required
+        job that dependend on Flowzone.
+
+        For now we will see if the GH auto-merge toggle behaves as designed.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.6.2
+  title: ""
+  date: 2023-04-04T20:43:06.899Z
+- commits:
     - subject: "chore(deps): update product-os/docusaurus-builder action to v1.5.4"
       hash: 7fa6922c0d23100026492ab420231d5e71699665
       body: |
