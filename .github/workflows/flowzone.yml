@@ -228,8 +228,8 @@ on:
         type: boolean
         required: false
         default: false
-      job_name:
-        description: The name of the job, necessary for branch protection if not using the default of 'Flowzone'
+      workflow_name:
+        description: The name of the workflow, necessary for branch protection if not using the default of 'Flowzone'
         type: string
         required: false
         default: Flowzone
@@ -3294,7 +3294,7 @@ jobs:
           new_required_status_checks__contexts="$(echo $required_status_checks__contexts | \
             jq -r "map(
               select(
-                test(\"^${{ inputs.job_name }} /\";\"i\") | not
+                test(\"^${{ inputs.workflow_name }} /\";\"i\") | not
               )
             ) | . + ${REQUIRED_STATUS_CHECKS_INPUT} | unique"
           )"
@@ -3668,7 +3668,11 @@ jobs:
 
             registered_checks="$(gh pr checks --required ${{ github.event.pull_request.number }} || true)"
 
-            mapfile -t required_checks < <(echo "${REQUIRED_STATUS_CHECKS}" | jq -r '.[]')
+            mapfile -t required_checks < <(echo "${REQUIRED_STATUS_CHECKS}" | jq -r 'map(
+              select(
+                test("^${{ inputs.workflow_name }} /";"i") | not
+              )
+            ) | .[]' )
 
             for required in "${required_checks[@]}"
             do
