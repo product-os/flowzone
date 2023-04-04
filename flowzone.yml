@@ -239,6 +239,19 @@
     env:
       <<: *gitHubCliEnvironmentTrusted
 
+  - &isDraftPullRequest # check both the github context (static) and via the gh cli (dynamic)
+    name: Check if PR is draft
+    id: is_draft_pr
+    env:
+      <<: *gitHubCliEnvironmentBase
+    run: |
+      if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
+      then
+        echo "result=true" >> $GITHUB_OUTPUT
+      else
+        echo "result=false" >> $GITHUB_OUTPUT
+      fi
+
   - &jsonArrayBuilder
     name: Build JSON array from comma-separated list
     id: to_json_array
@@ -2893,6 +2906,7 @@ jobs:
       - *getGitHubAppInstallationToken
       - *mapGitHubTokens
       - *getBranchProtectionRules
+      - *isDraftPullRequest
 
       - name: Prepare protection rules
         id: prepare_protection_rules
@@ -2983,7 +2997,7 @@ jobs:
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
         if: |
-          github.event.pull_request.draft == false &&
+          steps.is_draft_pr.outputs.result == 'false' &&
           steps.prepare_protection_rules.outputs.result != ''
         env:
           <<: *gitHubCliEnvironmentTrusted
@@ -3137,10 +3151,12 @@ jobs:
       - *getGitHubAppInstallationToken
       - *mapGitHubTokens
       - *getBranchProtectionRules
+      - *isDraftPullRequest
 
       # do not use automatic github token to enable auto-merge as it will not trigger merge events
       - name: Toggle auto-merge
         if: |
+          steps.is_draft_pr.outputs.result == 'false' &&
           steps.branch_protection.outputs.json != '' &&
           steps.branch_protection.outputs.required_status_checks__contexts != '[]'
         env:

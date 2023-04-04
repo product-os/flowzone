@@ -3268,6 +3268,21 @@ jobs:
           echo "required_signatures__enabled=$(jq -cr '.required_signatures.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
           echo "enforce_admins__enabled=$(jq -cr '.enforce_admins.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
           echo "block_creations__enabled=$(jq -cr '.block_creations.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
+      - name: Check if PR is draft
+        id: is_draft_pr
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
+          then
+            echo "result=true" >> $GITHUB_OUTPUT
+          else
+            echo "result=false" >> $GITHUB_OUTPUT
+          fi
       - name: Prepare protection rules
         id: prepare_protection_rules
         if: steps.branch_protection.outputs.json != ''
@@ -3354,7 +3369,7 @@ jobs:
       - name: Apply branch protection rules
         id: apply_branch_protection_rules
         if: |
-          github.event.pull_request.draft == false &&
+          steps.is_draft_pr.outputs.result == 'false' &&
           steps.prepare_protection_rules.outputs.result != ''
         env:
           GH_DEBUG: "true"
@@ -3637,8 +3652,24 @@ jobs:
           echo "required_signatures__enabled=$(jq -cr '.required_signatures.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
           echo "enforce_admins__enabled=$(jq -cr '.enforce_admins.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
           echo "block_creations__enabled=$(jq -cr '.block_creations.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
+      - name: Check if PR is draft
+        id: is_draft_pr
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
+          then
+            echo "result=true" >> $GITHUB_OUTPUT
+          else
+            echo "result=false" >> $GITHUB_OUTPUT
+          fi
       - name: Toggle auto-merge
         if: |
+          steps.is_draft_pr.outputs.result == 'false' &&
           steps.branch_protection.outputs.json != '' &&
           steps.branch_protection.outputs.required_status_checks__contexts != '[]'
         env:
