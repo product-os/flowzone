@@ -1,4 +1,18 @@
 - commits:
+    - subject: Prevent waiting for jobs that are part of the same workflow
+      hash: bb61d2cb87a9008fed5acf70406271dae6958622
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.6.0
+  title: ""
+  date: 2023-04-04T19:30:12.610Z
+- commits:
     - subject: Combine tagged source and versioned source jobs
       hash: 3f00dfb7b04a24e06473a90e1d6f482e5751dbde
       body: |
