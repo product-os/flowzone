@@ -2519,7 +2519,7 @@ jobs:
         if: |
           needs.is_website.outputs.has_readme == 'true' &&
           inputs.docusaurus_website != false
-        uses: product-os/docusaurus-builder@3db0af63d585b2daa4d4bb38b004914804761221
+        uses: product-os/docusaurus-builder@3c2a832a54574094e54ea8c02074681d90295ab0
         with:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
