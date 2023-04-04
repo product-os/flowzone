@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update product-os/docusaurus-builder action to v1.5.4"
+      hash: 7fa6922c0d23100026492ab420231d5e71699665
+      body: |
+        Update product-os/docusaurus-builder from 1.5.3 to 1.5.4
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Renovate Bot
+      nested: []
+  version: 3.6.1
+  title: ""
+  date: 2023-04-04T19:53:43.186Z
+- commits:
     - subject: Prevent waiting for jobs that are part of the same workflow
       hash: bb61d2cb87a9008fed5acf70406271dae6958622
       body: ""
