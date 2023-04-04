@@ -1,4 +1,20 @@
 - commits:
+    - subject: Combine tagged source and versioned source jobs
+      hash: 3f00dfb7b04a24e06473a90e1d6f482e5751dbde
+      body: |
+        These jobs were performing nrealy the same functions and
+        combining them reduces the paths required for testing.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.5.5
+  title: ""
+  date: 2023-04-04T17:13:26.163Z
+- commits:
     - subject: "chore(deps): update dawidd6/action-download-artifact digest to 7132ab5"
       hash: 9e45e8509e489d806240202133e644b100bbdc67
       body: |
