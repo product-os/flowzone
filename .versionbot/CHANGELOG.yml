@@ -1,4 +1,20 @@
 - commits:
+    - subject: Toggle auto-merge with a reduced scope ephemeral token
+      hash: 7dac859299767d5a43d42e8294bdbfb207b893c4
+      body: |
+        GitHub support suggested this should prevent auto-merging
+        without required checks.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 3.6.3
+  title: ""
+  date: 2023-04-05T00:02:28.915Z
+- commits:
     - subject: Remove wait for required checks
       hash: 32dbfcd88871e7b93e4ac91c478f7851011bebe9
       body: |
