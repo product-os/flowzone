@@ -22,6 +22,18 @@
 				"fileFilters": [".github/workflows/flowzone.yml"],
 				"executionMode": "update"
 			}
+		},
+		{
+			"matchManagers": ["github-actions"],
+			"matchUpdateTypes": ["major"],
+			"commitBody": "Update {{depName}} from {{{replace 'v' '' currentVersion}}} to {{{replace 'v' '' newVersion}}}\n\nChange-type: minor",
+			"labels": ["renovate", "dependencies", "{{depType}}", "minor"]
+		},
+		{
+			"matchManagers": ["github-actions"],
+			"matchUpdateTypes": ["minor"],
+			"commitBody": "Update {{depName}} from {{{replace 'v' '' currentVersion}}} to {{{replace 'v' '' newVersion}}}\n\nChange-type: patch",
+			"labels": ["renovate", "dependencies", "{{depType}}", "patch"]
 		}
 	]
 }
