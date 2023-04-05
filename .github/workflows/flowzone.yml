@@ -559,28 +559,12 @@ jobs:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.gh_app_private_key.outputs.found == 'true'
-        id: gh_app_installation_token
+        id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Map GitHub tokens to trusted/untrusted
-        id: github_tokens
-        shell: bash
-        env:
-          IS_EXTERNAL: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          AUTO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_TOKEN: ${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ "${IS_EXTERNAL}" = "true" ]
-          then
-            echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          else
-            echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          fi
       - name: Checkout merge branch
         if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
         id: checkout_merge
@@ -589,14 +573,14 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           ref: refs/pull/${{ github.event.number }}/merge
-          token: ${{ steps.github_tokens.outputs.trusted || false }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Checkout sha
         if: github.event_name != 'pull_request_target' || github.event.action == 'closed'
         uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3
         with:
           fetch-depth: 0
           submodules: recursive
-          token: ${{ steps.github_tokens.outputs.trusted || false }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reject merge commits
         run: |
           if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep '^parent ' | wc -l)" -gt 1 ]
@@ -621,7 +605,7 @@ jobs:
       - name: Generate changelog
         if: inputs.disable_versioning != true
         env:
-          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
           then
@@ -638,7 +622,7 @@ jobs:
         if: inputs.disable_versioning != true
         id: versionist
         env:
-          GITHUB_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           out="$(balena-versionist 2>&1)"
           error="$(awk '/Error:/{getline; print}' <<< "${out}")"
@@ -1444,32 +1428,16 @@ jobs:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.gh_app_private_key.outputs.found == 'true'
-        id: gh_app_installation_token
+        id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Map GitHub tokens to trusted/untrusted
-        id: github_tokens
-        shell: bash
-        env:
-          IS_EXTERNAL: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          AUTO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_TOKEN: ${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ "${IS_EXTERNAL}" = "true" ]
-          then
-            echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          else
-            echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          fi
       - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@7132ab516fba5f602fafae6fdd4822afa10db76f
         with:
-          github_token: ${{ steps.github_tokens.outputs.trusted || false }}
+          github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
@@ -1516,32 +1484,16 @@ jobs:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.gh_app_private_key.outputs.found == 'true'
-        id: gh_app_installation_token
+        id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Map GitHub tokens to trusted/untrusted
-        id: github_tokens
-        shell: bash
-        env:
-          IS_EXTERNAL: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          AUTO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_TOKEN: ${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ "${IS_EXTERNAL}" = "true" ]
-          then
-            echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          else
-            echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          fi
       - name: Download npm docs artifact from last run
         uses: dawidd6/action-download-artifact@7132ab516fba5f602fafae6fdd4822afa10db76f
         with:
-          github_token: ${{ steps.github_tokens.outputs.trusted || false }}
+          github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
@@ -1553,7 +1505,7 @@ jobs:
       - name: Publish generated docs to GitHub Pages
         uses: peaceiris/actions-gh-pages@373f7f263a76c20808c831209c920827a82a2847
         with:
-          github_token: ${{ steps.github_tokens.outputs.trusted || false }}
+          github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           publish_dir: docs
           publish_branch: docs
   docker_test:
@@ -1607,28 +1559,12 @@ jobs:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.gh_app_private_key.outputs.found == 'true'
-        id: gh_app_installation_token
+        id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Map GitHub tokens to trusted/untrusted
-        id: github_tokens
-        shell: bash
-        env:
-          IS_EXTERNAL: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          AUTO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_TOKEN: ${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ "${IS_EXTERNAL}" = "true" ]
-          then
-            echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          else
-            echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          fi
       - name: Sanitize docker strings
         id: strings
         env:
@@ -1743,7 +1679,7 @@ jobs:
           echo "COMPOSE_PROJECT_NAME=${{ github.run_id }}" >> $GITHUB_ENV
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> $GITHUB_ENV
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> $GITHUB_ENV
-      - name: Inject COMPOSE_VARS
+      - name: Add COMPOSE_VARS to compose env file
         if: github.event.pull_request.head.repo.full_name == github.repository
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
@@ -1759,11 +1695,11 @@ jobs:
               echo "::add-mask::${secret}"
             done < ${COMPOSE_ENV_FILE}
           fi
-      - name: Inject GITHUB_TOKEN
+      - name: Add GITHUB_TOKEN to compose env file
+        if: github.event.pull_request.head.repo.full_name == github.repository
         env:
-          GITHUB_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
-        shell: bash
+          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           if ! grep -q '^GH_TOKEN=' ${COMPOSE_ENV_FILE}
           then
@@ -1808,8 +1744,8 @@ jobs:
         id: docker_bake
         uses: docker/bake-action@6c87dcca988e4e074e3ab1f976a70f63ec9673fb
         env:
-          GITHUB_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
@@ -2567,28 +2503,12 @@ jobs:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.gh_app_private_key.outputs.found == 'true'
-        id: gh_app_installation_token
+        id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Map GitHub tokens to trusted/untrusted
-        id: github_tokens
-        shell: bash
-        env:
-          IS_EXTERNAL: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          AUTO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_TOKEN: ${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ "${IS_EXTERNAL}" = "true" ]
-          then
-            echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          else
-            echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          fi
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -2596,7 +2516,7 @@ jobs:
           GH_PAGER: cat
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
   github_publish:
     name: Publish Github release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -2627,28 +2547,12 @@ jobs:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.gh_app_private_key.outputs.found == 'true'
-        id: gh_app_installation_token
+        id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Map GitHub tokens to trusted/untrusted
-        id: github_tokens
-        shell: bash
-        env:
-          IS_EXTERNAL: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          AUTO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_TOKEN: ${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ "${IS_EXTERNAL}" = "true" ]
-          then
-            echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          else
-            echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          fi
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -2656,7 +2560,7 @@ jobs:
           GH_PAGER: cat
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Download all artifacts
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
@@ -2676,7 +2580,7 @@ jobs:
         if: steps.gh_artifacts.outputs.count != '0'
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
-          token: ${{ steps.github_tokens.outputs.trusted || false }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
@@ -2734,28 +2638,12 @@ jobs:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.gh_app_private_key.outputs.found == 'true'
-        id: gh_app_installation_token
+        id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Map GitHub tokens to trusted/untrusted
-        id: github_tokens
-        shell: bash
-        env:
-          IS_EXTERNAL: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          AUTO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_TOKEN: ${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ "${IS_EXTERNAL}" = "true" ]
-          then
-            echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          else
-            echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          fi
       - name: Generate release notes
         id: release_notes
         run: |
@@ -2772,7 +2660,7 @@ jobs:
           GH_PAGER: cat
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           set -ea
 
@@ -3200,28 +3088,12 @@ jobs:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.gh_app_private_key.outputs.found == 'true'
-        id: gh_app_installation_token
+        id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Map GitHub tokens to trusted/untrusted
-        id: github_tokens
-        shell: bash
-        env:
-          IS_EXTERNAL: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          AUTO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_TOKEN: ${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ "${IS_EXTERNAL}" = "true" ]
-          then
-            echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          else
-            echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          fi
       - name: Get branch protection rules
         id: branch_protection
         env:
@@ -3229,7 +3101,7 @@ jobs:
           GH_PAGER: cat
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           result="$(gh api "${BRANCH_PROTECTION_URI}" --jq '.' ; exit=$?)"
 
@@ -3376,7 +3248,7 @@ jobs:
           GH_PAGER: cat
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           result="$(echo '${{ fromJSON(steps.prepare_protection_rules.outputs.result) }}' \
             | gh api --method PUT ${{ env.BRANCH_PROTECTION_URI }} --input -)"
@@ -3411,35 +3283,19 @@ jobs:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.gh_app_private_key.outputs.found == 'true'
-        id: gh_app_installation_token
+        id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Map GitHub tokens to trusted/untrusted
-        id: github_tokens
-        shell: bash
-        env:
-          IS_EXTERNAL: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          AUTO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_TOKEN: ${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ "${IS_EXTERNAL}" = "true" ]
-          then
-            echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          else
-            echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          fi
       - name: Configure repository
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           # only change repository visibility if explicitly set to one of the permissible values
           visibility=''
@@ -3583,28 +3439,12 @@ jobs:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         if: steps.gh_app_private_key.outputs.found == 'true'
-        id: gh_app_installation_token
+        id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Map GitHub tokens to trusted/untrusted
-        id: github_tokens
-        shell: bash
-        env:
-          IS_EXTERNAL: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          AUTO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_TOKEN: ${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          if [ "${IS_EXTERNAL}" = "true" ]
-          then
-            echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          else
-            echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-            echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-          fi
       - name: Get branch protection rules
         id: branch_protection
         env:
@@ -3612,7 +3452,7 @@ jobs:
           GH_PAGER: cat
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           result="$(gh api "${BRANCH_PROTECTION_URI}" --jq '.' ; exit=$?)"
 

@@ -20,44 +20,16 @@
           echo 'found=false' >> $GITHUB_OUTPUT
       fi
 
-  - &getGitHubAppInstallationToken # https://github.com/marketplace/actions/github-app-token
+  - &getGitHubAppToken # https://github.com/marketplace/actions/github-app-token
     name: Generate GitHub App installation token
     uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # v1.8.0
     if: steps.gh_app_private_key.outputs.found == 'true'
-    id: gh_app_installation_token
+    id: gh_app_token
     with:
       app_id: ${{ inputs.app_id }}
       installation_id: ${{ inputs.installation_id }}
       private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
       permissions: ${{ inputs.token_scope }}
-
-  - &mapGitHubTokens
-    # for external PRs
-    # - untrusted: auto token (rw for internal, ro for external)
-    # - trusted: input token (controlled via inputs)
-    # for internal PRs
-    # - untrusted: input token (controlled via inputs)
-    # - trusted: input token (controlled via inputs)
-    name: Map GitHub tokens to trusted/untrusted
-    id: github_tokens
-    shell: bash
-    env:
-      # check if the PR is from a fork by comparing the repository name
-      IS_EXTERNAL: "${{ github.event.pull_request.head.repo.full_name != github.repository }}"
-      # auto token can be rw or ro depending on whether the PR is internal or external
-      # https://docs.github.com/en/actions/security-guides/automatic-token-authentication
-      AUTO_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-      # input token is provided via inputs, either an ephemeral token or a personal access token
-      INPUT_TOKEN: "${{ steps.gh_app_installation_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
-    run: |
-      if [ "${IS_EXTERNAL}" = "true" ]
-      then
-        echo "untrusted=${AUTO_TOKEN}" >> $GITHUB_OUTPUT
-        echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-      else
-        echo "untrusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-        echo "trusted=${INPUT_TOKEN}" >> $GITHUB_OUTPUT
-      fi
 
   - &downloadSourceArtifact
     name: Download source artifact
@@ -145,7 +117,7 @@
       fetch-depth: 0
       submodules: "recursive"
       ref: "refs/pull/${{ github.event.number }}/merge"
-      token: ${{ steps.github_tokens.outputs.trusted || false }}
+      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &checkoutSha # otherwise use the default checkout behaviour
     name: Checkout sha
@@ -154,7 +126,7 @@
     with:
       fetch-depth: 0
       submodules: "recursive"
-      token: ${{ steps.github_tokens.outputs.trusted || false }}
+      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &loginWithDockerHub
     name: Login to Docker Hub
@@ -189,7 +161,7 @@
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
 
-  - &gitHubCliEnvironmentBase
+  - &gitHubCliEnvironment
     # environment variables used by gh CLI
     # https://cli.github.com/manual/gh_help_environment
     GH_DEBUG: "true"
@@ -199,16 +171,11 @@
     # default to automatic actions token
     GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-  - &gitHubCliEnvironmentTrusted
-    <<: *gitHubCliEnvironmentBase
-    # elevate this request to a trusted token
-    GH_TOKEN: "${{ steps.github_tokens.outputs.trusted || false }}"
-
   - &rejectExternalWorkflowChanges
     name: Reject external workflow changes
     <<: *ifExternalPullRequest
     env:
-      <<: *gitHubCliEnvironmentBase
+      <<: *gitHubCliEnvironment
     run: |
       if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
       then
@@ -237,13 +204,14 @@
     name: Delete draft GitHub release
     run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
     env:
-      <<: *gitHubCliEnvironmentTrusted
+      <<: *gitHubCliEnvironment
+      GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &isDraftPullRequest # check both the github context (static) and via the gh cli (dynamic)
     name: Check if PR is draft
     id: is_draft_pr
     env:
-      <<: *gitHubCliEnvironmentBase
+      <<: *gitHubCliEnvironment
     run: |
       if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
       then
@@ -474,7 +442,8 @@
     name: Get branch protection rules
     id: branch_protection
     env:
-      <<: *gitHubCliEnvironmentTrusted
+      <<: *gitHubCliEnvironment
+      GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
     run: |
       result="$(gh api "${BRANCH_PROTECTION_URI}" --jq '.' ; exit=$?)"
 
@@ -952,8 +921,7 @@ jobs:
 
     steps:
       - *checkGitHubAppPrivateKey
-      - *getGitHubAppInstallationToken
-      - *mapGitHubTokens
+      - *getGitHubAppToken
       - *checkoutMergeBranch
       - *checkoutSha
 
@@ -985,7 +953,7 @@ jobs:
       - name: Generate changelog
         if: inputs.disable_versioning != true
         env:
-          GH_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
           then
@@ -1006,7 +974,7 @@ jobs:
         if: inputs.disable_versioning != true
         id: versionist
         env:
-          GITHUB_TOKEN: ${{ steps.github_tokens.outputs.trusted || false }}
+          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           out="$(balena-versionist 2>&1)"
           error="$(awk '/Error:/{getline; print}' <<< "${out}")"
@@ -1806,15 +1774,14 @@ jobs:
 
     steps:
       - *checkGitHubAppPrivateKey
-      - *getGitHubAppInstallationToken
-      - *mapGitHubTokens
+      - *getGitHubAppToken
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@7132ab516fba5f602fafae6fdd4822afa10db76f # v2
         with:
-          github_token: ${{ steps.github_tokens.outputs.trusted || false }}
+          github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
@@ -1854,15 +1821,14 @@ jobs:
 
     steps:
       - *checkGitHubAppPrivateKey
-      - *getGitHubAppInstallationToken
-      - *mapGitHubTokens
+      - *getGitHubAppToken
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm docs artifact from last run
         uses: dawidd6/action-download-artifact@7132ab516fba5f602fafae6fdd4822afa10db76f # v2
         with:
-          github_token: ${{ steps.github_tokens.outputs.trusted || false }}
+          github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
@@ -1876,7 +1842,7 @@ jobs:
       - name: Publish generated docs to GitHub Pages
         uses: peaceiris/actions-gh-pages@373f7f263a76c20808c831209c920827a82a2847 # v3
         with:
-          github_token: ${{ steps.github_tokens.outputs.trusted || false }}
+          github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           publish_dir: docs
           publish_branch: docs
 
@@ -1911,8 +1877,7 @@ jobs:
       - *extractSourceArtifact
       - *getVersionTag
       - *checkGitHubAppPrivateKey
-      - *getGitHubAppInstallationToken
-      - *mapGitHubTokens
+      - *getGitHubAppToken
       - *sanitizeDockerStrings
       - *dockerTestMetadata
       - *setupQemuBinfmt
@@ -1937,7 +1902,7 @@ jobs:
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> $GITHUB_ENV
 
       # these secrets are being used in untrusted user code so only allow for internal PRs
-      - name: Inject COMPOSE_VARS
+      - name: Add COMPOSE_VARS to compose env file
         <<: *ifInternalPullRequest
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
@@ -1955,13 +1920,11 @@ jobs:
             done < ${COMPOSE_ENV_FILE}
           fi
 
-      # inject github token pre-designated for untrusted code
-      - name: Inject GITHUB_TOKEN
+      - name: Add GITHUB_TOKEN to compose env file
+        <<: *ifInternalPullRequest
         env:
-          GITHUB_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
-        # do not use shell tracing to avoid leaking secrets
-        shell: bash
+          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           if ! grep -q '^GH_TOKEN=' ${COMPOSE_ENV_FILE}
           then
@@ -2010,8 +1973,9 @@ jobs:
         id: docker_bake
         uses: docker/bake-action@6c87dcca988e4e074e3ab1f976a70f63ec9673fb # v2
         env:
-          GITHUB_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
-          GH_TOKEN: ${{ steps.github_tokens.outputs.untrusted }}
+          # use automatic github token for untrusted user code
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
@@ -2448,8 +2412,7 @@ jobs:
     <<: *rootWorkingDirectory
     steps:
       - *checkGitHubAppPrivateKey
-      - *getGitHubAppInstallationToken
-      - *mapGitHubTokens
+      - *getGitHubAppToken
       - *deleteDraftGitHubRelease
 
   github_publish:
@@ -2469,8 +2432,7 @@ jobs:
 
     steps:
       - *checkGitHubAppPrivateKey
-      - *getGitHubAppInstallationToken
-      - *mapGitHubTokens
+      - *getGitHubAppToken
       - *deleteDraftGitHubRelease
 
       - name: Download all artifacts
@@ -2495,7 +2457,7 @@ jobs:
         if: steps.gh_artifacts.outputs.count != '0'
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
-          token: ${{ steps.github_tokens.outputs.trusted || false }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
@@ -2529,14 +2491,14 @@ jobs:
       - *extractSourceArtifact
       - *getVersionTag
       - *checkGitHubAppPrivateKey
-      - *getGitHubAppInstallationToken
-      - *mapGitHubTokens
+      - *getGitHubAppToken
       - *getReleaseNotes
 
       # https://docs.github.com/en/rest/releases
       - name: Finalize GitHub release (if any)
         env:
-          <<: *gitHubCliEnvironmentTrusted
+          <<: *gitHubCliEnvironment
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           set -ea
 
@@ -2903,8 +2865,7 @@ jobs:
 
     steps:
       - *checkGitHubAppPrivateKey
-      - *getGitHubAppInstallationToken
-      - *mapGitHubTokens
+      - *getGitHubAppToken
       - *getBranchProtectionRules
       - *isDraftPullRequest
 
@@ -3000,7 +2961,8 @@ jobs:
           steps.is_draft_pr.outputs.result == 'false' &&
           steps.prepare_protection_rules.outputs.result != ''
         env:
-          <<: *gitHubCliEnvironmentTrusted
+          <<: *gitHubCliEnvironment
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           result="$(echo '${{ fromJSON(steps.prepare_protection_rules.outputs.result) }}' \
             | gh api --method PUT ${{ env.BRANCH_PROTECTION_URI }} --input -)"
@@ -3028,12 +2990,12 @@ jobs:
       inputs.repo_config == true
     steps:
       - *checkGitHubAppPrivateKey
-      - *getGitHubAppInstallationToken
-      - *mapGitHubTokens
+      - *getGitHubAppToken
 
       - name: Configure repository
         env:
-          <<: *gitHubCliEnvironmentTrusted
+          <<: *gitHubCliEnvironment
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           # only change repository visibility if explicitly set to one of the permissible values
           visibility=''
@@ -3147,12 +3109,11 @@ jobs:
 
     steps:
       - *checkGitHubAppPrivateKey
-      - *getGitHubAppInstallationToken
-      - *mapGitHubTokens
+      - *getGitHubAppToken
       - *getBranchProtectionRules
       - *isDraftPullRequest
 
-      - <<: *getGitHubAppInstallationToken
+      - <<: *getGitHubAppToken
         id: non_admin_token
         with:
           app_id: ${{ inputs.app_id }}
@@ -3181,7 +3142,7 @@ jobs:
           steps.branch_protection.outputs.json != '' &&
           steps.branch_protection.outputs.required_status_checks__contexts != '[]'
         env:
-          <<: *gitHubCliEnvironmentBase
+          <<: *gitHubCliEnvironment
           GH_TOKEN: "${{ steps.non_admin_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
