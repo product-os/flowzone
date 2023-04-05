@@ -3140,8 +3140,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result != 'skipped' &&
-      inputs.toggle_auto_merge == true &&
-      github.event.pull_request.draft == false
+      inputs.toggle_auto_merge == true
 
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection
@@ -3153,6 +3152,28 @@ jobs:
       - *getBranchProtectionRules
       - *isDraftPullRequest
 
+      - <<: *getGitHubAppInstallationToken
+        id: non_admin_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: >-
+            {
+              "actions": "read",
+              "checks": "read",
+              "contents": "write",
+              "members": "read",
+              "metadata": "read",
+              "organization_secrets": "read",
+              "packages": "read",
+              "pages": "read",
+              "pull_requests": "write",
+              "secrets": "read",
+              "statuses": "read",
+              "workflows": "read"
+            }
+
       # do not use automatic github token to enable auto-merge as it will not trigger merge events
       - name: Toggle auto-merge
         if: |
@@ -3160,6 +3181,7 @@ jobs:
           steps.branch_protection.outputs.json != '' &&
           steps.branch_protection.outputs.required_status_checks__contexts != '[]'
         env:
-          <<: *gitHubCliEnvironmentTrusted
+          <<: *gitHubCliEnvironmentBase
+          GH_TOKEN: "${{ steps.non_admin_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
