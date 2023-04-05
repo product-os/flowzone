@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update peter-evans/create-pull-request action to v5"
+      hash: 895cd9b3d029e4ef005a96810005b1b62232703f
+      body: |
+        Update peter-evans/create-pull-request from 4.2.4 to 5.0.0
+      footer:
+        Change-type: major
+        change-type: major
+      author: Renovate Bot
+      nested: []
+  version: 4.0.0
+  title: ""
+  date: 2023-04-05T13:10:27.283Z
+- commits:
     - subject: Use automatic GHA token for steps with user code
       hash: 088474fee81211be824867beffe269eeca34efc0
       body: |
