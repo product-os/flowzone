@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update peter-evans/close-pull action to v3"
+      hash: 8d1002d0722ca9b491445d8f44f6653c85bd1d89
+      body: |
+        Update peter-evans/close-pull from 2.0.1 to 3.0.0
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Renovate Bot
+      nested: []
+  version: 4.1.0
+  title: ""
+  date: 2023-04-06T23:52:03.230Z
+- commits:
     - subject: Only bump the minor version for github actions major revisions
       hash: 7706ff8874b55ffa5734c454aa2cad9087a2da2d
       body: ""
