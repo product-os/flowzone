@@ -270,7 +270,7 @@ jobs:
       - name: Close pull request
         if: |
           always() && inputs.auto_close == true && steps.cpr.outputs.pull-request-number != ''
-        uses: peter-evans/close-pull@f47e95b46e45ebf8a3a792e3a60e831ec2563f81 # v2.0.1
+        uses: peter-evans/close-pull@d7e13b3f091bf792add23a96ab7bff41f25074f8 # v3.0.0
         with:
           token: ${{ steps.gh_token.outputs.token }}
           repository: ${{ matrix.repository }}
