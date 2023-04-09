@@ -2179,7 +2179,7 @@ jobs:
       - name: Update DockerHub Description
         if: contains(steps.strings.outputs.image, 'docker.io') && github.base_ref == github.event.repository.default_branch
         continue-on-error: true
-        uses: peter-evans/dockerhub-description@4b1a4bb4846dfa5c7b245358b948fc6dd57891c0 # v3
+        uses: peter-evans/dockerhub-description@579f64ca0abced29dbbc44ab4c6a0b9e33ab3588 # v3
         with:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
