@@ -2398,7 +2398,7 @@ jobs:
           fi
       - name: Lint with flake8
         run: |
-          poetry run flake8 --max-line-length=120 --benchmark --extend-ignore=E203
+          poetry run flake8 --max-line-length=120 --benchmark
       - name: Lint with pydocstyle
         run: |
           poetry run pydocstyle
