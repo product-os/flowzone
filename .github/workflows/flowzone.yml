@@ -930,6 +930,7 @@ jobs:
     outputs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
+      pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -955,8 +956,18 @@ jobs:
               echo "Poetry not used"
               echo "enabled=false" >> $GITHUB_OUTPUT
             fi
+
+            has_package=$(awk -F "=" '/^packages/ {print $2}' pyproject.toml)
+            if [ -n "${has_package}" ] && [ "${{ github.event.repository.visibility }}" = "public" ]
+            then
+              echo "pypi_publish=true" >> $GITHUB_OUTPUT
+            else
+              echo "pypi_publish=false" >> $GITHUB_OUTPUT
+            fi
+
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "pypi_publish=false" >> $GITHUB_OUTPUT
           fi
       - name: Install Poetry
         if: steps.python_poetry.outputs.enabled == 'true'
@@ -2353,12 +2364,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
-    outputs:
-      package: ${{ steps.meta.outputs.package }}
-      version: ${{ steps.meta.outputs.version }}
-      branch_tag: ${{ steps.meta.outputs.branch_tag }}
-      sha_tag: ${{ steps.meta.outputs.sha_tag }}
-      version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Download source artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
@@ -2406,20 +2411,136 @@ jobs:
       - name: Test with pytest
         run: |
           poetry run pytest tests/
-      - name: Generate metadata
-        id: meta
+  python_publish:
+    name: Publish to test PyPI
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_python
+      - npm_test
+      - custom_test
+      - docker_test
+      - cargo_test
+      - python_test
+    if: |
+      !failure() && !cancelled() &&
+      needs.python_test.result == 'success' &&
+      needs.is_python.outputs.python_poetry == 'true' &&
+      needs.is_python.outputs.pypi_publish == 'true'
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xf ${{ runner.temp }}/source.tgz
+      - name: Set up Python
+        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
+        with:
+          python-version: "3.9"
+      - name: Install Poetry
         run: |
-          package="$(grep '^name = \"' pyproject.toml | awk -F[\"\"] '{print $2}')"
-          version="${{ steps.version_tag.outputs.semver }}"
-          branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          pipx install poetry
+      - name: Generate Python metadata
+        id: python_meta
+        run: |
+          package=$(poetry version --no-ansi | awk '{print $1}')
+          version=$(poetry version --no-ansi | awk '{print $2}')
+          commit_sha="$(echo ${{ github.event.pull_request.head.sha }} | tr "a-z" "A-Z")"
+          decimal_sha=$(echo "ibase=16; $commit_sha" | bc)
+          version_tag="${version}-dev${decimal_sha}"
 
           echo "package=${package}" >> $GITHUB_OUTPUT
           echo "version=${version}" >> $GITHUB_OUTPUT
-          echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
-          echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
           echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+      - name: Run poetry install
+        run: |
+          poetry install
+      - name: Publish draft release
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TEST_TOKEN }}
+        run: |
+          poetry version ${{ steps.python_meta.outputs.version_tag }}
+          poetry config repositories.test-pypi https://test.pypi.org/legacy/
+          poetry config pypi-token.test-pypi $PYPI_TOKEN
+          poetry publish --build -r test-pypi
+  python_finalize:
+    name: Finalize npm
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_pr_merged
+      - is_pushed_tag
+      - is_npm
+    if: |
+      !failure() && !cancelled() &&
+      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      needs.is_python.outputs.python_poetry == 'true' &&
+      needs.is_python.outputs.pypi_publish == 'true'
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xf ${{ runner.temp }}/source.tgz
+      - name: Set up Python
+        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
+        with:
+          python-version: "3.9"
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+      - name: Generate Python metadata
+        id: python_meta
+        run: |
+          package=$(poetry version --no-ansi | awk '{print $1}')
+          version=$(poetry version --no-ansi | awk '{print $2}')
+          commit_sha="$(echo ${{ github.event.pull_request.head.sha }} | tr "a-z" "A-Z")"
+          decimal_sha=$(echo "ibase=16; $commit_sha" | bc)
+          version_tag="${version}-dev${decimal_sha}"
+
+          echo "package=${package}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+      - name: Publish release
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          name=${{ steps.python_meta.outputs.package }}
+          version=${{ steps.python_meta.outputs.version }}
+          version_tag=${{ steps.python_meta.outsputs.version_tag }}
+
+          wheel_name=$(pip download --pre --ignore-requires-python --no-deps -i https://test.pypi.org/simple/ "$name==$version_tag" -q --progress-bar off && ls -t | head -n1)
+          tgz_name=$(pip download --no-binary :all: --pre --ignore-requires-python --no-deps -i https://test.pypi.org/simple/ "$name==$version_tag" -q --progress-bar off && ls -t | head -n1)
+
+          mkdir -p dist
+
+          version_string=$(echo $wheel_name | sed -nE 's/.*-([^-]+)-py3-none-any.whl/\1/p')
+          new_wheel_name=${wheel_name/$version_string/$version}
+
+          version_string=$(echo $tgz_name | sed -nE 's/.*-([^-]+)\.tar\.gz/\1/p')
+          new_tgz_name=${tgz_name/$version_string/$version}
+
+          mv $wheel_name dist/$new_wheel_name
+          mv $tgz_name dist/$new_tgz_name
+
+          poetry config pypi-token.pypi $PYPI_TOKEN
+          poetry publish
   website_publish:
     name: Publish website
     runs-on: ${{fromJSON(inputs.runs_on)}}
@@ -2524,6 +2645,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - npm_publish
+      - python_publish
       - cargo_publish
       - custom_publish
       - is_pr_open
@@ -3389,6 +3511,7 @@ jobs:
       - npm_publish
       - docker_publish
       - balena_publish
+      - python_publish
       - website_publish
       - github_publish
       - cargo_publish
