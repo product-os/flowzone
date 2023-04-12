@@ -43,7 +43,7 @@
     # tar: Cannot connect to D: resolve failed
     shell: pwsh
     working-directory: .
-    run: tar -xvf ${{ runner.temp }}/source.tgz
+    run: tar -xf ${{ runner.temp }}/source.tgz
 
   - &getVersionTag
     name: Get version from tags
