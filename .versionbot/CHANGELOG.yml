@@ -1,4 +1,19 @@
 - commits:
+    - subject: Disable verbose extracting of source artifacts
+      hash: dc37f54cf696f39003c1aec1a80ddbcdf44df71f
+      body: |
+        On repos with many files this can overwhelm the logs.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 4.1.6
+  title: ""
+  date: 2023-04-12T17:20:22.395Z
+- commits:
     - subject: Update workflow-dispatch.md
       hash: fbed44ecb0d7f97388f16901b2f8d9a88c0a1280
       body: ""
