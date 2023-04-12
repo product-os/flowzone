@@ -46,3 +46,5 @@ gh workflow run patch.yml \
     -f pr_body="[skip ci]" \
     -f dry_run=true
 ```
+
+The same could also be accomplished with this similar tool: <https://github.com/duolingo/pulldozer>
