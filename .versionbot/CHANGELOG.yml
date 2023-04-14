@@ -1,4 +1,16 @@
 - commits:
+    - subject: Adds patch bump to commit footer on e2e
+      hash: 7ef4afedf096b8024672406b6002ffb81e2954f9
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Otávio Jacobi
+      nested: []
+  version: 4.1.9
+  title: ""
+  date: 2023-04-14T19:31:08.389Z
+- commits:
     - subject: "chore(deps): update dawidd6/action-download-artifact digest to 246dbf4"
       hash: f875d2c8a5ce5d470c54ac7bd91780774173d6ed
       body: |
