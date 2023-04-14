@@ -183,7 +183,7 @@ jobs:
           yq '.jobs.flowzone.uses |= . line_comment="${{ github.run_id }}-${{ github.run_attempt }}"' -i "${WORKFLOW_FILE}"
 
           git add "${WORKFLOW_FILE}"
-          git commit -m "patch: ${PR_TITLE}"
+          git commit -m "${PR_TITLE}" -m "Change-type: patch"
 
       # https://github.com/peter-evans/create-pull-request
       - name: Create pull request
