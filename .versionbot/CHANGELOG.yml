@@ -1,4 +1,23 @@
 - commits:
+    - subject: Disable SLSA Provenance attestation for now
+      hash: 08a0f698c58a880f6821788ee74780272b78c6df
+      body: |
+        See: https://github.com/product-os/flowzone/issues/548
+        See: https://github.com/docker/bake-action/releases/tag/v3.0.0
+        See: https://slsa.dev/provenance/v0.2
+
+        We can re-enable in the future when support is more common.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 4.2.2
+  title: ""
+  date: 2023-04-18T13:48:27.299Z
+- commits:
     - subject: "chore(deps): update docker/metadata-action digest to c4ee3ad"
       hash: 0c5e5348a662c6e0a58d196c6048b38720d509a3
       body: |
