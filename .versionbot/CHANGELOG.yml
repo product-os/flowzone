@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update docker/bake-action action to v3"
+      hash: 2991c5759c22f5a2bb83cd89ddf13f0278a0bb28
+      body: |
+        Update docker/bake-action from 2 to 3
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Renovate Bot
+      nested: []
+  version: 4.2.0
+  title: ""
+  date: 2023-04-18T07:52:26.120Z
+- commits:
     - subject: Adds patch bump to commit footer on e2e
       hash: 7ef4afedf096b8024672406b6002ffb81e2954f9
       body: ""
