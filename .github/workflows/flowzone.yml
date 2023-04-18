@@ -1759,6 +1759,7 @@ jobs:
             *.cache-to=type=gha,mode=min,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=type=gha,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
           load: true
+          provenance: false
       - name: Run docker compose tests
         if: needs.is_docker.outputs.docker_compose_tests == 'true'
         run: |
