@@ -1989,6 +1989,7 @@ jobs:
             *.cache-to=type=gha,mode=min,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=type=gha,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
           load: true
+          provenance: false
 
       # run docker compose tests and print the logs from all services
       - name: Run docker compose tests
