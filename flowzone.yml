@@ -1971,7 +1971,7 @@ jobs:
       # https://github.com/docker/bake-action
       - name: Docker bake
         id: docker_bake
-        uses: docker/bake-action@39f20cb0172439e0d27decdfa0c6778b2720c3e6 # v3
+        uses: docker/bake-action@ad0d2a9712378c502a7d5c590deb0d7a02d2a61d # v3
         env:
           # use automatic github token for untrusted user code
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
