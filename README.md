@@ -275,6 +275,8 @@ Python tests will be run if a `pyproject.toml` file is found in the root of the 
 
 Multiple versions (>=3.7, <3.11) of Python will be tested as long as they meet the range in the `pyproject.toml` file.
 
+If your `pyproject.toml` file contains a `packages` property under `[tool.poetry]` tag, this package will also be deployed to [PyPI registry](https://pypi.org/) on master and [PyPI test registry](https://test.pypi.org/) on PRs.
+
 ### Rust
 
 If a `Cargo.toml` file is found in the root of the repository, Flowzone will run tests on the code formatting (using `cargo fmt` and `cargo clippy`) and then run tests for a set of target architectures given in [`cargo_targets`](#cargo_targets). In order to disable Rust testing, set the value of that variable to `""`.
@@ -399,6 +401,18 @@ Required for [Docker](#docker) projects.
 [API key](https://www.balena.io/docs/learn/manage/account/#api-keys) for pushing releases to balena applications.
 
 Required for [balena](#balena) projects.
+
+#### `PYPI_TOKEN`
+
+[API key](https://pypi.org/help/#apitoken) for pushing releases to PyPI applications.
+
+Used for [python](#python) projects.
+
+#### `PYPI_TEST_TOKEN`
+
+[API key](https://pypi.org/help/#apitoken) for pushing releases to test PyPI applications.
+
+Used for [python](#python) PR artifacts.
 
 #### `CARGO_REGISTRY_TOKEN`
 
