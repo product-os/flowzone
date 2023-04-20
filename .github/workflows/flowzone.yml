@@ -964,7 +964,7 @@ jobs:
           pipx install poetry
       - name: Set up Python 3.7
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
+        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b
         with:
           python-version: "3.7"
       - name: Check compatibility
@@ -979,7 +979,7 @@ jobs:
           fi
       - name: Set up Python 3.8
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
+        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b
         with:
           python-version: "3.8"
       - name: Check compatibility
@@ -994,7 +994,7 @@ jobs:
           fi
       - name: Set up Python 3.9
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
+        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b
         with:
           python-version: "3.9"
       - name: Check compatibility
@@ -1009,7 +1009,7 @@ jobs:
           fi
       - name: Set up Python 3.10
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
+        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b
         with:
           python-version: "3.10"
       - name: Check compatibility
@@ -2377,7 +2377,7 @@ jobs:
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
           echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
+        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install Poetry
