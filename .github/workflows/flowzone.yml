@@ -2505,42 +2505,12 @@ jobs:
       - name: Install Poetry
         run: |
           pipx install poetry
-      - name: Generate Python metadata
-        id: python_meta
-        run: |
-          package=$(poetry version --no-ansi | awk '{print $1}')
-          version=$(poetry version --no-ansi | awk '{print $2}')
-          commit_sha="$(echo ${{ github.event.pull_request.head.sha }} | tr "a-z" "A-Z")"
-          decimal_sha=$(echo "ibase=16; $commit_sha" | bc)
-          version_tag="${version}-dev${decimal_sha}"
-
-          echo "package=${package}" >> $GITHUB_OUTPUT
-          echo "version=${version}" >> $GITHUB_OUTPUT
-          echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
       - name: Publish release
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
-          name=${{ steps.python_meta.outputs.package }}
-          version=${{ steps.python_meta.outputs.version }}
-          version_tag=${{ steps.python_meta.outputs.version_tag }}
-
-          wheel_name=$(pip download --pre --ignore-requires-python --no-deps -i https://test.pypi.org/simple/ "$name==$version_tag" -q --progress-bar off && ls -t | head -n1)
-          tgz_name=$(pip download --no-binary :all: --pre --ignore-requires-python --no-deps -i https://test.pypi.org/simple/ "$name==$version_tag" -q --progress-bar off && ls -t | head -n1)
-
-          mkdir -p dist
-
-          version_string=$(echo $wheel_name | sed -nE 's/.*-([^-]+)-py3-none-any.whl/\1/p')
-          new_wheel_name=${wheel_name/$version_string/$version}
-
-          version_string=$(echo $tgz_name | sed -nE 's/.*-([^-]+)\.tar\.gz/\1/p')
-          new_tgz_name=${tgz_name/$version_string/$version}
-
-          mv $wheel_name dist/$new_wheel_name
-          mv $tgz_name dist/$new_tgz_name
-
           poetry config pypi-token.pypi $PYPI_TOKEN
-          poetry publish
+          poetry publish --build
   website_publish:
     name: Publish website
     runs-on: ${{fromJSON(inputs.runs_on)}}
