@@ -2390,13 +2390,13 @@ jobs:
           poetry publish --build -r test-pypi
 
   python_finalize:
-    name: Finalize npm
+    name: Finalize python
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_merged
       - is_pushed_tag
-      - is_npm
+      - is_python
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
