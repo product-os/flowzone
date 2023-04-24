@@ -1,4 +1,18 @@
 - commits:
+    - subject: Skip docker save and upload when publish is disabled
+      hash: b346ed341488c26d70532f0410134e3b6cf77b8b
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 4.3.4
+  title: ""
+  date: 2023-04-24T06:25:51.078Z
+- commits:
     - subject: Builds python release on finalize
       hash: e85a3a0d9c8b540f16729e2c7b06e628690b9312
       body: ""
