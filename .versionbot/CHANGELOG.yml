@@ -1,4 +1,16 @@
 - commits:
+    - subject: Fix does not deploy python test package on each flowzone release
+      hash: 264d26acead294b94fba250ffc44a2977ce989b9
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Otávio Jacobi
+      nested: []
+  version: 4.3.5
+  title: ""
+  date: 2023-04-24T14:22:53.221Z
+- commits:
     - subject: Skip docker save and upload when publish is disabled
       hash: b346ed341488c26d70532f0410134e3b6cf77b8b
       body: ""
@@ -3629,7 +3641,8 @@
     - subject: Use merge source when creating github release notes
       hash: c7e5fa15167afa33ef872af91a6752c7069a0413
       body: >
-        The `github_finalize` job was trying to use the original source of the PR
+        The `github_finalize` job was trying to use the original source of the
+        PR
 
         for creating the release notes. This required the source artifact to
 
@@ -4958,7 +4971,8 @@
         exit code is derived from this service
       hash: 2f1ce78b1ba382a8003692b20dd992b9b52fb2e6
       body: >
-        resolves: Consider using only docker-compose.test.yml for docker tests #94
+        resolves: Consider using only docker-compose.test.yml for docker tests
+        #94
       footer:
         Change-type: patch
         change-type: patch
