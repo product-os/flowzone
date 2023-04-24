@@ -3,7 +3,6 @@ name = "python-flowzone-test"
 version = "0.1.1"
 description = ""
 authors = ["Team balena <team@balena.io>"]
-packages = [{include = "python_test"}]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
