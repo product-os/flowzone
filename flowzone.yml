@@ -54,7 +54,6 @@
       echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
       echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
 
-
   - &generatePythonMetadata
     name: Generate Python metadata
     id: python_meta
@@ -68,7 +67,6 @@
       echo "package=${package}" >> $GITHUB_OUTPUT
       echo "version=${version}" >> $GITHUB_OUTPUT
       echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
-
 
   - &deployToBalenaAction
     uses: balena-io/deploy-to-balena-action@e7041b7ca6dd85f47a3eb5ce141178bf77d85920 # v0.27.0
@@ -498,6 +496,15 @@
       echo "required_signatures__enabled=$(jq -cr '.required_signatures.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
       echo "enforce_admins__enabled=$(jq -cr '.enforce_admins.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
       echo "block_creations__enabled=$(jq -cr '.block_creations.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
+
+  - &sortNodeVersions
+    name: Sort node versions
+    id: node_versions
+    env:
+      VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
+    run: |
+      echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
+      echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
 
 name: Flowzone
 
@@ -1632,6 +1639,7 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
+      - *sortNodeVersions
 
       - name: Setup Node.js - Cached
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
@@ -1696,7 +1704,7 @@ jobs:
         run: npm test
 
       - name: Run pack
-        if: needs.is_npm.outputs.npm_private != 'true'
+        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: |
           mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
@@ -1704,7 +1712,7 @@ jobs:
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
 
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_private != 'true'
+        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1717,11 +1725,11 @@ jobs:
         run: npm run doc
 
       - name: Compress docs
-        if: needs.is_npm.outputs.npm_docs == 'true'
+        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
 
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_docs == 'true'
+        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1747,11 +1755,13 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
+      - *sortNodeVersions
+
       - name: Download npm artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
 
       - name: Setup Node.js
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
@@ -1802,6 +1812,7 @@ jobs:
     steps:
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
+      - *sortNodeVersions
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
@@ -1812,7 +1823,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
 
       - name: Setup Node.js
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
@@ -1849,6 +1860,7 @@ jobs:
     steps:
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
+      - *sortNodeVersions
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
@@ -1859,7 +1871,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
 
       - name: Extract docs artifact
         run: |
@@ -2342,7 +2354,6 @@ jobs:
       - name: Test with pytest
         run: |
           poetry run pytest tests/
-
 
   python_publish:
     name: Publish to test PyPI
