@@ -1283,6 +1283,13 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xf ${{ runner.temp }}/source.tgz
+      - name: Sort node versions
+        id: node_versions
+        env:
+          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
+        run: |
+          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
+          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
       - name: Setup Node.js - Cached
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
@@ -1333,14 +1340,14 @@ jobs:
       - name: Run tests
         run: npm test
       - name: Run pack
-        if: needs.is_npm.outputs.npm_private != 'true'
+        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: |
           mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_private != 'true'
+        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1351,10 +1358,10 @@ jobs:
         shell: bash
         run: npm run doc
       - name: Compress docs
-        if: needs.is_npm.outputs.npm_docs == 'true'
+        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_docs == 'true'
+        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1380,11 +1387,18 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Sort node versions
+        id: node_versions
+        env:
+          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
+        run: |
+          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
+          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
       - name: Download npm artifact
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
       - name: Setup Node.js
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
@@ -1445,6 +1459,13 @@ jobs:
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+      - name: Sort node versions
+        id: node_versions
+        env:
+          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
+        run: |
+          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
+          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
       - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@246dbf436b23d7c49e21a7ab8204ca9ecd1fe615
         with:
@@ -1452,7 +1473,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
       - name: Setup Node.js
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
@@ -1501,6 +1522,13 @@ jobs:
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+      - name: Sort node versions
+        id: node_versions
+        env:
+          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
+        run: |
+          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
+          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
       - name: Download npm docs artifact from last run
         uses: dawidd6/action-download-artifact@246dbf436b23d7c49e21a7ab8204ca9ecd1fe615
         with:
@@ -1508,7 +1536,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
       - name: Extract docs artifact
         run: |
           docs="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
