@@ -1,4 +1,18 @@
 - commits:
+    - subject: Only pack and upload for the latest node version
+      hash: 6aca7c570bf3c3f10eaf98ac582f8fe46e8f08d6
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 4.4.0
+  title: ""
+  date: 2023-04-25T19:31:34.057Z
+- commits:
     - subject: Update actions/setup-python digest to 57ded4d
       hash: 92c3e23435aa57b63df34445fa8601ad225c1427
       body: |
