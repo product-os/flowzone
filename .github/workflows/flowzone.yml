@@ -3424,7 +3424,7 @@ jobs:
           visibility=''
           if [[ '${{ inputs.repo_visibility }}' =~ private|public|internal ]]; then
               gh repo edit '${{ github.repository }}' \
-                --visibility '${{ inputs.repo_visibility }}'
+                --visibility '${{ inputs.repo_visibility }}' || true
           fi
 
           if [[ -n '${{ inputs.repo_description }}' ]]; then
