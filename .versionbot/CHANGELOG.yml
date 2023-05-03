@@ -1,4 +1,20 @@
 - commits:
+    - subject: Update balena-versionist to v0.14.13
+      hash: be7e0018fe03f2ede023bc973652a1d46d76d02f
+      body: |
+        This also updates versionist to v6.10.0 to use lockfileVersion 2 with
+        npm-shrinkwrap.json files
+      footer:
+        Change-type: patch
+        change-type: patch
+        Relates-to: product-os/versionist#243
+        relates-to: product-os/versionist#243
+      author: Felipe Lalanne
+      nested: []
+  version: 4.5.3
+  title: ""
+  date: 2023-05-03T20:16:41.332Z
+- commits:
     - subject: Update peter-evans/create-pull-request action to v5.0.1
       hash: b63aa1c2e2b8bd3e511fb02db46b1604e5e07c29
       body: |
