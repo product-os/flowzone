@@ -349,20 +349,41 @@ jobs:
         github.event.action == 'synchronize'
       )
     steps:
-      - name: Reject external pull_request events
+      - name: Check if an external PR is approved
+        id: is_approved_external_pr
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_labels="$(gh pr view ${{ github.event.pull_request.number }} --json labels -q .labels[].name)"
+          approve_label='run-ci-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}'
+
+          for label in "${pr_labels}"
+          do
+            if [[ "$label" =~ "$approve_label" ]]
+            then
+              echo "result=true" >> $GITHUB_OUTPUT
+              exit
+            fi
+          done
+          echo "result=false" >> $GITHUB_OUTPUT
+      - name: Reject external pull_request events on pull_request
         if: |
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name != github.repository
         run: |
-          echo "::error:External workflows can not be used with `pull_request` events. \
+          echo "::error::External workflows can not be used with `pull_request` events. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Reject external pull_request events
+      - name: Reject internal pull_request events on pull_request_target
         if: |
           github.event_name == 'pull_request_target' &&
           github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          echo "::error:Internal workflows should not be used with `pull_request_target` events. \
+          echo "::error::Internal workflows should not be used with `pull_request_target` events. \
             Please consult the documentation for more information."
           exit 1
       - name: Check secrets
@@ -389,15 +410,15 @@ jobs:
           fi
       - name: Reject self-hosted runners
         if: |
+          steps.is_approved_external_pr.outputs.result == 'false' &&
           github.event.pull_request.head.repo.full_name != github.repository &&
           (
-            contains(fromJSON(inputs.runs_on), 'self-hosted') ||
-            contains(fromJSON(inputs.custom_runs_on), 'self-hosted') ||
-            contains(fromJSON(inputs.custom_runs_on).*, 'self-hosted') ||
-            contains(fromJSON(inputs.docker_runs_on).*, 'self-hosted')
+            contains(inputs.runs_on, 'self-hosted') ||
+            contains(inputs.custom_runs_on, 'self-hosted') ||
+            contains(inputs.docker_runs_on, 'self-hosted')
           )
         run: |
-          echo "::error:External workflows can not be used with self-hosted runners. \
+          echo "::error::External workflows can not be used with self-hosted runners. \
             Please contact a member of the organization for assistance."
           exit 1
       - name: Log GitHub context
@@ -417,20 +438,41 @@ jobs:
         github.event.pull_request.merged == false
       )
     steps:
-      - name: Reject external pull_request events
+      - name: Check if an external PR is approved
+        id: is_approved_external_pr
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_labels="$(gh pr view ${{ github.event.pull_request.number }} --json labels -q .labels[].name)"
+          approve_label='run-ci-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}'
+
+          for label in "${pr_labels}"
+          do
+            if [[ "$label" =~ "$approve_label" ]]
+            then
+              echo "result=true" >> $GITHUB_OUTPUT
+              exit
+            fi
+          done
+          echo "result=false" >> $GITHUB_OUTPUT
+      - name: Reject external pull_request events on pull_request
         if: |
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name != github.repository
         run: |
-          echo "::error:External workflows can not be used with `pull_request` events. \
+          echo "::error::External workflows can not be used with `pull_request` events. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Reject external pull_request events
+      - name: Reject internal pull_request events on pull_request_target
         if: |
           github.event_name == 'pull_request_target' &&
           github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          echo "::error:Internal workflows should not be used with `pull_request_target` events. \
+          echo "::error::Internal workflows should not be used with `pull_request_target` events. \
             Please consult the documentation for more information."
           exit 1
       - name: Check secrets
@@ -457,15 +499,15 @@ jobs:
           fi
       - name: Reject self-hosted runners
         if: |
+          steps.is_approved_external_pr.outputs.result == 'false' &&
           github.event.pull_request.head.repo.full_name != github.repository &&
           (
-            contains(fromJSON(inputs.runs_on), 'self-hosted') ||
-            contains(fromJSON(inputs.custom_runs_on), 'self-hosted') ||
-            contains(fromJSON(inputs.custom_runs_on).*, 'self-hosted') ||
-            contains(fromJSON(inputs.docker_runs_on).*, 'self-hosted')
+            contains(inputs.runs_on, 'self-hosted') ||
+            contains(inputs.custom_runs_on, 'self-hosted') ||
+            contains(inputs.docker_runs_on, 'self-hosted')
           )
         run: |
-          echo "::error:External workflows can not be used with self-hosted runners. \
+          echo "::error::External workflows can not be used with self-hosted runners. \
             Please contact a member of the organization for assistance."
           exit 1
       - name: Log GitHub context
@@ -485,20 +527,20 @@ jobs:
         github.event.pull_request.merged == true
       )
     steps:
-      - name: Reject external pull_request events
+      - name: Reject external pull_request events on pull_request
         if: |
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name != github.repository
         run: |
-          echo "::error:External workflows can not be used with `pull_request` events. \
+          echo "::error::External workflows can not be used with `pull_request` events. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Reject external pull_request events
+      - name: Reject internal pull_request events on pull_request_target
         if: |
           github.event_name == 'pull_request_target' &&
           github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          echo "::error:Internal workflows should not be used with `pull_request_target` events. \
+          echo "::error::Internal workflows should not be used with `pull_request_target` events. \
             Please consult the documentation for more information."
           exit 1
       - name: Check secrets
