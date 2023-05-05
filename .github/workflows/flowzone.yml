@@ -1338,6 +1338,7 @@ jobs:
       - name: Run build
         run: npm run build --if-present
       - name: Run tests
+        shell: script -q -e -c "bash --noprofile --norc -eo pipefail -x {0}"
         run: npm test
       - name: Run pack
         if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
@@ -2439,6 +2440,7 @@ jobs:
         run: |
           poetry run pydocstyle
       - name: Test with pytest
+        shell: script -q -e -c "bash --noprofile --norc -eo pipefail -x {0}"
         run: |
           poetry run pytest tests/
   python_publish:
