@@ -1,4 +1,21 @@
 - commits:
+    - subject: Write `script` output to /tmp
+      hash: d628d5cb91cc792c380366761427b414dab7be29
+      body: |
+        The `script` command used for pseudo-tty during testing writes to
+        `typescript` in the current directory by default. This may cause issues
+        with some projects that do not expect new files to be generated. This
+        changes the location of that file to the `/tmp` directory to avoid any
+        issues.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 4.6.1
+  title: ""
+  date: 2023-05-08T22:51:36.383Z
+- commits:
     - subject: Enable pseudo-tty allocation on test steps
       hash: f649deb9bae872523e860835c447093c8bfcc347
       body: >
