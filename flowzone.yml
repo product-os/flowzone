@@ -1701,6 +1701,7 @@ jobs:
         run: npm run build --if-present
 
       - name: Run tests
+        shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail -x {0}"'
         run: npm test
 
       - name: Run pack
@@ -2352,6 +2353,7 @@ jobs:
           poetry run pydocstyle
 
       - name: Test with pytest
+        shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail -x {0}"'
         run: |
           poetry run pytest tests/
 
