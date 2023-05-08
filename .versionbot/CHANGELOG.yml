@@ -1,4 +1,23 @@
 - commits:
+    - subject: Enable pseudo-tty allocation on test steps
+      hash: f649deb9bae872523e860835c447093c8bfcc347
+      body: >
+        This wraps the shell in the steps that run `npm run test`
+
+        and `poetry run pytest` in a `script -q -e -c` to allow tests that
+
+        require pseudo-tty (e.g. for applications that work with terminal colors)
+
+        to be able to operate as they would in a local dev environment.
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Felipe Lalanne
+      nested: []
+  version: 4.6.0
+  title: ""
+  date: 2023-05-08T15:45:01.598Z
+- commits:
     - subject: Update crazy-max/ghaction-import-gpg action to v5.3.0
       hash: f86012dedf850e8e00ea6534fca1facdb3bea73c
       body: |
