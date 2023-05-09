@@ -24,6 +24,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
   - [Docs](#docs)
   - [Website](#website)
 - [Customization](#customization)
+
   - [Secrets](#secrets)
     - [`GH_APP_PRIVATE_KEY`](#gh_app_private_key)
     - [`FLOWZONE_TOKEN`](#flowzone_token)
@@ -56,6 +57,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`cargo_targets`](#cargo_targets)
     - [`rust_binaries`](#rust_binaries)
     - [`rust_toolchain`](#rust_toolchain)
+    - [`pseudo_terminal`](#pseudo_terminal)
     - [`protect_branch`](#protect_branch)
     - [`repo_config`](#repo_config)
     - [`repo_allow_forking`](#repo_allow_forking)
@@ -597,6 +599,14 @@ Version specifier (e.g. 1.65, stable, nigthly) for the toolchain to use when bui
 Type: _string_
 
 Default: `'stable'`
+
+#### `pseudo_terminal`
+
+Set to true to enable terminal emulation for test steps (under `npm_test` and `python_tests`). This wraps the test call with the `script` command so test commands that rely on a terminal feature (e.g. terminal colors) can work as they would in a development environment. This only works with ubuntu runners.
+
+Type: _boolean_
+
+Default: `false`
 
 #### `protect_branch`
 
