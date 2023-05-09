@@ -1,4 +1,23 @@
 - commits:
+    - subject: Make pseudo-tty allocation optional.
+      hash: 03b7b78659a70312c68c14c540e2c08e88d601cf
+      body: |
+        Pseudo-tty allocation uses the `script` command for setting up the
+        environment, however this really only works in linux runners, meaning
+        users trying to setup runs on other environments will see their tests
+        fail for unrelated reasons. This makes the configuration optional
+        behind a `pseudo_terminal` input.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Relates-to: "#630"
+        relates-to: "#630"
+      author: Felipe Lalanne
+      nested: []
+  version: 4.7.0
+  title: ""
+  date: 2023-05-09T14:22:09.507Z
+- commits:
     - subject: Write `script` output to /tmp
       hash: d628d5cb91cc792c380366761427b414dab7be29
       body: |
