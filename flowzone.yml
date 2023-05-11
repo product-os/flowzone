@@ -43,7 +43,7 @@
     # tar: Cannot connect to D: resolve failed
     shell: pwsh
     working-directory: .
-    run: tar -xf ${{ runner.temp }}/source.tgz
+    run: tar -xf ${{ runner.temp }}/source.tar.zst
 
   - &getVersionTag
     name: Get version from tags
@@ -1059,13 +1059,13 @@ jobs:
 
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress source
-        run: tar -acvf ${{ runner.temp }}/source.tgz .
+        run: tar -acvf ${{ runner.temp }}/source.tar.zst .
 
       - name: Upload artifact
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}/source.tgz
+          path: ${{ runner.temp }}/source.tar.zst
           retention-days: 1
 
   # check if the repository has a package.json file and which engine versions are supported
