@@ -43,7 +43,7 @@
     # tar: Cannot connect to D: resolve failed
     shell: pwsh
     working-directory: .
-    run: tar -xf ${{ runner.temp }}/source.tgz
+    run: tar -xf ${{ runner.temp }}/source.tar.zst
 
   - &getVersionTag
     name: Get version from tags
@@ -1059,13 +1059,13 @@ jobs:
 
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress source
-        run: tar -acvf ${{ runner.temp }}/source.tgz .
+        run: tar --auto-compress -cvf ${{ runner.temp }}/source.tar.zst .
 
       - name: Upload artifact
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}/source.tgz
+          path: ${{ runner.temp }}/source.tar.zst
           retention-days: 1
 
   # check if the repository has a package.json file and which engine versions are supported
@@ -1737,14 +1737,14 @@ jobs:
 
       - name: Compress docs
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
-        run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
+        run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
 
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
-          path: ${{ runner.temp }}/docs.tgz
+          path: ${{ runner.temp }}/docs.tar.zst
           retention-days: 90
 
   npm_publish:
@@ -1886,7 +1886,7 @@ jobs:
 
       - name: Extract docs artifact
         run: |
-          docs="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
+          docs="$(ls ${{ runner.temp }}/*.tar.zst | sort -t- -n -k3 | tail -n1)"
           tar -xvf "${docs}"
 
       - name: Publish generated docs to GitHub Pages
@@ -2052,7 +2052,7 @@ jobs:
         if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
-          gzip -v ${DOCKER_TAR}
+          zstd -v ${DOCKER_TAR}
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
@@ -2061,7 +2061,7 @@ jobs:
         with:
           # this docker-{sha}-{target}-{platform} naming scheme is used by docker_publish to find the correct artifact
           name: docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${{ steps.strings.outputs.platform }}
-          path: ${{ env.DOCKER_TAR }}.gz
+          path: ${{ env.DOCKER_TAR }}.zst
           retention-days: 1
 
   docker_publish:
@@ -2115,9 +2115,9 @@ jobs:
 
       - name: Decompress artifacts
         run: |
-          for gz in ${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-*/docker.tar.gz
+          for gz in ${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-*/docker.tar.zst
           do
-            gzip -vd "${gz}"
+            zstd -vd "${gz}"
           done
 
       - name: Create local manifest
@@ -2758,7 +2758,7 @@ jobs:
 
       - name: Compress
         run: |
-          tar -czvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
+          tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
