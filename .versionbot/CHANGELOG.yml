@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update registry Docker tag to v2.8.2
+      hash: 406dcf37d3c95c92f441123a418c04bda9cae718
+      body: |
+        Update registry from 2.8.1 to 2.8.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Renovate Bot
+      nested: []
+  version: 4.7.1
+  title: ""
+  date: 2023-05-11T17:53:31.362Z
+- commits:
     - subject: Make pseudo-tty allocation optional.
       hash: 03b7b78659a70312c68c14c540e2c08e88d601cf
       body: |
