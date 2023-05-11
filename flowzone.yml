@@ -1737,14 +1737,14 @@ jobs:
 
       - name: Compress docs
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
-        run: tar -acvf ${{ runner.temp }}/docs.tgz ./docs
+        run: tar -acvf ${{ runner.temp }}/docs.tar.zst ./docs
 
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
-          path: ${{ runner.temp }}/docs.tgz
+          path: ${{ runner.temp }}/docs.tar.zst
           retention-days: 90
 
   npm_publish:
@@ -1886,7 +1886,7 @@ jobs:
 
       - name: Extract docs artifact
         run: |
-          docs="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
+          docs="$(ls ${{ runner.temp }}/*.tar.zst | sort -t- -n -k3 | tail -n1)"
           tar -xvf "${docs}"
 
       - name: Publish generated docs to GitHub Pages
