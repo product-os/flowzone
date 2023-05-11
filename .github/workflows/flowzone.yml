@@ -683,7 +683,7 @@ jobs:
           # the tag successfully but not the main branch and breaks future versioning attempts
           git push origin "refs/tags/${{ steps.versionist.outputs.tag }}"
       - name: Compress source
-        run: tar -acvf ${{ runner.temp }}/source.tar.zst .
+        run: tar --auto-compress -cvf ${{ runner.temp }}/source.tar.zst .
       - name: Upload artifact
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
@@ -1369,7 +1369,7 @@ jobs:
         run: npm run doc
       - name: Compress docs
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
-        run: tar -acvf ${{ runner.temp }}/docs.tar.zst ./docs
+        run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
@@ -2939,7 +2939,7 @@ jobs:
         run: llvm-strip target/${{ matrix.target }}/release/${{ needs.cargo_test.outputs.package }}
       - name: Compress
         run: |
-          tar -acvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
+          tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
       - name: Upload artifact
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:

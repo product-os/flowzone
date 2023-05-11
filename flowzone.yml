@@ -1059,7 +1059,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress source
-        run: tar -acvf ${{ runner.temp }}/source.tar.zst .
+        run: tar --auto-compress -cvf ${{ runner.temp }}/source.tar.zst .
 
       - name: Upload artifact
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
@@ -1737,7 +1737,7 @@ jobs:
 
       - name: Compress docs
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
-        run: tar -acvf ${{ runner.temp }}/docs.tar.zst ./docs
+        run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
 
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
@@ -2758,7 +2758,7 @@ jobs:
 
       - name: Compress
         run: |
-          tar -acvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
+          tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
