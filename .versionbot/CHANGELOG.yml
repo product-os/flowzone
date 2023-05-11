@@ -1,4 +1,40 @@
 - commits:
+    - subject: Use automatic compression detection for gh-release artifacts
+      hash: 7cfa822a1104cedab9900bf01ff4eb1795ae8ff5
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+    - subject: Convert docker image compression to zstd
+      hash: ad5211aac7564fe56faf33615b8261bf463c13d8
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+    - subject: Convert docs artifact compression to zstd
+      hash: 8ba5c7e28de3320bcc433d9ed35f525a844611fb
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+    - subject: Convert source artifact compression to zstd
+      hash: 4fd080b7a4925e12b20616f59a033400bef15d45
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 4.7.2
+  title: ""
+  date: 2023-05-11T18:42:20.569Z
+- commits:
     - subject: Update registry Docker tag to v2.8.2
       hash: 406dcf37d3c95c92f441123a418c04bda9cae718
       body: |
