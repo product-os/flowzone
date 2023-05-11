@@ -2052,7 +2052,7 @@ jobs:
         if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
-          gzip -v ${DOCKER_TAR}
+          zstd -v ${DOCKER_TAR}
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
@@ -2061,7 +2061,7 @@ jobs:
         with:
           # this docker-{sha}-{target}-{platform} naming scheme is used by docker_publish to find the correct artifact
           name: docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${{ steps.strings.outputs.platform }}
-          path: ${{ env.DOCKER_TAR }}.gz
+          path: ${{ env.DOCKER_TAR }}.zst
           retention-days: 1
 
   docker_publish:
@@ -2115,9 +2115,9 @@ jobs:
 
       - name: Decompress artifacts
         run: |
-          for gz in ${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-*/docker.tar.gz
+          for gz in ${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-*/docker.tar.zst
           do
-            gzip -vd "${gz}"
+            zstd -vd "${gz}"
           done
 
       - name: Create local manifest
