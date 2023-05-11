@@ -2758,7 +2758,7 @@ jobs:
 
       - name: Compress
         run: |
-          tar -czvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
+          tar -acvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
