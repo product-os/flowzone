@@ -38,3 +38,13 @@ jobs:
       bake_targets: default,multiarch
       jobs_timeout_minutes: 30
       docker_publish_platform_tags: true
+      # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+      custom_runs_on: >
+        [
+          ["ubuntu-20.04"],
+          ["ubuntu-22.04"],
+          ["macos-12"],
+          ["macos-13"],
+          ["windows-2019"],
+          ["windows-2022"]
+        ]
