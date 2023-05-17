@@ -1,4 +1,28 @@
 - commits:
+    - subject: Remove macos-11 as it does not support zstd
+      hash: 2041dae24b03a6bdc6738d486d5caf18a6830479
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Test custom actions on a range of hosted runners
+      hash: 33e7b0d6a1470089081b892a12072d874f759e14
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 4.7.3
+  title: ""
+  date: 2023-05-17T14:16:45.420Z
+- commits:
     - subject: Use automatic compression detection for gh-release artifacts
       hash: 7cfa822a1104cedab9900bf01ff4eb1795ae8ff5
       body: ""
