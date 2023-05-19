@@ -2265,6 +2265,25 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xf ${{ runner.temp }}/source.tar.zst
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - uses: balena-io/deploy-to-balena-action@e7041b7ca6dd85f47a3eb5ce141178bf77d85920
         id: balena_deploy
         with:
@@ -2276,7 +2295,7 @@ jobs:
             {
               "ghcr.io": {
                 "username": "${{ github.actor }}",
-                "password": "${{ secrets.GITHUB_TOKEN }}"
+                "password": "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || secrets.GITHUB_TOKEN }}"
               },
               "docker.io": {
                 "username": "${{ secrets.DOCKERHUB_USER }}",
@@ -2340,6 +2359,25 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar -xf ${{ runner.temp }}/source.tar.zst
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - uses: balena-io/deploy-to-balena-action@e7041b7ca6dd85f47a3eb5ce141178bf77d85920
         id: balena_deploy
         with:
@@ -2351,7 +2389,7 @@ jobs:
             {
               "ghcr.io": {
                 "username": "${{ github.actor }}",
-                "password": "${{ secrets.GITHUB_TOKEN }}"
+                "password": "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || secrets.GITHUB_TOKEN }}"
               },
               "docker.io": {
                 "username": "${{ secrets.DOCKERHUB_USER }}",

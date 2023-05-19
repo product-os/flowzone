@@ -80,7 +80,7 @@
         {
           "ghcr.io": {
             "username": "${{ github.actor }}",
-            "password": "${{ secrets.GITHUB_TOKEN }}"
+            "password": "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || secrets.GITHUB_TOKEN }}"
           },
           "docker.io": {
             "username": "${{ secrets.DOCKERHUB_USER }}",
@@ -2270,6 +2270,8 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppToken
       - *deployToBalenaAction
       - *getReleaseNotes
       - *updateBalenaReleaseNotes
@@ -2297,6 +2299,8 @@ jobs:
     steps:
       - *downloadSourceArtifact
       - *extractSourceArtifact
+      - *checkGitHubAppPrivateKey
+      - *getGitHubAppToken
       - *deployToBalenaAction
       - *getReleaseNotes
       - *updateBalenaReleaseNotes
