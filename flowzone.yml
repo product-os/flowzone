@@ -568,6 +568,16 @@ on:
         required: false
 
     inputs:
+      aws_region:
+        description: "AWS region with GitHub OIDC provider IAM configuration"
+        type: string
+        required: false
+        default: "${{ vars.AWS_REGION || '' }}"
+      aws_iam_role:
+        description: "AWS IAM role ARN to assume with GitHub OIDC provider"
+        type: string
+        required: false
+        default: "${{ vars.AWS_IAM_ROLE || '' }}"
       app_id:
         description: "GitHub App id to impersonate"
         type: string
@@ -1919,6 +1929,10 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_test_matrix) }}
 
+    # https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#adding-permissions-settings
+    permissions:
+     id-token: write
+
     env:
       DOCKER_BUILDKIT: "1"
 
@@ -1984,6 +1998,48 @@ jobs:
           if ! grep -q '^GITHUB_TOKEN=' ${COMPOSE_ENV_FILE}
           then
             echo "GITHUB_TOKEN=${GITHUB_TOKEN}" >> ${COMPOSE_ENV_FILE}
+          fi
+
+      # optionally attempt to get AWS login short-lived session credentials over OIDC
+      - uses: aws-actions/configure-aws-credentials@v2
+        <<: *ifInternalPullRequest
+        continue-on-error: true
+        with:
+          role-to-assume: ${{ inputs.aws_iam_role }}
+          role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Add AWS ephemeral credentials to compose env file
+        <<: *ifInternalPullRequest
+        env:
+          AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
+          AWS_REGION: ${{ inputs.aws_region }}
+        run: |
+          if [[ -n "${AWS_REGION}" ]] && [[ -n '${{ inputs.aws_iam_role }}' ]]; then
+              if [[ -n '${{ env.AWS_ACCESS_KEY_ID }}' ]] \
+                && [[ -n '${{ env.AWS_SECRET_ACCESS_KEY }}' ]] \
+                && [[ -n '${{ env.AWS_SESSION_TOKEN }}' ]]; then
+
+                  if ! grep -q '^AWS_REGION=' ${COMPOSE_ENV_FILE}; then
+                    echo "AWS_REGION=${AWS_REGION}" >> ${COMPOSE_ENV_FILE}
+                  fi
+
+                  if ! grep -q '^AWS_DEFAULT_REGION=' ${COMPOSE_ENV_FILE}; then
+                    echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >> ${COMPOSE_ENV_FILE}
+                  fi
+
+                  if ! grep -q '^AWS_ACCESS_KEY_ID=' ${COMPOSE_ENV_FILE}; then
+                    echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" >> ${COMPOSE_ENV_FILE}
+                  fi
+
+                  if ! grep -q '^AWS_SECRET_ACCESS_KEY=' ${COMPOSE_ENV_FILE}; then
+                    echo "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" >> ${COMPOSE_ENV_FILE}
+                  fi
+
+                  if ! grep -q '^AWS_SESSION_TOKEN=' ${COMPOSE_ENV_FILE}; then
+                    echo "AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}" >> ${COMPOSE_ENV_FILE}
+                  fi
+              fi
           fi
 
       - name: Write docker bake file
