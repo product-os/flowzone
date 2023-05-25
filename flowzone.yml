@@ -1356,7 +1356,7 @@ jobs:
 
       - name: Set up Python 3.7
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4
+        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
         with:
           python-version: "3.7"
 
@@ -1373,7 +1373,7 @@ jobs:
 
       - name: Set up Python 3.8
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4
+        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
         with:
           python-version: "3.8"
 
@@ -1390,7 +1390,7 @@ jobs:
 
       - name: Set up Python 3.9
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4
+        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
         with:
           python-version: "3.9"
 
@@ -1407,7 +1407,7 @@ jobs:
 
       - name: Set up Python 3.10
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4
+        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
         with:
           python-version: "3.10"
 
@@ -2330,7 +2330,7 @@ jobs:
       - *getVersionTag
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4
+        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -2397,7 +2397,7 @@ jobs:
       - *extractSourceArtifact
 
       - name: Set up Python
-        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4
+        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
         with:
           python-version: "3.9"
 
@@ -2440,7 +2440,7 @@ jobs:
       - *extractSourceArtifact
 
       - name: Set up Python
-        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4
+        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
         with:
           python-version: "3.9"
 
