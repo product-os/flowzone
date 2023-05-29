@@ -606,7 +606,7 @@ jobs:
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |
-          npm install -g balena-versionist@0.14.13 versionist@6.10.0
+          npm install -g balena-versionist@0.14.13 versionist@7.0.1
       - name: Generate changelog
         if: inputs.disable_versioning != true
         env:
@@ -614,14 +614,7 @@ jobs:
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
           then
-            (cd ${{ runner.temp }}
-
-            wget https://github.com/mikefarah/yq/releases/download/3.0.1/yq_linux_amd64 -O yq
-            echo "a1097c74b81a2ef255583d9718bf4be6  yq" | md5sum -c -
-            chmod +x yq
-
-            PATH="${PWD}:${PATH}" $(npm root -g)/versionist/scripts/generate-changelog.sh "${GITHUB_WORKSPACE}"
-            )
+            $(npm root -g)/versionist/scripts/generate-changelog.sh .
           fi
       - name: Run versionist
         if: inputs.disable_versioning != true
