@@ -38,6 +38,11 @@ jobs:
       bake_targets: default,multiarch
       jobs_timeout_minutes: 30
       docker_publish_platform_tags: true
+      docker_runs_on: >
+        {
+          "linux/arm64": ["self-hosted","distro:jammy","ARM64"],
+          "linux/arm/v7": ["self-hosted","distro:jammy","ARM"]
+        }
       # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
       custom_runs_on: >
         [

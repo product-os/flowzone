@@ -58,6 +58,21 @@ on:
         description: Optional secret for using with custom jobs
         required: false
     inputs:
+      aws_region:
+        description: AWS region with GitHub OIDC provider IAM configuration
+        type: string
+        required: false
+        default: ${{ vars.AWS_REGION || '' }}
+      aws_iam_role:
+        description: AWS IAM role ARN to assume with GitHub OIDC provider
+        type: string
+        required: false
+        default: ${{ vars.AWS_IAM_ROLE || '' }}
+      cloudformation_templates:
+        description: AWS CloudFormation templates to deploy
+        type: string
+        required: false
+        default: ""
       app_id:
         description: GitHub App id to impersonate
         type: string
@@ -1229,7 +1244,9 @@ jobs:
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
       - name: Check for custom actions
-        if: github.event.pull_request.head.repo.full_name == github.repository || inputs.restrict_custom_actions == false
+        if: |
+          github.event.pull_request.head.repo.full_name == github.repository ||
+          inputs.restrict_custom_actions == false
         id: custom
         run: |
           if [ -d .github/actions/test ]
@@ -1288,6 +1305,49 @@ jobs:
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
+  is_cloudformation:
+    name: Is CloudFormation
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+    if: |
+      !failure() && !cancelled() &&
+      needs.versioned_source.result == 'success' &&
+      inputs.cloudformation_templates != '' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    outputs:
+      cloudformation: ${{ steps.validate_json.outputs.enabled }}
+      stacks: ${{ steps.cloudformation_stacks.outputs.deploy }}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xf ${{ runner.temp }}/source.tar.zst
+      - name: Validate CloudFormation input
+        id: validate_json
+        run: |
+          if echo '${{ inputs.cloudformation_templates }}' | jq -r
+          then
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Generate stacks matrix
+        id: cloudformation_stacks
+        run: |
+          stacks="$(echo '${{ inputs.cloudformation_templates }}' \
+            | jq -r '.stacks[].name' | jq -Rcn '[inputs'])"
+          echo "deploy=${stacks}" >> $GITHUB_OUTPUT
   npm_test:
     name: Test npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3230,6 +3290,179 @@ jobs:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
           variables: ${{ toJSON(vars) }}
+  cloudformation_test:
+    name: Test CloudFormation
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    strategy:
+      fail-fast: true
+      matrix:
+        stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_pr_open
+      - is_cloudformation
+    if: |
+      !failure() && !cancelled() &&
+      needs.is_pr_open.result == 'success' &&
+      needs.is_cloudformation.outputs.cloudformation == 'true'
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Download source artifact
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        with:
+          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          path: ${{ runner.temp }}
+      - name: Extract source artifact
+        shell: pwsh
+        working-directory: .
+        run: tar -xf ${{ runner.temp }}/source.tar.zst
+      - uses: aws-actions/configure-aws-credentials@v2
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        with:
+          role-to-assume: ${{ inputs.aws_iam_role }}
+          role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          aws-region: ${{ inputs.aws_region }}
+          mask-aws-account-id: false
+      - name: Get caller identity (AWS/whoami)
+        run: aws sts get-caller-identity
+      - name: Create templates bucket
+        id: make_bucket
+        run: |
+          bucket="$(aws s3api list-buckets | jq -r '.Buckets[] | select(.Name=="${{ vars.AWS_S3_BUCKET }}").Name' || true)"
+          if [[ -z "$bucket" ]]; then
+              result="$(aws s3 mb "s3://cfn-$(uuid)-${{ inputs.aws_region }}" --region '${{ inputs.aws_region }}')"
+              bucket=${output#*:}
+          fi
+          echo "s3_bucket=${bucket}" >> $GITHUB_OUTPUT
+      - name: Wait until stack ready
+        run: |
+          stack_status="$(aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus)"
+          if [[ -n "$stack_status" ]] && ! [[ "$stack_status" =~ REVIEW_IN_PROGRESS ]]; then
+              for op in stack-rollback-complete stack-update-complete; do
+                  aws cloudformation wait "${op}" --stack-name '${{ matrix.stack }}'
+              done
+          fi
+      - name: Generate shared outputs
+        id: shared
+        run: |
+          stack="$(echo '${{ inputs.cloudformation_templates }}' | jq -r '.stacks[] | select(.name=="${{ matrix.stack }}")')"
+
+          template_file="$(echo "${stack}" | jq -rc .template)"
+          tags="$(echo "${stack}" | jq -rc .tags[] | paste -sd' ' -) github_pull_request=${{ github.event.pull_request.number }} github_sha=${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          params="$(echo "${stack}" | jq -rc .params[] | paste -sd, -)"
+          kvparams="$(echo "${stack}" | jq -rc .params | jq -r 'map(split("=") as [$ParameterKey, $ParameterValue] | {$ParameterKey, $ParameterValue})[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue' | paste -sd' ' -)"
+          caps="$(echo "${stack}" | jq -rc .capabilities[] | paste -sd' ' -)"
+
+          echo "stack_name=${{ matrix.stack }}" >> $GITHUB_OUTPUT
+          echo "template_file=${template_file}" >> $GITHUB_OUTPUT
+          echo "tags=${tags}" >> $GITHUB_OUTPUT
+          echo "params=${params}" >> $GITHUB_OUTPUT
+          echo "kvparams=${kvparams}" >> $GITHUB_OUTPUT
+          echo "caps=${caps}" >> $GITHUB_OUTPUT
+      - name: Validate template
+        run: |
+          aws cloudformation validate-template \
+            --template-body 'file://${{ steps.shared.outputs.template_file }}'
+      - name: Package template
+        run: |
+          mkdir -p "package/$(dirname '${{ steps.shared.outputs.template_file }}')"
+
+          aws cloudformation package \
+            --template-file '${{ steps.shared.outputs.template_file }}' \
+            --s3-bucket '${{ steps.make_bucket.outputs.s3_bucket }}' \
+            --output-template-file 'package/${{ steps.shared.outputs.template_file }}'
+      - name: Estimate costs
+        run: |
+          aws cloudformation estimate-template-cost \
+            --template-body 'file://package/${{ steps.shared.outputs.template_file }}' \
+            --parameters ${{ steps.shared.outputs.kvparams }}
+      - name: Delete existing change set
+        continue-on-error: true
+        run: |
+          change_set_ids="$(aws cloudformation list-change-sets \
+            --stack-name '${{ matrix.stack }}' | jq -r '.Summaries[].ChangeSetId')"
+
+          for id in ${change_set_ids}; do
+              pr_tag="$(aws cloudformation describe-change-set \
+                --change-set-name "${id}" \
+                --query Tags | jq -r '.[] | select(.Key=="github_pull_request").Value')"
+
+              if [[ -n "$pr_tag" ]] && [[ "$pr_tag" == '${{ github.event.pull_request.number }}' ]]; then
+                  aws cloudformation delete-change-set --change-set-name "${id}"
+              fi
+          done
+      - name: Generate change set
+        id: change_set
+        run: |
+          result="$(aws cloudformation deploy \
+            --stack-name '${{ steps.shared.outputs.stack_name }}' \
+            --template-file 'package/${{ steps.shared.outputs.template_file }}' \
+            --s3-bucket '${{ steps.make_bucket.outputs.s3_bucket }}' \
+            --capabilities ${{ steps.shared.outputs.caps }} \
+            --parameter-overrides '${{ steps.shared.outputs.params }}' \
+            --tags ${{ steps.shared.outputs.tags }} \
+            --no-fail-on-empty-changeset \
+            --no-execute-changeset)"
+
+          if ! [[ "$result" =~ 'No changes to deploy' ]]; then
+              cmd="${result#*:}"
+              cmd=${cmd//$'\n'/}
+              echo "command=${cmd}" >> $GITHUB_OUTPUT
+          else
+              echo '::info::no changes'
+          fi
+      - name: Describe change set(s)
+        if: steps.change_set.outputs.command != ''
+        run: |
+          result="$(${{ steps.change_set.outputs.command }})"
+          if grep -qEi 'replace|delete'; then
+              echo '::warning::change set will destroy existing resources'
+          else
+              echo '::info::change set may add or update resources'
+          fi
+          echo "${result}" | jq -r
+  cloudformation_finalize:
+    name: Finalize CloudFormation
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_pr_merged
+      - is_pushed_tag
+      - is_cloudformation
+    if: |
+      !failure() && !cancelled() &&
+      needs.is_pr_merged.result != needs.is_pushed_tag.result
+    steps:
+      - name: Wait until stack ready
+        run: |
+          stack_status="$(aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus)"
+          if [[ -n "$stack_status" ]] && ! [[ "$stack_status" =~ REVIEW_IN_PROGRESS ]]; then
+              for op in stack-rollback-complete stack-update-complete; do
+                  aws cloudformation wait "${op}" --stack-name '${{ matrix.stack }}'
+              done
+          fi
+      - name: Execute change set
+        run: |
+          change_set_ids="$(aws cloudformation list-change-sets \
+            --stack-name '${{ matrix.stack }}' | jq -r '.Summaries[].ChangeSetId')"
+
+          for id in ${change_set_ids}; do
+              pr_tag="$(aws cloudformation describe-change-set \
+                --change-set-name "${id}" \
+                --query Tags | jq -r '.[] | select(.Key=="github_pull_request").Value')"
+
+              if [[ -n "$pr_tag" ]] && [[ "$pr_tag" == '${{ github.event.pull_request.number }}' ]]; then
+                  aws cloudformation execute-change-set --change-set-name "${id}"
+              fi
+          done
   protect_branch:
     name: Protect branch
     runs-on: ${{ fromJSON(inputs.runs_on) }}

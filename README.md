@@ -40,6 +40,9 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [`CUSTOM_JOB_SECRET_2`](#custom_job_secret_2)
     - [`CUSTOM_JOB_SECRET_3`](#custom_job_secret_3)
   - [Inputs](#inputs)
+    - [`aws_region`](#aws_region)
+    - [`aws_iam_role`](#aws_iam_role)
+    - [`cloudformation_templates`](#cloudformation_templates)
     - [`app_id`](#app_id)
     - [`installation_id`](#installation_id)
     - [`token_scope`](#token_scope)
@@ -445,6 +448,54 @@ Optional secret for use with [Custom](#custom) jobs.
 
 These inputs are all optional and include some opinionated defaults.
 They can also be found at the top of [flowzone.yml](./.github/workflows/flowzone.yml).
+
+#### `aws_region`
+
+AWS region with GitHub OIDC provider IAM configuration.
+
+Type: _string_
+
+Default: `"${{ vars.AWS_REGION || '' }}"`
+
+#### `aws_iam_role`
+
+AWS IAM role ARN to assume with GitHub OIDC provider.
+
+Type: _string_
+
+Default: `"${{ vars.AWS_IAM_ROLE || '' }}"`
+
+#### `cloudformation_templates`
+
+AWS CloudFormation templates to deploy.
+
+Type: _string_
+
+Example: ```plain
+{
+  "stacks": [
+    {
+      "name": "foo-bar",
+      "template": "aws/foo/bar.yaml",
+      "params": [
+        "var=${{ vars.VERBOSE }}",
+        "secret=${{ secrets.GITHUB_TOKEN }} ",
+        "static=foo-bar"
+      ],
+      "tags": [
+        "Name=foo",
+        "Environment=bar"
+      ],
+      "capabilities": [
+        "CAPABILITY_IAM",
+        "CAPABILITY_NAMED_IAM"
+      ]
+    }
+  ]
+}
+```
+
+Default: ``
 
 #### `app_id`
 
