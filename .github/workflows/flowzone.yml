@@ -51,6 +51,12 @@ on:
       CUSTOM_JOB_SECRET_3:
         description: Optional secret for using with custom jobs
         required: false
+      OPENAI_API_KEY:
+        description: OpenAI API Key for GPT pull request reviews
+        required: false
+      OPENAI_ORG_KEY:
+        description: OpenAI Organization ID for GPT pull request reviews
+        required: false
     inputs:
       aws_region:
         description: AWS region with GitHub OIDC provider IAM configuration
@@ -381,6 +387,11 @@ on:
         type: boolean
         required: false
         default: true
+      enable_gpt_review:
+        description: Set to false to disable GPT pull request review generation.
+        type: boolean
+        required: false
+        default: false
 concurrency:
   group: flowzone-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != github.base_ref }}
@@ -438,7 +449,7 @@ jobs:
           echo "::error::Internal workflows should not be used with `pull_request_target` events. \
             Please consult the documentation for more information."
           exit 1
-      - name: Check secrets
+      - name: Reject missing secrets
         run: |
           if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
           then
@@ -473,6 +484,9 @@ jobs:
           echo "::error::External workflows can not be used with self-hosted runners. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Warn if GPT Review is skipped
+        if: github.event.repository.private && inputs.enable_gpt_review
+        run: echo "::warning::GPT Review is not supported for private repositories!"
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
@@ -527,7 +541,7 @@ jobs:
           echo "::error::Internal workflows should not be used with `pull_request_target` events. \
             Please consult the documentation for more information."
           exit 1
-      - name: Check secrets
+      - name: Reject missing secrets
         run: |
           if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
           then
@@ -595,7 +609,7 @@ jobs:
           echo "::error::Internal workflows should not be used with `pull_request_target` events. \
             Please consult the documentation for more information."
           exit 1
-      - name: Check secrets
+      - name: Reject missing secrets
         run: |
           if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
           then
@@ -612,7 +626,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Check secrets
+      - name: Reject missing secrets
         run: |
           if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
           then
@@ -4262,6 +4276,7 @@ jobs:
       - custom_publish
       - custom_always
       - protect_branch
+      - gpt-review
     if: |
       always() &&
       needs.is_pr_open.result != 'skipped'
@@ -4410,3 +4425,61 @@ jobs:
           GH_TOKEN: ${{ steps.non_admin_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
+  gpt-review:
+    name: GPT Review
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_pr_open
+      - versioned_source
+    if: |
+      !failure() && !cancelled() &&
+      needs.is_pr_open.result != 'skipped' &&
+      inputs.enable_gpt_review == true &&
+      github.event.repository.private != true
+    steps:
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install gpt-review
+        run: |
+          python3 -m venv .env
+          source .env/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install gpt-review==0.9.4
+      - name: Configure models
+        run: |
+          if [ -f azure.yaml ]; then
+            echo "CONTEXT_FILE=azure.yaml" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          yq e -n '.azure_model_map.turbo_llm_model_deployment_id = "gpt-3.5-turbo" |
+            .azure_model_map.smart_llm_model_deployment_id = "gpt-4" |
+            .azure_model_map.large_llm_model_deployment_id = "gpt-4-32k" |
+            .azure_model_map.embedding_model_deployment_id = "text-embedding-ada-002"' > ${{ runner.temp }}/azure.yaml
+          echo "CONTEXT_FILE=${{ runner.temp }}/azure.yaml" >> $GITHUB_ENV
+      - name: Review PR and make comment
+        continue-on-error: true
+        run: |
+          source .env/bin/activate
+          gpt github review \
+            --access-token $GITHUB_TOKEN \
+            --pull-request $PR_NUMBER \
+            --repository $REPOSITORY_NAME
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_ORG_KEY: ${{ secrets.OPENAI_ORG_KEY }}
+          GIT_COMMIT_HASH: ${{ github.event.pull_request.head.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          REPOSITORY_NAME: ${{ github.repository }}
+          LINK: https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+          FULL_SUMMARY: true
+          FILE_SUMMARY: false
+          TEST_SUMMARY: false
+          BUG_SUMMARY: false
+          RISK_SUMMARY: false
+          RISK_BREAKING: false
