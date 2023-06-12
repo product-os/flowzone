@@ -3388,7 +3388,7 @@ jobs:
         run: |
           bucket="$(aws s3api list-buckets | jq -r '.Buckets[] | select(.Name=="${{ vars.AWS_S3_BUCKET }}").Name' || true)"
           if [[ -z "$bucket" ]]; then
-              result="$(aws s3 mb "s3://cfn-$(uuid)-${{ inputs.aws_region }}" --region '${{ inputs.aws_region }}')"
+              result="$(aws s3 mb "s3://cfn-$(uuidgen)-${{ inputs.aws_region }}" --region '${{ inputs.aws_region }}')"
               bucket=${output#*:}
           fi
           echo "s3_bucket=${bucket}" >> $GITHUB_OUTPUT
