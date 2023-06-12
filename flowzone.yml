@@ -55,7 +55,9 @@
     # tar: Cannot connect to D: resolve failed
     shell: pwsh
     working-directory: .
-    run: tar -xf ${{ runner.temp }}/source.tar.zst
+    run: |
+      tar --version
+      tar -xf ${{ runner.temp }}/source.tar.zst
 
   - &getVersionTag
     name: Get version from tags
@@ -3169,7 +3171,7 @@ jobs:
               cmd=${cmd//$'\n'/}
               echo "command=${cmd}" >> $GITHUB_OUTPUT
           else
-              echo '::info::no changes'
+              echo '::notice::no changes'
           fi
 
       - name: Describe change set(s)
@@ -3179,7 +3181,7 @@ jobs:
           if grep -qEi 'replace|delete'; then
               echo '::warning::change set will destroy existing resources'
           else
-              echo '::info::change set may add or update resources'
+              echo '::notice::change set may add or update resources'
           fi
           echo "${result}" | jq -r
 
@@ -3197,7 +3199,8 @@ jobs:
       - is_cloudformation
     if: |
       !failure() && !cancelled() &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result
+      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      needs.is_cloudformation.outputs.cloudformation == 'true'
 
     steps:
       - name: Wait until stack ready
