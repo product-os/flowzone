@@ -3496,9 +3496,21 @@ jobs:
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
       needs.is_cloudformation.outputs.cloudformation == 'true'
     steps:
+      - uses: aws-actions/configure-aws-credentials@v2
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        with:
+          role-to-assume: ${{ inputs.aws_iam_role }}
+          role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          aws-region: ${{ inputs.aws_region }}
+          mask-aws-account-id: false
+      - name: Get caller identity (AWS/whoami)
+        run: aws sts get-caller-identity
       - name: Wait until stack ready
         run: |
-          stack_status="$(aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus)"
+          stack_status="$(aws cloudformation describe-stacks \
+            --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus)"
+
           if [[ -n "$stack_status" ]] && ! [[ "$stack_status" =~ REVIEW_IN_PROGRESS ]]; then
               for op in stack-rollback-complete stack-update-complete; do
                   aws cloudformation wait "${op}" --stack-name '${{ matrix.stack }}'
