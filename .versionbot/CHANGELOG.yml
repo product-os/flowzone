@@ -1,4 +1,23 @@
 - commits:
+    - subject: Dedup AWS steps
+      hash: c5d626d9712d03dcdcc4ab20e6c33c40376beacd
+      body: |
+        * fix random bucket name generation
+      footer:
+        change-type: patch
+      author: ab77
+      nested: []
+    - subject: Handle all cases of CFN waits
+      hash: d19d2f9561058d5a8531790e121a9b1edb1e330c
+      body: ""
+      footer:
+        change-type: patch
+      author: ab77
+      nested: []
+  version: 4.8.6
+  title: ""
+  date: 2023-06-12T22:22:03.094Z
+- commits:
     - subject: Separate parameters with a space
       hash: 830858247e5c0683376fec0ad6c7504c90957d71
       body: ""
