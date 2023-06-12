@@ -3203,9 +3203,16 @@ jobs:
       needs.is_cloudformation.outputs.cloudformation == 'true'
 
     steps:
+      - *configureAWSCredentials
+
+      - name: Get caller identity (AWS/whoami)
+        run: aws sts get-caller-identity
+
       - name: Wait until stack ready
         run: |
-          stack_status="$(aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus)"
+          stack_status="$(aws cloudformation describe-stacks \
+            --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus)"
+
           if [[ -n "$stack_status" ]] && ! [[ "$stack_status" =~ REVIEW_IN_PROGRESS ]]; then
               for op in stack-rollback-complete stack-update-complete; do
                   aws cloudformation wait "${op}" --stack-name '${{ matrix.stack }}'
