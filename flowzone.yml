@@ -3092,7 +3092,7 @@ jobs:
 
       - name: Wait until stack ready
         run: |
-          stack_status="$(aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus)"
+          stack_status="$(aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus || true)"
           if [[ -n "$stack_status" ]] && ! [[ "$stack_status" =~ REVIEW_IN_PROGRESS ]]; then
               for op in stack-rollback-complete stack-update-complete; do
                   aws cloudformation wait "${op}" --stack-name '${{ matrix.stack }}'
@@ -3106,7 +3106,7 @@ jobs:
 
           template_file="$(echo "${stack}" | jq -rc .template)"
           tags="$(echo "${stack}" | jq -rc .tags[] | paste -sd' ' -) github_pull_request=${{ github.event.pull_request.number }} github_sha=${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
-          params="$(echo "${stack}" | jq -rc .params[] | paste -sd, -)"
+          params="$(echo "${stack}" | jq -rc .params[] | paste -sd' ' -)"
           kvparams="$(echo "${stack}" | jq -rc .params | jq -r 'map(split("=") as [$ParameterKey, $ParameterValue] | {$ParameterKey, $ParameterValue})[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue' | paste -sd' ' -)"
           caps="$(echo "${stack}" | jq -rc .capabilities[] | paste -sd' ' -)"
 
@@ -3161,7 +3161,7 @@ jobs:
             --template-file 'package/${{ steps.shared.outputs.template_file }}' \
             --s3-bucket '${{ steps.make_bucket.outputs.s3_bucket }}' \
             --capabilities ${{ steps.shared.outputs.caps }} \
-            --parameter-overrides '${{ steps.shared.outputs.params }}' \
+            --parameter-overrides ${{ steps.shared.outputs.params }} \
             --tags ${{ steps.shared.outputs.tags }} \
             --no-fail-on-empty-changeset \
             --no-execute-changeset)"
@@ -3211,7 +3211,7 @@ jobs:
       - name: Wait until stack ready
         run: |
           stack_status="$(aws cloudformation describe-stacks \
-            --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus)"
+            --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus || true)"
 
           if [[ -n "$stack_status" ]] && ! [[ "$stack_status" =~ REVIEW_IN_PROGRESS ]]; then
               for op in stack-rollback-complete stack-update-complete; do
