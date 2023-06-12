@@ -3392,13 +3392,27 @@ jobs:
               bucket=${output#*:}
           fi
           echo "s3_bucket=${bucket}" >> $GITHUB_OUTPUT
-      - name: Wait until stack ready
+      - name: Wait for resources
         run: |
-          stack_status="$(aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus || true)"
-          if [[ -n "$stack_status" ]] && ! [[ "$stack_status" =~ REVIEW_IN_PROGRESS ]]; then
-              for op in stack-rollback-complete stack-update-complete; do
-                  aws cloudformation wait "${op}" --stack-name '${{ matrix.stack }}'
-              done
+          stack_status="$(aws cloudformation describe-stacks \
+            --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus || true)"
+
+          if [[ -n "$stack_status" ]]; then
+              aws cloudformation wait stack-exists --stack-name '${{ matrix.stack }}'
+
+              if [[ "$stack_status" =~ CREATE_IN_PROGRESS ]]; then
+                  aws cloudformation wait stack-create-complete --stack-name '${{ matrix.stack }}'
+              fi
+
+              if [[ "$stack_status" =~ UPDATE_IN_PROGRESS ]]; then
+                  aws cloudformation wait stack-update-complete --stack-name '${{ matrix.stack }}'
+              fi
+
+              if [[ "$stack_status" =~ ROLLBACK_IN_PROGRESS ]]; then
+                  aws cloudformation wait stack-rollback-complete --stack-name '${{ matrix.stack }}'
+              fi
+
+              aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}'
           fi
       - name: Generate shared outputs
         id: shared
@@ -3506,15 +3520,27 @@ jobs:
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
         run: aws sts get-caller-identity
-      - name: Wait until stack ready
+      - name: Wait for resources
         run: |
           stack_status="$(aws cloudformation describe-stacks \
             --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus || true)"
 
-          if [[ -n "$stack_status" ]] && ! [[ "$stack_status" =~ REVIEW_IN_PROGRESS ]]; then
-              for op in stack-rollback-complete stack-update-complete; do
-                  aws cloudformation wait "${op}" --stack-name '${{ matrix.stack }}'
-              done
+          if [[ -n "$stack_status" ]]; then
+              aws cloudformation wait stack-exists --stack-name '${{ matrix.stack }}'
+
+              if [[ "$stack_status" =~ CREATE_IN_PROGRESS ]]; then
+                  aws cloudformation wait stack-create-complete --stack-name '${{ matrix.stack }}'
+              fi
+
+              if [[ "$stack_status" =~ UPDATE_IN_PROGRESS ]]; then
+                  aws cloudformation wait stack-update-complete --stack-name '${{ matrix.stack }}'
+              fi
+
+              if [[ "$stack_status" =~ ROLLBACK_IN_PROGRESS ]]; then
+                  aws cloudformation wait stack-rollback-complete --stack-name '${{ matrix.stack }}'
+              fi
+
+              aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}'
           fi
       - name: Execute change set
         run: |
@@ -3530,6 +3556,28 @@ jobs:
                   aws cloudformation execute-change-set --change-set-name "${id}"
               fi
           done
+      - name: Wait for resources
+        run: |
+          stack_status="$(aws cloudformation describe-stacks \
+            --stack-name '${{ matrix.stack }}' --output text --query Stacks[*].StackStatus || true)"
+
+          if [[ -n "$stack_status" ]]; then
+              aws cloudformation wait stack-exists --stack-name '${{ matrix.stack }}'
+
+              if [[ "$stack_status" =~ CREATE_IN_PROGRESS ]]; then
+                  aws cloudformation wait stack-create-complete --stack-name '${{ matrix.stack }}'
+              fi
+
+              if [[ "$stack_status" =~ UPDATE_IN_PROGRESS ]]; then
+                  aws cloudformation wait stack-update-complete --stack-name '${{ matrix.stack }}'
+              fi
+
+              if [[ "$stack_status" =~ ROLLBACK_IN_PROGRESS ]]; then
+                  aws cloudformation wait stack-rollback-complete --stack-name '${{ matrix.stack }}'
+              fi
+
+              aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}'
+          fi
   protect_branch:
     name: Protect branch
     runs-on: ${{ fromJSON(inputs.runs_on) }}
