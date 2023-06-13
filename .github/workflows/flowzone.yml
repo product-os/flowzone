@@ -3373,7 +3373,7 @@ jobs:
         run: |
           tar --version
           tar -xf ${{ runner.temp }}/source.tar.zst
-      - uses: aws-actions/configure-aws-credentials@v2
+      - uses: aws-actions/configure-aws-credentials@5727f247b64f324ec403ac56ae05e220fd02b65f
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -3510,7 +3510,7 @@ jobs:
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
       needs.is_cloudformation.outputs.cloudformation == 'true'
     steps:
-      - uses: aws-actions/configure-aws-credentials@v2
+      - uses: aws-actions/configure-aws-credentials@5727f247b64f324ec403ac56ae05e220fd02b65f
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
