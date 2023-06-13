@@ -3120,14 +3120,28 @@ jobs:
 
       - name: Generate shared outputs
         id: shared
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+          VARS_CONTEXT: ${{ toJson(vars) }}
         run: |
-          stack="$(echo '${{ inputs.cloudformation_templates }}' | jq -r '.stacks[] | select(.name=="${{ matrix.stack }}")')"
+          set -a
 
+          trap 'rm -f .env' EXIT
+
+          to_envs() { jq -r "to_entries[] | \"\(.key)="\'"\(.value)"\'"\""; }
+
+          stack="$(echo '${{ inputs.cloudformation_templates }}' | jq -r '.stacks[] | select(.name=="${{ matrix.stack }}")')"
           template_file="$(echo "${stack}" | jq -rc .template)"
           tags="$(echo "${stack}" | jq -rc .tags[] | paste -sd' ' -) github_pull_request=${{ github.event.pull_request.number }} github_sha=${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
           params="$(echo "${stack}" | jq -rc .params[] | paste -sd' ' -)"
           kvparams="$(echo "${stack}" | jq -rc .params | jq -r 'map(split("=") as [$ParameterKey, $ParameterValue] | {$ParameterKey, $ParameterValue})[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue' | paste -sd' ' -)"
           caps="$(echo "${stack}" | jq -rc .capabilities[] | paste -sd' ' -)"
+
+          echo "${SECRETS_CONTEXT}" | to_envs > .env
+          echo "${VARS_CONTEXT}" | to_envs >> .env
+          source .env && rm -f .env
+          params="$(echo "${params}" | envsubst)"
+          kvparams="$(echo "${kvparams}" | envsubst)"
 
           echo "stack_name=${{ matrix.stack }}" >> $GITHUB_OUTPUT
           echo "template_file=${template_file}" >> $GITHUB_OUTPUT
@@ -3151,6 +3165,9 @@ jobs:
             --output-template-file 'package/${{ steps.shared.outputs.template_file }}'
 
       - name: Estimate costs
+        # seems buggy: estimate-template-cost doesn't know about LaunchTemplate(s)
+        # (e.g.) An error occurred (ValidationError) when calling the EstimateTemplateCost operation: LaunchConfigurationName missing. It is a mandatory property of AutoScaling Group
+        continue-on-error: true
         run: |
           aws cloudformation estimate-template-cost \
             --template-body 'file://package/${{ steps.shared.outputs.template_file }}' \
@@ -3229,7 +3246,8 @@ jobs:
       - name: Execute change set
         run: |
           change_set_ids="$(aws cloudformation list-change-sets \
-            --stack-name '${{ matrix.stack }}' | jq -r '.Summaries[].ChangeSetId')"
+            --stack-name '${{ matrix.stack }}' \
+            | jq -r '.Summaries[] | select(.ExecutionStatus=="AVAILABLE").ChangeSetId')"
 
           for id in ${change_set_ids}; do
               pr_tag="$(aws cloudformation describe-change-set \
