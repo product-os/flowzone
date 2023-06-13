@@ -1,4 +1,16 @@
 - commits:
+    - subject: Inject secrets into environment
+      hash: c0180f3d17d438f8af1fe0d248838af604091408
+      body: |
+        * CloudFormation step(s)
+      footer:
+        change-type: patch
+      author: ab77
+      nested: []
+  version: 4.8.14
+  title: ""
+  date: 2023-06-13T21:05:27.237Z
+- commits:
     - subject: Update docker/setup-qemu-action digest to 2b82ce8
       hash: b90bce8db501263d26c039bdfcb52627521652c8
       body: |
