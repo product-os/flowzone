@@ -1040,9 +1040,8 @@ jobs:
             exit 1
           fi
 
-      # commits are automatically verified for app installation tokens
       - name: Import GPG key for signing commits
-        if: inputs.disable_versioning != true && steps.gh_app_private_key.outputs.found != 'true'
+        if: inputs.disable_versioning != true
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@72b6676b71ab476b77e676928516f6982eef7a41 # v5.3.0
         with:
@@ -1100,25 +1099,15 @@ jobs:
           echo "semver=${semver}" >> $GITHUB_OUTPUT
           echo "tag=v${semver}" >> $GITHUB_OUTPUT
 
-      - name: Get author from token
-        if: inputs.disable_versioning != true
-        id: author
-        env:
-          <<: *gitHubCliEnvironment
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          echo "name=$(gh api /user | jq -r .name)" >> $GITHUB_OUTPUT
-          echo "email=$(gh api /user | jq -r .email)" >> $GITHUB_OUTPUT
-
       # create a versioned commit
       - name: Create versioned commit
         if: inputs.disable_versioning != true
         id: versioned_commit
         env:
-          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name || steps.author.outputs.name }}
-          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email || steps.author.outputs.email }}
-          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name || steps.author.outputs.name }}
-          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email || steps.author.outputs.email }}
+          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
+          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
+          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
           TAG: ${{ steps.versionist.outputs.tag }}
         run: |
           git add --all
@@ -1139,8 +1128,11 @@ jobs:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           COMMIT_SHA: ${{ steps.versioned_commit.outputs.sha }}
           COMMIT_MESSAGE: ${{ steps.versioned_commit.outputs.message }}
-          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-          PARENT_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          # BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+          # PARENT_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          # BRANCH_NAME: ${{ github.ref }} # TODO: does this work for other events?
+          PARENT_COMMIT_SHA: ${{ github.sha }} # TODO: does this work for other events?
+          BRANCH_NAME: flowzone/pr/${{ github.event.number }}
         shell: bash
         run: |
           base_tree_sha=$(git show -s --format=%T $PARENT_COMMIT_SHA) # Get the SHA of the tree the parent commit points to
@@ -1196,14 +1188,22 @@ jobs:
           echo "$response" | jq .
           new_commit_sha=$(echo $response | jq -r .sha)
 
-          echo "Updating branch..."
-          response=$(curl -s -X PATCH \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/$GH_REPO/git/refs/heads/$BRANCH_NAME" \
-            -d "{\"sha\": \"$new_commit_sha\",\"force\": true}")
+          # echo "Updating branch..."
+          # response=$(curl -s -X PATCH \
+          #   -H "Authorization: token $GH_TOKEN" \
+          #   -H "Accept: application/vnd.github.v3+json" \
+          #   "https://api.github.com/repos/$GH_REPO/git/refs/heads/$BRANCH_NAME" \
+          #   -d "{\"sha\": \"$new_commit_sha\",\"force\": true}")
+
+          # echo "$response" | jq .
+
+          echo "Creating branch..."
+          response=$(gh api -X POST /repos/$GH_REPO/git/refs \
+            -F ref=refs/heads/$BRANCH_NAME \
+            -F sha=$new_commit_sha)
 
           echo "$response" | jq .
+
 
       - *getVersionTag
 
