@@ -651,7 +651,7 @@ jobs:
             exit 1
           fi
       - name: Import GPG key for signing commits
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && steps.gh_app_private_key.outputs.found != 'true'
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@72b6676b71ab476b77e676928516f6982eef7a41
         with:
@@ -702,13 +702,25 @@ jobs:
 
           echo "semver=${semver}" >> $GITHUB_OUTPUT
           echo "tag=v${semver}" >> $GITHUB_OUTPUT
+      - name: Get author from token
+        if: inputs.disable_versioning != true
+        id: author
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          echo "name=$(gh api /user | jq -r .name)" >> $GITHUB_OUTPUT
+          echo "email=$(gh api /user | jq -r .email)" >> $GITHUB_OUTPUT
       - name: Create versioned commit
         if: inputs.disable_versioning != true
         env:
-          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
-          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
-          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name || steps.author.outputs.name }}
+          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email || steps.author.outputs.email }}
+          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name || steps.author.outputs.name }}
+          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email || steps.author.outputs.email }}
           TAG: ${{ steps.versionist.outputs.tag }}
         run: |
           git add --all
