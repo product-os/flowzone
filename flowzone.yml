@@ -1140,44 +1140,70 @@ jobs:
           COMMIT_SHA: ${{ steps.versioned_commit.outputs.sha }}
           COMMIT_MESSAGE: ${{ steps.versioned_commit.outputs.message }}
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-          PARENT_COMMIT_SHA: ${{ steps.checkout_sha.outputs.sha }}
-        # shell: bash
+          PARENT_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+        shell: bash
         run: |
-          BASE_TREE_SHA=$(git show -s --format=%T $PARENT_COMMIT_SHA) # Get the SHA of the tree the parent commit points to
+          base_tree_sha=$(git show -s --format=%T $PARENT_COMMIT_SHA) # Get the SHA of the tree the parent commit points to
 
           # Temporary array to hold our new tree objects
-          declare -a TREE_ARRAY
+          declare -a tree_array
 
           # Extract changes
-          git diff-tree --no-commit-id --name-status -r $COMMIT_SHA | while read status file; do
-            echo "Processing $file file..."
+          while read status file; do
+            echo "Processing file $file..."
 
             # Create blob
-            CONTENT=$(cat "$file" | base64)
-            echo "{\"content\": \"$CONTENT\", \"encoding\": \"base64\"}" > blob.json
-            BLOB_SHA=$(curl -s -X POST \
+            content=$(cat "$file" | base64)
+            echo "{\"content\": \"$content\", \"encoding\": \"base64\"}" > blob.json
+
+            echo "Creating blob..."
+            response=$(curl -s -X POST \
               -H "Authorization: token $GH_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/repos/$GH_REPO/git/blobs" \
-              -d @blob.json | jq -r .sha)
+              -d @blob.json)
+
+            echo "$response" | jq .
+            blob_sha=$(echo $response | jq -r .sha)
 
             # Add blob to our tree
-            TREE_ARRAY+=("{\"path\":\"$file\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$BLOB_SHA\"}")
-          done
+            tree_array+=("{\"path\":\"$file\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$blob_sha\"}")
+          done < <(git diff-tree --no-commit-id --name-status -r $COMMIT_SHA)
 
           # Create JSON array for tree creation
-          TREE_JSON=$(printf ",%s" "${TREE_ARRAY[@]}")
-          TREE_JSON=${TREE_JSON:1}
-          TREE_JSON="[$TREE_JSON]"
+          tree_json=$(printf ",%s" "${tree_array[@]}")
+          tree_json=${tree_json:1}
+          tree_json="[$tree_json]"
+          tree_json="{\"tree\": $tree_json, \"base_tree\": \"$base_tree_sha\"}"
 
-          # Create tree
-          TREE_SHA=$(echo $TREE_JSON | gh api -X POST /repos/$GH_REPO/git/trees -F "base_tree=$BASE_TREE_SHA" -F "tree=$TREE_JSON" | jq -r .sha)
+          echo "Creating tree..."
+          response=$(echo $tree_json | curl -s -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$GH_REPO/git/trees" \
+            -d @-)
 
-          # Create commit
-          NEW_COMMIT_SHA=$(gh api -X POST /repos/$GH_REPO/git/commits -f "message=$COMMIT_MESSAGE" -f "tree=$TREE_SHA" -f "parents[]=$PARENT_COMMIT_SHA" | jq -r .sha)
+          echo "$response" | jq .
+          tree_sha=$(echo $response | jq -r .sha)
 
-          # Update reference
-          #gh api -X PATCH /repos/$GH_REPO/git/refs/heads/$BRANCH_NAME -f "sha=$NEW_COMMIT_SHA" -f "force=true"
+          echo "Creating commit..."
+          response=$(curl -s -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$GH_REPO/git/commits" \
+            -d "{\"message\": \"$COMMIT_MESSAGE\",\"tree\": \"$tree_sha\",\"parents\": [\"$PARENT_COMMIT_SHA\"]}")
+
+          echo "$response" | jq .
+          new_commit_sha=$(echo $response | jq -r .sha)
+
+          echo "Updating branch..."
+          response=$(curl -s -X PATCH \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$GH_REPO/git/refs/heads/$BRANCH_NAME" \
+            -d "{\"sha\": \"$new_commit_sha\",\"force\": true}")
+
+          echo "$response" | jq .
 
       - *getVersionTag
 
