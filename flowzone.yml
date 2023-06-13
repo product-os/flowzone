@@ -43,22 +43,6 @@
       # https://github.com/orgs/community/discussions/26636#discussioncomment-3252664
       mask-aws-account-id: false
 
-  - &downloadSourceArtifact
-    name: Download source artifact
-    uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
-    with:
-      name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-      path: ${{ runner.temp }}
-
-  - &extractSourceArtifact
-    name: Extract source artifact
-    # tar: Cannot connect to D: resolve failed
-    shell: pwsh
-    working-directory: .
-    run: |
-      tar --version
-      tar -xf ${{ runner.temp }}/source.tar.zst
-
   - &getVersionTag
     name: Get version from tags
     id: version_tag
@@ -139,7 +123,6 @@
     # because the default checkout ref is the tip of the main/master branch
     name: Checkout merge branch
     if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
-    id: checkout_merge
     uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
     with:
       fetch-depth: 0
@@ -154,6 +137,15 @@
     with:
       fetch-depth: 0
       submodules: "recursive"
+      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+
+  - &checkoutVersionedSource
+    name: Checkout versioned source
+    uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+    with:
+      fetch-depth: 0
+      submodules: "recursive"
+      ref: "flowzone/pr/${{ github.event.number }}"
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &loginWithDockerHub
@@ -1160,30 +1152,6 @@ jobs:
 
           echo "$response" | jq .
 
-      - *getVersionTag
-
-      # push the versioned commit only if the PR is merged
-      - name: Push versioned commit
-        if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
-        continue-on-error: true
-        run: |
-          git push origin HEAD:refs/heads/${{ github.base_ref }}
-          # We push the tag separately so that it is only pushed if the commit push succeed, this avoids
-          # issues if something else updates the main branch whilst we're running and causes us to push
-          # the tag successfully but not the main branch and breaks future versioning attempts
-          git push origin "refs/tags/${{ steps.versionist.outputs.tag }}"
-
-      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
-      - name: Compress source
-        run: tar --auto-compress -cvf ${{ runner.temp }}/source.tar.zst .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}/source.tar.zst
-          retention-days: 1
-
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
     name: Is npm
@@ -1206,8 +1174,7 @@ jobs:
       npm_access: ${{ steps.access.outputs.access }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - name: Check for package.json
         id: npm
@@ -1328,8 +1295,7 @@ jobs:
       docker_test_matrix: ${{ steps.docker_test.outputs.build }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - id: docker_images_json
         <<: *jsonArrayBuilder
@@ -1432,8 +1398,7 @@ jobs:
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - name: Check for Python Poetry pyproject.toml
         id: python_poetry
@@ -1569,8 +1534,7 @@ jobs:
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - id: cargo_targets
         <<: *jsonArrayBuilder
@@ -1607,8 +1571,7 @@ jobs:
       balena_yml: ${{ steps.balena_yml.outputs.enabled }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - id: balena_slugs
         <<: *jsonArrayBuilder
@@ -1651,8 +1614,7 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - id: custom_test_matrix
         <<: *jsonArrayBuilder
@@ -1714,8 +1676,7 @@ jobs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       # Check if we have at least a README to build a website from
       - name: Check for README for building a website
@@ -1748,8 +1709,7 @@ jobs:
       stacks: ${{ steps.cloudformation_stacks.outputs.deploy }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - name: Validate CloudFormation input
         id: validate_json
@@ -1799,8 +1759,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
       - *sortNodeVersions
 
       - name: Setup Node.js - Cached
@@ -2080,8 +2039,7 @@ jobs:
       DOCKER_BUILDKIT: "1"
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
       - *getVersionTag
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
@@ -2363,8 +2321,7 @@ jobs:
         target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
       - *getVersionTag
       - *sanitizeDockerStrings
       - *dockerFinalMetadata
@@ -2425,8 +2382,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
       - *deployToBalenaAction
       - *getReleaseNotes
       - *updateBalenaReleaseNotes
@@ -2452,8 +2408,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
       - *deployToBalenaAction
       - *getReleaseNotes
       - *updateBalenaReleaseNotes
@@ -2482,8 +2437,7 @@ jobs:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
       - *getVersionTag
 
       - name: Set up Python ${{ matrix.python-version }}
@@ -2550,8 +2504,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
@@ -2593,8 +2546,7 @@ jobs:
 
     <<: *customWorkingDirectory
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
@@ -2636,8 +2588,7 @@ jobs:
       needs.is_website.result == 'success'
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
@@ -2765,8 +2716,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
       - *getVersionTag
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
@@ -2830,8 +2780,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
       - *getVersionTag
 
       - name: Set up toolchain ${{ matrix.target }}
@@ -2892,8 +2841,7 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -2940,8 +2888,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@stable
@@ -2979,8 +2926,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - name: Set the matrix value env var
         run: |
@@ -3018,8 +2964,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - name: Set the matrix value env var
         run: |
@@ -3053,8 +2998,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - name: Set the matrix value env var
         run: |
@@ -3085,8 +3029,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - uses: ./.github/actions/clean
         with:
@@ -3114,8 +3057,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
 
       - uses: ./.github/actions/always
         with:
@@ -3146,8 +3088,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSource
       - *configureAWSCredentials
       - *getAWSCallerIdentity
 
