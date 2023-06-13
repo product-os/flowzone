@@ -1791,7 +1791,7 @@ jobs:
           echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
       - name: Generate docker metadata
         id: test_meta
-        uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e
+        uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175
         with:
           images: |
             sut
@@ -2035,7 +2035,7 @@ jobs:
           echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
       - name: Generate docker metadata
         id: draft_meta
-        uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e
+        uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175
         with:
           images: |
             ${{ matrix.image }}
@@ -2256,7 +2256,7 @@ jobs:
           echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
       - name: Generate docker metadata
         id: final_meta
-        uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e
+        uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175
         with:
           images: |
             ${{ matrix.image }}
