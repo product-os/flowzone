@@ -755,7 +755,12 @@ jobs:
 
             # Create blob
             CONTENT=$(cat "$file" | base64)
-            BLOB_SHA=$(echo $CONTENT | gh api -X POST /repos/$GH_REPO/git/blobs -f "content=$CONTENT" -f "encoding=base64" | jq -r .sha)
+            echo "{\"content\": \"$CONTENT\", \"encoding\": \"base64\"}" > blob.json
+            BLOB_SHA=$(curl -s -X POST \
+              -H "Authorization: token $GH_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/$GH_REPO/git/blobs" \
+              -d @blob.json | jq -r .sha)
 
             # Add blob to our tree
             TREE_ARRAY+=("{\"path\":\"$file\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$BLOB_SHA\"}")
