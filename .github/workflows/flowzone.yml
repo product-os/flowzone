@@ -630,7 +630,7 @@ jobs:
       - name: Checkout merge branch
         if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
         id: checkout_merge
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
@@ -638,7 +638,7 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Checkout sha
         if: github.event_name != 'pull_request_target' || github.event.action == 'closed'
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
