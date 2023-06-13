@@ -6,93 +6,96 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 
 ## Contents
 
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-  - [Merging](#merging)
-  - [External Contributions](#external-contributions)
-  - [Commit Message](#commit-message)
-    - [Skipping Workflow Runs](#skipping-workflow-runs)
-- [Supported project types](#supported-project-types)
-  - [npm](#npm)
-  - [Docker](#docker)
-  - [balena](#balena)
-  - [Python (with Poetry)](#python-with-poetry)
-  - [Rust](#rust)
-  - [GitHub](#github)
-  - [Custom](#custom)
-  - [Versioning](#versioning)
-  - [Docs](#docs)
-  - [Website](#website)
-- [Customization](#customization)
-
-  - [Secrets](#secrets)
-    - [`GH_APP_PRIVATE_KEY`](#gh_app_private_key)
-    - [`FLOWZONE_TOKEN`](#flowzone_token)
-    - [`GPG_PRIVATE_KEY`](#gpg_private_key)
-    - [`GPG_PASSPHRASE`](#gpg_passphrase)
-    - [`NPM_TOKEN`](#npm_token)
-    - [`DOCKERHUB_USER`](#dockerhub_user)
-    - [`DOCKERHUB_TOKEN`](#dockerhub_token)
-    - [`BALENA_API_KEY`](#balena_api_key)
-    - [`CARGO_REGISTRY_TOKEN`](#cargo_registry_token)
-    - [`COMPOSE_VARS`](#compose_vars)
-    - [`CUSTOM_JOB_SECRET_1`](#custom_job_secret_1)
-    - [`CUSTOM_JOB_SECRET_2`](#custom_job_secret_2)
-    - [`CUSTOM_JOB_SECRET_3`](#custom_job_secret_3)
-  - [Inputs](#inputs)
-    - [`aws_region`](#aws_region)
-    - [`aws_iam_role`](#aws_iam_role)
-    - [`cloudformation_templates`](#cloudformation_templates)
-    - [`app_id`](#app_id)
-    - [`installation_id`](#installation_id)
-    - [`token_scope`](#token_scope)
-    - [`runs_on`](#runs_on)
-    - [`custom_runs_on`](#custom_runs_on)
-    - [`docker_runs_on`](#docker_runs_on)
-    - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
-    - [`working_directory`](#working_directory)
-    - [`docker_images`](#docker_images)
-    - [`bake_targets`](#bake_targets)
-    - [`docker_invert_tags`](#docker_invert_tags)
-    - [`docker_publish_platform_tags`](#docker_publish_platform_tags)
-    - [`balena_environment`](#balena_environment)
-    - [`balena_slugs`](#balena_slugs)
-    - [`cargo_targets`](#cargo_targets)
-    - [`rust_binaries`](#rust_binaries)
-    - [`rust_toolchain`](#rust_toolchain)
-    - [`pseudo_terminal`](#pseudo_terminal)
-    - [`protect_branch`](#protect_branch)
-    - [`repo_config`](#repo_config)
-    - [`repo_allow_forking`](#repo_allow_forking)
-    - [`repo_default_branch`](#repo_default_branch)
-    - [`repo_delete_branch_on_merge`](#repo_delete_branch_on_merge)
-    - [`repo_allow_update_branch`](#repo_allow_update_branch)
-    - [`repo_description`](#repo_description)
-    - [`repo_homepage`](#repo_homepage)
-    - [`repo_enable_auto_merge`](#repo_enable_auto_merge)
-    - [`repo_enable_issues`](#repo_enable_issues)
-    - [`repo_enable_merge_commit`](#repo_enable_merge_commit)
-    - [`repo_enable_projects`](#repo_enable_projects)
-    - [`repo_enable_rebase_merge`](#repo_enable_rebase_merge)
-    - [`repo_enable_squash_merge`](#repo_enable_squash_merge)
-    - [`repo_enable_wiki`](#repo_enable_wiki)
-    - [`repo_visibility`](#repo_visibility)
-    - [`disable_versioning`](#disable_versioning)
-    - [`required_approving_review_count`](#required_approving_review_count)
-    - [`required_status_checks](#required_status_checks)
-    - [`github_prerelease`](#github_prerelease)
-    - [`restrict_custom_actions`](#restrict_custom_actions)
-    - [`custom_test_matrix`](#custom_test_matrix)
-    - [`custom_publish_matrix`](#custom_publish_matrix)
-    - [`custom_finalize_matrix`](#custom_finalize_matrix)
-    - [`cloudflare_website`](#cloudflare_website)
-    - [`docusaurus_website`](#docusaurus_website)
-    - [`toggle_auto_merge`](#toggle_auto_merge)
-
-- [Maintenance](#maintenance)
-  - [Generate GPG keys](#generate-gpg-keys)
-- [Help](#help)
-- [Contributing](#contributing)
+- [Flowzone](#flowzone)
+  - [Contents](#contents)
+  - [Getting Started](#getting-started)
+  - [Usage](#usage)
+    - [Merging](#merging)
+    - [External Contributions](#external-contributions)
+    - [Commit Message](#commit-message)
+      - [Skipping Workflow Runs](#skipping-workflow-runs)
+  - [Supported project types](#supported-project-types)
+    - [npm](#npm)
+    - [Docker](#docker)
+    - [balena](#balena)
+    - [Python (with Poetry)](#python-with-poetry)
+    - [Rust](#rust)
+    - [GitHub](#github)
+    - [Custom](#custom)
+    - [Versioning](#versioning)
+    - [Docs](#docs)
+    - [Website](#website)
+  - [Customization](#customization)
+    - [Secrets](#secrets)
+      - [`GH_APP_PRIVATE_KEY`](#gh_app_private_key)
+      - [`FLOWZONE_TOKEN`](#flowzone_token)
+      - [`GPG_PRIVATE_KEY`](#gpg_private_key)
+      - [`GPG_PASSPHRASE`](#gpg_passphrase)
+      - [`NPM_TOKEN`](#npm_token)
+      - [`DOCKERHUB_USER`](#dockerhub_user)
+      - [`DOCKERHUB_TOKEN`](#dockerhub_token)
+      - [`BALENA_API_KEY`](#balena_api_key)
+      - [`PYPI_TOKEN`](#pypi_token)
+      - [`PYPI_TEST_TOKEN`](#pypi_test_token)
+      - [`CARGO_REGISTRY_TOKEN`](#cargo_registry_token)
+      - [`COMPOSE_VARS`](#compose_vars)
+      - [`CUSTOM_JOB_SECRET_1`](#custom_job_secret_1)
+      - [`CUSTOM_JOB_SECRET_2`](#custom_job_secret_2)
+      - [`CUSTOM_JOB_SECRET_3`](#custom_job_secret_3)
+    - [Inputs](#inputs)
+      - [`aws_region`](#aws_region)
+      - [`aws_iam_role`](#aws_iam_role)
+      - [`cloudformation_templates`](#cloudformation_templates)
+      - [`app_id`](#app_id)
+      - [`installation_id`](#installation_id)
+      - [`token_scope`](#token_scope)
+      - [`runs_on`](#runs_on)
+      - [`custom_runs_on`](#custom_runs_on)
+      - [`docker_runs_on`](#docker_runs_on)
+      - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
+      - [`working_directory`](#working_directory)
+      - [`docker_images`](#docker_images)
+      - [`bake_targets`](#bake_targets)
+      - [`docker_invert_tags`](#docker_invert_tags)
+      - [`docker_publish_platform_tags`](#docker_publish_platform_tags)
+      - [`balena_environment`](#balena_environment)
+      - [`balena_slugs`](#balena_slugs)
+      - [`cargo_targets`](#cargo_targets)
+      - [`rust_binaries`](#rust_binaries)
+      - [`rust_toolchain`](#rust_toolchain)
+      - [`pseudo_terminal`](#pseudo_terminal)
+      - [`protect_branch`](#protect_branch)
+      - [`repo_config`](#repo_config)
+      - [`repo_allow_forking`](#repo_allow_forking)
+      - [`repo_default_branch`](#repo_default_branch)
+      - [`repo_delete_branch_on_merge`](#repo_delete_branch_on_merge)
+      - [`repo_allow_update_branch`](#repo_allow_update_branch)
+      - [`repo_description`](#repo_description)
+      - [`repo_homepage`](#repo_homepage)
+      - [`repo_enable_auto_merge`](#repo_enable_auto_merge)
+      - [`repo_enable_issues`](#repo_enable_issues)
+      - [`repo_enable_merge_commit`](#repo_enable_merge_commit)
+      - [`repo_enable_projects`](#repo_enable_projects)
+      - [`repo_enable_rebase_merge`](#repo_enable_rebase_merge)
+      - [`repo_enable_squash_merge`](#repo_enable_squash_merge)
+      - [`repo_enable_wiki`](#repo_enable_wiki)
+      - [`repo_visibility`](#repo_visibility)
+      - [`disable_versioning`](#disable_versioning)
+      - [`required_approving_review_count`](#required_approving_review_count)
+      - [`required_status_checks`](#required_status_checks)
+      - [`github_prerelease`](#github_prerelease)
+      - [`restrict_custom_actions`](#restrict_custom_actions)
+      - [`custom_test_matrix`](#custom_test_matrix)
+      - [`custom_publish_matrix`](#custom_publish_matrix)
+      - [`custom_finalize_matrix`](#custom_finalize_matrix)
+      - [`cloudflare_website`](#cloudflare_website)
+      - [`docusaurus_website`](#docusaurus_website)
+      - [`toggle_auto_merge`](#toggle_auto_merge)
+  - [Testing](#testing)
+  - [Maintenance](#maintenance)
+    - [Generate GPG keys](#generate-gpg-keys)
+  - [Help](#help)
+  - [Contributing](#contributing)
 
 ## Getting Started
 
@@ -411,13 +414,13 @@ Required for [balena](#balena) projects.
 
 [API key](https://pypi.org/help/#apitoken) for pushing releases to PyPI applications.
 
-Used for [python](#python) projects.
+Used for [python](#python-with-poetry) projects.
 
 #### `PYPI_TEST_TOKEN`
 
 [API key](https://pypi.org/help/#apitoken) for pushing releases to test PyPI applications.
 
-Used for [python](#python) PR artifacts.
+Used for [python](#python-with-poetry) PR artifacts.
 
 #### `CARGO_REGISTRY_TOKEN`
 
@@ -471,7 +474,9 @@ AWS CloudFormation templates to deploy.
 
 Type: _string_
 
-Example: ```plain
+Example:
+
+```json
 {
   "stacks": [
     {
@@ -482,14 +487,8 @@ Example: ```plain
         "secret=${{ secrets.GITHUB_TOKEN }} ",
         "static=foo-bar"
       ],
-      "tags": [
-        "Name=foo",
-        "Environment=bar"
-      ],
-      "capabilities": [
-        "CAPABILITY_IAM",
-        "CAPABILITY_NAMED_IAM"
-      ]
+      "tags": ["Name=foo", "Environment=bar"],
+      "capabilities": ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"]
     }
   ]
 }
@@ -521,7 +520,7 @@ Type: _string_
 
 Default:
 
-```plain
+```json
 {
   "actions": "read",
   "administration": "write",
