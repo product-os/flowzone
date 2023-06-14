@@ -1,4 +1,18 @@
 - commits:
+    - subject: Handle new and modified files after running versionist
+      hash: 591f6ba94cba625186dbabc03ab056e031c8df37
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.0.1
+  title: ""
+  date: 2023-06-14T18:19:31.731Z
+- commits:
     - subject: Create versioned commit objects via GitHub API
       hash: 9ed50142427ba7c7e145ce9bd854b35a0325eb4d
       body: |
