@@ -43,15 +43,6 @@
       # https://github.com/orgs/community/discussions/26636#discussioncomment-3252664
       mask-aws-account-id: false
 
-  - &getVersionTag
-    name: Get version from tags
-    id: version_tag
-    run: |
-      tag="$(git tag --points-at HEAD | tail -n1)"
-      echo "tag=${tag}" >> $GITHUB_OUTPUT
-      echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-      echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
-
   - &generatePythonMetadata
     name: Generate Python metadata
     id: python_meta
@@ -118,43 +109,13 @@
             -d "{\"note\":${release_notes}}"
       fi
 
-  - &checkoutMergeBranch
-    # for pull_request_target events that are not closed we need to specify the merge branch manually
-    # because the default checkout ref is the tip of the main/master branch
-    name: Checkout merge branch
-    if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+  - &checkoutVersionedSha
+    name: Checkout versioned sha
     uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
     with:
       fetch-depth: 0
       submodules: "recursive"
-      ref: "refs/pull/${{ github.event.number }}/merge"
-      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-
-  - &checkoutSha # otherwise use the default checkout behaviour
-    name: Checkout sha
-    if: github.event_name != 'pull_request_target' || github.event.action == 'closed'
-    uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
-    with:
-      fetch-depth: 0
-      submodules: "recursive"
-      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-
-  - &checkoutVersionedSource
-    name: Checkout versioned source
-    uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
-    with:
-      fetch-depth: 0
-      submodules: "recursive"
-      ref: "flowzone/pr/${{ github.event.number }}"
-      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-
-  - &checkoutTaggedSource
-    name: Checkout tagged source
-    uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
-    with:
-      fetch-depth: 0
-      submodules: "recursive"
-      ref: "${{ github.ref }}" # TODO: does this work for all event types?
+      ref: "${{ needs.versioned_source.outputs.sha }}"
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &loginWithDockerHub
@@ -361,7 +322,7 @@
         localhost:5000/sut
         ${{ needs.is_docker.outputs.docker_images_crlf }}
       labels: |
-        org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+        org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
         org.opencontainers.image.ref.name=${{ matrix.target }}
       tags: |
         type=raw,value=${{ github.event.pull_request.head.sha }}
@@ -395,10 +356,10 @@
       # and version tag and semver will be empty
       tags: |
         type=raw,value=${{ github.base_ref || github.ref_name }}
-        type=raw,value=${{ steps.version_tag.outputs.tag }}
-        type=raw,value=${{ steps.version_tag.outputs.semver }}
+        type=raw,value=${{ needs.versioned_source.outputs.tag }}
+        type=raw,value=${{ needs.versioned_source.outputs.semver }}
       flavor: |
-        latest=${{ steps.version_tag.outputs.semver != '' }}
+        latest=${{ needs.versioned_source.outputs.semver != '' }}
         prefix=${{ steps.strings.outputs.prefix }},onlatest=true
         suffix=${{ steps.strings.outputs.suffix }},onlatest=true
 
@@ -1023,15 +984,31 @@ jobs:
 
     env:
       <<: *gitHubCliEnvironment
-      PARENT_COMMIT_SHA: ${{ github.sha }} # TODO: does this work for other events?
-      BRANCH_NAME: flowzone/pr/${{ github.event.number }}
+      PARENT_COMMIT_SHA: ${{ github.sha }}
 
     steps:
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
-      - *checkoutMergeBranch
-      - *checkoutSha
-      - *getVersionTag
+
+      # checkout merge ref for open PRs
+      - name: Checkout merge ref
+        if: needs.is_pr_open.result == 'success'
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        with:
+          fetch-depth: 0
+          submodules: "recursive"
+          ref: "refs/pull/${{ github.event.number }}/merge"
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+
+      # otherwise use the event sha
+      - name: Checkout event sha
+        if: needs.is_pr_open.result != 'success'
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        with:
+          fetch-depth: 0
+          submodules: "recursive"
+          ref: ${{ github.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
       # fail on merge commits (ones with more than one parent)
       - name: Reject merge commits
@@ -1041,6 +1018,15 @@ jobs:
             echo "::error::Latest commit appears to be a merge, which is currently unsupported. Try a rebase instead."
             exit 1
           fi
+
+      # get current version from git tags as a fallback if versioning is disabled
+      - name: Get current tag
+        id: version_tag
+        run: |
+          tag="$(git tag --points-at HEAD | tail -n1)"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
 
       - name: Install versionist
         if: inputs.disable_versioning != true
@@ -1159,31 +1145,20 @@ jobs:
             -F "tree=${{ steps.create_tree.outputs.sha }}" \
             -F "parents[]=$PARENT_COMMIT_SHA")
 
+          echo "$response" | jq .
           echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
           echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
 
-      - name: Create versioned branch
-        if: inputs.disable_versioning != true && needs.is_pr_open.result == 'success'
-        env:
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          # Try to delete the branch (ignore any error if it does not exist)
-          gh api -X DELETE /repos/$GH_REPO/git/refs/heads/$BRANCH_NAME || true
-
-          gh api -X POST /repos/$GH_REPO/git/refs \
-            -F ref=refs/heads/$BRANCH_NAME \
-            -F sha='${{ steps.create_commit.outputs.sha }}'
-
-      - name: Update base branch
+      - name: Push commit to base
         if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
-          gh api -X PATCH /repos/$GH_REPO/git/refs/heads/$BRANCH_NAME \
+          gh api -X PATCH /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
             -F sha='${{ steps.create_commit.outputs.sha }}' \
             -F force='true'
       
-      - name: Push versioned tag
+      - name: Push tag to base
         if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1216,7 +1191,7 @@ jobs:
       npm_access: ${{ steps.access.outputs.access }}
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - name: Check for package.json
         id: npm
@@ -1337,7 +1312,7 @@ jobs:
       docker_test_matrix: ${{ steps.docker_test.outputs.build }}
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - id: docker_images_json
         <<: *jsonArrayBuilder
@@ -1440,7 +1415,7 @@ jobs:
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - name: Check for Python Poetry pyproject.toml
         id: python_poetry
@@ -1576,7 +1551,7 @@ jobs:
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - id: cargo_targets
         <<: *jsonArrayBuilder
@@ -1613,7 +1588,7 @@ jobs:
       balena_yml: ${{ steps.balena_yml.outputs.enabled }}
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - id: balena_slugs
         <<: *jsonArrayBuilder
@@ -1656,7 +1631,7 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - id: custom_test_matrix
         <<: *jsonArrayBuilder
@@ -1718,7 +1693,7 @@ jobs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       # Check if we have at least a README to build a website from
       - name: Check for README for building a website
@@ -1751,7 +1726,7 @@ jobs:
       stacks: ${{ steps.cloudformation_stacks.outputs.deploy }}
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - name: Validate CloudFormation input
         id: validate_json
@@ -1801,7 +1776,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
       - *sortNodeVersions
 
       - name: Setup Node.js - Cached
@@ -2081,8 +2056,7 @@ jobs:
       DOCKER_BUILDKIT: "1"
 
     steps:
-      - *checkoutVersionedSource
-      - *getVersionTag
+      - *checkoutVersionedSha
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *sanitizeDockerStrings
@@ -2363,8 +2337,7 @@ jobs:
         target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
 
     steps:
-      - *checkoutVersionedSource
-      - *getVersionTag
+      - *checkoutVersionedSha
       - *sanitizeDockerStrings
       - *dockerFinalMetadata
       - *setupCrane
@@ -2424,7 +2397,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
       - *deployToBalenaAction
       - *getReleaseNotes
       - *updateBalenaReleaseNotes
@@ -2450,7 +2423,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
       - *deployToBalenaAction
       - *getReleaseNotes
       - *updateBalenaReleaseNotes
@@ -2479,8 +2452,7 @@ jobs:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
 
     steps:
-      - *checkoutVersionedSource
-      - *getVersionTag
+      - *checkoutVersionedSha
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
@@ -2546,7 +2518,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
@@ -2588,7 +2560,7 @@ jobs:
 
     <<: *customWorkingDirectory
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
@@ -2630,7 +2602,7 @@ jobs:
       needs.is_website.result == 'success'
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
@@ -2758,8 +2730,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *checkoutVersionedSource
-      - *getVersionTag
+      - *checkoutVersionedSha
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *getReleaseNotes
@@ -2775,13 +2746,13 @@ jobs:
           if gh release view '${{ github.event.pull_request.head.ref }}'; then
             gh release edit '${{ github.event.pull_request.head.ref }}' \
               --notes-file '${{ steps.release_notes.outputs.file }}' \
-              --title '${{ steps.version_tag.outputs.tag }}' \
-              --tag '${{ steps.version_tag.outputs.tag }}' \
+              --title '${{ needs.versioned_source.outputs.tag }}' \
+              --tag '${{ needs.versioned_source.outputs.tag }}' \
               --prerelease='${{ inputs.github_prerelease }}' \
               --draft=false
 
             if [[ ${{ inputs.github_prerelease }} =~ false ]]; then
-                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ steps.version_tag.outputs.tag }}" \
+                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ needs.versioned_source.outputs.tag }}" \
                   -H 'Accept: application/vnd.github+json' | jq -r .id)"
                 gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
                   -H 'Accept: application/vnd.github+json' \
@@ -2822,8 +2793,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *checkoutVersionedSource
-      - *getVersionTag
+      - *checkoutVersionedSha
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -2848,7 +2818,7 @@ jobs:
         id: meta
         run: |
           package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
-          version="${{ steps.version_tag.outputs.semver }}"
+          version="${{ needs.versioned_source.outputs.semver }}"
           branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
@@ -2883,7 +2853,7 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -2930,7 +2900,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@stable
@@ -2968,7 +2938,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - name: Set the matrix value env var
         run: |
@@ -3006,7 +2976,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - name: Set the matrix value env var
         run: |
@@ -3040,7 +3010,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - name: Set the matrix value env var
         run: |
@@ -3071,7 +3041,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - uses: ./.github/actions/clean
         with:
@@ -3099,7 +3069,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
 
       - uses: ./.github/actions/always
         with:
@@ -3130,7 +3100,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *checkoutVersionedSource
+      - *checkoutVersionedSha
       - *configureAWSCredentials
       - *getAWSCallerIdentity
 

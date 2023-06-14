@@ -609,7 +609,6 @@ jobs:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       PARENT_COMMIT_SHA: ${{ github.sha }}
-      BRANCH_NAME: flowzone/pr/${{ github.event.number }}
     steps:
       - name: Check for GitHub App private key
         id: gh_app_private_key
@@ -630,28 +629,22 @@ jobs:
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout merge branch
-        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+      - name: Checkout merge ref
+        if: needs.is_pr_open.result == 'success'
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
           ref: refs/pull/${{ github.event.number }}/merge
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Checkout sha
-        if: github.event_name != 'pull_request_target' || github.event.action == 'closed'
+      - name: Checkout event sha
+        if: needs.is_pr_open.result != 'success'
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
+          ref: ${{ github.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Reject merge commits
         run: |
           if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep '^parent ' | wc -l)" -gt 1 ]
@@ -659,6 +652,13 @@ jobs:
             echo "::error::Latest commit appears to be a merge, which is currently unsupported. Try a rebase instead."
             exit 1
           fi
+      - name: Get current tag
+        id: version_tag
+        run: |
+          tag="$(git tag --points-at HEAD | tail -n1)"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |
@@ -767,28 +767,18 @@ jobs:
             -F "tree=${{ steps.create_tree.outputs.sha }}" \
             -F "parents[]=$PARENT_COMMIT_SHA")
 
+          echo "$response" | jq .
           echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
           echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
-      - name: Create versioned branch
-        if: inputs.disable_versioning != true && needs.is_pr_open.result == 'success'
-        env:
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          # Try to delete the branch (ignore any error if it does not exist)
-          gh api -X DELETE /repos/$GH_REPO/git/refs/heads/$BRANCH_NAME || true
-
-          gh api -X POST /repos/$GH_REPO/git/refs \
-            -F ref=refs/heads/$BRANCH_NAME \
-            -F sha='${{ steps.create_commit.outputs.sha }}'
-      - name: Update base branch
+      - name: Push commit to base
         if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
-          gh api -X PATCH /repos/$GH_REPO/git/refs/heads/$BRANCH_NAME \
+          gh api -X PATCH /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
             -F sha='${{ steps.create_commit.outputs.sha }}' \
             -F force='true'
-      - name: Push versioned tag
+      - name: Push tag to base
         if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -819,12 +809,12 @@ jobs:
       node_versions: ${{ steps.node_versions.outputs.json }}
       npm_access: ${{ steps.access.outputs.access }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for package.json
         id: npm
@@ -931,12 +921,12 @@ jobs:
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
       docker_test_matrix: ${{ steps.docker_test.outputs.build }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: docker_images_json
         name: Build JSON array from comma-separated list
@@ -1041,12 +1031,12 @@ jobs:
       python_versions: ${{ steps.python_versions.outputs.json }}
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for Python Poetry pyproject.toml
         id: python_poetry
@@ -1167,12 +1157,12 @@ jobs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: cargo_targets
         name: Build JSON array from comma-separated list
@@ -1210,12 +1200,12 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       balena_yml: ${{ steps.balena_yml.outputs.enabled }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: balena_slugs
         name: Build JSON array from comma-separated list
@@ -1258,12 +1248,12 @@ jobs:
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: custom_test_matrix
         name: Build JSON array from comma-separated list
@@ -1332,12 +1322,12 @@ jobs:
     outputs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for README for building a website
         id: has_readme
@@ -1368,12 +1358,12 @@ jobs:
       cloudformation: ${{ steps.validate_json.outputs.enabled }}
       stacks: ${{ steps.cloudformation_stacks.outputs.deploy }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Validate CloudFormation input
         id: validate_json
@@ -1416,12 +1406,12 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Sort node versions
         id: node_versions
@@ -1714,20 +1704,13 @@ jobs:
     env:
       DOCKER_BUILDKIT: "1"
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Check for GitHub App private key
         id: gh_app_private_key
         shell: bash
@@ -1816,7 +1799,7 @@ jobs:
             localhost:5000/sut
             ${{ needs.is_docker.outputs.docker_images_crlf }}
           labels: |
-            org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+            org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.sha }}
@@ -2058,7 +2041,7 @@ jobs:
           images: |
             ${{ matrix.image }}
           labels: |
-            org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+            org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.sha }}
@@ -2194,20 +2177,13 @@ jobs:
         image: ${{ fromJSON(needs.is_docker.outputs.docker_images) }}
         target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Sanitize docker strings
         id: strings
         env:
@@ -2275,14 +2251,14 @@ jobs:
           images: |
             ${{ matrix.image }}
           labels: |
-            org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+            org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
             type=raw,value=${{ github.base_ref || github.ref_name }}
-            type=raw,value=${{ steps.version_tag.outputs.tag }}
-            type=raw,value=${{ steps.version_tag.outputs.semver }}
+            type=raw,value=${{ needs.versioned_source.outputs.tag }}
+            type=raw,value=${{ needs.versioned_source.outputs.semver }}
           flavor: |
-            latest=${{ steps.version_tag.outputs.semver != '' }}
+            latest=${{ needs.versioned_source.outputs.semver != '' }}
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
       - uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
@@ -2387,12 +2363,12 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: balena-io/deploy-to-balena-action@e7041b7ca6dd85f47a3eb5ce141178bf77d85920
         id: balena_deploy
@@ -2460,12 +2436,12 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: balena-io/deploy-to-balena-action@e7041b7ca6dd85f47a3eb5ce141178bf77d85920
         id: balena_deploy
@@ -2532,20 +2508,13 @@ jobs:
       matrix:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
         with:
@@ -2603,12 +2572,12 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
@@ -2658,12 +2627,12 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
@@ -2697,12 +2666,12 @@ jobs:
       !failure() && !cancelled() &&
       needs.is_website.result == 'success'
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
@@ -2867,20 +2836,13 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Check for GitHub App private key
         id: gh_app_private_key
         shell: bash
@@ -2923,13 +2885,13 @@ jobs:
           if gh release view '${{ github.event.pull_request.head.ref }}'; then
             gh release edit '${{ github.event.pull_request.head.ref }}' \
               --notes-file '${{ steps.release_notes.outputs.file }}' \
-              --title '${{ steps.version_tag.outputs.tag }}' \
-              --tag '${{ steps.version_tag.outputs.tag }}' \
+              --title '${{ needs.versioned_source.outputs.tag }}' \
+              --tag '${{ needs.versioned_source.outputs.tag }}' \
               --prerelease='${{ inputs.github_prerelease }}' \
               --draft=false
 
             if [[ ${{ inputs.github_prerelease }} =~ false ]]; then
-                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ steps.version_tag.outputs.tag }}" \
+                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ needs.versioned_source.outputs.tag }}" \
                   -H 'Accept: application/vnd.github+json' | jq -r .id)"
                 gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
                   -H 'Accept: application/vnd.github+json' \
@@ -2964,20 +2926,13 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:
@@ -2996,7 +2951,7 @@ jobs:
         id: meta
         run: |
           package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
-          version="${{ steps.version_tag.outputs.semver }}"
+          version="${{ needs.versioned_source.outputs.semver }}"
           branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
@@ -3030,12 +2985,12 @@ jobs:
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -3076,12 +3031,12 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@stable
@@ -3118,12 +3073,12 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set the matrix value env var
         run: |
@@ -3164,12 +3119,12 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set the matrix value env var
         run: |
@@ -3206,12 +3161,12 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set the matrix value env var
         run: |
@@ -3246,12 +3201,12 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: ./.github/actions/clean
         with:
@@ -3284,12 +3239,12 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: ./.github/actions/always
         with:
@@ -3316,12 +3271,12 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Checkout versioned source
+      - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: flowzone/pr/${{ github.event.number }}
+          ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: aws-actions/configure-aws-credentials@5727f247b64f324ec403ac56ae05e220fd02b65f
         if: github.event.pull_request.head.repo.full_name == github.repository
