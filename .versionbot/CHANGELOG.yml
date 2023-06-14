@@ -1,4 +1,19 @@
 - commits:
+    - subject: Skip GPG signing when using app installation tokens
+      hash: dcac997e93c2e6e16189efcbf7894347538f333b
+      body: >
+        GitHub will automatically verify commits by apps.
+
+        https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification#signature-verification-for-bots
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Kyle Harding
+      nested: []
+  version: 4.8.16
+  title: ""
+  date: 2023-06-14T14:49:34.285Z
+- commits:
     - subject: Update peter-evans/create-pull-request action to v5.0.2
       hash: 4f19267cf071b5d4eab60e6903774d36a3aab8ca
       body: |
