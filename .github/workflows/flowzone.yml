@@ -9,12 +9,6 @@ on:
       FLOWZONE_TOKEN:
         description: .. or Personal Access Token (PAT) with admin/owner permissions in the org.
         required: false
-      GPG_PRIVATE_KEY:
-        description: GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits
-        required: false
-      GPG_PASSPHRASE:
-        description: Passphrase to decrypt GPG private key
-        required: false
       NPM_TOKEN:
         description: The npm auth token to use for publishing
         required: false
@@ -607,6 +601,14 @@ jobs:
     outputs:
       tag: ${{ steps.versionist.outputs.tag || steps.version_tag.outputs.tag }}
       semver: ${{ steps.versionist.outputs.semver || steps.version_tag.outputs.semver }}
+      sha: ${{ steps.create_commit.outputs.sha || github.sha }}
+    env:
+      GH_DEBUG: "true"
+      GH_PAGER: cat
+      GH_PROMPT_DISABLED: "true"
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PARENT_COMMIT_SHA: ${{ github.sha }}
     steps:
       - name: Check for GitHub App private key
         id: gh_app_private_key
@@ -627,21 +629,21 @@ jobs:
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout merge branch
-        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
-        id: checkout_merge
+      - name: Checkout merge ref
+        if: needs.is_pr_open.result == 'success'
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
           ref: refs/pull/${{ github.event.number }}/merge
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Checkout sha
-        if: github.event_name != 'pull_request_target' || github.event.action == 'closed'
+      - name: Checkout event sha
+        if: needs.is_pr_open.result != 'success'
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
           submodules: recursive
+          ref: ${{ github.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reject merge commits
         run: |
@@ -650,16 +652,13 @@ jobs:
             echo "::error::Latest commit appears to be a merge, which is currently unsupported. Try a rebase instead."
             exit 1
           fi
-      - name: Import GPG key for signing commits
-        if: inputs.disable_versioning != true
-        id: import-gpg
-        uses: crazy-max/ghaction-import-gpg@72b6676b71ab476b77e676928516f6982eef7a41
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          git_config_global: true
-          git_user_signingkey: true
-          git_commit_gpgsign: true
+      - name: Get current tag
+        id: version_tag
+        run: |
+          tag="$(git tag --points-at HEAD | tail -n1)"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |
@@ -702,44 +701,111 @@ jobs:
 
           echo "semver=${semver}" >> $GITHUB_OUTPUT
           echo "tag=v${semver}" >> $GITHUB_OUTPUT
-      - name: Create versioned commit
+      - name: Create blobs and tree objects
         if: inputs.disable_versioning != true
+        id: create_tree
+        shell: bash
         env:
-          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
-          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
-          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          # Temporary array to hold our new tree objects
+          declare -a tree_array
+
+          # Use git status to check for modified files
+          modified_files=$(git diff --name-only)
+
+          # Extract changes
+          for file in $modified_files; do
+            echo "Processing file $file..."
+
+            # Create blob
+            content=$(cat "$file" | base64)
+            echo "{\"content\": \"$content\", \"encoding\": \"base64\"}" > blob.json
+
+            echo "Creating blob..."
+            response=$(curl -s -X POST \
+              -H "Authorization: token $GH_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/$GH_REPO/git/blobs" \
+              -d @blob.json)
+
+            echo "$response" | jq .
+            blob_sha=$(echo $response | jq -r .sha)
+
+            # Add blob to our tree
+            tree_array+=("{\"path\":\"$file\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$blob_sha\"}")
+          done
+
+          # Get the SHA of the tree the parent commit points to
+          base_tree_sha=$(git show -s --format=%T $PARENT_COMMIT_SHA)
+
+          # Create JSON array for tree creation
+          tree_json=$(printf ",%s" "${tree_array[@]}")
+          tree_json=${tree_json:1}
+          tree_json="[$tree_json]"
+          tree_json="{\"tree\": $tree_json, \"base_tree\": \"$base_tree_sha\"}"
+
+          echo "Creating tree..."
+          echo "$tree_json" | jq .
+
+          response=$(echo $tree_json | curl -s -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$GH_REPO/git/trees" \
+            -d @-)
+
+          echo "$response" | jq .
+          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
+          echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
+      - name: Create commit object
+        if: inputs.disable_versioning != true
+        id: create_commit
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          MESSAGE: ${{ steps.versionist.outputs.tag }}
+        run: |
+          response=$(gh api -X POST /repos/$GH_REPO/git/commits \
+            -F "message=$MESSAGE" \
+            -F "tree=${{ steps.create_tree.outputs.sha }}" \
+            -F "parents[]=$PARENT_COMMIT_SHA")
+
+          echo "$response" | jq .
+          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
+          echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
+      - name: Create tag object
+        if: inputs.disable_versioning != true
+        id: create_tag
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          TAG: ${{ steps.versionist.outputs.tag }}
+          MESSAGE: ${{ steps.versionist.outputs.tag }}
+        run: |
+          response=$(gh api -X POST repos/$GH_REPO/git/tags \
+            -F "tag=${TAG}" \
+            -F "message=${MESSAGE}" \
+            -F "object=${{ steps.create_commit.outputs.sha }}" \
+            -F "type=commit")
+
+          echo "$response" | jq .
+          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
+          echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
+      - name: Create commit reference
+        if: needs.is_pr_merged.result == 'success' && steps.create_commit.outputs.sha != ''
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          gh api -X PATCH /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
+            -F sha='${{ steps.create_commit.outputs.sha }}' \
+            -F force='true'
+      - name: Create tag reference
+        if: needs.is_pr_merged.result == 'success' && steps.create_tag.outputs.sha != ''
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           TAG: ${{ steps.versionist.outputs.tag }}
         run: |
-          git add --all
-          git commit -m "${TAG}"
-          git tag -a "${TAG}" -m "${TAG}" -f
-          git show -1
-          git log -n 2
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
-      - name: Push versioned commit
-        if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
-        continue-on-error: true
-        run: |
-          git push origin HEAD:refs/heads/${{ github.base_ref }}
-          # We push the tag separately so that it is only pushed if the commit push succeed, this avoids
-          # issues if something else updates the main branch whilst we're running and causes us to push
-          # the tag successfully but not the main branch and breaks future versioning attempts
-          git push origin "refs/tags/${{ steps.versionist.outputs.tag }}"
-      - name: Compress source
-        run: tar --auto-compress -cvf ${{ runner.temp }}/source.tar.zst .
-      - name: Upload artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
-        with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}/source.tar.zst
-          retention-days: 1
+          gh api -X POST /repos/$GH_REPO/git/refs \
+            -f "ref=refs/tags/${TAG}" \
+            -f "sha=${{ steps.create_tag.outputs.sha }}"
   is_npm:
     name: Is npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -761,17 +827,13 @@ jobs:
       node_versions: ${{ steps.node_versions.outputs.json }}
       npm_access: ${{ steps.access.outputs.access }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for package.json
         id: npm
         run: |
@@ -877,17 +939,13 @@ jobs:
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
       docker_test_matrix: ${{ steps.docker_test.outputs.build }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: docker_images_json
         name: Build JSON array from comma-separated list
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
@@ -991,17 +1049,13 @@ jobs:
       python_versions: ${{ steps.python_versions.outputs.json }}
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for Python Poetry pyproject.toml
         id: python_poetry
         run: |
@@ -1121,17 +1175,13 @@ jobs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: cargo_targets
         name: Build JSON array from comma-separated list
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
@@ -1168,17 +1218,13 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       balena_yml: ${{ steps.balena_yml.outputs.enabled }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: balena_slugs
         name: Build JSON array from comma-separated list
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
@@ -1220,17 +1266,13 @@ jobs:
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: custom_test_matrix
         name: Build JSON array from comma-separated list
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
@@ -1298,17 +1340,13 @@ jobs:
     outputs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for README for building a website
         id: has_readme
         run: |
@@ -1338,17 +1376,13 @@ jobs:
       cloudformation: ${{ steps.validate_json.outputs.enabled }}
       stacks: ${{ steps.cloudformation_stacks.outputs.deploy }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Validate CloudFormation input
         id: validate_json
         run: |
@@ -1371,6 +1405,7 @@ jobs:
     needs:
       - is_npm
       - is_pr_open
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -1390,17 +1425,13 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Sort node versions
         id: node_versions
         env:
@@ -1677,6 +1708,7 @@ jobs:
     needs:
       - is_pr_open
       - is_docker
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_docker.result == 'success' &&
@@ -1692,24 +1724,13 @@ jobs:
     env:
       DOCKER_BUILDKIT: "1"
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for GitHub App private key
         id: gh_app_private_key
         shell: bash
@@ -1798,7 +1819,7 @@ jobs:
             localhost:5000/sut
             ${{ needs.is_docker.outputs.docker_images_crlf }}
           labels: |
-            org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+            org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.sha }}
@@ -2040,7 +2061,7 @@ jobs:
           images: |
             ${{ matrix.image }}
           labels: |
-            org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+            org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
             type=raw,value=${{ github.event.pull_request.head.sha }}
@@ -2161,6 +2182,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_docker
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_docker.result == 'success' &&
@@ -2176,24 +2198,13 @@ jobs:
         image: ${{ fromJSON(needs.is_docker.outputs.docker_images) }}
         target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Sanitize docker strings
         id: strings
         env:
@@ -2261,14 +2272,14 @@ jobs:
           images: |
             ${{ matrix.image }}
           labels: |
-            org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+            org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
             type=raw,value=${{ github.base_ref || github.ref_name }}
-            type=raw,value=${{ steps.version_tag.outputs.tag }}
-            type=raw,value=${{ steps.version_tag.outputs.semver }}
+            type=raw,value=${{ needs.versioned_source.outputs.tag }}
+            type=raw,value=${{ needs.versioned_source.outputs.semver }}
           flavor: |
-            latest=${{ steps.version_tag.outputs.semver != '' }}
+            latest=${{ needs.versioned_source.outputs.semver != '' }}
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
       - uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
@@ -2360,6 +2371,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
@@ -2373,17 +2385,13 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: balena-io/deploy-to-balena-action@e7041b7ca6dd85f47a3eb5ce141178bf77d85920
         id: balena_deploy
         with:
@@ -2437,6 +2445,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_balena
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
@@ -2450,17 +2459,13 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: balena-io/deploy-to-balena-action@e7041b7ca6dd85f47a3eb5ce141178bf77d85920
         id: balena_deploy
         with:
@@ -2513,6 +2518,7 @@ jobs:
     needs:
       - is_pr_open
       - is_python
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2526,24 +2532,13 @@ jobs:
       matrix:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
         with:
@@ -2591,6 +2586,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.python_test.result == 'success' &&
@@ -2601,17 +2597,13 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
         with:
@@ -2650,6 +2642,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_python
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -2660,17 +2653,13 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
         with:
@@ -2699,21 +2688,18 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_website.result == 'success'
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
         with:
           node-version: 18
@@ -2877,24 +2863,13 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for GitHub App private key
         id: gh_app_private_key
         shell: bash
@@ -2937,13 +2912,13 @@ jobs:
           if gh release view '${{ github.event.pull_request.head.ref }}'; then
             gh release edit '${{ github.event.pull_request.head.ref }}' \
               --notes-file '${{ steps.release_notes.outputs.file }}' \
-              --title '${{ steps.version_tag.outputs.tag }}' \
-              --tag '${{ steps.version_tag.outputs.tag }}' \
+              --title '${{ needs.versioned_source.outputs.tag }}' \
+              --tag '${{ needs.versioned_source.outputs.tag }}' \
               --prerelease='${{ inputs.github_prerelease }}' \
               --draft=false
 
             if [[ ${{ inputs.github_prerelease }} =~ false ]]; then
-                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ steps.version_tag.outputs.tag }}" \
+                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ needs.versioned_source.outputs.tag }}" \
                   -H 'Accept: application/vnd.github+json' | jq -r .id)"
                 gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
                   -H 'Accept: application/vnd.github+json' \
@@ -2959,6 +2934,7 @@ jobs:
     needs:
       - is_pr_open
       - is_cargo
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2978,24 +2954,13 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
-      - name: Get version from tags
-        id: version_tag
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:
@@ -3014,7 +2979,7 @@ jobs:
         id: meta
         run: |
           package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
-          version="${{ steps.version_tag.outputs.semver }}"
+          version="${{ needs.versioned_source.outputs.semver }}"
           branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
@@ -3035,6 +3000,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.cargo_test.result == 'success' &&
@@ -3048,17 +3014,13 @@ jobs:
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:
@@ -3089,6 +3051,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_cargo
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -3098,17 +3061,13 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@stable
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
@@ -3126,6 +3085,7 @@ jobs:
     needs:
       - is_pr_open
       - is_custom
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -3144,17 +3104,13 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
@@ -3176,6 +3132,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -3194,17 +3151,13 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
@@ -3222,6 +3175,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_custom
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -3240,17 +3194,13 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
@@ -3271,6 +3221,7 @@ jobs:
     needs:
       - is_pr_closed
       - is_custom
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_closed.result == 'success' &&
@@ -3284,17 +3235,13 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -3314,6 +3261,7 @@ jobs:
       - custom_finalize
       - custom_clean
       - is_custom
+      - versioned_source
     if: |
       always() &&
       needs.is_custom.outputs.custom_always == 'true'
@@ -3326,17 +3274,13 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: ./.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}
@@ -3353,6 +3297,7 @@ jobs:
     needs:
       - is_pr_open
       - is_cloudformation
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -3362,17 +3307,13 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Download source artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}
-      - name: Extract source artifact
-        shell: pwsh
-        working-directory: .
-        run: |
-          tar --version
-          tar -xf ${{ runner.temp }}/source.tar.zst
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: aws-actions/configure-aws-credentials@5727f247b64f324ec403ac56ae05e220fd02b65f
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true

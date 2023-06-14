@@ -43,31 +43,6 @@
       # https://github.com/orgs/community/discussions/26636#discussioncomment-3252664
       mask-aws-account-id: false
 
-  - &downloadSourceArtifact
-    name: Download source artifact
-    uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
-    with:
-      name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-      path: ${{ runner.temp }}
-
-  - &extractSourceArtifact
-    name: Extract source artifact
-    # tar: Cannot connect to D: resolve failed
-    shell: pwsh
-    working-directory: .
-    run: |
-      tar --version
-      tar -xf ${{ runner.temp }}/source.tar.zst
-
-  - &getVersionTag
-    name: Get version from tags
-    id: version_tag
-    run: |
-      tag="$(git tag --points-at HEAD | tail -n1)"
-      echo "tag=${tag}" >> $GITHUB_OUTPUT
-      echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-      echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
-
   - &generatePythonMetadata
     name: Generate Python metadata
     id: python_meta
@@ -134,26 +109,13 @@
             -d "{\"note\":${release_notes}}"
       fi
 
-  - &checkoutMergeBranch
-    # for pull_request_target events that are not closed we need to specify the merge branch manually
-    # because the default checkout ref is the tip of the main/master branch
-    name: Checkout merge branch
-    if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
-    id: checkout_merge
+  - &checkoutVersionedSha
+    name: Checkout versioned sha
     uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
     with:
       fetch-depth: 0
       submodules: "recursive"
-      ref: "refs/pull/${{ github.event.number }}/merge"
-      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-
-  - &checkoutSha # otherwise use the default checkout behaviour
-    name: Checkout sha
-    if: github.event_name != 'pull_request_target' || github.event.action == 'closed'
-    uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
-    with:
-      fetch-depth: 0
-      submodules: "recursive"
+      ref: "${{ needs.versioned_source.outputs.sha }}"
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &loginWithDockerHub
@@ -360,7 +322,7 @@
         localhost:5000/sut
         ${{ needs.is_docker.outputs.docker_images_crlf }}
       labels: |
-        org.opencontainers.image.version=${{ steps.version_tag.outputs.semver }}
+        org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
         org.opencontainers.image.ref.name=${{ matrix.target }}
       tags: |
         type=raw,value=${{ github.event.pull_request.head.sha }}
@@ -394,10 +356,10 @@
       # and version tag and semver will be empty
       tags: |
         type=raw,value=${{ github.base_ref || github.ref_name }}
-        type=raw,value=${{ steps.version_tag.outputs.tag }}
-        type=raw,value=${{ steps.version_tag.outputs.semver }}
+        type=raw,value=${{ needs.versioned_source.outputs.tag }}
+        type=raw,value=${{ needs.versioned_source.outputs.semver }}
       flavor: |
-        latest=${{ steps.version_tag.outputs.semver != '' }}
+        latest=${{ needs.versioned_source.outputs.semver != '' }}
         prefix=${{ steps.strings.outputs.prefix }},onlatest=true
         suffix=${{ steps.strings.outputs.suffix }},onlatest=true
 
@@ -578,12 +540,6 @@ on:
         required: false
       FLOWZONE_TOKEN:
         description: ".. or Personal Access Token (PAT) with admin/owner permissions in the org."
-        required: false
-      GPG_PRIVATE_KEY:
-        description: "GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits"
-        required: false
-      GPG_PASSPHRASE:
-        description: "Passphrase to decrypt GPG private key"
         required: false
       NPM_TOKEN:
         description: "The npm auth token to use for publishing"
@@ -1024,12 +980,35 @@ jobs:
     outputs:
       tag: ${{ steps.versionist.outputs.tag || steps.version_tag.outputs.tag }}
       semver: ${{ steps.versionist.outputs.semver || steps.version_tag.outputs.semver }}
+      sha: ${{ steps.create_commit.outputs.sha || github.sha }}
+
+    env:
+      <<: *gitHubCliEnvironment
+      PARENT_COMMIT_SHA: ${{ github.sha }}
 
     steps:
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
-      - *checkoutMergeBranch
-      - *checkoutSha
+
+      # checkout merge ref for open PRs
+      - name: Checkout merge ref
+        if: needs.is_pr_open.result == 'success'
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        with:
+          fetch-depth: 0
+          submodules: "recursive"
+          ref: "refs/pull/${{ github.event.number }}/merge"
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+
+      # otherwise use the event sha
+      - name: Checkout event sha
+        if: needs.is_pr_open.result != 'success'
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        with:
+          fetch-depth: 0
+          submodules: "recursive"
+          ref: ${{ github.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
       # fail on merge commits (ones with more than one parent)
       - name: Reject merge commits
@@ -1040,16 +1019,14 @@ jobs:
             exit 1
           fi
 
-      - name: Import GPG key for signing commits
-        if: inputs.disable_versioning != true
-        id: import-gpg
-        uses: crazy-max/ghaction-import-gpg@72b6676b71ab476b77e676928516f6982eef7a41 # v5.3.0
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          git_config_global: true
-          git_user_signingkey: true
-          git_commit_gpgsign: true
+      # get current version from git tags as a fallback if versioning is disabled
+      - name: Get current tag
+        id: version_tag
+        run: |
+          tag="$(git tag --points-at HEAD | tail -n1)"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
 
       - name: Install versionist
         if: inputs.disable_versioning != true
@@ -1099,45 +1076,117 @@ jobs:
           echo "semver=${semver}" >> $GITHUB_OUTPUT
           echo "tag=v${semver}" >> $GITHUB_OUTPUT
 
-      # create a versioned commit
-      - name: Create versioned commit
+      # https://github.com/orgs/community/discussions/50055
+      # https://www.levibotelho.com/development/commit-a-file-with-the-github-api/
+      - name: Create blobs and tree objects
         if: inputs.disable_versioning != true
+        id: create_tree
+        shell: bash
         env:
-          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
-          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
-          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          # Temporary array to hold our new tree objects
+          declare -a tree_array
+
+          # Use git status to check for modified files
+          modified_files=$(git diff --name-only)
+
+          # Extract changes
+          for file in $modified_files; do
+            echo "Processing file $file..."
+
+            # Create blob
+            content=$(cat "$file" | base64)
+            echo "{\"content\": \"$content\", \"encoding\": \"base64\"}" > blob.json
+
+            echo "Creating blob..."
+            response=$(curl -s -X POST \
+              -H "Authorization: token $GH_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/$GH_REPO/git/blobs" \
+              -d @blob.json)
+
+            echo "$response" | jq .
+            blob_sha=$(echo $response | jq -r .sha)
+
+            # Add blob to our tree
+            tree_array+=("{\"path\":\"$file\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$blob_sha\"}")
+          done
+
+          # Get the SHA of the tree the parent commit points to
+          base_tree_sha=$(git show -s --format=%T $PARENT_COMMIT_SHA)
+
+          # Create JSON array for tree creation
+          tree_json=$(printf ",%s" "${tree_array[@]}")
+          tree_json=${tree_json:1}
+          tree_json="[$tree_json]"
+          tree_json="{\"tree\": $tree_json, \"base_tree\": \"$base_tree_sha\"}"
+
+          echo "Creating tree..."
+          echo "$tree_json" | jq .
+
+          response=$(echo $tree_json | curl -s -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$GH_REPO/git/trees" \
+            -d @-)
+
+          echo "$response" | jq .
+          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
+          echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
+
+      - name: Create commit object
+        if: inputs.disable_versioning != true
+        id: create_commit
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          MESSAGE: ${{ steps.versionist.outputs.tag }}
+        run: |
+          response=$(gh api -X POST /repos/$GH_REPO/git/commits \
+            -F "message=$MESSAGE" \
+            -F "tree=${{ steps.create_tree.outputs.sha }}" \
+            -F "parents[]=$PARENT_COMMIT_SHA")
+
+          echo "$response" | jq .
+          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
+          echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
+
+      - name: Create tag object
+        if: inputs.disable_versioning != true
+        id: create_tag
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          TAG: ${{ steps.versionist.outputs.tag }}
+          MESSAGE: ${{ steps.versionist.outputs.tag }}
+        run: |
+          response=$(gh api -X POST repos/$GH_REPO/git/tags \
+            -F "tag=${TAG}" \
+            -F "message=${MESSAGE}" \
+            -F "object=${{ steps.create_commit.outputs.sha }}" \
+            -F "type=commit")
+
+          echo "$response" | jq .
+          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
+          echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
+
+      - name: Create commit reference
+        if: needs.is_pr_merged.result == 'success' && steps.create_commit.outputs.sha != ''
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          gh api -X PATCH /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
+            -F sha='${{ steps.create_commit.outputs.sha }}' \
+            -F force='true'
+
+      - name: Create tag reference
+        if: needs.is_pr_merged.result == 'success' && steps.create_tag.outputs.sha != ''
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           TAG: ${{ steps.versionist.outputs.tag }}
         run: |
-          git add --all
-          git commit -m "${TAG}"
-          git tag -a "${TAG}" -m "${TAG}" -f
-          git show -1
-          git log -n 2
-
-      - *getVersionTag
-
-      # push the versioned commit only if the PR is merged
-      - name: Push versioned commit
-        if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
-        continue-on-error: true
-        run: |
-          git push origin HEAD:refs/heads/${{ github.base_ref }}
-          # We push the tag separately so that it is only pushed if the commit push succeed, this avoids
-          # issues if something else updates the main branch whilst we're running and causes us to push
-          # the tag successfully but not the main branch and breaks future versioning attempts
-          git push origin "refs/tags/${{ steps.versionist.outputs.tag }}"
-
-      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
-      - name: Compress source
-        run: tar --auto-compress -cvf ${{ runner.temp }}/source.tar.zst .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
-        with:
-          name: source-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ runner.temp }}/source.tar.zst
-          retention-days: 1
+          gh api -X POST /repos/$GH_REPO/git/refs \
+            -f "ref=refs/tags/${TAG}" \
+            -f "sha=${{ steps.create_tag.outputs.sha }}"
 
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
@@ -1161,8 +1210,7 @@ jobs:
       npm_access: ${{ steps.access.outputs.access }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - name: Check for package.json
         id: npm
@@ -1283,8 +1331,7 @@ jobs:
       docker_test_matrix: ${{ steps.docker_test.outputs.build }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - id: docker_images_json
         <<: *jsonArrayBuilder
@@ -1387,8 +1434,7 @@ jobs:
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - name: Check for Python Poetry pyproject.toml
         id: python_poetry
@@ -1524,8 +1570,7 @@ jobs:
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - id: cargo_targets
         <<: *jsonArrayBuilder
@@ -1562,8 +1607,7 @@ jobs:
       balena_yml: ${{ steps.balena_yml.outputs.enabled }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - id: balena_slugs
         <<: *jsonArrayBuilder
@@ -1606,8 +1650,7 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - id: custom_test_matrix
         <<: *jsonArrayBuilder
@@ -1669,8 +1712,7 @@ jobs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       # Check if we have at least a README to build a website from
       - name: Check for README for building a website
@@ -1703,8 +1745,7 @@ jobs:
       stacks: ${{ steps.cloudformation_stacks.outputs.deploy }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - name: Validate CloudFormation input
         id: validate_json
@@ -1734,6 +1775,7 @@ jobs:
     needs:
       - is_npm
       - is_pr_open
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -1754,8 +1796,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
       - *sortNodeVersions
 
       - name: Setup Node.js - Cached
@@ -2019,6 +2060,7 @@ jobs:
     needs:
       - is_pr_open
       - is_docker
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_docker.result == 'success' &&
@@ -2035,9 +2077,7 @@ jobs:
       DOCKER_BUILDKIT: "1"
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
-      - *getVersionTag
+      - *checkoutVersionedSha
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *sanitizeDockerStrings
@@ -2303,6 +2343,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_docker
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_docker.result == 'success' &&
@@ -2318,9 +2359,7 @@ jobs:
         target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
-      - *getVersionTag
+      - *checkoutVersionedSha
       - *sanitizeDockerStrings
       - *dockerFinalMetadata
       - *setupCrane
@@ -2367,6 +2406,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
@@ -2380,8 +2420,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
       - *deployToBalenaAction
       - *getReleaseNotes
       - *updateBalenaReleaseNotes
@@ -2394,6 +2433,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_balena
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
@@ -2407,8 +2447,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
       - *deployToBalenaAction
       - *getReleaseNotes
       - *updateBalenaReleaseNotes
@@ -2424,6 +2463,7 @@ jobs:
     needs:
       - is_pr_open
       - is_python
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2437,9 +2477,7 @@ jobs:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
-      - *getVersionTag
+      - *checkoutVersionedSha
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
@@ -2496,6 +2534,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.python_test.result == 'success' &&
@@ -2505,8 +2544,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
@@ -2540,6 +2578,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_python
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -2548,8 +2587,7 @@ jobs:
 
     <<: *customWorkingDirectory
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
@@ -2586,13 +2624,13 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_website.result == 'success'
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
@@ -2720,9 +2758,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
-      - *getVersionTag
+      - *checkoutVersionedSha
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *getReleaseNotes
@@ -2738,13 +2774,13 @@ jobs:
           if gh release view '${{ github.event.pull_request.head.ref }}'; then
             gh release edit '${{ github.event.pull_request.head.ref }}' \
               --notes-file '${{ steps.release_notes.outputs.file }}' \
-              --title '${{ steps.version_tag.outputs.tag }}' \
-              --tag '${{ steps.version_tag.outputs.tag }}' \
+              --title '${{ needs.versioned_source.outputs.tag }}' \
+              --tag '${{ needs.versioned_source.outputs.tag }}' \
               --prerelease='${{ inputs.github_prerelease }}' \
               --draft=false
 
             if [[ ${{ inputs.github_prerelease }} =~ false ]]; then
-                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ steps.version_tag.outputs.tag }}" \
+                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ needs.versioned_source.outputs.tag }}" \
                   -H 'Accept: application/vnd.github+json' | jq -r .id)"
                 gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
                   -H 'Accept: application/vnd.github+json' \
@@ -2765,6 +2801,7 @@ jobs:
     needs:
       - is_pr_open
       - is_cargo
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2785,9 +2822,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
-      - *getVersionTag
+      - *checkoutVersionedSha
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -2812,7 +2847,7 @@ jobs:
         id: meta
         run: |
           package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
-          version="${{ steps.version_tag.outputs.semver }}"
+          version="${{ needs.versioned_source.outputs.semver }}"
           branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
@@ -2834,6 +2869,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.cargo_test.result == 'success' &&
@@ -2847,8 +2883,7 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -2887,6 +2922,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_cargo
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -2895,8 +2931,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@stable
@@ -2921,6 +2956,7 @@ jobs:
     needs:
       - is_pr_open
       - is_custom
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2934,8 +2970,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - name: Set the matrix value env var
         run: |
@@ -2960,6 +2995,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2973,8 +3009,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - name: Set the matrix value env var
         run: |
@@ -2995,6 +3030,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_custom
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -3008,8 +3044,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - name: Set the matrix value env var
         run: |
@@ -3033,6 +3068,7 @@ jobs:
     needs:
       - is_pr_closed
       - is_custom
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_closed.result == 'success' &&
@@ -3040,8 +3076,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - uses: ./.github/actions/clean
         with:
@@ -3063,14 +3098,14 @@ jobs:
       - custom_finalize
       - custom_clean
       - is_custom
+      - versioned_source
     if: |
       always() &&
       needs.is_custom.outputs.custom_always == 'true'
 
     steps:
       - *rejectExternalCustomActions
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
 
       - uses: ./.github/actions/always
         with:
@@ -3093,6 +3128,7 @@ jobs:
     needs:
       - is_pr_open
       - is_cloudformation
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -3101,8 +3137,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadSourceArtifact
-      - *extractSourceArtifact
+      - *checkoutVersionedSha
       - *configureAWSCredentials
       - *getAWSCallerIdentity
 

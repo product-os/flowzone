@@ -29,8 +29,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [Secrets](#secrets)
       - [`GH_APP_PRIVATE_KEY`](#gh_app_private_key)
       - [`FLOWZONE_TOKEN`](#flowzone_token)
-      - [`GPG_PRIVATE_KEY`](#gpg_private_key)
-      - [`GPG_PASSPHRASE`](#gpg_passphrase)
       - [`NPM_TOKEN`](#npm_token)
       - [`DOCKERHUB_USER`](#dockerhub_user)
       - [`DOCKERHUB_TOKEN`](#dockerhub_token)
@@ -92,8 +90,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
       - [`docusaurus_website`](#docusaurus_website)
       - [`toggle_auto_merge`](#toggle_auto_merge)
   - [Testing](#testing)
-  - [Maintenance](#maintenance)
-    - [Generate GPG keys](#generate-gpg-keys)
   - [Help](#help)
   - [Contributing](#contributing)
 
@@ -169,8 +165,6 @@ jobs:
       )
     secrets:
       FLOWZONE_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -371,20 +365,6 @@ Not required, but preferred.
 #### `FLOWZONE_TOKEN`
 
 Personal access token (PAT) for the GitHub service account with admin/owner permissions.
-
-Required if `GH_APP_PRIVATE_KEY` is not used.
-
-#### `GPG_PRIVATE_KEY`
-
-GPG private key exported with `gpg --armor --export-secret-keys ...` to sign commits.
-
-Required for [versioned](#versioning) projects.
-
-#### `GPG_PASSPHRASE`
-
-Passphrase to decrypt GPG private key.
-
-Required for [versioned](#versioning) projects.
 
 #### `NPM_TOKEN`
 
@@ -882,32 +862,6 @@ Default: true
 There is a dispatch workflow to test development branches of Flowzone with a range of repositories to ensure breaking changes aren't introduced.
 
 See [docs/workflow-dispatch.md#e2e](docs/workflow-dispatch.md#e2e) for more information.
-
-## Maintenance
-
-### Generate GPG keys
-
-[Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification)
-
-1. generate new GPG key signing ensuring the name matches an existing GitHub user/identity
-
-   ```bash
-   gpg --full-generate-key
-   ```
-
-2. get the key id
-
-   ```bash
-   gpg --list-secret-keys --keyid-format=long
-   ```
-
-3. export the key to be stored in `GPG_PRIVATE_KEY` GitHub organisation secret
-
-   ```bash
-   gpg --armor --export-secret-keys {{secret_key_id}}
-   ```
-
-4. set `GPG_PASSPHRASE` and `GPG_PRIVATE_KEY` GitHub organisation secrets
 
 ## Help
 
