@@ -148,6 +148,15 @@
       ref: "flowzone/pr/${{ github.event.number }}"
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
+  - &checkoutTaggedSource
+    name: Checkout tagged source
+    uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+    with:
+      fetch-depth: 0
+      submodules: "recursive"
+      ref: "${{ github.ref }}" # TODO: does this work for all event types?
+      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+
   - &loginWithDockerHub
     name: Login to Docker Hub
     continue-on-error: true
@@ -1010,12 +1019,19 @@ jobs:
     outputs:
       tag: ${{ steps.versionist.outputs.tag || steps.version_tag.outputs.tag }}
       semver: ${{ steps.versionist.outputs.semver || steps.version_tag.outputs.semver }}
+      sha: ${{ steps.create_commit.outputs.sha || github.sha }}
+
+    env:
+      <<: *gitHubCliEnvironment
+      PARENT_COMMIT_SHA: ${{ github.sha }} # TODO: does this work for other events?
+      BRANCH_NAME: flowzone/pr/${{ github.event.number }}
 
     steps:
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutMergeBranch
       - *checkoutSha
+      - *getVersionTag
 
       # fail on merge commits (ones with more than one parent)
       - name: Reject merge commits
@@ -1074,20 +1090,15 @@ jobs:
           echo "semver=${semver}" >> $GITHUB_OUTPUT
           echo "tag=v${semver}" >> $GITHUB_OUTPUT
 
-      # create a commit blob via the GH API so it can be automatically verified as an app
       # https://github.com/orgs/community/discussions/50055
       # https://www.levibotelho.com/development/commit-a-file-with-the-github-api/
-      - name: Create signed commit
-        env:
-          <<: *gitHubCliEnvironment
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          PARENT_COMMIT_SHA: ${{ github.sha }} # TODO: does this work for other events?
-          COMMIT_MESSAGE: ${{ steps.versionist.outputs.tag }}
-          BRANCH_NAME: flowzone/pr/${{ github.event.number }}
+      - name: Create tree with changes
+        if: inputs.disable_versioning != true
+        id: create_tree
         shell: bash
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
-          base_tree_sha=$(git show -s --format=%T $PARENT_COMMIT_SHA) # Get the SHA of the tree the parent commit points to
-
           # Temporary array to hold our new tree objects
           declare -a tree_array
 
@@ -1116,6 +1127,9 @@ jobs:
             tree_array+=("{\"path\":\"$file\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$blob_sha\"}")
           done
 
+          # Get the SHA of the tree the parent commit points to
+          base_tree_sha=$(git show -s --format=%T $PARENT_COMMIT_SHA)
+
           # Create JSON array for tree creation
           tree_json=$(printf ",%s" "${tree_array[@]}")
           tree_json=${tree_json:1}
@@ -1128,29 +1142,57 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/$GH_REPO/git/trees" \
             -d @-)
-
+          
           echo "$response" | jq .
-          tree_sha=$(echo $response | jq -r .sha)
+          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
+          echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
 
-          echo "Creating commit..."
-          response=$(curl -s -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/$GH_REPO/git/commits" \
-            -d "{\"message\": \"$COMMIT_MESSAGE\",\"tree\": \"$tree_sha\",\"parents\": [\"$PARENT_COMMIT_SHA\"]}")
+      - name: Create versioned commit
+        if: inputs.disable_versioning != true
+        id: create_commit
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          COMMIT_MESSAGE: ${{ steps.versionist.outputs.tag }}
+        run: |
+          response=$(gh api -X POST /repos/$GH_REPO/git/commits \
+            -F "message=$COMMIT_MESSAGE" \
+            -F "tree=${{ steps.create_tree.outputs.sha }}" \
+            -F "parents[]=$PARENT_COMMIT_SHA")
 
-          echo "$response" | jq .
-          new_commit_sha=$(echo $response | jq -r .sha)
+          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
+          echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
 
+      - name: Create versioned branch
+        if: inputs.disable_versioning != true && needs.is_pr_open.result == 'success'
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
           # Try to delete the branch (ignore any error if it does not exist)
           gh api -X DELETE /repos/$GH_REPO/git/refs/heads/$BRANCH_NAME || true
 
-          echo "Creating branch..."
-          response=$(gh api -X POST /repos/$GH_REPO/git/refs \
+          gh api -X POST /repos/$GH_REPO/git/refs \
             -F ref=refs/heads/$BRANCH_NAME \
-            -F sha=$new_commit_sha)
+            -F sha='${{ steps.create_commit.outputs.sha }}'
 
-          echo "$response" | jq .
+      - name: Update base branch
+        if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          gh api -X PATCH /repos/$GH_REPO/git/refs/heads/$BRANCH_NAME \
+            -F sha='${{ steps.create_commit.outputs.sha }}' \
+            -F force='true'
+      
+      - name: Push versioned tag
+        if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          gh api -X POST repos/$GH_REPO/git/tags \
+            -F tag='${{ steps.versionist.outputs.tag }}' \
+            -F message='${{ steps.versionist.outputs.tag }}' \
+            -F object='${{ steps.create_commit.outputs.sha }}' \
+            -F type='commit'
 
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
