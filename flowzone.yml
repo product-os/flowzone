@@ -1123,12 +1123,14 @@ jobs:
           tree_json="{\"tree\": $tree_json, \"base_tree\": \"$base_tree_sha\"}"
 
           echo "Creating tree..."
+          echo "$tree_json" | jq .
+
           response=$(echo $tree_json | curl -s -X POST \
             -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/$GH_REPO/git/trees" \
             -d @-)
-          
+
           echo "$response" | jq .
           echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
           echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
@@ -1773,6 +1775,7 @@ jobs:
     needs:
       - is_npm
       - is_pr_open
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2057,6 +2060,7 @@ jobs:
     needs:
       - is_pr_open
       - is_docker
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_docker.result == 'success' &&
@@ -2339,6 +2343,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_docker
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_docker.result == 'success' &&
@@ -2401,6 +2406,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
@@ -2427,6 +2433,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_balena
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
@@ -2456,6 +2463,7 @@ jobs:
     needs:
       - is_pr_open
       - is_python
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2526,6 +2534,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.python_test.result == 'success' &&
@@ -2569,6 +2578,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_python
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -2614,6 +2624,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_website.result == 'success'
@@ -2790,6 +2801,7 @@ jobs:
     needs:
       - is_pr_open
       - is_cargo
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2857,6 +2869,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.cargo_test.result == 'success' &&
@@ -2909,6 +2922,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_cargo
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -2942,6 +2956,7 @@ jobs:
     needs:
       - is_pr_open
       - is_custom
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -2980,6 +2995,7 @@ jobs:
       - docker_test
       - cargo_test
       - python_test
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
@@ -3014,6 +3030,7 @@ jobs:
       - is_pr_merged
       - is_pushed_tag
       - is_custom
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
@@ -3051,6 +3068,7 @@ jobs:
     needs:
       - is_pr_closed
       - is_custom
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_closed.result == 'success' &&
@@ -3080,6 +3098,7 @@ jobs:
       - custom_finalize
       - custom_clean
       - is_custom
+      - versioned_source
     if: |
       always() &&
       needs.is_custom.outputs.custom_always == 'true'
@@ -3109,6 +3128,7 @@ jobs:
     needs:
       - is_pr_open
       - is_cloudformation
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_open.result == 'success' &&
