@@ -711,8 +711,8 @@ jobs:
           # Temporary array to hold our new tree objects
           declare -a tree_array
 
-          # Use git status to check for modified files
-          modified_files=$(git diff --name-only)
+          # Use git status to check for new and modified files
+          modified_files=$(git diff --name-only ; git ls-files --others --exclude-standard)
 
           # Extract changes
           for file in $modified_files; do
