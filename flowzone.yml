@@ -145,7 +145,7 @@
     with:
       fetch-depth: 0
       submodules: "recursive"
-      ref: "flowzone/pr/${{ github.event.number }}"
+      ref: "${{ needs.versioned_source.outputs.sha }}"
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &checkoutTaggedSource
@@ -1179,7 +1179,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
-          gh api -X PATCH /repos/$GH_REPO/git/refs/heads/$BRANCH_NAME \
+          gh api -X PATCH /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
             -F sha='${{ steps.create_commit.outputs.sha }}' \
             -F force='true'
       
