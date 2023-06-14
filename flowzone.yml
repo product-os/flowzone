@@ -4016,8 +4016,8 @@ jobs:
           fi
 
           yq e -n '.azure_model_map.turbo_llm_model_deployment_id = "gpt-3.5-turbo" |
-            .azure_model_map.smart_llm_model_deployment_id = "gpt-4" |
-            .azure_model_map.large_llm_model_deployment_id = "gpt-4-32k" |
+            .azure_model_map.smart_llm_model_deployment_id = "gpt-3.5-turbo-16k" |
+            .azure_model_map.large_llm_model_deployment_id = "gpt-3.5-turbo-16k" |
             .azure_model_map.embedding_model_deployment_id = "text-embedding-ada-002"' > ${{ runner.temp }}/azure.yaml
           echo "CONTEXT_FILE=${{ runner.temp }}/azure.yaml" >> $GITHUB_ENV
 
