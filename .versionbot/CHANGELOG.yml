@@ -1,4 +1,23 @@
 - commits:
+    - subject: Create versioned commit objects via GitHub API
+      hash: 9ed50142427ba7c7e145ce9bd854b35a0325eb4d
+      body: |
+        These commit objects will be automatically signed and verified
+        if using GitHub app tokens for authentication.
+
+        This also removes the need for versioned source artifacts
+        as each job can clone the versioned commit directly.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.0.0
+  title: ""
+  date: 2023-06-14T18:04:53.691Z
+- commits:
     - subject: Update peter-evans/create-pull-request action to v5.0.2
       hash: 4f19267cf071b5d4eab60e6903774d36a3aab8ca
       body: |
