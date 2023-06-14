@@ -701,7 +701,7 @@ jobs:
 
           echo "semver=${semver}" >> $GITHUB_OUTPUT
           echo "tag=v${semver}" >> $GITHUB_OUTPUT
-      - name: Create tree with changes
+      - name: Create blobs and tree objects
         if: inputs.disable_versioning != true
         id: create_tree
         shell: bash
@@ -755,39 +755,55 @@ jobs:
           echo "$response" | jq .
           echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
           echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
-      - name: Create versioned commit
+      - name: Create commit object
         if: inputs.disable_versioning != true
         id: create_commit
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          COMMIT_MESSAGE: ${{ steps.versionist.outputs.tag }}
+          MESSAGE: ${{ steps.versionist.outputs.tag }}
         run: |
           response=$(gh api -X POST /repos/$GH_REPO/git/commits \
-            -F "message=$COMMIT_MESSAGE" \
+            -F "message=$MESSAGE" \
             -F "tree=${{ steps.create_tree.outputs.sha }}" \
             -F "parents[]=$PARENT_COMMIT_SHA")
 
           echo "$response" | jq .
           echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
           echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
-      - name: Push commit to base
-        if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
+      - name: Create tag object
+        if: inputs.disable_versioning != true
+        id: create_tag
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          TAG: ${{ steps.versionist.outputs.tag }}
+          MESSAGE: ${{ steps.versionist.outputs.tag }}
+        run: |
+          response=$(gh api -X POST repos/$GH_REPO/git/tags \
+            -F "tag=${TAG}" \
+            -F "message=${MESSAGE}" \
+            -F "object=${{ steps.create_commit.outputs.sha }}" \
+            -F "type=commit")
+
+          echo "$response" | jq .
+          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
+          echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
+      - name: Create commit reference
+        if: needs.is_pr_merged.result == 'success' && steps.create_commit.outputs.sha != ''
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           gh api -X PATCH /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
             -F sha='${{ steps.create_commit.outputs.sha }}' \
             -F force='true'
-      - name: Push tag to base
-        if: inputs.disable_versioning != true && needs.is_pr_merged.result == 'success'
+      - name: Create tag reference
+        if: needs.is_pr_merged.result == 'success' && steps.create_tag.outputs.sha != ''
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          TAG: ${{ steps.versionist.outputs.tag }}
         run: |
-          gh api -X POST repos/$GH_REPO/git/tags \
-            -F tag='${{ steps.versionist.outputs.tag }}' \
-            -F message='${{ steps.versionist.outputs.tag }}' \
-            -F object='${{ steps.create_commit.outputs.sha }}' \
-            -F type='commit'
+          gh api -X POST /repos/$GH_REPO/git/refs \
+            -f "ref=refs/tags/${TAG}" \
+            -f "sha=${{ steps.create_tag.outputs.sha }}"
   is_npm:
     name: Is npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
