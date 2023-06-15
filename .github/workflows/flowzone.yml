@@ -599,16 +599,15 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      tag: ${{ steps.versionist.outputs.tag || steps.version_tag.outputs.tag }}
-      semver: ${{ steps.versionist.outputs.semver || steps.version_tag.outputs.semver }}
-      sha: ${{ steps.create_commit.outputs.sha || github.sha }}
+      tag: ${{ steps.versionist.outputs.tag || steps.git_describe.outputs.tag }}
+      semver: ${{ steps.versionist.outputs.semver || steps.git_describe.outputs.semver }}
+      sha: ${{ steps.create_commit.outputs.sha || steps.git_describe.outputs.sha }}
     env:
       GH_DEBUG: "true"
       GH_PAGER: cat
       GH_PROMPT_DISABLED: "true"
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      PARENT_COMMIT_SHA: ${{ github.sha }}
     steps:
       - name: Check for GitHub App private key
         id: gh_app_private_key
@@ -652,13 +651,14 @@ jobs:
             echo "::error::Latest commit appears to be a merge, which is currently unsupported. Try a rebase instead."
             exit 1
           fi
-      - name: Get current tag
-        id: version_tag
+      - name: Inspect git state
+        id: git_describe
         run: |
           tag="$(git tag --points-at HEAD | tail -n1)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
           echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |
@@ -707,6 +707,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         run: |
           # Temporary array to hold our new tree objects
           declare -a tree_array
@@ -763,6 +764,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           MESSAGE: ${{ steps.versionist.outputs.tag }}
+          PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         run: |
           response=$(gh api -X POST /repos/$GH_REPO/git/commits \
             -F "message=$MESSAGE" \

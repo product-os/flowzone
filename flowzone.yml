@@ -978,13 +978,15 @@ jobs:
     <<: *rootWorkingDirectory
 
     outputs:
-      tag: ${{ steps.versionist.outputs.tag || steps.version_tag.outputs.tag }}
-      semver: ${{ steps.versionist.outputs.semver || steps.version_tag.outputs.semver }}
-      sha: ${{ steps.create_commit.outputs.sha || github.sha }}
+      tag: ${{ steps.versionist.outputs.tag || steps.git_describe.outputs.tag }}
+      semver: ${{ steps.versionist.outputs.semver || steps.git_describe.outputs.semver }}
+      # note that this is NOT the same sha we use for draft artifact tagging,
+      # for that we use github.event.pull_request.head.sha which aligns with the tip of the HEAD branch
+      # whereas this will be the merge commit sha for PRs or the tagged commit sha for tags
+      sha: ${{ steps.create_commit.outputs.sha || steps.git_describe.outputs.sha }}
 
     env:
       <<: *gitHubCliEnvironment
-      PARENT_COMMIT_SHA: ${{ github.sha }}
 
     steps:
       - *checkGitHubAppPrivateKey
@@ -1019,14 +1021,17 @@ jobs:
             exit 1
           fi
 
-      # get current version from git tags as a fallback if versioning is disabled
-      - name: Get current tag
-        id: version_tag
+      # get tag, semver, sha, and description of current git working copy
+      # these will be used as the parent sha for the versioned commit
+      # or as default tag & semver if versioning is disabled
+      - name: Inspect git state
+        id: git_describe
         run: |
           tag="$(git tag --points-at HEAD | tail -n1)"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
           echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
       - name: Install versionist
         if: inputs.disable_versioning != true
@@ -1084,6 +1089,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         run: |
           # Temporary array to hold our new tree objects
           declare -a tree_array
@@ -1141,6 +1147,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           MESSAGE: ${{ steps.versionist.outputs.tag }}
+          PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         run: |
           response=$(gh api -X POST /repos/$GH_REPO/git/commits \
             -F "message=$MESSAGE" \
