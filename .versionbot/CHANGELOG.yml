@@ -1,4 +1,19 @@
 - commits:
+    - subject: Do not use github.sha for pull request target events
+      hash: 4ae993af94720e2088aa98eab2d4c313ddbd3062
+      body: |
+        For PRT this sha is from master, not the PR branch.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.0.3
+  title: ""
+  date: 2023-06-15T16:40:56.273Z
+- commits:
     - subject: Update aws-actions/configure-aws-credentials digest to 5fd3084
       hash: 7e7a76410e6f1c250017037d27815d56b6150fee
       body: |
