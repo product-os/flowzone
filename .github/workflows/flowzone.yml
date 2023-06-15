@@ -3747,6 +3747,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_merged
+      - versioned_source
     if: |
       !failure() && !cancelled() &&
       needs.is_pr_merged.result == 'success' &&
