@@ -451,6 +451,7 @@ Default: `"${{ vars.AWS_IAM_ROLE || '' }}"`
 #### `cloudformation_templates`
 
 AWS CloudFormation templates to deploy.
+> environment variables will be injected at runtime for both vars. and secrets. contexts
 
 Type: _string_
 
@@ -463,9 +464,8 @@ Example:
       "name": "foo-bar",
       "template": "aws/foo/bar.yaml",
       "params": [
-        "var=${{ vars.VERBOSE }}",
-        "secret=${{ secrets.GITHUB_TOKEN }} ",
-        "static=foo-bar"
+        "somesecret=${GITHUB_TOKEN}",
+        "somevar=not-a-secret"
       ],
       "tags": ["Name=foo", "Environment=bar"],
       "capabilities": ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"]

@@ -3835,6 +3835,7 @@ jobs:
       - python_test
       - cargo_test
       - custom_test
+      - cloudformation_test
     if: |
       always() &&
       needs.is_pr_open.result != 'skipped'
@@ -3877,6 +3878,7 @@ jobs:
       - cargo_publish
       - custom_publish
       - custom_always
+      - cloudformation_finalize
       - protect_branch
     if: |
       always() &&
