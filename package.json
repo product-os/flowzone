@@ -3,7 +3,7 @@
   "private": "true",
   "scripts": {
     "build": "node build",
-    "test": "npm run build && git diff --exit-code ./.github/workflows/flowzone.yml",
+    "test": "npm run build && git diff --exit-code ./.github/workflows/flowzone.yml ./README.md",
     "prepare": "node -e \"try { require('husky').install() } catch (e) {if (e.code !== 'MODULE_NOT_FOUND') throw e}\""
   },
   "repository": {
