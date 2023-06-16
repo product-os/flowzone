@@ -25,70 +25,6 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
     - [Versioning](#versioning)
     - [Docs](#docs)
     - [Website](#website)
-  - [Customization](#customization)
-    - [Secrets](#secrets)
-      - [`GH_APP_PRIVATE_KEY`](#gh_app_private_key)
-      - [`FLOWZONE_TOKEN`](#flowzone_token)
-      - [`NPM_TOKEN`](#npm_token)
-      - [`DOCKERHUB_USER`](#dockerhub_user)
-      - [`DOCKERHUB_TOKEN`](#dockerhub_token)
-      - [`BALENA_API_KEY`](#balena_api_key)
-      - [`PYPI_TOKEN`](#pypi_token)
-      - [`PYPI_TEST_TOKEN`](#pypi_test_token)
-      - [`CARGO_REGISTRY_TOKEN`](#cargo_registry_token)
-      - [`COMPOSE_VARS`](#compose_vars)
-      - [`CUSTOM_JOB_SECRET_1`](#custom_job_secret_1)
-      - [`CUSTOM_JOB_SECRET_2`](#custom_job_secret_2)
-      - [`CUSTOM_JOB_SECRET_3`](#custom_job_secret_3)
-    - [Inputs](#inputs)
-      - [`aws_region`](#aws_region)
-      - [`aws_iam_role`](#aws_iam_role)
-      - [`cloudformation_templates`](#cloudformation_templates)
-      - [`app_id`](#app_id)
-      - [`installation_id`](#installation_id)
-      - [`token_scope`](#token_scope)
-      - [`runs_on`](#runs_on)
-      - [`custom_runs_on`](#custom_runs_on)
-      - [`docker_runs_on`](#docker_runs_on)
-      - [`jobs_timeout_minutes`](#jobs_timeout_minutes)
-      - [`working_directory`](#working_directory)
-      - [`docker_images`](#docker_images)
-      - [`bake_targets`](#bake_targets)
-      - [`docker_invert_tags`](#docker_invert_tags)
-      - [`docker_publish_platform_tags`](#docker_publish_platform_tags)
-      - [`balena_environment`](#balena_environment)
-      - [`balena_slugs`](#balena_slugs)
-      - [`cargo_targets`](#cargo_targets)
-      - [`rust_binaries`](#rust_binaries)
-      - [`rust_toolchain`](#rust_toolchain)
-      - [`pseudo_terminal`](#pseudo_terminal)
-      - [`protect_branch`](#protect_branch)
-      - [`repo_config`](#repo_config)
-      - [`repo_allow_forking`](#repo_allow_forking)
-      - [`repo_default_branch`](#repo_default_branch)
-      - [`repo_delete_branch_on_merge`](#repo_delete_branch_on_merge)
-      - [`repo_allow_update_branch`](#repo_allow_update_branch)
-      - [`repo_description`](#repo_description)
-      - [`repo_homepage`](#repo_homepage)
-      - [`repo_enable_auto_merge`](#repo_enable_auto_merge)
-      - [`repo_enable_issues`](#repo_enable_issues)
-      - [`repo_enable_merge_commit`](#repo_enable_merge_commit)
-      - [`repo_enable_projects`](#repo_enable_projects)
-      - [`repo_enable_rebase_merge`](#repo_enable_rebase_merge)
-      - [`repo_enable_squash_merge`](#repo_enable_squash_merge)
-      - [`repo_enable_wiki`](#repo_enable_wiki)
-      - [`repo_visibility`](#repo_visibility)
-      - [`disable_versioning`](#disable_versioning)
-      - [`required_approving_review_count`](#required_approving_review_count)
-      - [`required_status_checks`](#required_status_checks)
-      - [`github_prerelease`](#github_prerelease)
-      - [`restrict_custom_actions`](#restrict_custom_actions)
-      - [`custom_test_matrix`](#custom_test_matrix)
-      - [`custom_publish_matrix`](#custom_publish_matrix)
-      - [`custom_finalize_matrix`](#custom_finalize_matrix)
-      - [`cloudflare_website`](#cloudflare_website)
-      - [`docusaurus_website`](#docusaurus_website)
-      - [`toggle_auto_merge`](#toggle_auto_merge)
   - [Testing](#testing)
   - [Help](#help)
   - [Contributing](#contributing)
@@ -104,10 +40,14 @@ Open a PR with the following changes to test and enable Flowzone:
 
 ## Usage
 
-Workflows that call reusable workflows in the same organization or enterprise can use the inherit keyword to implicitly pass the secrets.
+<!-- start usage -->
 
-```yml
-# .github/workflows/flowzone.yml
+<!---
+DO NOT EDIT MANUALLY - This section is auto-generated from flowzone.yml
+-->
+
+```yaml
+
 name: Flowzone
 
 on:
@@ -132,47 +72,375 @@ jobs:
         github.event.pull_request.head.repo.full_name != github.repository &&
         github.event_name == 'pull_request_target'
       )
+
+    # Workflows in the same org or enterprise can use the inherit keyword to implicitly pass secrets
     secrets: inherit
-    with: ... # see inputs
-```
 
-Otherwise specify the repository secrets to pass into Flowzone.
-
-```yml
-name: Flowzone
-
-on:
-  pull_request:
-    types: [opened, synchronize, closed]
-    branches: [main, master]
-  # allow external contributions to use secrets within trusted code
-  pull_request_target:
-    types: [opened, synchronize, closed]
-    branches: [main, master]
-
-jobs:
-  flowzone:
-    name: Flowzone
-    uses: product-os/flowzone/.github/workflows/flowzone.yml@master
-    # prevent duplicate workflow executions for pull_request and pull_request_target
-    if: |
-      (
-        github.event.pull_request.head.repo.full_name == github.repository &&
-        github.event_name == 'pull_request'
-      ) || (
-        github.event.pull_request.head.repo.full_name != github.repository &&
-        github.event_name == 'pull_request_target'
-      )
+    # Otherwise you must manually specify which secrets to pass
     secrets:
-      FLOWZONE_TOKEN: ${{ secrets.FLOWZONE_TOKEN }}
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      BALENA_API_KEY: ${{ secrets.BALENA_API_KEY }}
-    with: ... # see inputs
-```
+      # GitHub App to generate ephemeral access tokens
+      # Required: false
+      GH_APP_PRIVATE_KEY:
 
-Flowzone will automatically select an appropriate runner based on your project's code.
+      # .. or Personal Access Token (PAT) with admin/owner permissions in the org.
+      # Required: false
+      FLOWZONE_TOKEN:
+
+      # The npm auth token to use for publishing
+      # Required: false
+      NPM_TOKEN:
+
+      # Username to publish to the Docker Hub container registry
+      # Required: false
+      DOCKERHUB_USER:
+
+      # Deprecated, use DOCKERHUB_USER instead
+      # Required: false
+      DOCKER_REGISTRY_USER:
+
+      # A personal access token to publish to the Docker Hub container registry
+      # Required: false
+      DOCKERHUB_TOKEN:
+
+      # Deprecated, use DOCKERHUB_TOKEN instead
+      # Required: false
+      DOCKER_REGISTRY_PASS:
+
+      # API key for pushing releases to balena applications
+      # Required: false
+      BALENA_API_KEY:
+
+      # Deprecated, use BALENA_API_KEY instead
+      # Required: false
+      BALENA_API_KEY_PUSH:
+
+      # A personal access token to publish to a cargo registry
+      # Required: false
+      CARGO_REGISTRY_TOKEN:
+
+      # Optional base64 encoded docker-compose `.env` file for testing Docker images
+      # Required: false
+      COMPOSE_VARS:
+
+      # Cloudflare account ID
+      # Required: false
+      CF_ACCOUNT_ID:
+
+      # Cloudflare API token with limited access for Pages projects
+      # Required: false
+      CF_API_TOKEN:
+
+      # Optional secret for using with custom jobs
+      # Required: false
+      CUSTOM_JOB_SECRET_1:
+
+      # Optional secret for using with custom jobs
+      # Required: false
+      CUSTOM_JOB_SECRET_2:
+
+      # Optional secret for using with custom jobs
+      # Required: false
+      CUSTOM_JOB_SECRET_3:
+
+    with:
+      # AWS region with GitHub OIDC provider IAM configuration
+      # Type: string
+      # Required: false
+      aws_region: ${{ vars.AWS_REGION || '' }}
+
+      # AWS IAM role ARN to assume with GitHub OIDC provider
+      # Type: string
+      # Required: false
+      aws_iam_role: ${{ vars.AWS_IAM_ROLE || '' }}
+
+      # AWS CloudFormation templates to deploy
+      # Type: string
+      # Required: false
+      cloudformation_templates: 
+
+      # GitHub App id to impersonate
+      # Type: string
+      # Required: false
+      app_id: ${{ vars.APP_ID || '291899' }}
+
+      # GitHub App installation id
+      # Type: string
+      # Required: false
+      installation_id: ${{ vars.INSTALLATION_ID || '34040165' }}
+
+      # Ephemeral token scope(s)
+      # Type: string
+      # Required: false
+      token_scope: >
+        {
+          "actions": "read",
+          "administration": "write",
+          "checks": "read",
+          "contents": "write",
+          "members": "read",
+          "metadata": "read",
+          "organization_secrets": "read",
+          "packages": "write",
+          "pages": "write",
+          "pull_requests": "read",
+          "secrets": "read",
+          "statuses": "read",
+          "workflows": "read"
+        }
+
+      # Timeout for the job(s).
+      # Type: number
+      # Required: false
+      jobs_timeout_minutes: 360
+
+      # GitHub actions working directory
+      # Type: string
+      # Required: false
+      working_directory: .
+
+      # Comma-delimited string of Docker images (without tags) to publish (skipped if empty)
+      # Type: string
+      # Required: false
+      docker_images: 
+
+      # Comma-delimited string of Docker buildx bake targets to publish (skipped if empty)
+      # Type: string
+      # Required: false
+      bake_targets: default
+
+      # Invert the tags for the Docker images (e.g. `{tag}-{variant}` becomes `{variant}-{tag}`)
+      # Type: boolean
+      # Required: false
+      docker_invert_tags: false
+
+      # Publish platform-specific tags in addition to multi-arch manifests (e.g.
+      # `product-os/flowzone:latest-amd64`)
+      # Type: boolean
+      # Required: false
+      docker_publish_platform_tags: false
+
+      # balenaCloud environment
+      # Type: string
+      # Required: false
+      balena_environment: balena-cloud.com
+
+      # Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty)
+      # Type: string
+      # Required: false
+      balena_slugs: 
+
+      # Comma-delimited string of Rust stable targets to publish (skipped if empty)
+      # Type: string
+      # Required: false
+      cargo_targets: >
+        aarch64-unknown-linux-gnu,
+        armv7-unknown-linux-gnueabihf,
+        arm-unknown-linux-gnueabihf,
+        x86_64-unknown-linux-gnu,
+        i686-unknown-linux-gnu
+
+      # Version specifier (e.g. 1.65, stable, nigthly) for the toolchain to use when building Rust
+      # sources
+      # Type: string
+      # Required: false
+      rust_toolchain: stable
+
+      # Set to true to publish Rust binary release artifacts to GitHub
+      # Type: boolean
+      # Required: false
+      rust_binaries: false
+
+      # Set to true to enable terminal emulation for test steps
+      # Type: boolean
+      # Required: false
+      pseudo_terminal: false
+
+      # Set to true to standardise repository settings after a successful run
+      # Type: boolean
+      # Required: false
+      repo_config: false
+
+      # Allow forking of an organization repository
+      # Type: boolean
+      # Required: false
+      repo_allow_forking: true
+
+      # Set the default branch name for the repository
+      # Type: string
+      # Required: false
+      repo_default_branch: master
+
+      # Delete head branch when pull requests are merged
+      # Type: boolean
+      # Required: false
+      repo_delete_branch_on_merge: true
+
+      # Always suggest updating pull request branches
+      # Type: boolean
+      # Required: false
+      repo_allow_update_branch: true
+
+      # Description of the repository
+      # Type: string
+      # Required: false
+      repo_description: 
+
+      # Repository home page URL
+      # Type: string
+      # Required: false
+      repo_homepage: 
+
+      # Enable auto-merge functionality
+      # Type: boolean
+      # Required: false
+      repo_enable_auto_merge: true
+
+      # Enable issues in the repository
+      # Type: boolean
+      # Required: false
+      repo_enable_issues: true
+
+      # Enable merging pull requests via merge commit
+      # Type: boolean
+      # Required: false
+      repo_enable_merge_commit: true
+
+      # Enable projects in the repository
+      # Type: boolean
+      # Required: false
+      repo_enable_projects: false
+
+      # Enable merging pull requests via rebase
+      # Type: boolean
+      # Required: false
+      repo_enable_rebase_merge: false
+
+      # Enable merging pull requests via squashed commit
+      # Type: boolean
+      # Required: false
+      repo_enable_squash_merge: false
+
+      # Enable wiki in the repository
+      # Type: boolean
+      # Required: false
+      repo_enable_wiki: false
+
+      # Change the visibility of the repository to {public,private,internal}
+      # Type: string
+      # Required: false
+      repo_visibility: default
+
+      # Set to true to disable automatic versioning
+      # Type: boolean
+      # Required: false
+      disable_versioning: false
+
+      # The name of the job, necessary for branch protection if not using the default of
+      # 'Flowzone'
+      # Type: string
+      # Required: false
+      job_name: Flowzone
+
+      # Configures the depth of the actions/checkout git fetch.
+      # Type: number
+      # Required: false
+      checkout_fetch_depth: 1
+
+      # Deprecated, use 'custom_runs_on' input instead.
+      # Type: string
+      # Required: false
+      tests_run_on: 
+
+      # JSON array of runner label strings for generic jobs.
+      # Type: string
+      # Required: false
+      runs_on: >
+        [
+          "ubuntu-22.04"
+        ]
+
+      # JSON 2-dimensional matrix of runner label strings for custom jobs.
+      # Type: string
+      # Required: false
+      custom_runs_on: >
+        [
+          ["ubuntu-22.04"]
+        ]
+
+      # JSON key-value pairs mapping platforms to arrays of runner labels. Unlisted platforms will
+      # use `runs_on`.
+      # Type: string
+      # Required: false
+      docker_runs_on: {}
+
+      # Setting this to your existing CF pages project name will generate and deploy a website.
+      # Skipped if empty.
+      # Type: string
+      # Required: false
+      cloudflare_website: 
+
+      # Set to false to disable building a docusaurus website. If false the script `npm run
+      # deploy-docs` will be run if it exists.
+      # Type: boolean
+      # Required: false
+      docusaurus_website: true
+
+      # Finalize releases on merge.
+      # Type: boolean
+      # Required: false
+      github_prerelease: false
+
+      # Do not execute custom actions for external contributors. Only remove this restriction if
+      # custom actions have been vetted as secure.
+      # Type: boolean
+      # Required: false
+      restrict_custom_actions: true
+
+      # Comma-delimited string of values that will be passed to the custom test action.
+      # Type: string
+      # Required: false
+      custom_test_matrix: 
+
+      # Comma-delimited string of values that will be passed to the custom publish action.
+      # Type: string
+      # Required: false
+      custom_publish_matrix: 
+
+      # Comma-delimited string of values that will be passed to the custom finalize action.
+      # Type: string
+      # Required: false
+      custom_finalize_matrix: 
+
+      # Set to false to disable updating branch protection rules after a successful run.
+      # Type: boolean
+      # Required: false
+      protect_branch: true
+
+      # Count of GitHub approved reviews required for Pull Requests to be merged. Set to 0 if
+      # using palantir/policy-bot for PR merge conditions.
+      # Type: string
+      # Required: false
+      required_approving_review_count: 0
+
+      # JSON array of status checks that must pass before a Pull Requests can be merged. Skipped
+      # if `protect_branch` is false.
+      # Type: string
+      # Required: false
+      required_status_checks: >
+        [
+          "Flowzone / All tests",
+          "Flowzone / All jobs",
+          "policy-bot: ${{ github.event.repository.default_branch }}"
+        ]
+
+      # Set to false to disable toggling auto-merge on PRs.
+      # Type: boolean
+      # Required: false
+      toggle_auto_merge: true
+
+
+```
+<!-- end usage -->
 
 ### Merging
 
@@ -191,7 +459,7 @@ To mitigate the risk of secrets being exposed by malicious pull requests, we hav
 
 - Trusted code includes the Flowzone workflow itself and cannot be modified by pull requests.
 - Untrusted or arbitrary code can be called by Flowzone (eg. npm scripts) but does not expose any secrets in the environment at these points.
-- Custom actions are disabled for external contributors by default and can be [enabled](#restrict_custom_actions) after the custom action has been vetted to not leak secrets to untrusted code.
+- Custom actions are disabled for external contributors by default and can be enabled via `restrict_custom_actions` after the custom action has been vetted to not leak secrets to untrusted code.
 
 See the [usage examples](#usage) to get started and allow external contributions to your repo.
 
@@ -243,17 +511,17 @@ If a `docker-compose.yml` is also found they will be merged.
 The result of the test is determined by the exit code of the `sut` service.
 Typically, the `sut` container will execute your e2e or integration tests and will exit on test completion.
 
-If you need to provide environment variables to the compose environment you can add a repository secret called [`COMPOSE_VARS`](#compose_vars) that should be a base64 encoded `.env` file.
+If you need to provide environment variables to the compose environment you can add a repository secret called `COMPOSE_VARS` that should be a base64 encoded `.env` file.
 This will be decoded and written to a `.env` file inside the test worker at runtime.
 
 > **WARNING**: The `COMPOSE_VARS` secret is not well protected from leaking and we recommend alternate methods where possible.
 > See <https://github.com/product-os/flowzone/issues/236>.
 
-To enable publishing of Docker artifacts set the [`docker_images`](#docker_images) input to correct value of docker image repositories without tags - eg `ghcr.io/product-os/flowzone`.
+To enable publishing of Docker artifacts set the `docker_images` input to correct value of docker image repositories without tags - eg `ghcr.io/product-os/flowzone`.
 
 For advanced Docker build options, including multi-arch, add one or more [Docker bake files](https://docs.docker.com/build/customize/bake/file-definition/) to your project.
 
-To publish multiple image variants, set the [`bake_targets`](#bake_targets) input to the name of each target in the Docker bake file(s).
+To publish multiple image variants, set the `bake_targets` input to the name of each target in the Docker bake file(s).
 All targets except `default` will have the target name prefixed to the tags - eg. `v1.2.3`, `debug-v1.2.3`.
 
 An example of multiple bake targets can be found here: <https://github.com/balena-io-modules/open-balena-base/blob/master/docker-bake.hcl>
@@ -264,7 +532,7 @@ If a `balena.yml` file is found in the root of the repository Flowzone will atte
 
 This will **require** either your organization or your repository to have a balenaCloud API key set as a secret named `BALENA_API_KEY`. If you intend to set the secret at the org level then make sure that the API key is valid for all repositories in that organization. A repository-level secret will override an organization-level secret. This API key will be used to login into balena-cli and push draft releases to your fleet in balenaCloud.
 
-To disable publishing of releases to balenaCloud set [`balena_slugs`](#balena_slugs) to `""`.
+To disable publishing of releases to balenaCloud set `balena_slugs` to `""`.
 
 Examples:
 
@@ -281,11 +549,11 @@ If your `pyproject.toml` file contains a `packages` property under `[tool.poetry
 
 ### Rust
 
-If a `Cargo.toml` file is found in the root of the repository, Flowzone will run tests on the code formatting (using `cargo fmt` and `cargo clippy`) and then run tests for a set of target architectures given in [`cargo_targets`](#cargo_targets). In order to disable Rust testing, set the value of that variable to `""`.
+If a `Cargo.toml` file is found in the root of the repository, Flowzone will run tests on the code formatting (using `cargo fmt` and `cargo clippy`) and then run tests for a set of target architectures given in `cargo_targets`. In order to disable Rust testing, set the value of that variable to `""`.
 
 For cross building targets, flowzone uses [cross](https://github.com/cross-rs/cross). This also means that further build options (e.g. [pre-build hooks](https://github.com/cross-rs/cross#pre-build-hook)) can be defined by adding a `Cross.toml` file to the local repository.
 
-When [`rust_binaries`](#rust_binaries) is set to `true`, Flowzone will also build release artifacts for each target architecture given in [`cargo_targets`](#cargo_targets) and upload the artifacts to the GitHub release.
+When `rust_binaries` is set to `true`, Flowzone will also build release artifacts for each target architecture given in `cargo_targets` and upload the artifacts to the GitHub release.
 
 ### GitHub
 
@@ -346,516 +614,6 @@ If you have an `npm run doc` script then it will automatically be run and the ge
 If you have docs that you intend to publish on a website, checkout the [Getting Started](https://docusaurus-builder.pages.dev/) section of the Docusaurus builder. The docs will be built using the Docusaurus framework and published on Cloudflare Pages.
 
 If you intend to use a custom framework for your docs build, then you can make use of the custom website build option by adding your desired build command in a input called `custom_website_build`. This command should generate your static site into a folder called `build` which will then be deployed to Cloudflare Pages.
-
-## Customization
-
-### Secrets
-
-The following secrets should be set by an Owner at the Organization level,
-but they can also be [configured for personal repositories](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository).
-
-These secrets can also be found at the top of [flowzone.yml](./.github/workflows/flowzone.yml).
-
-#### `GH_APP_PRIVATE_KEY`
-
-GitHub App's private key to generate ephemeral access tokens.
-
-Not required, but preferred.
-
-#### `FLOWZONE_TOKEN`
-
-Personal access token (PAT) for the GitHub service account with admin/owner permissions.
-
-#### `NPM_TOKEN`
-
-The npm auth token to use for publishing.
-
-Required for [npm](#npm) projects.
-
-#### `DOCKERHUB_USER`
-
-Username to publish to the Docker Hub container registry.
-
-Required for [Docker](#docker) projects.
-
-#### `DOCKERHUB_TOKEN`
-
-A [personal access token](https://docs.docker.com/docker-hub/access-tokens/) to publish to the Docker Hub container registry.
-
-Required for [Docker](#docker) projects.
-
-#### `BALENA_API_KEY`
-
-[API key](https://www.balena.io/docs/learn/manage/account/#api-keys) for pushing releases to balena applications.
-
-Required for [balena](#balena) projects.
-
-#### `PYPI_TOKEN`
-
-[API key](https://pypi.org/help/#apitoken) for pushing releases to PyPI applications.
-
-Used for [python](#python-with-poetry) projects.
-
-#### `PYPI_TEST_TOKEN`
-
-[API key](https://pypi.org/help/#apitoken) for pushing releases to test PyPI applications.
-
-Used for [python](#python-with-poetry) PR artifacts.
-
-#### `CARGO_REGISTRY_TOKEN`
-
-[API token](https://doc.rust-lang.org/cargo/reference/publishing.html) for publishing a library into a cargo registry.
-
-Publishing to a cargo registry will be skipped if the token is empty.
-
-#### `COMPOSE_VARS`
-
-Optional base64 encoded docker-compose `.env` file for testing [Docker](#docker) projects.
-
-> **WARNING**: The `COMPOSE_VARS` secret is not well protected from leaking and we recommend alternate methods where possible.
-> See <https://github.com/product-os/flowzone/issues/236>.
-
-#### `CUSTOM_JOB_SECRET_1`
-
-Optional secret for use with [Custom](#custom) jobs.
-
-#### `CUSTOM_JOB_SECRET_2`
-
-Optional secret for use with [Custom](#custom) jobs.
-
-#### `CUSTOM_JOB_SECRET_3`
-
-Optional secret for use with [Custom](#custom) jobs.
-
-### Inputs
-
-These inputs are all optional and include some opinionated defaults.
-They can also be found at the top of [flowzone.yml](./.github/workflows/flowzone.yml).
-
-#### `aws_region`
-
-AWS region with GitHub OIDC provider IAM configuration.
-
-Type: _string_
-
-Default: `"${{ vars.AWS_REGION || '' }}"`
-
-#### `aws_iam_role`
-
-AWS IAM role ARN to assume with GitHub OIDC provider.
-
-Type: _string_
-
-Default: `"${{ vars.AWS_IAM_ROLE || '' }}"`
-
-#### `cloudformation_templates`
-
-AWS CloudFormation templates to deploy.
-> environment variables will be injected at runtime for both vars. and secrets. contexts
-
-Type: _string_
-
-Example:
-
-```json
-{
-  "stacks": [
-    {
-      "name": "foo-bar",
-      "template": "aws/foo/bar.yaml",
-      "params": [
-        "somesecret=${GITHUB_TOKEN}",
-        "somevar=not-a-secret"
-      ],
-      "tags": ["Name=foo", "Environment=bar"],
-      "capabilities": ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"]
-    }
-  ]
-}
-```
-
-Default: ``
-
-#### `app_id`
-
-GitHub App id to generate ephemeral access tokens.
-
-Type: _string_
-
-Default: `"${{ vars.APP_ID || '291899' }}"`
-
-#### `installation_id`
-
-GitHub App installation id, if installed in a different organisation.
-
-Type: _string_
-
-Default: `"${{ vars.INSTALLATION_ID || '34040165' }}"`
-
-#### `token_scope`
-
-Subset from permissions granted to the GitHub App, see [list](https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-a-scoped-access-token).
-
-Type: _string_
-
-Default:
-
-```json
-{
-  "actions": "read",
-  "administration": "write",
-  "checks": "read",
-  "contents": "write",
-  "members": "read",
-  "metadata": "read",
-  "organization_secrets": "read",
-  "packages": "write",
-  "pages": "write",
-  "pull_requests": "read",
-  "secrets": "read",
-  "statuses": "read",
-  "workflows": "read"
-}
-```
-
-#### `runs_on`
-
-JSON array of runner label strings for generic jobs.
-
-Type: _string_
-
-Default: `["ubuntu-22.04"]`
-
-#### `custom_runs_on`
-
-JSON 2-dimensional matrix of runner label strings for custom jobs.
-
-Type: _string_
-
-Default: `[["ubuntu-22.04"]]`
-
-#### `docker_runs_on`
-
-JSON key-value pairs mapping platforms to arrays of runner labels. Unlisted platforms will use `runs_on`.
-
-Type: _string_
-
-Default: `{}`
-
-#### `jobs_timeout_minutes`
-
-Job(s) timeout.
-
-Type: _number_
-
-Default: `360`
-
-#### `working_directory`
-
-GitHub actions working directory.
-
-Type: _string_
-
-Default: `.`
-
-#### `docker_images`
-
-Comma-delimited string of Docker images (without tags) to publish (skipped if empty).
-
-Type: _string_
-
-Default: `''`
-
-#### `bake_targets`
-
-Comma-delimited string of Docker buildx bake targets to publish (skipped if empty).
-
-Type: _string_
-
-Default: `default`
-
-#### `docker_invert_tags`
-
-Invert the tags for the Docker images (e.g. `{tag}-{variant}` becomes `{variant}-{tag}`)
-
-Type: _boolean_
-
-Default: `false`
-
-#### `docker_publish_platform_tags`
-
-Publish platform-specific tags in addition to multi-arch manifests (e.g. `product-os/flowzone:latest-amd64`)
-
-Type: _boolean_
-
-Default: `false`
-
-#### `balena_environment`
-
-Alternative balenaCloud environment (e.g. balena-staging.com)
-
-Type: _string_
-
-Default: `balena-cloud.com`
-
-#### `balena_slugs`
-
-Comma-delimited string of balenaCloud apps, fleets, or blocks to deploy (skipped if empty).
-
-Type: _string_
-
-Default: `''`
-
-#### `cargo_targets`
-
-Comma-delimited string of Rust stable targets to publish (skipped if empty).
-
-Type: _string_
-
-Default: `'aarch64-unknown-linux-gnu,armv7-unknown-linux-gnueabi,arm-unknown-linux-gnueabihf,x86_64-unknown-linux-gnu,i686-unknown-linux-gnu'`
-
-#### `rust_binaries`
-
-Set to true to publish Rust binary artifacts to GitHub.
-
-Type: _boolean_
-
-Default: `true`
-
-#### `rust_toolchain`
-
-Version specifier (e.g. 1.65, stable, nigthly) for the toolchain to use when building Rust sources.
-
-Type: _string_
-
-Default: `'stable'`
-
-#### `pseudo_terminal`
-
-Set to true to enable terminal emulation for test steps (under `npm_test` and `python_tests`). This wraps the test call with the `script` command so test commands that rely on a terminal feature (e.g. terminal colors) can work as they would in a development environment. This only works with ubuntu runners.
-
-Type: _boolean_
-
-Default: `false`
-
-#### `protect_branch`
-
-Set to false to disable updating branch protection rules after a successful run. Rules are not applied for draft pull requests.
-
-Type: _boolean_
-
-Default: `true`
-
-#### `repo_config`
-
-Set to true to standardise repository settings after a successful run.
-
-Type: _boolean_
-
-Default: `false`
-
-#### `repo_allow_forking`
-
-Allow forking of an organization repository.
-
-Type: _boolean_
-
-Default: `true`
-
-#### `repo_default_branch`
-
-Set the default branch name for the repository.
-
-Type: _string_
-
-Default: `master`
-
-#### `repo_delete_branch_on_merge`
-
-Delete head branch when pull requests are merged.
-
-Type: _boolean_
-
-Default: `true`
-
-#### `repo_allow_update_branch`
-
-Always suggest updating pull request branches.
-
-Type: _boolean_
-
-Default: `true`
-
-#### `repo_description`
-
-Description of the repository.
-
-Type: _string_
-
-Default: `''`
-
-#### `repo_homepage`
-
-Repository home page URL.
-
-Type: _string_
-
-Default: `''`
-
-#### `repo_enable_auto_merge`
-
-Enable auto-merge functionality.
-
-Type: _boolean_
-
-Default: `true`
-
-#### `repo_enable_issues`
-
-Enable issues in the repository.
-
-Type: _boolean_
-
-Default: `true`
-
-#### `repo_enable_merge_commit`
-
-Enable merging pull requests via merge commit.
-
-Type: _boolean_
-
-Default: `true`
-
-#### `repo_enable_projects`
-
-Enable projects in the repository.
-
-Type: _boolean_
-
-Default: `false`
-
-#### `repo_enable_rebase_merge`
-
-Enable merging pull requests via rebase.
-
-Type: _boolean_
-
-Default: `false`
-
-#### `repo_enable_squash_merge`
-
-Enable merging pull requests via squashed commit.
-
-Type: _boolean_
-
-Default: `false`
-
-#### `repo_enable_wiki`
-
-Enable wiki in the repository.
-
-Type: _boolean_
-
-Default: `false`
-
-#### `repo_visibility`
-
-Change the visibility of the repository to {public,private,internal}.
-
-Type: _string_
-
-Default: `default`
-
-#### `disable_versioning`
-
-Set to true to disable automatic versioning.
-
-Type: _boolean_
-
-Default: `false`
-
-#### `required_approving_review_count`
-
-Count of GitHub approved reviews required for Pull Requests to be merged.
-Set to 0 if using [policy-bot](https://github.com/palantir/policy-bot) for PR merge conditions.
-Skipped if [protect_branch](#protect_branch) is false.
-
-Type: _string_
-
-Default: `'0'`
-
-#### `required_status_checks`
-
-JSON array of status checks that must pass before a Pull Requests can be merged.
-Skipped if [protect_branch](#protect_branch) is false.
-
-Type: _string_
-
-Default: `["Flowzone / Protect branch","policy-bot: master"]`
-
-#### `github_prerelease`
-
-Make GitHub release final on merge.
-
-Type: _boolean_
-
-Default: `false`
-
-#### `restrict_custom_actions`
-
-Do not execute custom actions for external contributors. Only remove this restriction if custom actions have been vetted as secure.
-
-Type: _boolean_
-
-Default: `true`
-
-#### `custom_test_matrix`
-
-Comma-delimited string of values that will be passed to the custom test action.
-
-Type: _string_
-
-Default: `''`
-
-#### `custom_publish_matrix`
-
-Comma-delimited string of values that will be passed to the custom publish action.
-
-Type: _string_
-
-Default: `''`
-
-#### `custom_finalize_matrix`
-
-Comma-delimited string of values that will be passed to the custom finalize action.
-
-Type: _string_
-
-Default: `''`
-
-#### `cloudflare_website`
-
-Setting this to your existing CF pages project name will generate and deploy a website. Skipped if empty.
-
-Type: _string_
-
-Default: `""`
-
-#### `docusaurus_website`
-
-Set to false to disable building a docusaurus website. If false the script `npm run deploy-docs` will be run if it exists.
-
-Type: _string_
-
-Default: true
-
-#### `toggle_auto_merge`
-
-Set to false to disable toggling auto-merge on PRs.
-
-Type: _boolean_
-
-Default: true
 
 ## Testing
 
