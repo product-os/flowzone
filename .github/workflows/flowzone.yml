@@ -3594,7 +3594,7 @@ jobs:
           result="$(${{ steps.change_set.outputs.command }})"
           if [[ -n "$result" ]]; then
               replace="$(echo "${result}" | jq -r '.Changes[].ResourceChange | select(.Replacement=="True")' | jq -rs '. | length')"
-              destroy="$(echo "${result}" | jq -r '.Changes[].ResourceChange | select(.Action=="Delete")' | jq -rs '. | length')"
+              destroy="$(echo "${result}" | jq -r '.Changes[].ResourceChange | select(.Action=="Remove")' | jq -rs '. | length')"
               if [[ $replace -gt 0 ]] || [[ $destroy -gt 0 ]]; then
                   echo '::warning::change set will destroy existing resources'
               else
