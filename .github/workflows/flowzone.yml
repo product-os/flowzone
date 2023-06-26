@@ -3592,7 +3592,7 @@ jobs:
         if: steps.change_set.outputs.command != ''
         run: |
           result="$(${{ steps.change_set.outputs.command }})"
-          if grep -qEi 'replace|delete|remove'; then
+          if echo "${result}" | grep -qEi 'replace|delete|remove'; then
               echo '::warning::change set will destroy existing resources'
           else
               echo '::notice::change set may add or update resources'
