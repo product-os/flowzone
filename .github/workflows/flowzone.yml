@@ -63,7 +63,50 @@ on:
         required: false
         default: ${{ vars.AWS_IAM_ROLE || '' }}
       cloudformation_templates:
-        description: AWS CloudFormation templates to deploy
+        description: |
+          AWS CloudFormation templates to deploy (e.g.)
+
+          ```
+          {
+            "stacks": [
+              {
+                "name": "foo",
+                "template": "aws/bar.yaml",
+                "tags": [
+                  "Name=foo",
+                  "Environment=${FOO}"
+                ],
+                "capabilities": [
+                  "CAPABILITY_IAM",
+                  "CAPABILITY_NAMED_IAM"
+                ]
+              },
+              ...
+            ]
+          }
+          ```
+
+          * assumes `aws/bar.yaml` exists.
+          * `${ENVVARS}` injected at runtime from `vars` and `secrets` contexts
+        type: string
+        required: false
+        default: ""
+      terraform_projects:
+        description: |
+          Terraform projects to deploy (e.g.)
+
+          ```
+          {
+            "projects": [
+              {
+                "main_tf": "terraform/foo"
+              }
+            ]
+          }
+          ```
+
+          * assumes `terraform/foo/main.tf` exists
+          * GitHub `vars` and `secrets` contexts injected into TF plan/apply steps
         type: string
         required: false
         default: ""
@@ -1370,8 +1413,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.versioned_source.result == 'success' &&
-      inputs.cloudformation_templates != '' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      inputs.cloudformation_templates != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1390,10 +1432,16 @@ jobs:
       - name: Validate CloudFormation input
         id: validate_json
         run: |
-          if echo '${{ inputs.cloudformation_templates }}' | jq -r
+          if echo '${{ inputs.cloudformation_templates }}' | jq -r .stacks
           then
+            if [[ '${{ github.event.pull_request.head.repo.full_name }}' != '${{ github.repository }}' ]]; then
+              echo '::warning:: CloudFormation stacks are skipped for external contributions.'
+              echo "enabled=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
             echo "enabled=true" >> $GITHUB_OUTPUT
           else
+            echo '::warning::invalid JSON or no CloudFormation stacks?'
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
       - name: Generate stacks matrix
@@ -1402,6 +1450,45 @@ jobs:
           stacks="$(echo '${{ inputs.cloudformation_templates }}' \
             | jq -r '.stacks[].name' | jq -Rcn '[inputs'])"
           echo "deploy=${stacks}" >> $GITHUB_OUTPUT
+  is_terraform:
+    name: Is Terraform
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+    if: |
+      !failure() && !cancelled() &&
+      needs.versioned_source.result == 'success' &&
+      inputs.terraform_projects != ''
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    outputs:
+      terraform: ${{ steps.validate_json.outputs.enabled }}
+      projects: ${{ steps.terraform_projects.outputs.deploy }}
+    steps:
+      - name: Validate Terraform input
+        id: validate_json
+        run: |
+          if echo '${{ inputs.terraform_projects }}' | jq -r .projects
+          then
+            if [[ '${{ github.event.pull_request.head.repo.full_name }}' != '${{ github.repository }}' ]]; then
+              echo '::warning:: Terraform projects are skipped for external contributions.'
+              echo "enabled=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo '::warning::invalid JSON or no Terraform projects?'
+            echo "enabled=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Generate projects matrix
+        id: terraform_projects
+        run: |
+          projects="$(echo '${{ inputs.terraform_projects }}' \
+            | jq -r '.projects[].main_tf' | jq -Rcn '[inputs'])"
+          echo "deploy=${projects}" >> $GITHUB_OUTPUT
   npm_test:
     name: Test npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3310,6 +3397,11 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      AWS_RETRY_MODE: adaptive
+      AWS_MAX_ATTEMPTS: 10
+      ATTEMPTS: 5
+      TIMEOUT: 3
     steps:
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
@@ -3318,6 +3410,12 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Random delay
+        run: |
+          DELAY=${DELAY-5}
+          random=$(((RANDOM % DELAY) + 1))
+          echo "::notice::sleeping for ${random}s"
+          sleep "${random}s"
       - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
@@ -3328,12 +3426,44 @@ jobs:
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
         run: aws sts get-caller-identity
+      - name: Convenience functions
+        id: functions
+        run: |
+          EOF="$(openssl rand -hex 16)"
+
+          # https://sre.google/sre-book/addressing-cascading-failures/
+          with_backoff="$(mktemp)"
+          cat << $EOF > "${with_backoff}"
+          function with_backoff() {
+              local max_attempts=\${ATTEMPTS-3}
+              local timeout=\${TIMEOUT-2}
+              local attempt=0
+              local exitCode=0
+              set +e
+              while [[ \$attempt < \$max_attempts ]]; do
+                  "\$@"
+                  exitCode=\$?
+                  [[ \$exitCode == 0 ]] && break
+                  echo "Failure! Retrying in \$timeout.." 1>&2
+                  sleep "\$timeout"
+                  attempt=\$(( attempt + 1 ))
+                  timeout=\$(( timeout * 2 ))
+              done
+              [[ \$exitCode != 0 ]] && echo "You've failed me for the last time! (\$*)" 1>&2
+              set -e
+              return \$exitCode
+          }
+          $EOF
+          echo "with_backoff=${with_backoff}" >> $GITHUB_OUTPUT
       - name: Create templates bucket
         id: make_bucket
         run: |
-          bucket="$(aws s3api list-buckets | jq -r '.Buckets[] | select(.Name=="${{ vars.AWS_S3_BUCKET }}").Name' || true)"
+          # If at first you don't succeed, back off exponentially.
+          source '${{ steps.functions.outputs.with_backoff }}'
+
+          bucket="$(with_backoff aws s3api list-buckets | jq -r '.Buckets[] | select(.Name=="${{ vars.AWS_S3_BUCKET }}").Name' || true)"
           if [[ -z "$bucket" ]]; then
-              result="$(aws s3 mb "s3://cfn-$(uuidgen)-${{ inputs.aws_region }}" --region '${{ inputs.aws_region }}')"
+              result="$(with_backoff aws s3 mb "s3://cfn-$(uuidgen)-${{ inputs.aws_region }}" --region '${{ inputs.aws_region }}')"
               bucket=${result#*:}
           fi
           echo "s3_bucket=${bucket}" >> $GITHUB_OUTPUT
@@ -3399,13 +3529,17 @@ jobs:
           echo "caps=${caps}" >> $GITHUB_OUTPUT
       - name: Validate template
         run: |
-          aws cloudformation validate-template \
+          source '${{ steps.functions.outputs.with_backoff }}'
+
+          with_backoff aws cloudformation validate-template \
             --template-body 'file://${{ steps.shared.outputs.template_file }}'
       - name: Package template
         run: |
+          source '${{ steps.functions.outputs.with_backoff }}'
+
           mkdir -p "package/$(dirname '${{ steps.shared.outputs.template_file }}')"
 
-          aws cloudformation package \
+          with_backoff aws cloudformation package \
             --template-file '${{ steps.shared.outputs.template_file }}' \
             --s3-bucket '${{ steps.make_bucket.outputs.s3_bucket }}' \
             --output-template-file 'package/${{ steps.shared.outputs.template_file }}'
@@ -3418,22 +3552,26 @@ jobs:
       - name: Delete existing change set
         continue-on-error: true
         run: |
-          change_set_ids="$(aws cloudformation list-change-sets \
+          source '${{ steps.functions.outputs.with_backoff }}'
+
+          change_set_ids="$(with_backoff aws cloudformation list-change-sets \
             --stack-name '${{ matrix.stack }}' | jq -r '.Summaries[].ChangeSetId')"
 
           for id in ${change_set_ids}; do
-              pr_tag="$(aws cloudformation describe-change-set \
+              pr_tag="$(with_backoff aws cloudformation describe-change-set \
                 --change-set-name "${id}" \
                 --query Tags | jq -r '.[] | select(.Key=="github_pull_request").Value')"
 
               if [[ -n "$pr_tag" ]] && [[ "$pr_tag" == '${{ github.event.pull_request.number }}' ]]; then
-                  aws cloudformation delete-change-set --change-set-name "${id}"
+                  with_backoff aws cloudformation delete-change-set --change-set-name "${id}"
               fi
           done
       - name: Generate change set
         id: change_set
         run: |
-          result="$(aws cloudformation deploy \
+          source '${{ steps.functions.outputs.with_backoff }}'
+
+          result="$(with_backoff aws cloudformation deploy \
             --stack-name '${{ steps.shared.outputs.stack_name }}' \
             --template-file 'package/${{ steps.shared.outputs.template_file }}' \
             --s3-bucket '${{ steps.make_bucket.outputs.s3_bucket }}' \
@@ -3476,7 +3614,18 @@ jobs:
       !failure() && !cancelled() &&
       needs.is_pr_merged.result != needs.is_pushed_tag.result &&
       needs.is_cloudformation.outputs.cloudformation == 'true'
+    env:
+      AWS_RETRY_MODE: adaptive
+      AWS_MAX_ATTEMPTS: 10
+      ATTEMPTS: 5
+      TIMEOUT: 3
     steps:
+      - name: Random delay
+        run: |
+          DELAY=${DELAY-5}
+          random=$(((RANDOM % DELAY) + 1))
+          echo "::notice::sleeping for ${random}s"
+          sleep "${random}s"
       - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
@@ -3509,19 +3658,50 @@ jobs:
 
               aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}'
           fi
+      - name: Convenience functions
+        id: functions
+        run: |
+          EOF="$(openssl rand -hex 16)"
+
+          # https://sre.google/sre-book/addressing-cascading-failures/
+          with_backoff="$(mktemp)"
+          cat << $EOF > "${with_backoff}"
+          function with_backoff() {
+              local max_attempts=\${ATTEMPTS-3}
+              local timeout=\${TIMEOUT-2}
+              local attempt=0
+              local exitCode=0
+              set +e
+              while [[ \$attempt < \$max_attempts ]]; do
+                  "\$@"
+                  exitCode=\$?
+                  [[ \$exitCode == 0 ]] && break
+                  echo "Failure! Retrying in \$timeout.." 1>&2
+                  sleep "\$timeout"
+                  attempt=\$(( attempt + 1 ))
+                  timeout=\$(( timeout * 2 ))
+              done
+              [[ \$exitCode != 0 ]] && echo "You've failed me for the last time! (\$*)" 1>&2
+              set -e
+              return \$exitCode
+          }
+          $EOF
+          echo "with_backoff=${with_backoff}" >> $GITHUB_OUTPUT
       - name: Execute change set
         run: |
-          change_set_ids="$(aws cloudformation list-change-sets \
+          source '${{ steps.functions.outputs.with_backoff }}'
+
+          change_set_ids="$(with_backoff aws cloudformation list-change-sets \
             --stack-name '${{ matrix.stack }}' \
             | jq -r '.Summaries[] | select(.ExecutionStatus=="AVAILABLE").ChangeSetId')"
 
           for id in ${change_set_ids}; do
-              pr_tag="$(aws cloudformation describe-change-set \
+              pr_tag="$(with_backoff aws cloudformation describe-change-set \
                 --change-set-name "${id}" \
                 --query Tags | jq -r '.[] | select(.Key=="github_pull_request").Value')"
 
               if [[ -n "$pr_tag" ]] && [[ "$pr_tag" == '${{ github.event.pull_request.number }}' ]]; then
-                  aws cloudformation execute-change-set --change-set-name "${id}"
+                  with_backoff aws cloudformation execute-change-set --change-set-name "${id}"
               fi
           done
       - name: Wait for resources
@@ -3545,6 +3725,177 @@ jobs:
               fi
 
               aws cloudformation describe-stacks --stack-name '${{ matrix.stack }}'
+          fi
+  terraform_test:
+    name: Test Terraform
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    strategy:
+      fail-fast: true
+      matrix:
+        project: ${{ fromJSON(needs.is_terraform.outputs.projects) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_pr_open
+      - is_terraform
+      - versioned_source
+    if: |
+      !failure() && !cancelled() &&
+      needs.is_pr_open.result == 'success' &&
+      needs.is_terraform.outputs.terraform == 'true'
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+    env:
+      KUBE_CTX: ${{ vars.KUBECTL_CONTEXT }}
+      KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE }}
+      LOCK_TIMEOUT: 300s
+    steps:
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Random delay
+        run: |
+          DELAY=${DELAY-5}
+          random=$(((RANDOM % DELAY) + 1))
+          echo "::notice::sleeping for ${random}s"
+          sleep "${random}s"
+      - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        with:
+          role-to-assume: ${{ inputs.aws_iam_role }}
+          role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          aws-region: ${{ inputs.aws_region }}
+          mask-aws-account-id: false
+      - name: Get caller identity (AWS/whoami)
+        run: aws sts get-caller-identity
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name $(echo "${KUBE_CTX}" | awk -F'/' '{print $2}')
+      - uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1
+        with:
+          terraform_wrapper: false
+          terraform_version: 1.3.9
+      - name: Terraform init
+        run: terraform init
+      - name: Terraform show
+        run: terraform show
+      - name: Terraform validate
+        run: terraform validate
+      - name: Terraform plan
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+          VARS_CONTEXT: ${{ toJson(vars) }}
+        run: |
+          set -a
+
+          trap 'rm -f .env "${json_plan}"' EXIT
+
+          to_envs() { jq -r "to_entries[] | \"\(.key)="\'"\(.value)"\'"\""; }
+
+          echo "${SECRETS_CONTEXT}" | to_envs > .env
+          echo "${VARS_CONTEXT}" | to_envs >> .env
+          source .env && rm -f .env
+
+          rc=0
+          terraform plan -lock-timeout=${LOCK_TIMEOUT} -detailed-exitcode || rc=$?
+          if [[ $rc -eq 1 ]]; then
+              false
+          fi
+
+          json_plan="$(mktemp)"
+          terraform plan -lock-timeout=${LOCK_TIMEOUT} -json > "${json_plan}"
+          msg=$(cat < "${json_plan}" | jq -rs '.[] | select(.type=="change_summary")."@message"')
+          add=$(cat < "${json_plan}" | jq -rs '.[] | select(.type=="change_summary").changes.add')
+          change=$(cat < "${json_plan}" | jq -rs '.[] | select(.type=="change_summary").changes.change')
+          remove=$(cat < "${json_plan}" | jq -rs '.[] | select(.type=="change_summary").changes.remove')
+
+          if [[ -n "$remove" ]] && [[ "$remove" -gt 0 ]]; then
+              echo "::warning::${msg}"
+          else
+              echo "::notice::${msg}"
+          fi
+  terraform_finalize:
+    name: Finalize Terraform
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.is_terraform.outputs.projects) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - is_pr_merged
+      - is_pushed_tag
+      - is_terraform
+    if: |
+      !failure() && !cancelled() &&
+      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      needs.is_terraform.outputs.terraform == 'true'
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+    env:
+      KUBE_CTX: ${{ vars.KUBECTL_CONTEXT }}
+      KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE }}
+      LOCK_TIMEOUT: 300s
+    steps:
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Random delay
+        run: |
+          DELAY=${DELAY-5}
+          random=$(((RANDOM % DELAY) + 1))
+          echo "::notice::sleeping for ${random}s"
+          sleep "${random}s"
+      - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        with:
+          role-to-assume: ${{ inputs.aws_iam_role }}
+          role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          aws-region: ${{ inputs.aws_region }}
+          mask-aws-account-id: false
+      - name: Get caller identity (AWS/whoami)
+        run: aws sts get-caller-identity
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name $(echo "${KUBE_CTX}" | awk -F'/' '{print $2}')
+      - uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1
+        with:
+          terraform_wrapper: false
+          terraform_version: 1.3.9
+      - name: Terraform apply
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+          VARS_CONTEXT: ${{ toJson(vars) }}
+        run: |
+          set -a
+
+          trap 'rm -f .env' EXIT
+
+          to_envs() { jq -r "to_entries[] | \"\(.key)="\'"\(.value)"\'"\""; }
+
+          echo "${SECRETS_CONTEXT}" | to_envs > .env
+          echo "${VARS_CONTEXT}" | to_envs >> .env
+          source .env && rm -f .env
+
+          rc=0
+          terraform plan -lock-timeout=${LOCK_TIMEOUT} -detailed-exitcode || rc=$?
+          if [[ $rc -eq 2 ]]; then
+              terraform apply -lock-timeout=300s -auto-approve
+          elif [[ $rc -eq 0 ]]; then
+              true
+          else
+              false
           fi
   protect_branch:
     name: Protect branch
@@ -3845,6 +4196,7 @@ jobs:
       - cargo_test
       - custom_test
       - cloudformation_test
+      - terraform_test
     if: |
       always() &&
       needs.is_pr_open.result != 'skipped'
@@ -3887,7 +4239,6 @@ jobs:
       - cargo_publish
       - custom_publish
       - custom_always
-      - cloudformation_finalize
       - protect_branch
     if: |
       always() &&

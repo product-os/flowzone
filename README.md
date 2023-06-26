@@ -153,10 +153,47 @@ jobs:
       # Required: false
       aws_iam_role: ${{ vars.AWS_IAM_ROLE || '' }}
 
-      # AWS CloudFormation templates to deploy
+      # AWS CloudFormation templates to deploy (e.g.)
+      # ```
+      # {
+      # "stacks": [
+      # {
+      # "name": "foo",
+      # "template": "aws/bar.yaml",
+      # "tags": [
+      # "Name=foo",
+      # "Environment=${FOO}"
+      # ],
+      # "capabilities": [
+      # "CAPABILITY_IAM",
+      # "CAPABILITY_NAMED_IAM"
+      # ]
+      # },
+      # ...
+      # ]
+      # }
+      # ```
+      # * assumes `aws/bar.yaml` exists.
+      # * `${ENVVARS}` injected at runtime from `vars` and `secrets` contexts
       # Type: string
       # Required: false
       cloudformation_templates: 
+
+      # Terraform projects to deploy (e.g.)
+      # ```
+      # {
+      # "projects": [
+      # {
+      # "main_tf": "terraform/foo"
+      # }
+      # ]
+      # }
+      # ```
+      # * assumes `terraform/foo/main.tf` exists
+      # * GitHub `vars` and `secrets` contexts injected into TF plan/apply steps
+      # Type: string
+      # Required: false
+      terraform_projects: 
 
       # GitHub App id to impersonate
       # Type: string
