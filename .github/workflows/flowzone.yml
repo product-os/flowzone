@@ -3592,12 +3592,16 @@ jobs:
         if: steps.change_set.outputs.command != ''
         run: |
           result="$(${{ steps.change_set.outputs.command }})"
-          if echo "${result}" | grep -qEi 'replace|delete|remove'; then
-              echo '::warning::change set will destroy existing resources'
-          else
-              echo '::notice::change set may add or update resources'
+          if [[ -n "$result" ]]; then
+              replace="$(echo "${result}" | jq -r '.Changes[].ResourceChange | select(.Replacement=="True")' | jq -rs '. | length')"
+              destroy="$(echo "${result}" | jq -r '.Changes[].ResourceChange | select(.Action=="Delete")' | jq -rs '. | length')"
+              if [[ $replace -gt 0 ]] || [[ $destroy -gt 0 ]]; then
+                  echo '::warning::change set will destroy existing resources'
+              else
+                  echo '::notice::change set may add or update resources'
+              fi
+              echo "${result}" | jq -r
           fi
-          echo "${result}" | jq -r
   cloudformation_finalize:
     name: Finalize CloudFormation
     runs-on: ${{ fromJSON(inputs.runs_on) }}
