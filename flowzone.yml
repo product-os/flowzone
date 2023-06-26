@@ -3599,6 +3599,9 @@ jobs:
           terraform_wrapper: false
           terraform_version: 1.3.9
 
+      - name: Terraform init
+        run: terraform init
+
       - name: Terraform apply
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
