@@ -1420,7 +1420,8 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
       cloudformation: ${{ steps.validate_json.outputs.enabled }}
-      stacks: ${{ steps.cloudformation_stacks.outputs.deploy }}
+      stacks: ${{ steps.cloudformation_stacks.outputs.matrix }}
+      includes: ${{ steps.cloudformation_stacks.outputs.includes }}
     steps:
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
@@ -1449,7 +1450,13 @@ jobs:
         run: |
           stacks="$(echo '${{ inputs.cloudformation_templates }}' \
             | jq -r '.stacks[].name' | jq -Rcn '[inputs'])"
-          echo "deploy=${stacks}" >> $GITHUB_OUTPUT
+
+          includes="$(echo '${{ inputs.cloudformation_templates }}' \
+            | jq -r '.stacks[] | with_entries(if .key == "name" then .key = "stack" else . end)' \
+            | jq -rsc)"
+
+          echo "matrix=${stacks}" >> $GITHUB_OUTPUT
+          echo "includes=${includes}" >> $GITHUB_OUTPUT
   is_terraform:
     name: Is Terraform
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3384,6 +3391,7 @@ jobs:
       fail-fast: true
       matrix:
         stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
+        include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_pr_open
@@ -3422,7 +3430,7 @@ jobs:
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
           role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
-          aws-region: ${{ inputs.aws_region }}
+          aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
         run: aws sts get-caller-identity
@@ -3461,10 +3469,13 @@ jobs:
           # If at first you don't succeed, back off exponentially.
           source '${{ steps.functions.outputs.with_backoff }}'
 
-          bucket="$(with_backoff aws s3api list-buckets | jq -r '.Buckets[] | select(.Name=="${{ vars.AWS_S3_BUCKET }}").Name' || true)"
+          bucket="$(with_backoff aws s3api list-buckets | jq -r '.Buckets[] | select(.Name | (startswith("cfn-") and endswith("-${{ matrix.region || inputs.aws_region }}"))).Name' | head -n 1)"
           if [[ -z "$bucket" ]]; then
-              result="$(with_backoff aws s3 mb "s3://cfn-$(uuidgen)-${{ inputs.aws_region }}" --region '${{ inputs.aws_region }}')"
-              bucket=${result#*:}
+              result="$(with_backoff aws s3 mb "s3://cfn-$(uuidgen)-${{ matrix.region || inputs.aws_region }}" \
+                --region '${{ matrix.region || inputs.aws_region }}')"
+
+              bucket="${result#*:}"
+              bucket="${bucket//[[:space:]]/}"
           fi
           echo "s3_bucket=${bucket}" >> $GITHUB_OUTPUT
       - name: Wait for resources
@@ -3500,6 +3511,11 @@ jobs:
           trap 'rm -f .env' EXIT
 
           to_envs() { jq -r "to_entries[] | \"\(.key)="\'"\(.value)"\'"\""; }
+
+          printf "matrix: params='%s' tags='%s' caps='%s'" \
+            '${{ toJSON(matrix.params) }}' \
+            '${{ toJSON(matrix.tags) }}' \
+            '${{ toJSON(matrix.capabilities) }}'
 
           stack="$(echo '${{ inputs.cloudformation_templates }}' | jq -r '.stacks[] | select(.name=="${{ matrix.stack }}")')"
           template_file="$(echo "${stack}" | jq -rc .template)"
@@ -3636,7 +3652,7 @@ jobs:
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
           role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
-          aws-region: ${{ inputs.aws_region }}
+          aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
         run: aws sts get-caller-identity
@@ -3773,7 +3789,7 @@ jobs:
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
           role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
-          aws-region: ${{ inputs.aws_region }}
+          aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
         run: aws sts get-caller-identity
@@ -3866,7 +3882,7 @@ jobs:
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
           role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
-          aws-region: ${{ inputs.aws_region }}
+          aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
         run: aws sts get-caller-identity
