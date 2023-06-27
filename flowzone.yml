@@ -28,7 +28,7 @@
     <<: *ifInternalPullRequest
     continue-on-error: true
     with:
-      role-to-assume: ${{ inputs.aws_iam_role }}
+      role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
       role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       aws-region: ${{ matrix.region || inputs.aws_region }}
       # https://github.com/orgs/community/discussions/26636#discussioncomment-3252664
@@ -586,7 +586,7 @@
     run: |
       DELAY=${DELAY-5}
       random=$(((RANDOM % DELAY) + 1))
-      echo "::notice::sleeping for ${random}s"
+      echo "sleeping for ${random}s"
       sleep "${random}s"
 
   - &warnGPTReviewSkipped
@@ -1843,6 +1843,7 @@ jobs:
     outputs:
       terraform: ${{ steps.validate_json.outputs.enabled }}
       projects: ${{ steps.terraform_projects.outputs.deploy }}
+      includes: ${{ steps.terraform_projects.outputs.includes }}
 
     steps:
       - name: Validate Terraform input
@@ -1866,7 +1867,13 @@ jobs:
         run: |
           projects="$(echo '${{ inputs.terraform_projects }}' \
             | jq -r '.projects[].main_tf' | jq -Rcn '[inputs'])"
+
+          includes="$(echo '${{ inputs.terraform_projects }}' \
+            | jq -r '.projects[] | with_entries(if .key == "main_tf" then .key = "project" else . end)' \
+            | jq -rsc)"
+
           echo "deploy=${projects}" >> $GITHUB_OUTPUT
+          echo "includes=${includes}" >> $GITHUB_OUTPUT
 
   ###################################################
   ## npm
@@ -3229,6 +3236,8 @@ jobs:
     env:
       AWS_RETRY_MODE: adaptive
       AWS_MAX_ATTEMPTS: 10
+      AWS_REGION: ${{ matrix.region || inputs.aws_region }}
+      AWS_DEFAULT_REGION: ${{ matrix.region || inputs.aws_region }}
       ATTEMPTS: 5
       TIMEOUT: 3
 
@@ -3306,8 +3315,15 @@ jobs:
         run: |
           source '${{ steps.functions.outputs.with_backoff }}'
 
+          tmpvalid="$(openssl rand -hex 16)"
+
+          trap 'aws s3 rm s3://${{ steps.make_bucket.outputs.s3_bucket }}/${tmpvalid}' EXIT
+
+          with_backoff aws s3 cp '${{ steps.shared.outputs.template_file }}' \
+            "s3://${{ steps.make_bucket.outputs.s3_bucket }}/${tmpvalid}"
+
           with_backoff aws cloudformation validate-template \
-            --template-body 'file://${{ steps.shared.outputs.template_file }}'
+            --template-url "https://s3.amazonaws.com/${{ steps.make_bucket.outputs.s3_bucket }}/${tmpvalid}"
 
       - name: Package template
         run: |
@@ -3378,7 +3394,7 @@ jobs:
               replace="$(echo "${result}" | jq -r '.Changes[].ResourceChange | select(.Replacement=="True")' | jq -rs '. | length')"
               destroy="$(echo "${result}" | jq -r '.Changes[].ResourceChange | select(.Action=="Remove")' | jq -rs '. | length')"
               if [[ $replace -gt 0 ]] || [[ $destroy -gt 0 ]]; then
-                  echo '::warning::change set will destroy existing resources'
+                  echo '::warning::change set may destroy and/or replace existing resources'
               else
                   echo '::notice::change set may add or update resources'
               fi
@@ -3392,6 +3408,7 @@ jobs:
       fail-fast: false
       matrix:
         stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
+        include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_cloudformation
@@ -3403,6 +3420,8 @@ jobs:
       # https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-retries.html#cli-usage-retries-modes-adaptive
       AWS_RETRY_MODE: adaptive
       AWS_MAX_ATTEMPTS: 10
+      AWS_REGION: ${{ matrix.region || inputs.aws_region }}
+      AWS_DEFAULT_REGION: ${{ matrix.region || inputs.aws_region }}
       ATTEMPTS: 5
       TIMEOUT: 3
 
@@ -3444,6 +3463,7 @@ jobs:
       fail-fast: true
       matrix:
         project: ${{ fromJSON(needs.is_terraform.outputs.projects) }}
+        include: ${{ fromJSON(needs.is_terraform.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_terraform
@@ -3525,6 +3545,7 @@ jobs:
       fail-fast: false
       matrix:
         project: ${{ fromJSON(needs.is_terraform.outputs.projects) }}
+        include: ${{ fromJSON(needs.is_terraform.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_terraform
@@ -3552,6 +3573,7 @@ jobs:
       - uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1 # v2
         with:
           terraform_wrapper: false
+          # https://github.com/hashicorp/terraform/releases
           terraform_version: 1.3.9
 
       - name: Terraform init
@@ -3575,7 +3597,7 @@ jobs:
           rc=0
           terraform plan -lock-timeout=${LOCK_TIMEOUT} -detailed-exitcode || rc=$?
           if [[ $rc -eq 2 ]]; then
-              terraform apply -lock-timeout=300s -auto-approve
+              terraform apply -lock-timeout=${LOCK_TIMEOUT} -auto-approve
           elif [[ $rc -eq 0 ]]; then
               true
           else
