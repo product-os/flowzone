@@ -1,4 +1,28 @@
 - commits:
+    - subject: Create local refs for orphaned commit and tag objects
+      hash: 4c3678755a7307bf18de1515fd53b1b13f6c4de4
+      body: |
+        For open pull requests, the versioned commit and tag
+        objects are created but are intentionally not referenced
+        anywhere in the git tree.
+
+        As such, command line tools like git describe do not return
+        the current versioned tag which is sometimes used in build scripts.
+
+        So before build, test, and publish jobs we can create the references
+        to the orphaned objects locally. These references should already
+        exist on merge/finalize.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.2.0
+  title: ""
+  date: 2023-06-28T18:38:06.225Z
+- commits:
     - subject: Update docker/setup-buildx-action digest to 16c0bc4
       hash: 938efc40261dec333b12172d1a1080750b341687
       body: |
