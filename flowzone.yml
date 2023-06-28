@@ -121,6 +121,26 @@
       ref: "${{ needs.versioned_source.outputs.sha }}"
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
+  - &describeGitState
+    # Resolve tag, semver, sha, and description of current git working copy.
+    name: Describe git state
+    id: git_describe
+    run: |
+      tag="$(git tag --points-at HEAD | tail -n1)"
+      echo "tag=${tag}" >> $GITHUB_OUTPUT
+      echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+      echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
+      echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+  
+  - &createLocalRefs
+    # Create a local reference for the versioned tag so that it
+    # may be consumed by build steps that need to know the version of the source.
+    # These refs should already exist on merge/finalize.
+    name: Create local refs
+    if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
+    run: |
+      git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+
   - &loginWithDockerHub
     name: Login to Docker Hub
     continue-on-error: true
@@ -1087,10 +1107,12 @@ jobs:
     outputs:
       tag: ${{ steps.versionist.outputs.tag || steps.git_describe.outputs.tag }}
       semver: ${{ steps.versionist.outputs.semver || steps.git_describe.outputs.semver }}
-      # note that this is NOT the same sha we use for draft artifact tagging,
-      # for that we use github.event.pull_request.head.sha which aligns with the tip of the HEAD branch
-      # whereas this will be the merge commit sha for PRs or the tagged commit sha for tags
-      sha: ${{ steps.create_commit.outputs.sha || steps.git_describe.outputs.sha }}
+      # Note that this is NOT the same sha we use for draft artifact tagging!
+      # For that we use github.event.pull_request.head.sha which aligns with the tip of the HEAD branch
+      # whereas this will be the merge commit sha for PRs or the tagged commit sha for tags.
+      sha: ${{ steps.create_tag.outputs.sha || steps.git_describe.outputs.sha }}
+      commit_sha: ${{ steps.create_commit.outputs.sha }}
+      tag_sha: ${{ steps.create_tag.outputs.sha }}
 
     env:
       <<: *gitHubCliEnvironment
@@ -1128,17 +1150,9 @@ jobs:
             exit 1
           fi
 
-      # get tag, semver, sha, and description of current git working copy
-      # these will be used as the parent sha for the versioned commit
-      # or as default tag & semver if versioning is disabled
-      - name: Inspect git state
-        id: git_describe
-        run: |
-          tag="$(git tag --points-at HEAD | tail -n1)"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-          echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-          echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
-          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      # The current commit sha is needed as the parent sha for the versioned commit
+      # and/or as default tag & semver if versioning is disabled.
+      - *describeGitState
 
       - name: Install versionist
         if: inputs.disable_versioning != true
@@ -1966,6 +1980,7 @@ jobs:
 
     steps:
       - *checkoutVersionedSha
+      - *createLocalRefs
       - *sortNodeVersions
 
       - name: Setup Node.js - Cached
@@ -2247,6 +2262,7 @@ jobs:
 
     steps:
       - *checkoutVersionedSha
+      - *createLocalRefs
       - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *sanitizeDockerStrings
@@ -2590,6 +2606,7 @@ jobs:
 
     steps:
       - *checkoutVersionedSha
+      - *createLocalRefs
       - *deployToBalenaAction
       - *getReleaseNotes
       - *updateBalenaReleaseNotes
@@ -2647,6 +2664,7 @@ jobs:
 
     steps:
       - *checkoutVersionedSha
+      - *createLocalRefs
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
@@ -2714,6 +2732,7 @@ jobs:
 
     steps:
       - *checkoutVersionedSha
+      - *createLocalRefs
 
       - name: Set up Python
         uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4
@@ -2800,6 +2819,7 @@ jobs:
 
     steps:
       - *checkoutVersionedSha
+      - *createLocalRefs
 
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
         with:
@@ -2992,6 +3012,7 @@ jobs:
 
     steps:
       - *checkoutVersionedSha
+      - *createLocalRefs
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -3053,6 +3074,7 @@ jobs:
 
     steps:
       - *checkoutVersionedSha
+      - *createLocalRefs
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -3140,6 +3162,7 @@ jobs:
     steps:
       - *rejectExternalCustomActions
       - *checkoutVersionedSha
+      - *createLocalRefs
 
       - name: Set the matrix value env var
         run: |
@@ -3179,6 +3202,7 @@ jobs:
     steps:
       - *rejectExternalCustomActions
       - *checkoutVersionedSha
+      - *createLocalRefs
 
       - name: Set the matrix value env var
         run: |

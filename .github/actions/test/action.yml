@@ -28,6 +28,18 @@ runs:
         echo "${SECRETS}"
         echo "${VARIABLES}"
 
+    # Resolve tag, semver, sha, and description of current git working copy.
+    - name: Describe git state
+      id: git_describe
+      shell: bash
+      run: |
+        set -x
+        tag="$(git tag --points-at HEAD | tail -n1)"
+        echo "tag=${tag}" >> $GITHUB_OUTPUT
+        echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
+        echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
+        echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
     - name: Check for GitHub App private key
       id: gh_app_private_key
       shell: bash
