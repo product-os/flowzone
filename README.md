@@ -142,6 +142,14 @@ jobs:
       # Required: false
       CUSTOM_JOB_SECRET_3:
 
+      # OpenAI API Key for GPT pull request reviews
+      # Required: false
+      OPENAI_API_KEY:
+
+      # OpenAI Organization ID for GPT pull request reviews
+      # Required: false
+      OPENAI_ORG_KEY:
+
     with:
       # AWS region with GitHub OIDC provider IAM configuration
       # Type: string
@@ -474,6 +482,11 @@ jobs:
       # Type: boolean
       # Required: false
       toggle_auto_merge: true
+
+      # Set to false to disable GPT pull request review generation.
+      # Type: boolean
+      # Required: false
+      enable_gpt_review: false
 
 
 ```
