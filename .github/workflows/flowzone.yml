@@ -4439,7 +4439,7 @@ jobs:
       github.event.repository.private != true
     steps:
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
         with:
           python-version: 3.11
       - name: Install gpt-review
