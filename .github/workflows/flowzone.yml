@@ -399,21 +399,36 @@ env:
   NPM_REGISTRY: https://registry.npmjs.org
   CARGO_REGISTRY: crates.io
 jobs:
-  is_pr_open:
-    name: Is PR Open
+  event_types:
+    name: Event Types
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
-        github.event_name == 'pull_request' ||
-        github.event_name == 'pull_request_target'
-      ) && (
-        github.event.action == 'opened' ||
-        github.event.action == 'synchronize'
+        (
+          github.event_name == 'pull_request' ||
+          github.event_name == 'pull_request_target'
+        ) && (
+          github.event.action == 'opened' ||
+          github.event.action == 'synchronize' ||
+          github.event.action == 'closed'
+        )
+      ) || (
+        github.event_name == 'push' &&
+        startsWith(github.ref, 'refs/tags/')
       )
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - event_name: ${{ github.event_name }}
+            event_action: ${{ github.event.action }}
     steps:
       - name: Check if an external PR is approved
         id: is_approved_external_pr
+        if: |
+          github.event.pull_request.state == 'open' &&
+          github.event.pull_request.head.repo.full_name != github.repository
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
@@ -457,7 +472,9 @@ jobs:
             false
           fi
       - name: Reject external workflow changes
-        if: github.event.pull_request.head.repo.full_name != github.repository
+        if: |
+          github.event.pull_request.state == 'open' &&
+          github.event.pull_request.head.repo.full_name != github.repository
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
@@ -485,154 +502,11 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Warn if GPT Review is skipped
-        if: github.event.repository.private && inputs.enable_gpt_review
+        if: |
+          github.event.pull_request.state == 'open' &&
+          github.event.repository.private &&
+          inputs.enable_gpt_review
         run: echo "::warning::GPT Review is not supported for private repositories!"
-      - name: Log GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "${GITHUB_CONTEXT}" || true
-  is_pr_closed:
-    name: Is PR Closed
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    if: |
-      (
-        github.event_name == 'pull_request' ||
-        github.event_name == 'pull_request_target'
-      ) && (
-        github.event.action == 'closed' &&
-        github.event.pull_request.merged == false
-      )
-    steps:
-      - name: Check if an external PR is approved
-        id: is_approved_external_pr
-        env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          pr_labels="$(gh pr view ${{ github.event.pull_request.number }} --json labels -q .labels[].name)"
-          approve_label='run-ci-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}'
-
-          for label in "${pr_labels}"
-          do
-            if [[ "$label" =~ "$approve_label" ]]
-            then
-              echo "result=true" >> $GITHUB_OUTPUT
-              exit
-            fi
-          done
-          echo "result=false" >> $GITHUB_OUTPUT
-      - name: Reject external pull_request events on pull_request
-        if: |
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        run: |
-          echo "::error::External workflows can not be used with `pull_request` events. \
-            Please contact a member of the organization for assistance."
-          exit 1
-      - name: Reject internal pull_request events on pull_request_target
-        if: |
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          echo "::error::Internal workflows should not be used with `pull_request_target` events. \
-            Please consult the documentation for more information."
-          exit 1
-      - name: Reject missing secrets
-        run: |
-          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
-          then
-            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
-            false
-          fi
-      - name: Reject external workflow changes
-        if: github.event.pull_request.head.repo.full_name != github.repository
-        env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
-          then
-            echo "::error::Modifications to workflow files are not supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
-      - name: Reject self-hosted runners
-        if: |
-          steps.is_approved_external_pr.outputs.result == 'false' &&
-          github.event.pull_request.head.repo.full_name != github.repository &&
-          (
-            contains(inputs.runs_on, 'self-hosted') ||
-            contains(inputs.custom_runs_on, 'self-hosted') ||
-            contains(inputs.docker_runs_on, 'self-hosted')
-          )
-        run: |
-          echo "::error::External workflows can not be used with self-hosted runners. \
-            Please contact a member of the organization for assistance."
-          exit 1
-      - name: Log GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "${GITHUB_CONTEXT}" || true
-  is_pr_merged:
-    name: Is PR Merged
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    if: |
-      (
-        github.event_name == 'pull_request' ||
-        github.event_name == 'pull_request_target'
-      ) && (
-        github.event.action == 'closed' &&
-        github.event.pull_request.merged == true
-      )
-    steps:
-      - name: Reject external pull_request events on pull_request
-        if: |
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        run: |
-          echo "::error::External workflows can not be used with `pull_request` events. \
-            Please contact a member of the organization for assistance."
-          exit 1
-      - name: Reject internal pull_request events on pull_request_target
-        if: |
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          echo "::error::Internal workflows should not be used with `pull_request_target` events. \
-            Please consult the documentation for more information."
-          exit 1
-      - name: Reject missing secrets
-        run: |
-          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
-          then
-            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
-            false
-          fi
-      - name: Log GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "${GITHUB_CONTEXT}" || true
-  is_pushed_tag:
-    name: Is Pushed Tag
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    steps:
-      - name: Reject missing secrets
-        run: |
-          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
-          then
-            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
-            false
-          fi
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
@@ -642,15 +516,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
-      - is_pr_merged
-      - is_pushed_tag
+      - event_types
     if: |
-      !failure() && !cancelled() && (
-        needs.is_pushed_tag.result == 'success' ||
-        needs.is_pr_open.result == 'success' ||
-        needs.is_pr_merged.result == 'success'
-      )
+      github.event.action != 'closed' || github.event.pull_request.merged == true
     defaults:
       run:
         working-directory: .
@@ -688,7 +556,7 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout merge ref
-        if: needs.is_pr_open.result == 'success'
+        if: github.event.pull_request.state == 'open'
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
@@ -696,7 +564,7 @@ jobs:
           ref: refs/pull/${{ github.event.number }}/merge
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Checkout event sha
-        if: needs.is_pr_open.result != 'success'
+        if: github.event.pull_request.state == 'open'
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           fetch-depth: 0
@@ -704,6 +572,7 @@ jobs:
           ref: ${{ github.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reject merge commits
+        if: github.event.pull_request.state == 'open'
         run: |
           if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep '^parent ' | wc -l)" -gt 1 ]
           then
@@ -853,7 +722,7 @@ jobs:
           echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
           echo "json=$(echo $response | jq -n .)" >> $GITHUB_OUTPUT
       - name: Create commit reference
-        if: needs.is_pr_merged.result == 'success' && steps.create_commit.outputs.sha != ''
+        if: github.event.pull_request.merged == true && steps.create_commit.outputs.sha != ''
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
@@ -861,7 +730,7 @@ jobs:
             -F sha='${{ steps.create_commit.outputs.sha }}' \
             -F force='true'
       - name: Create tag reference
-        if: needs.is_pr_merged.result == 'success' && steps.create_tag.outputs.sha != ''
+        if: github.event.pull_request.merged == true && steps.create_tag.outputs.sha != ''
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           TAG: ${{ steps.versionist.outputs.tag }}
@@ -875,9 +744,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: |
-      !failure() && !cancelled() &&
-      needs.versioned_source.result == 'success'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -987,9 +853,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: |
-      !failure() && !cancelled() &&
-      needs.versioned_source.result == 'success'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1100,9 +963,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: |
-      !failure() && !cancelled() &&
-      needs.versioned_source.result == 'success'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1226,10 +1086,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: |
-      !failure() && !cancelled() &&
-      needs.versioned_source.result == 'success' &&
-      inputs.cargo_targets != ''
+    if: inputs.cargo_targets != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1269,10 +1126,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: |
-      !failure() && !cancelled() &&
-      needs.versioned_source.result == 'success' &&
-      inputs.balena_slugs != ''
+    if: inputs.balena_slugs != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1312,9 +1166,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: |
-      !failure() && !cancelled() &&
-      needs.versioned_source.result == 'success'
     defaults:
       run:
         working-directory: .
@@ -1392,10 +1243,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: |
-      !failure() && !cancelled() &&
-      needs.versioned_source.result == 'success' &&
-      inputs.cloudflare_website != ''
+    if: inputs.cloudflare_website != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1426,10 +1274,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: |
-      !failure() && !cancelled() &&
-      needs.versioned_source.result == 'success' &&
-      inputs.cloudformation_templates != ''
+    if: inputs.cloudformation_templates != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1479,10 +1324,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: |
-      !failure() && !cancelled() &&
-      needs.versioned_source.result == 'success' &&
-      inputs.terraform_projects != ''
+    if: inputs.terraform_projects != ''
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1518,11 +1360,9 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_npm
-      - is_pr_open
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_open.result == 'success' &&
+      github.event.pull_request.state == 'open' &&
       needs.is_npm.outputs.npm == 'true'
     defaults:
       run:
@@ -1699,12 +1539,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
-      - is_pushed_tag
       - is_npm
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_npm.outputs.npm == 'true' &&
       needs.is_npm.outputs.npm_private != 'true'
     defaults:
@@ -1763,12 +1600,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
-      - is_pushed_tag
       - is_npm
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_npm.outputs.npm_docs == 'true'
     defaults:
       run:
@@ -1824,13 +1658,10 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - is_docker
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_docker.result == 'success' &&
-      needs.is_pr_open.result == 'success' &&
+      github.event.pull_request.state == 'open' &&
       needs.is_docker.outputs.docker_bake_json != ''
     defaults:
       run:
@@ -1987,7 +1818,9 @@ jobs:
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> $GITHUB_ENV
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> $GITHUB_ENV
       - name: Add COMPOSE_VARS to compose env file
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: |
+          github.event.pull_request.state == 'open' &&
+          github.event.pull_request.head.repo.full_name == github.repository
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         shell: bash
@@ -2003,7 +1836,9 @@ jobs:
             done < ${COMPOSE_ENV_FILE}
           fi
       - name: Add GITHUB_TOKEN to compose env file
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: |
+          github.event.pull_request.state == 'open' &&
+          github.event.pull_request.head.repo.full_name == github.repository
         env:
           GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -2301,14 +2136,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
-      - is_pushed_tag
       - is_docker
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_docker.result == 'success' &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      (github.event.pull_request.merged == true || github.event_name == 'push') &&
       join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
     defaults:
       run:
@@ -2486,7 +2317,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - is_balena
       - npm_test
       - custom_test
@@ -2497,7 +2327,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
-      needs.is_pr_open.result == 'success'
+      github.event.pull_request.state == 'open'
     strategy:
       fail-fast: false
       matrix:
@@ -2568,14 +2398,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
-      - is_pushed_tag
       - is_balena
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_balena.result == 'success' &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result
+      github.event.pull_request.merged == true || github.event_name == 'push'
     strategy:
       fail-fast: false
       matrix:
@@ -2642,12 +2468,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - is_python
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_open.result == 'success' &&
+      github.event.pull_request.state == 'open' &&
       needs.is_python.outputs.python_poetry == 'true'
     defaults:
       run:
@@ -2773,13 +2597,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
-      - is_pushed_tag
       - is_python
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_python.outputs.python_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
     defaults:
@@ -2813,9 +2634,6 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
-      - is_pr_open
-      - is_pr_merged
-      - is_pushed_tag
       - is_website
       - npm_test
       - custom_test
@@ -2825,6 +2643,7 @@ jobs:
       - versioned_source
     if: |
       !failure() && !cancelled() &&
+      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
       needs.is_website.result == 'success'
     steps:
       - name: Checkout versioned sha
@@ -2856,7 +2675,7 @@ jobs:
           inputs.docusaurus_website == false
         run: npm run deploy-docs --if-present
       - name: Update deploy branch for merged PRs
-        if: needs.is_pr_open.result != 'success'
+        if: github.event.pull_request.state != 'open'
         run: |
           echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
       - name: Deploy to Cloudflare Pages
@@ -2872,10 +2691,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_closed
+      - event_types
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_closed.result == 'success'
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == false
     defaults:
       run:
         working-directory: .
@@ -2917,10 +2736,9 @@ jobs:
       - python_publish
       - cargo_publish
       - custom_publish
-      - is_pr_open
     if: |
       !failure() && !cancelled() &&
-      needs.is_pr_open.result == 'success'
+      github.event.pull_request.state == 'open'
     defaults:
       run:
         working-directory: .
@@ -2983,16 +2801,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
-      - is_pushed_tag
       - versioned_source
     if: |
-      !failure() && !cancelled() && (
+      (
         (
-          needs.is_pr_merged.result == 'success' &&
+          github.event.pull_request.merged == true &&
           inputs.disable_versioning == false
         ) || (
-          needs.is_pushed_tag.result == 'success' &&
+          github.event_name == 'push' &&
           inputs.disable_versioning == true
         )
       )
@@ -3070,12 +2886,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - is_cargo
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_open.result == 'success' &&
+      github.event.pull_request.state == 'open' &&
       needs.is_cargo.outputs.cargo == 'true'
     defaults:
       run:
@@ -3194,13 +3008,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
-      - is_pushed_tag
       - is_cargo
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_cargo.outputs.cargo == 'true'
     defaults:
       run:
@@ -3229,12 +3040,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - is_custom
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_open.result == 'success' &&
+      github.event.pull_request.state == 'open' &&
       needs.is_custom.outputs.custom_test == 'true'
     strategy:
       fail-fast: false
@@ -3275,7 +3084,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - is_custom
       - npm_test
       - custom_test
@@ -3285,7 +3093,7 @@ jobs:
       - versioned_source
     if: |
       !failure() && !cancelled() &&
-      needs.is_pr_open.result == 'success' &&
+      github.event.pull_request.state == 'open' &&
       needs.is_custom.outputs.custom_publish == 'true'
     strategy:
       fail-fast: false
@@ -3326,13 +3134,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
-      - is_pushed_tag
       - is_custom
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_custom.outputs.custom_finalize == 'true'
     strategy:
       fail-fast: false
@@ -3373,12 +3178,11 @@ jobs:
         os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_closed
       - is_custom
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_closed.result == 'success' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == false &&
       needs.is_custom.outputs.custom_clean == 'true'
     steps:
       - name: Reject external custom actions
@@ -3450,12 +3254,10 @@ jobs:
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - is_cloudformation
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_open.result == 'success' &&
+      github.event.pull_request.state == 'open' &&
       needs.is_cloudformation.outputs.cloudformation == 'true'
     defaults:
       run:
@@ -3481,7 +3283,9 @@ jobs:
           echo "::notice::sleeping for ${random}s"
           sleep "${random}s"
       - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: |
+          github.event.pull_request.state == 'open' &&
+          github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
@@ -3683,12 +3487,9 @@ jobs:
         stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
-      - is_pushed_tag
       - is_cloudformation
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_cloudformation.outputs.cloudformation == 'true'
     env:
       AWS_RETRY_MODE: adaptive
@@ -3703,7 +3504,9 @@ jobs:
           echo "::notice::sleeping for ${random}s"
           sleep "${random}s"
       - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: |
+          github.event.pull_request.state == 'open' &&
+          github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
@@ -3811,12 +3614,10 @@ jobs:
         project: ${{ fromJSON(needs.is_terraform.outputs.projects) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - is_terraform
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_open.result == 'success' &&
+      github.event.pull_request.state == 'open' &&
       needs.is_terraform.outputs.terraform == 'true'
     defaults:
       run:
@@ -3840,7 +3641,9 @@ jobs:
           echo "::notice::sleeping for ${random}s"
           sleep "${random}s"
       - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: |
+          github.event.pull_request.state == 'open' &&
+          github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
@@ -3904,12 +3707,9 @@ jobs:
         project: ${{ fromJSON(needs.is_terraform.outputs.projects) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
-      - is_pushed_tag
       - is_terraform
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_merged.result != needs.is_pushed_tag.result &&
+      (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_terraform.outputs.terraform == 'true'
     defaults:
       run:
@@ -3933,7 +3733,9 @@ jobs:
           echo "::notice::sleeping for ${random}s"
           sleep "${random}s"
       - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: |
+          github.event.pull_request.state == 'open' &&
+          github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
@@ -3980,11 +3782,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_open.result == 'success' &&
+      github.event.pull_request.state == 'open' &&
       inputs.protect_branch == true &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.repository.default_branch == github.event.pull_request.base.ref
@@ -4184,11 +3984,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_merged
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_merged.result == 'success' &&
+      github.event.pull_request.merged == true &&
       inputs.repo_config == true
     steps:
       - name: Check for GitHub App private key
@@ -4267,7 +4065,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - npm_test
       - docker_test
       - python_test
@@ -4277,7 +4074,7 @@ jobs:
       - terraform_test
     if: |
       always() &&
-      needs.is_pr_open.result != 'skipped'
+      github.event.pull_request.state == 'open'
     steps:
       - name: Reject failed jobs
         run: |
@@ -4298,7 +4095,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
+      - event_types
       - versioned_source
       - is_npm
       - is_docker
@@ -4321,7 +4118,7 @@ jobs:
       - gpt-review
     if: |
       always() &&
-      needs.is_pr_open.result != 'skipped'
+      github.event.pull_request.state == 'open'
     steps:
       - name: Reject failed jobs
         run: |
@@ -4342,11 +4139,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - protect_branch
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_open.result != 'skipped' &&
+      github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection
@@ -4472,11 +4267,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_pr_open
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      needs.is_pr_open.result != 'skipped' &&
+      github.event.pull_request.state == 'open' &&
       inputs.enable_gpt_review == true &&
       github.event.repository.private != true
     steps:
