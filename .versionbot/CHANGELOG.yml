@@ -1,4 +1,31 @@
 - commits:
+    - subject: Fix typo in checkout conditions
+      hash: ea045af29152ea8223f3caba5d9c312715cf3f4d
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Flatten event types into one job
+      hash: 9589637d1b1d74eb728908a5f7630f136d36778b
+      body: |
+        This removes a ton of duplicated logic, and encourages use of
+        direct use of the github payload instead of helper functions
+        that may change definitions unintentionally.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.3.0
+  title: ""
+  date: 2023-07-11T13:42:04.043Z
+- commits:
     - subject: Update actions/setup-node digest to e33196f
       hash: 27b5b73e3306d2fe6c5e0f9b98a3e00d8b630886
       body: |
