@@ -15,22 +15,10 @@
   - &ifPublicRepository
     if: github.event.repository.private != true
 
-  - &checkGitHubAppPrivateKey
-    name: Check for GitHub App private key
-    id: gh_app_private_key
-    shell: bash
-    run: |
-      if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
-      then
-          echo 'found=true' >> $GITHUB_OUTPUT
-      else
-          echo 'found=false' >> $GITHUB_OUTPUT
-      fi
-
   - &getGitHubAppToken # https://github.com/marketplace/actions/github-app-token
     name: Generate GitHub App installation token
     uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # v1.8.0
-    if: steps.gh_app_private_key.outputs.found == 'true'
+    continue-on-error: true
     id: gh_app_token
     with:
       app_id: ${{ inputs.app_id }}
@@ -1085,7 +1073,6 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
 
       # checkout merge ref for open PRs
@@ -1305,7 +1292,6 @@ jobs:
       npm_access: ${{ steps.access.outputs.access }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -1425,7 +1411,6 @@ jobs:
       docker_test_matrix: ${{ steps.docker_test.outputs.build }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -1527,7 +1512,6 @@ jobs:
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -1662,7 +1646,6 @@ jobs:
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -1698,7 +1681,6 @@ jobs:
       balena_yml: ${{ steps.balena_yml.outputs.enabled }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -1740,7 +1722,6 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -1801,7 +1782,6 @@ jobs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -1833,7 +1813,6 @@ jobs:
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -1934,7 +1913,6 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -2113,7 +2091,6 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *sortNodeVersions
 
@@ -2158,7 +2135,6 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *sortNodeVersions
 
@@ -2210,7 +2186,6 @@ jobs:
       DOCKER_BUILDKIT: "1"
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -2490,7 +2465,6 @@ jobs:
         target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *sanitizeDockerStrings
@@ -2553,7 +2527,6 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -2579,7 +2552,6 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *deployToBalenaAction
@@ -2609,7 +2581,6 @@ jobs:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -2680,7 +2651,6 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -2723,7 +2693,6 @@ jobs:
 
     <<: *customWorkingDirectory
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -2768,7 +2737,6 @@ jobs:
       needs.is_website.result == 'success'
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -2822,7 +2790,6 @@ jobs:
       github.event.pull_request.merged == false
     <<: *rootWorkingDirectory
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *deleteDraftGitHubRelease
 
@@ -2843,7 +2810,6 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *deleteDraftGitHubRelease
 
@@ -2897,7 +2863,6 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *getReleaseNotes
@@ -2959,7 +2924,6 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -3024,7 +2988,6 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -3072,7 +3035,6 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -3111,7 +3073,6 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -3153,7 +3114,6 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -3188,7 +3148,6 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -3221,7 +3180,6 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -3252,7 +3210,6 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
@@ -3291,7 +3248,6 @@ jobs:
       TIMEOUT: 3
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *randomDelay # Why do people always forget that you need to add a little jitter?
@@ -3522,7 +3478,6 @@ jobs:
       LOCK_TIMEOUT: 300s # wait for TF lock(s)
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *randomDelay
@@ -3602,7 +3557,6 @@ jobs:
       LOCK_TIMEOUT: 300s
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *randomDelay
@@ -3662,7 +3616,6 @@ jobs:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *getBranchProtectionRules
       - *isDraftPullRequest
@@ -3786,7 +3739,6 @@ jobs:
       github.event.pull_request.merged == true &&
       inputs.repo_config == true
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
 
       - name: Configure repository
@@ -3906,7 +3858,6 @@ jobs:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection
 
     steps:
-      - *checkGitHubAppPrivateKey
       - *getGitHubAppToken
       - *getBranchProtectionRules
       - *isDraftPullRequest
