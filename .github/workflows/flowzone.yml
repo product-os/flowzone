@@ -756,6 +756,25 @@ jobs:
       node_versions: ${{ steps.node_versions.outputs.json }}
       npm_access: ${{ steps.access.outputs.access }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -865,6 +884,25 @@ jobs:
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
       docker_test_matrix: ${{ steps.docker_test.outputs.build }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -972,6 +1010,25 @@ jobs:
       python_versions: ${{ steps.python_versions.outputs.json }}
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -1095,6 +1152,25 @@ jobs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -1135,6 +1211,25 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       balena_yml: ${{ steps.balena_yml.outputs.enabled }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -1180,6 +1275,25 @@ jobs:
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -1251,6 +1365,25 @@ jobs:
     outputs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -1284,6 +1417,25 @@ jobs:
       stacks: ${{ steps.cloudformation_stacks.outputs.matrix }}
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -1379,6 +1531,25 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -1673,17 +1844,6 @@ jobs:
     env:
       DOCKER_BUILDKIT: "1"
     steps:
-      - name: Checkout versioned sha
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
-        with:
-          fetch-depth: 0
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Check for GitHub App private key
         id: gh_app_private_key
         shell: bash
@@ -1703,6 +1863,17 @@ jobs:
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Create local refs
+        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
+        run: |
+          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Sanitize docker strings
         id: strings
         env:
@@ -2151,6 +2322,25 @@ jobs:
         image: ${{ fromJSON(needs.is_docker.outputs.docker_images) }}
         target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -2337,6 +2527,25 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -2411,6 +2620,25 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -2482,6 +2710,25 @@ jobs:
       matrix:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -2551,6 +2798,25 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -2608,6 +2874,25 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -2646,6 +2931,25 @@ jobs:
       (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
       needs.is_website.result == 'success'
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -2817,13 +3121,6 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Checkout versioned sha
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
-        with:
-          fetch-depth: 0
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for GitHub App private key
         id: gh_app_private_key
         shell: bash
@@ -2843,6 +3140,13 @@ jobs:
           installation_id: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+      - name: Checkout versioned sha
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Generate release notes
         id: release_notes
         run: |
@@ -2906,6 +3210,25 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -2970,6 +3293,25 @@ jobs:
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -3018,6 +3360,25 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -3059,6 +3420,25 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -3109,6 +3489,25 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -3153,6 +3552,25 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -3193,6 +3611,25 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -3232,6 +3669,25 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -3269,6 +3725,25 @@ jobs:
       ATTEMPTS: 5
       TIMEOUT: 3
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -3627,6 +4102,25 @@ jobs:
       KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE }}
       LOCK_TIMEOUT: 300s
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
@@ -3719,6 +4213,25 @@ jobs:
       KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE }}
       LOCK_TIMEOUT: 300s
     steps:
+      - name: Check for GitHub App private key
+        id: gh_app_private_key
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          then
+              echo 'found=true' >> $GITHUB_OUTPUT
+          else
+              echo 'found=false' >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        if: steps.gh_app_private_key.outputs.found == 'true'
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_id: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
