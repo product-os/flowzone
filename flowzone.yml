@@ -1100,7 +1100,7 @@ jobs:
 
       # otherwise use the event sha
       - name: Checkout event sha
-        if: github.event.pull_request.state == 'open'
+        if: github.event.pull_request.state != 'open'
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
         with:
           fetch-depth: 0
