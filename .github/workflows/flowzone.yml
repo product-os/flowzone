@@ -908,7 +908,7 @@ jobs:
             echo "found=false" >> $GITHUB_OUTPUT
           fi
       - name: Setup buildx
-        uses: docker/setup-buildx-action@16c0bc4a6e6ada2cfd8afd41d22d95379cf7c32a
+        uses: docker/setup-buildx-action@2a1a44ac4aa01993040736bd95bb470da1a38365
         with:
           version: v0.9.1
       - name: Pre-process Docker bake files
@@ -1789,7 +1789,7 @@ jobs:
           platforms: all
           image: tonistiigi/binfmt:qemu-v6.2.0
       - name: Setup buildx
-        uses: docker/setup-buildx-action@16c0bc4a6e6ada2cfd8afd41d22d95379cf7c32a
+        uses: docker/setup-buildx-action@2a1a44ac4aa01993040736bd95bb470da1a38365
         with:
           driver-opts: network=host
           install: true
@@ -2029,7 +2029,7 @@ jobs:
             prefix=${{ steps.strings.outputs.prefix }}
             suffix=${{ steps.strings.outputs.suffix }}
       - name: Setup buildx
-        uses: docker/setup-buildx-action@16c0bc4a6e6ada2cfd8afd41d22d95379cf7c32a
+        uses: docker/setup-buildx-action@2a1a44ac4aa01993040736bd95bb470da1a38365
         with:
           driver-opts: network=host
           install: true
