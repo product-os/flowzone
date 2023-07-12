@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action digest to 4c0219f
+      hash: c7c7767afbce99ed9b83748a3209f7765c621871
+      body: |
+        Update docker/setup-buildx-action
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.3.3
+  title: ""
+  date: 2023-07-12T13:02:48.665Z
+- commits:
     - subject: Get Github app token before cloning versioned source
       hash: c848ce0c394ea76c5da42c441e23600f7932a72e
       body: |
