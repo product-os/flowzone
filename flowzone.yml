@@ -1143,6 +1143,7 @@ jobs:
               ;;
             'No such file or directory'*)
               echo "::error::${error}"
+              echo "::error file=.versionbot/CHANGELOG.yml,line=1::${error}"
               ;;
             *)
               echo "::error::${error}"
