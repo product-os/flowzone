@@ -1,4 +1,26 @@
 - commits:
+    - subject: Create annotation if versionist fails due to missing files
+      hash: f3401aad09b154641e1df01083f3b39de82bfadf
+      body: |
+        This will raise awareness of the issue as workflow errors
+        in the workflow summary are often never seen.
+
+        The workaround is usually to create a repo.yml with the
+        project type to satisfy versionist.
+
+        Alternatively, we could look into improving the versionist
+        project type assumptions.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.3.5
+  title: ""
+  date: 2023-07-14T18:33:44.411Z
+- commits:
     - subject: Update actions/setup-python digest to 61a6322
       hash: 21a7d22593007dab3510ef5ab3ff2022569b4a8d
       body: |
