@@ -1030,7 +1030,7 @@ jobs:
           pipx install poetry
       - name: Set up Python 3.7
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: "3.7"
       - name: Check compatibility
@@ -1045,7 +1045,7 @@ jobs:
           fi
       - name: Set up Python 3.8
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: "3.8"
       - name: Check compatibility
@@ -1060,7 +1060,7 @@ jobs:
           fi
       - name: Set up Python 3.9
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: "3.9"
       - name: Check compatibility
@@ -1075,7 +1075,7 @@ jobs:
           fi
       - name: Set up Python 3.10
         if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: "3.10"
       - name: Check compatibility
@@ -2571,7 +2571,7 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install Poetry
@@ -2649,7 +2649,7 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Set up Python
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: "3.9"
       - name: Install Poetry
@@ -2711,7 +2711,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up Python
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: "3.9"
       - name: Install Poetry
@@ -4417,7 +4417,7 @@ jobs:
       github.event.repository.private != true
     steps:
       - name: Set up Python 3.11
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: 3.11
       - name: Install gpt-review
