@@ -1141,8 +1141,8 @@ jobs:
           case ${error} in
             "") # no error
               ;;
-            'No such file or directory'*)
-              echo "::error::${error}"
+            'No such file or directory'*'/package.json')
+              echo "::error file=.versionbot/CHANGELOG.yml,line=1::Versionist expects a package.json if repo.yml does not provide a 'type' for the project"
               ;;
             *)
               echo "::error::${error}"
