@@ -1,4 +1,20 @@
 - commits:
+    - subject: Use gh api command to create blobs
+      hash: cc140780d7a8495a69413fed98fdde4c55c93bbd
+      body: |
+        This command is more likely to catch errors that are
+        missed by curl.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.3.7
+  title: ""
+  date: 2023-07-18T17:04:09.693Z
+- commits:
     - subject: Catch curl errors when creating versioned blobs
       hash: 155cb7d2cd6048d7617b9b8ed11298346bb68645
       body: ""
