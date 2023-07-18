@@ -393,8 +393,8 @@ on:
         required: false
         default: false
 concurrency:
-  group: flowzone-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != github.base_ref }}
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: ${{ github.event.action == 'synchronize' }}
 env:
   NPM_REGISTRY: https://registry.npmjs.org
   CARGO_REGISTRY: crates.io
