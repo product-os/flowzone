@@ -637,18 +637,13 @@ jobs:
 
           # Extract changes
           for file in $modified_files; do
-            echo "Processing file $file..."
 
-            # Create blob
-            content=$(cat "$file" | base64)
-            echo "{\"content\": \"$content\", \"encoding\": \"base64\"}" > blob.json
-
-            echo "Creating blob..."
-            response=$(curl --fail -s -X POST \
-              -H "Authorization: token $GH_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/$GH_REPO/git/blobs" \
-              -d @blob.json)
+            echo "Creating blob of file $file..."
+            base64 -w0 "$file" > content.base64
+            response=$(gh api -X POST /repos/$GH_REPO/git/blobs \
+              -F 'content=@content.base64' \
+              -F 'encoding=base64')
+            rm content.base64
 
             echo "$response" | jq .
             blob_sha=$(echo $response | jq -r .sha)
@@ -669,11 +664,7 @@ jobs:
           echo "Creating tree..."
           echo "$tree_json" | jq .
 
-          response=$(echo $tree_json | curl --fail -s -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/$GH_REPO/git/trees" \
-            -d @-)
+          response=$(echo $tree_json | gh api -X POST /repos/$GH_REPO/git/trees --input -)
 
           echo "$response" | jq .
           echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
