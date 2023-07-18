@@ -1,4 +1,18 @@
 - commits:
+    - subject: Catch curl errors when creating versioned blobs
+      hash: 155cb7d2cd6048d7617b9b8ed11298346bb68645
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.3.6
+  title: ""
+  date: 2023-07-18T16:28:20.310Z
+- commits:
     - subject: Create annotation if versionist fails due to missing files
       hash: f3401aad09b154641e1df01083f3b39de82bfadf
       body: |
