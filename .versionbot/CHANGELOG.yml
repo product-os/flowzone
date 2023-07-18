@@ -1,4 +1,20 @@
 - commits:
+    - subject: Fix concurrency for external contributions and non-syncronize events
+      hash: 3da75d05d829e02330244a7d2777885d292e7a49
+      body: |
+        Use the PR number for uniqueness when determining concurrency, and
+        only cancel in progress jobs if the PR is open.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.3.8
+  title: ""
+  date: 2023-07-18T17:38:16.941Z
+- commits:
     - subject: Use gh api command to create blobs
       hash: cc140780d7a8495a69413fed98fdde4c55c93bbd
       body: |
