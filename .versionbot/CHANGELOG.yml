@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update balena-io/deploy-to-balena-action action to v0.28.0
+      hash: 559d4d2458e87967593ee18cafc20f35fb393200
+      body: |
+        Update balena-io/deploy-to-balena-action from 0.27.0 to 0.28.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.3.9
+  title: ""
+  date: 2023-07-30T18:53:52.748Z
+- commits:
     - subject: Fix concurrency for external contributions and non-syncronize events
       hash: 3da75d05d829e02330244a7d2777885d292e7a49
       body: |
