@@ -1,4 +1,22 @@
 - commits:
+    - subject: Remove the open condition from external PR checks
+      hash: 3b64e1f5af4452c2d5f06b5eb70dbbb2984effb5
+      body: |
+        In the current use cases it doesn't matter if the PR
+        is open or not when performing the steps, and in some
+        cases like configureAWSCredentials we actually expect the
+        PR to be closed sometimes.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.3.10
+  title: ""
+  date: 2023-07-31T19:52:03.619Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v0.28.0
       hash: 559d4d2458e87967593ee18cafc20f35fb393200
       body: |
