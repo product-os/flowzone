@@ -1,13 +1,9 @@
 .flowzone:
   - &ifInternalPullRequest # check if the PR is from a fork by comparing the repository name
-    if: |
-      github.event.pull_request.state == 'open' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.pull_request.head.repo.full_name == github.repository
 
   - &ifExternalPullRequest # check if the PR is from a fork by comparing the repository name
-    if: |
-      github.event.pull_request.state == 'open' &&
-      github.event.pull_request.head.repo.full_name != github.repository
+    if: github.event.pull_request.head.repo.full_name != github.repository
 
   - &ifPrivateRepository
     if: github.event.repository.private
@@ -177,7 +173,9 @@
 
   - &rejectExternalWorkflowChanges
     name: Reject external workflow changes
-    <<: *ifExternalPullRequest
+    if: |
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.head.repo.full_name != github.repository
     env:
       <<: *gitHubCliEnvironment
     run: |
@@ -191,6 +189,7 @@
   - &rejectExternalCustomActions
     name: Reject external custom actions
     if: |
+      github.event.pull_request.state == 'open' &&
       github.event.pull_request.head.repo.full_name != github.repository &&
       inputs.restrict_custom_actions == true
     run: |
@@ -227,7 +226,9 @@
   - &isApprovedExternalPullRequest
     name: Check if an external PR is approved
     id: is_approved_external_pr
-    <<: *ifExternalPullRequest
+    if: |
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.head.repo.full_name != github.repository
     env:
       <<: *gitHubCliEnvironment
     run: |

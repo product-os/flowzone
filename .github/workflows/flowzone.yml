@@ -1850,9 +1850,7 @@ jobs:
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> $GITHUB_ENV
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> $GITHUB_ENV
       - name: Add COMPOSE_VARS to compose env file
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event.pull_request.head.repo.full_name == github.repository
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         shell: bash
@@ -1868,9 +1866,7 @@ jobs:
             done < ${COMPOSE_ENV_FILE}
           fi
       - name: Add GITHUB_TOKEN to compose env file
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event.pull_request.head.repo.full_name == github.repository
         env:
           GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3145,6 +3141,7 @@ jobs:
     steps:
       - name: Reject external custom actions
         if: |
+          github.event.pull_request.state == 'open' &&
           github.event.pull_request.head.repo.full_name != github.repository &&
           inputs.restrict_custom_actions == true
         run: |
@@ -3204,6 +3201,7 @@ jobs:
     steps:
       - name: Reject external custom actions
         if: |
+          github.event.pull_request.state == 'open' &&
           github.event.pull_request.head.repo.full_name != github.repository &&
           inputs.restrict_custom_actions == true
         run: |
@@ -3257,6 +3255,7 @@ jobs:
     steps:
       - name: Reject external custom actions
         if: |
+          github.event.pull_request.state == 'open' &&
           github.event.pull_request.head.repo.full_name != github.repository &&
           inputs.restrict_custom_actions == true
         run: |
@@ -3306,6 +3305,7 @@ jobs:
     steps:
       - name: Reject external custom actions
         if: |
+          github.event.pull_request.state == 'open' &&
           github.event.pull_request.head.repo.full_name != github.repository &&
           inputs.restrict_custom_actions == true
         run: |
@@ -3354,6 +3354,7 @@ jobs:
     steps:
       - name: Reject external custom actions
         if: |
+          github.event.pull_request.state == 'open' &&
           github.event.pull_request.head.repo.full_name != github.repository &&
           inputs.restrict_custom_actions == true
         run: |
@@ -3429,9 +3430,7 @@ jobs:
           echo "::notice::sleeping for ${random}s"
           sleep "${random}s"
       - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
@@ -3650,9 +3649,7 @@ jobs:
           echo "::notice::sleeping for ${random}s"
           sleep "${random}s"
       - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
@@ -3796,9 +3793,7 @@ jobs:
           echo "::notice::sleeping for ${random}s"
           sleep "${random}s"
       - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
@@ -3897,9 +3892,7 @@ jobs:
           echo "::notice::sleeping for ${random}s"
           sleep "${random}s"
       - uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ inputs.aws_iam_role }}
