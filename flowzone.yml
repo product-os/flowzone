@@ -741,14 +741,11 @@ on:
         default: >-
           {
             "administration": "write",
-            "checks": "read",
             "contents": "write",
             "metadata": "read",
             "packages": "write",
             "pages": "write",
-            "pull_requests": "read",
-            "secrets": "read",
-            "statuses": "read"
+            "pull_requests": "read"
           }
       jobs_timeout_minutes:
         description: "Timeout for the job(s)."
@@ -3858,14 +3855,9 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: >-
             {
-              "checks": "read",
               "contents": "write",
               "metadata": "read",
-              "packages": "read",
-              "pages": "read",
-              "pull_requests": "write",
-              "secrets": "read",
-              "statuses": "read"
+              "pull_requests": "write"
             }
 
       # do not use automatic github token to enable auto-merge as it will not trigger merge events

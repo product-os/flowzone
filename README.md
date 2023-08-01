@@ -219,14 +219,11 @@ jobs:
       token_scope: >
         {
           "administration": "write",
-          "checks": "read",
           "contents": "write",
           "metadata": "read",
           "packages": "write",
           "pages": "write",
-          "pull_requests": "read",
-          "secrets": "read",
-          "statuses": "read"
+          "pull_requests": "read"
         }
 
       # Timeout for the job(s).
