@@ -1,4 +1,21 @@
 - commits:
+    - subject: Remove e2e workflow that required workflow write permissions
+      hash: e6cc36014fdef78c362fdd84713102c642a541eb
+      body: |
+        The Github App flowzone-app has reduced permissions to avoid
+        leaking secrets via modified workflows, so this e2e workflow
+        must be deprecated and replaced with manual testing.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.3.14
+  title: ""
+  date: 2023-08-01T17:14:35.255Z
+- commits:
     - subject: Remove token permissions for statuses, checks, and secrets
       hash: 52a7fbaa3457c75d9e343da0aa4921842273a6ac
       body: ""
