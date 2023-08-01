@@ -133,15 +133,9 @@ jobs:
           repository: ${{ matrix.repository }}
           permissions: >-
             {
-              "actions": "read",
-              "administration": "write",
-              "checks": "read",
               "contents": "write",
-              "members": "read",
               "metadata": "read",
-              "pull_requests": "write",
-              "statuses": "read",
-              "workflows": "write"
+              "pull_requests": "write"
             }
 
       # https://cli.github.com/manual/gh_api
