@@ -224,13 +224,11 @@ jobs:
           "contents": "write",
           "members": "read",
           "metadata": "read",
-          "organization_secrets": "read",
           "packages": "write",
           "pages": "write",
           "pull_requests": "read",
           "secrets": "read",
-          "statuses": "read",
-          "workflows": "read"
+          "statuses": "read"
         }
 
       # Timeout for the job(s).

@@ -138,13 +138,11 @@ on:
             "contents": "write",
             "members": "read",
             "metadata": "read",
-            "organization_secrets": "read",
             "packages": "write",
             "pages": "write",
             "pull_requests": "read",
             "secrets": "read",
-            "statuses": "read",
-            "workflows": "read"
+            "statuses": "read"
           }
       jobs_timeout_minutes:
         description: Timeout for the job(s).
@@ -4368,13 +4366,11 @@ jobs:
               "contents": "write",
               "members": "read",
               "metadata": "read",
-              "organization_secrets": "read",
               "packages": "read",
               "pages": "read",
               "pull_requests": "write",
               "secrets": "read",
-              "statuses": "read",
-              "workflows": "read"
+              "statuses": "read"
             }
       - name: Toggle auto-merge
         if: |
