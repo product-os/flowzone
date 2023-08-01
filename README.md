@@ -218,11 +218,9 @@ jobs:
       # Required: false
       token_scope: >
         {
-          "actions": "read",
           "administration": "write",
           "checks": "read",
           "contents": "write",
-          "members": "read",
           "metadata": "read",
           "packages": "write",
           "pages": "write",
