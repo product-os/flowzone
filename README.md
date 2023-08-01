@@ -6,28 +6,26 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 
 ## Contents
 
-- [Flowzone](#flowzone)
-  - [Contents](#contents)
-  - [Getting Started](#getting-started)
-  - [Usage](#usage)
-    - [Merging](#merging)
-    - [External Contributions](#external-contributions)
-    - [Commit Message](#commit-message)
-      - [Skipping Workflow Runs](#skipping-workflow-runs)
-  - [Supported project types](#supported-project-types)
-    - [npm](#npm)
-    - [Docker](#docker)
-    - [balena](#balena)
-    - [Python (with Poetry)](#python-with-poetry)
-    - [Rust](#rust)
-    - [GitHub](#github)
-    - [Custom](#custom)
-    - [Versioning](#versioning)
-    - [Docs](#docs)
-    - [Website](#website)
-  - [Testing](#testing)
-  - [Help](#help)
-  - [Contributing](#contributing)
+- [Contents](#contents)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+  - [Merging](#merging)
+  - [External Contributions](#external-contributions)
+  - [Commit Message](#commit-message)
+    - [Skipping Workflow Runs](#skipping-workflow-runs)
+- [Supported project types](#supported-project-types)
+  - [npm](#npm)
+  - [Docker](#docker)
+  - [balena](#balena)
+  - [Python (with Poetry)](#python-with-poetry)
+  - [Rust](#rust)
+  - [GitHub](#github)
+  - [Custom](#custom)
+  - [Versioning](#versioning)
+  - [Docs](#docs)
+  - [Website](#website)
+- [Help](#help)
+- [Contributing](#contributing)
 
 ## Getting Started
 
@@ -657,12 +655,6 @@ If you have an `npm run doc` script then it will automatically be run and the ge
 If you have docs that you intend to publish on a website, checkout the [Getting Started](https://docusaurus-builder.pages.dev/) section of the Docusaurus builder. The docs will be built using the Docusaurus framework and published on Cloudflare Pages.
 
 If you intend to use a custom framework for your docs build, then you can make use of the custom website build option by adding your desired build command in a input called `custom_website_build`. This command should generate your static site into a folder called `build` which will then be deployed to Cloudflare Pages.
-
-## Testing
-
-There is a dispatch workflow to test development branches of Flowzone with a range of repositories to ensure breaking changes aren't introduced.
-
-See [docs/workflow-dispatch.md#e2e](docs/workflow-dispatch.md#e2e) for more information.
 
 ## Help
 
