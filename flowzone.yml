@@ -740,11 +740,9 @@ on:
         # https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-a-scoped-access-token
         default: >-
           {
-            "actions": "read",
             "administration": "write",
             "checks": "read",
             "contents": "write",
-            "members": "read",
             "metadata": "read",
             "packages": "write",
             "pages": "write",
@@ -3860,10 +3858,8 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: >-
             {
-              "actions": "read",
               "checks": "read",
               "contents": "write",
-              "members": "read",
               "metadata": "read",
               "packages": "read",
               "pages": "read",
