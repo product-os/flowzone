@@ -2924,7 +2924,7 @@ jobs:
         run: cargo fmt --check
 
       - name: Install cross
-        run: cargo install cross
+        run: cargo install cross --locked
 
       - name: Lint with clippy
         run: cross -v clippy --all-targets --all-features -- -D warnings
@@ -2984,7 +2984,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install cross
-        run: cargo install cross
+        run: cargo install cross --locked
 
       - name: Build release for toolchain ${{ matrix.target }}
         run: cross -v build --release --target ${{ matrix.target }}
