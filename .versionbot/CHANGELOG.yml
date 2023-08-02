@@ -1,4 +1,22 @@
 - commits:
+    - subject: Use `--locked` flag when installing cross
+      hash: 42484338e6ce8c1e9948c27b49e4bb3fe4c4a889
+      body: >
+        This is to prevent bugs from dependencies from breaking the build.
+
+
+        See: https://github.com/balena-io-modules/node-systemd/actions/runs/5740095381/job/15557192112
+
+        Caused by: https://github.com/bytecodealliance/rustix/issues/767
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 5.3.15
+  title: ""
+  date: 2023-08-02T14:59:00.129Z
+- commits:
     - subject: Remove e2e workflow that required workflow write permissions
       hash: e6cc36014fdef78c362fdd84713102c642a541eb
       body: |
