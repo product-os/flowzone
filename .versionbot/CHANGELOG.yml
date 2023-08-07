@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update cloudflare/wrangler-action action to v3
+      hash: dc5b0227ba0b69462b4de0557bedfd63997a1b73
+      body: |
+        Update cloudflare/wrangler-action from 2.0.0 to 3.0.0
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.4.0
+  title: ""
+  date: 2023-08-07T20:54:27.021Z
+- commits:
     - subject: Use `--locked` flag when installing cross
       hash: 42484338e6ce8c1e9948c27b49e4bb3fe4c4a889
       body: >
