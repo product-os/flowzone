@@ -1103,6 +1103,12 @@ jobs:
       # and/or as default tag & semver if versioning is disabled.
       - *describeGitState
 
+      - name: Setup Node.js 18.x
+        if: inputs.disable_versioning != true
+        uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8 # v3
+        with:
+          node-version: 18.x
+
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |

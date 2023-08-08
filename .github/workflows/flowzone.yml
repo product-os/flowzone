@@ -570,6 +570,11 @@ jobs:
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
           echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - name: Setup Node.js 18.x
+        if: inputs.disable_versioning != true
+        uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8
+        with:
+          node-version: 18.x
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |
