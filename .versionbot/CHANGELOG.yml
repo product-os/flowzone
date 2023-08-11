@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): pin abatilo/actions-poetry action to 192395c"
+      hash: cc92e44e4462908b5a444e57713ab4f79262fa99
+      body: |
+        Update abatilo/actions-poetry
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.6.1
+  title: ""
+  date: 2023-08-11T13:53:50.041Z
+- commits:
     - subject: Run skopeo from container image instead of installed package
       hash: 68ead8bc4793e8588794bef7f61c58259a2dcc8d
       body: |
