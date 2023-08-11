@@ -1025,7 +1025,7 @@ jobs:
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
       - name: Setup poetry
-        uses: abatilo/actions-poetry@v2.3.0
+        uses: abatilo/actions-poetry@192395c0d10c082a7c62294ab5d9a9de40e48974
         with:
           poetry-version: 1.5.1
       - name: Validate project Python requirements
@@ -2536,7 +2536,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Setup poetry
-        uses: abatilo/actions-poetry@v2.3.0
+        uses: abatilo/actions-poetry@192395c0d10c082a7c62294ab5d9a9de40e48974
         with:
           poetry-version: 1.5.1
       - name: Run poetry install
@@ -2615,7 +2615,7 @@ jobs:
         with:
           python-version: "3.9"
       - name: Setup poetry
-        uses: abatilo/actions-poetry@v2.3.0
+        uses: abatilo/actions-poetry@192395c0d10c082a7c62294ab5d9a9de40e48974
         with:
           poetry-version: 1.5.1
       - name: Generate Python metadata
@@ -2678,7 +2678,7 @@ jobs:
         with:
           python-version: "3.9"
       - name: Setup poetry
-        uses: abatilo/actions-poetry@v2.3.0
+        uses: abatilo/actions-poetry@192395c0d10c082a7c62294ab5d9a9de40e48974
         with:
           poetry-version: 1.5.1
       - name: Publish release

@@ -465,7 +465,7 @@
 
   - &setupPoetry # https://github.com/abatilo/actions-poetry
     name: Setup poetry
-    uses: abatilo/actions-poetry@v2.3.0
+    uses: abatilo/actions-poetry@192395c0d10c082a7c62294ab5d9a9de40e48974 # v2.3.0
     with:
       poetry-version: "1.5.1"
 
