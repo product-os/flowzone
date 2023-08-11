@@ -458,9 +458,16 @@
       install: true
 
   - &setupCrane # https://github.com/imjasonh/setup-crane
+    name: Setup crane
     uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c # v0.3
     with:
       version: v0.14.0
+
+  - &setupPoetry # https://github.com/abatilo/actions-poetry
+    name: Setup poetry
+    uses: abatilo/actions-poetry@v2.3.0
+    with:
+      poetry-version: "1.5.1"
 
   # If there are no existing protections an empty object will be returned
   - &getBranchProtectionRules
@@ -1103,6 +1110,12 @@ jobs:
       # and/or as default tag & semver if versioning is disabled.
       - *describeGitState
 
+      - name: Setup Node.js 18.x
+        if: inputs.disable_versioning != true
+        uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8 # v3
+        with:
+          node-version: 18.x
+
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |
@@ -1483,7 +1496,7 @@ jobs:
           echo "build=${matrix}">> $GITHUB_OUTPUT
 
   is_python:
-    name: Determine compatible Python versions
+    name: Is python
     env:
       SUPPORTED_VERSIONS: |
         3.8
@@ -1535,16 +1548,13 @@ jobs:
             echo "pypi_publish=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Install Poetry tool
-        if: steps.python_poetry.outputs.enabled == 'true'
-        run: |
-          pipx install poetry
-
       - name: Set up Python environment
         if: steps.python_poetry.outputs.enabled == 'true'
         uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
+
+      - *setupPoetry
 
       - name: Validate project Python requirements
         if: steps.python_poetry.outputs.enabled == 'true'
@@ -2343,7 +2353,9 @@ jobs:
 
             platform_tag="${LOCAL_TAG}-${platform}"
 
-            skopeo copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
+            docker run --rm --network host -v "${tar}:${tar}:ro" \
+              quay.io/skopeo/stable:v1.13.0 \
+              copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
 
             docker buildx imagetools create -t ${LOCAL_TAG} --append "${platform_tag}" || \
               docker buildx imagetools create -t ${LOCAL_TAG} "${platform_tag}"
@@ -2540,9 +2552,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
-        run: |
-          pipx install poetry
+      - *setupPoetry
 
       - name: Run poetry install
         run: |
@@ -2610,9 +2620,7 @@ jobs:
         with:
           python-version: "3.9"
 
-      - name: Install Poetry
-        run: |
-          pipx install poetry
+      - *setupPoetry
 
       - *generatePythonMetadata
 
@@ -2651,9 +2659,7 @@ jobs:
         with:
           python-version: "3.9"
 
-      - name: Install Poetry
-        run: |
-          pipx install poetry
+      - *setupPoetry
 
       - name: Publish release
         env:

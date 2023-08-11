@@ -570,6 +570,11 @@ jobs:
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
           echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - name: Setup Node.js 18.x
+        if: inputs.disable_versioning != true
+        uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8
+        with:
+          node-version: 18.x
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |
@@ -950,7 +955,7 @@ jobs:
 
           echo "build=${matrix}">> $GITHUB_OUTPUT
   is_python:
-    name: Determine compatible Python versions
+    name: Is python
     env:
       SUPPORTED_VERSIONS: |
         3.8
@@ -1014,15 +1019,15 @@ jobs:
             echo "enabled=false" >> $GITHUB_OUTPUT
             echo "pypi_publish=false" >> $GITHUB_OUTPUT
           fi
-      - name: Install Poetry tool
-        if: steps.python_poetry.outputs.enabled == 'true'
-        run: |
-          pipx install poetry
       - name: Set up Python environment
         if: steps.python_poetry.outputs.enabled == 'true'
         uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
+      - name: Setup poetry
+        uses: abatilo/actions-poetry@v2.3.0
+        with:
+          poetry-version: 1.5.1
       - name: Validate project Python requirements
         if: steps.python_poetry.outputs.enabled == 'true'
         run: |
@@ -2026,7 +2031,8 @@ jobs:
         with:
           driver-opts: network=host
           install: true
-      - uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
+      - name: Setup crane
+        uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
         with:
           version: v0.14.0
       - name: Warn if tests skipped
@@ -2053,7 +2059,9 @@ jobs:
 
             platform_tag="${LOCAL_TAG}-${platform}"
 
-            skopeo copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
+            docker run --rm --network host -v "${tar}:${tar}:ro" \
+              quay.io/skopeo/stable:v1.13.0 \
+              copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
 
             docker buildx imagetools create -t ${LOCAL_TAG} --append "${platform_tag}" || \
               docker buildx imagetools create -t ${LOCAL_TAG} "${platform_tag}"
@@ -2237,7 +2245,8 @@ jobs:
             latest=${{ needs.versioned_source.outputs.semver != '' }}
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
-      - uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
+      - name: Setup crane
+        uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
         with:
           version: v0.14.0
       - name: Login to GitHub Container Registry
@@ -2526,9 +2535,10 @@ jobs:
         uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Poetry
-        run: |
-          pipx install poetry
+      - name: Setup poetry
+        uses: abatilo/actions-poetry@v2.3.0
+        with:
+          poetry-version: 1.5.1
       - name: Run poetry install
         run: |
           poetry install
@@ -2604,9 +2614,10 @@ jobs:
         uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: "3.9"
-      - name: Install Poetry
-        run: |
-          pipx install poetry
+      - name: Setup poetry
+        uses: abatilo/actions-poetry@v2.3.0
+        with:
+          poetry-version: 1.5.1
       - name: Generate Python metadata
         id: python_meta
         run: |
@@ -2666,9 +2677,10 @@ jobs:
         uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: "3.9"
-      - name: Install Poetry
-        run: |
-          pipx install poetry
+      - name: Setup poetry
+        uses: abatilo/actions-poetry@v2.3.0
+        with:
+          poetry-version: 1.5.1
       - name: Publish release
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
