@@ -950,7 +950,13 @@ jobs:
 
           echo "build=${matrix}">> $GITHUB_OUTPUT
   is_python:
-    name: Is python
+    name: Determine compatible Python versions
+    env:
+      SUPPORTED_VERSIONS: |
+        3.8
+        3.9
+        3.10
+        3.11
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -980,7 +986,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Check for Python Poetry pyproject.toml
+      - name: Identify Poetry project
         id: python_poetry
         run: |
           if test -f "pyproject.toml"
@@ -1008,75 +1014,34 @@ jobs:
             echo "enabled=false" >> $GITHUB_OUTPUT
             echo "pypi_publish=false" >> $GITHUB_OUTPUT
           fi
-      - name: Install Poetry
+      - name: Install Poetry tool
         if: steps.python_poetry.outputs.enabled == 'true'
         run: |
           pipx install poetry
-      - name: Set up Python 3.7
+      - name: Set up Python environment
         if: steps.python_poetry.outputs.enabled == 'true'
         uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
-          python-version: "3.7"
-      - name: Check compatibility
+          python-version: ${{ env.SUPPORTED_VERSIONS }}
+      - name: Validate project Python requirements
         if: steps.python_poetry.outputs.enabled == 'true'
         run: |
-          error_check=`(poetry env use 3.7 2>&1 || true)`
-          if ! grep -q "Please choose a compatible version" <<< $error_check
-          then
-            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.7"]')" >> $GITHUB_ENV
-          else
-            echo "Python 3.7 does not meet project requirements."
-          fi
-      - name: Set up Python 3.8
-        if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
-        with:
-          python-version: "3.8"
-      - name: Check compatibility
-        if: steps.python_poetry.outputs.enabled == 'true'
-        run: |
-          error_check=`(poetry env use 3.8 2>&1 || true)`
-          if ! grep -q "Please choose a compatible version" <<< $error_check
-          then
-            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.8"]')" >> $GITHUB_ENV
-          else
-            echo "Python 3.8 does not meet project requirements."
-          fi
-      - name: Set up Python 3.9
-        if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
-        with:
-          python-version: "3.9"
-      - name: Check compatibility
-        if: steps.python_poetry.outputs.enabled == 'true'
-        run: |
-          error_check=`(poetry env use 3.9 2>&1 || true)`
-          if ! grep -q "Please choose a compatible version" <<< $error_check
-          then
-            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.9"]')" >> $GITHUB_ENV
-          else
-            echo "Python 3.9 does not meet project requirements."
-          fi
-      - name: Set up Python 3.10
-        if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
-        with:
-          python-version: "3.10"
-      - name: Check compatibility
-        if: steps.python_poetry.outputs.enabled == 'true'
-        run: |
-          error_check=`(poetry env use 3.10 2>&1 || true)`
-          if ! grep -q "Please choose a compatible version" <<< $error_check
-          then
-            echo "PYTHON_VERSIONS=$(echo "${PYTHON_VERSIONS}" | jq -c '. + ["3.10"]')" >> $GITHUB_ENV
-          else
-            echo "Python 3.10 does not meet project requirements."
-          fi
-      - name: Set Python versions
+          versions=()
+          while IFS= read -r version; do
+            echo "Setting up Python $version"
+            error_check=`(poetry env use $version 2>&1 || true)`
+            if ! grep -q "Please choose a compatible version" <<< $error_check; then
+              versions+=("$version")
+            else
+              echo "Python $version does not meet project requirements."
+            fi
+          done <<< "$(echo -n "${SUPPORTED_VERSIONS}")"
+          echo "PYTHON_VERSIONS=[$(IFS=,; echo "${versions[*]}")]" >> $GITHUB_ENV
+      - name: Output compatible Python versions
         if: steps.python_poetry.outputs.enabled == 'true'
         id: python_versions
         run: |
-          echo "json=[\"\^3.7\"]" >> $GITHUB_OUTPUT
+          echo "json=[\"3.x\"]" >> $GITHUB_OUTPUT
           if [ "${PYTHON_VERSIONS}" != "[]" ]
           then
             echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
