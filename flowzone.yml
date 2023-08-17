@@ -1112,7 +1112,7 @@ jobs:
 
       - name: Setup Node.js 18.x
         if: inputs.disable_versioning != true
-        uses: actions/setup-node@bea5baf987ba7aa777a8a0b4ace377a21c45c381 # v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
         with:
           node-version: 18.x
 
@@ -1328,7 +1328,7 @@ jobs:
 
       - name: Setup Node.js 12.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@bea5baf987ba7aa777a8a0b4ace377a21c45c381 # v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
         with:
           node-version: 12.x
       - name: Check engine
@@ -1341,7 +1341,7 @@ jobs:
 
       - name: Setup Node.js 14.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@bea5baf987ba7aa777a8a0b4ace377a21c45c381 # v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
         with:
           node-version: 14.x
       - name: Check engine
@@ -1354,7 +1354,7 @@ jobs:
 
       - name: Setup Node.js 16.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@bea5baf987ba7aa777a8a0b4ace377a21c45c381 # v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
         with:
           node-version: 16.x
       - name: Check engine
@@ -1367,7 +1367,7 @@ jobs:
 
       - name: Setup Node.js 18.x
         if: steps.npm.outputs.enabled == 'true'
-        uses: actions/setup-node@bea5baf987ba7aa777a8a0b4ace377a21c45c381 # v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
         with:
           node-version: 18.x
       - name: Check engine
@@ -1880,7 +1880,7 @@ jobs:
 
       - name: Setup Node.js - Cached
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
-        uses: actions/setup-node@bea5baf987ba7aa777a8a0b4ace377a21c45c381 # v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
         with:
           node-version: "${{ matrix.node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
@@ -1888,7 +1888,7 @@ jobs:
 
       - name: Setup Node.js
         if: needs.is_npm.outputs.has_npm_lockfile != 'true'
-        uses: actions/setup-node@bea5baf987ba7aa777a8a0b4ace377a21c45c381 # v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
         with:
           node-version: "${{ matrix.node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
@@ -2008,7 +2008,7 @@ jobs:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@bea5baf987ba7aa777a8a0b4ace377a21c45c381 # v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
         with:
           # use npm v9 or later as the access flag behaviour has changed
           # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
@@ -2066,7 +2066,7 @@ jobs:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@bea5baf987ba7aa777a8a0b4ace377a21c45c381 # v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
         with:
           # use npm v9 or later as the access flag behaviour has changed
           # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
@@ -2697,7 +2697,7 @@ jobs:
       - *checkoutVersionedSha
       - *createLocalRefs
 
-      - uses: actions/setup-node@bea5baf987ba7aa777a8a0b4ace377a21c45c381 # v3
+      - uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
         with:
           node-version: 18
 
