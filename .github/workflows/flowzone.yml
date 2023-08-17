@@ -3516,14 +3516,20 @@ jobs:
           echo "template_file=${template_file}" >> $GITHUB_OUTPUT
           echo "tags=${tags}" >> $GITHUB_OUTPUT
 
+          EOF="$(openssl rand -hex 16)"
+
           if [[ -n "$params" ]]; then
               params="$(echo "${params}" | envsubst)"
-              echo "params=--parameter-overrides ${params}" >> $GITHUB_OUTPUT
+              echo "params<<$EOF" >> $GITHUB_OUTPUT
+              echo --parameter-overrides ${params} >> $GITHUB_OUTPUT
+              echo $EOF >> $GITHUB_OUTPUT
           fi
 
           if [[ -n "$kvparams" ]]; then
               kvparams="$(echo "${kvparams}" | envsubst)"
-              echo "kvparams=--parameters ${kvparams}" >> $GITHUB_OUTPUT
+              echo "kvparams<<$EOF" >> $GITHUB_OUTPUT
+              echo --parameters ${kvparams} >> $GITHUB_OUTPUT
+              echo $EOF >> $GITHUB_OUTPUT
           fi
 
           echo "caps=${caps}" >> $GITHUB_OUTPUT
