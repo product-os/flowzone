@@ -1564,7 +1564,7 @@ jobs:
             echo "Setting up Python $version"
             error_check=`(poetry env use $version 2>&1 || true)`
             if ! grep -q "Please choose a compatible version" <<< $error_check; then
-              versions+=("$version")
+              versions+=("\"$version\"")
             else
               echo "Python $version does not meet project requirements."
             fi
