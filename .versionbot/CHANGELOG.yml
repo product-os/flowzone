@@ -1,4 +1,18 @@
 - commits:
+    - subject: Switch to pull_request.user.type property for identifying bots
+      hash: 54269e0cf9452082a9e79d5b6faeca3455c20616
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.6.9
+  title: ""
+  date: 2023-08-23T18:22:59.576Z
+- commits:
     - subject: Do not toggle automerge for PRs authored by github apps
       hash: 9b1baa30794f7b754b507bd876fc8fd10935efff
       body: |
