@@ -4273,7 +4273,8 @@ jobs:
       - protect_branch
     if: |
       github.event.pull_request.state == 'open' &&
-      inputs.toggle_auto_merge == true
+      inputs.toggle_auto_merge == true &&
+      contains(github.event.pull_request.user.login, '[bot]') == false
     env:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection
     steps:
