@@ -1210,9 +1210,6 @@ jobs:
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
       - name: Check for custom actions
-        if: |
-          github.event.pull_request.head.repo.full_name == github.repository ||
-          inputs.restrict_custom_actions == false
         id: custom
         run: |
           if [ -d .github/actions/test ]
