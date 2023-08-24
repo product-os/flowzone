@@ -24,7 +24,7 @@
 
   # optionally attempt to get AWS login short-lived session credentials over OIDC
   - &configureAWSCredentials # https://github.com/aws-actions/configure-aws-credentials
-    uses: aws-actions/configure-aws-credentials@ef93a73b1313f148011965ef7361f667f371f58b # v3
+    uses: aws-actions/configure-aws-credentials@04b98b3f9e85f563fb061be8751a0352327246b0 # v3
     <<: *ifInternalPullRequest
     continue-on-error: true
     with:
