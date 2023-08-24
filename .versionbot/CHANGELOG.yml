@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update aws-actions/configure-aws-credentials action to v3"
+      hash: 915a568b57811a49eaf4d3e099e835902c2d8056
+      body: |
+        Update aws-actions/configure-aws-credentials from 2 to 3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.6.11
+  title: ""
+  date: 2023-08-24T20:10:09.543Z
+- commits:
     - subject: Save docker image to file before running compose tests
       hash: 2b5f4143f660b0c6289f668e668ebbe58034b624
       body: |
