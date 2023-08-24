@@ -1897,16 +1897,16 @@ jobs:
             *.cache-from=type=gha,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
           load: true
           provenance: false
-      - name: Run docker compose tests
-        if: needs.is_docker.outputs.docker_compose_tests == 'true'
-        run: |
-          docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
-          docker compose logs
       - name: Save image to file
         if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
           zstd -v ${DOCKER_TAR}
+      - name: Run docker compose tests
+        if: needs.is_docker.outputs.docker_compose_tests == 'true'
+        run: |
+          docker compose up sut --exit-code-from sut || { docker compose logs ; exit 1 ; }
+          docker compose logs
       - name: Upload artifacts
         if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
