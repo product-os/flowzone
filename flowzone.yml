@@ -102,7 +102,7 @@
 
   - &checkoutVersionedSha
     name: Checkout versioned sha
-    uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+    uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
     with:
       fetch-depth: 0
       submodules: "recursive"
@@ -1079,7 +1079,7 @@ jobs:
       # checkout merge ref for open PRs
       - name: Checkout merge ref
         if: github.event.pull_request.state == 'open'
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
           fetch-depth: 0
           submodules: "recursive"
@@ -1089,7 +1089,7 @@ jobs:
       # otherwise use the event sha
       - name: Checkout event sha
         if: github.event.pull_request.state != 'open'
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
           fetch-depth: 0
           submodules: "recursive"
