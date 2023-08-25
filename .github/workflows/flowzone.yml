@@ -1757,11 +1757,17 @@ jobs:
             fi
           fi
 
+          if [[ "${image_slug}" =~ ^docker\.io\/(.*)$ ]]
+          then
+            dockerhub_slug="${BASH_REMATCH[1]}"
+          fi
+
           echo "image=${image_slug}" >> $GITHUB_OUTPUT
           echo "target=${target_slug}" >> $GITHUB_OUTPUT
           echo "platform=${platform_slug}" >> $GITHUB_OUTPUT
           echo "prefix=${prefix_slug}" >> $GITHUB_OUTPUT
           echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
+          echo "dockerhub=${dockerhub_slug}" >> $GITHUB_OUTPUT
       - name: Generate docker metadata
         id: test_meta
         uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175
@@ -2001,11 +2007,17 @@ jobs:
             fi
           fi
 
+          if [[ "${image_slug}" =~ ^docker\.io\/(.*)$ ]]
+          then
+            dockerhub_slug="${BASH_REMATCH[1]}"
+          fi
+
           echo "image=${image_slug}" >> $GITHUB_OUTPUT
           echo "target=${target_slug}" >> $GITHUB_OUTPUT
           echo "platform=${platform_slug}" >> $GITHUB_OUTPUT
           echo "prefix=${prefix_slug}" >> $GITHUB_OUTPUT
           echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
+          echo "dockerhub=${dockerhub_slug}" >> $GITHUB_OUTPUT
       - name: Generate docker metadata
         id: draft_meta
         uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175
@@ -2220,11 +2232,17 @@ jobs:
             fi
           fi
 
+          if [[ "${image_slug}" =~ ^docker\.io\/(.*)$ ]]
+          then
+            dockerhub_slug="${BASH_REMATCH[1]}"
+          fi
+
           echo "image=${image_slug}" >> $GITHUB_OUTPUT
           echo "target=${target_slug}" >> $GITHUB_OUTPUT
           echo "platform=${platform_slug}" >> $GITHUB_OUTPUT
           echo "prefix=${prefix_slug}" >> $GITHUB_OUTPUT
           echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
+          echo "dockerhub=${dockerhub_slug}" >> $GITHUB_OUTPUT
       - name: Generate docker metadata
         id: final_meta
         uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175
@@ -2312,13 +2330,13 @@ jobs:
             done
           done
       - name: Update DockerHub Description
-        if: contains(steps.strings.outputs.image, 'docker.io') && github.base_ref == github.event.repository.default_branch
+        if: steps.strings.outputs.dockerhub != '' && github.base_ref == github.event.repository.default_branch
         continue-on-error: true
         uses: peter-evans/dockerhub-description@dc67fad7001ef9e8e3c124cb7a64e16d0a63d864
         with:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-          repository: ${{ steps.dockerhub.outputs.repository }}
+          repository: ${{ steps.strings.outputs.dockerhub }}
           readme-filepath: ./README.md
   balena_publish:
     name: Publish balena
