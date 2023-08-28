@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update docker/setup-buildx-action digest to 885d146"
+      hash: 734f9b13b728663091c716f23c175ae7be8bf946
+      body: |
+        Update docker/setup-buildx-action
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.6.15
+  title: ""
+  date: 2023-08-28T07:52:44.181Z
+- commits:
     - subject: Fix resolving of dockerhub image slug for readme publishing
       hash: fef733dcab9c4192b86b249de8daf042adfc3640
       body: ""
