@@ -458,7 +458,7 @@
 
   - &setupBuildx # https://github.com/docker/setup-buildx-action
     name: Setup buildx
-    uses: docker/setup-buildx-action@4c0219f9ac95b02789c1075625400b2acbff50b1 # v2
+    uses: docker/setup-buildx-action@885d1462b80bc1c1c7f0b00334ad271f09369c55 # v2
     with:
       driver-opts: network=host
       install: true
@@ -1444,7 +1444,7 @@ jobs:
           fi
 
       - name: Setup buildx
-        uses: docker/setup-buildx-action@4c0219f9ac95b02789c1075625400b2acbff50b1 # v2
+        uses: docker/setup-buildx-action@885d1462b80bc1c1c7f0b00334ad271f09369c55 # v2
         with:
           # pin to a known working version because v0.10.x will
           # create a group called "default" that does not contain multiple targets
