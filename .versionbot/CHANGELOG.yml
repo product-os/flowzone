@@ -1,4 +1,26 @@
 - commits:
+    - subject: Only provide automatic GITHUB_TOKEN to compose vars
+      hash: 83ed64c293e86aa16add5322222f5a362cc257f2
+      body: |
+        The docker compose tests are one of the few places
+        where we are providing elevated secrets to untrusted user
+        code beyond the workflow itself.
+
+        In the case of a GitHub token appended to compose vars,
+        we should use the automatic GHA token if possible and avoid
+        leaking a privileged PAT or ephemeral app token, even when restricted
+        to internal PRs.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.7.0
+  title: ""
+  date: 2023-08-28T19:15:52.660Z
+- commits:
     - subject: "chore(deps): update docker/setup-buildx-action digest to 885d146"
       hash: 734f9b13b728663091c716f23c175ae7be8bf946
       body: |
