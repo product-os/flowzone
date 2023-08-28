@@ -2193,11 +2193,10 @@ jobs:
             done < ${COMPOSE_ENV_FILE}
           fi
 
-      - name: Add GITHUB_TOKEN to compose env file
-        <<: *ifInternalPullRequest
+      - name: Add automatic GITHUB_TOKEN to compose env file
         env:
-          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if ! grep -q '^GH_TOKEN=' ${COMPOSE_ENV_FILE}
           then
