@@ -16,12 +16,14 @@
     uses: tibdex/github-app-token@0914d50df753bbc42180d982a6550f195390069f # v2.0.0
     continue-on-error: true
     id: gh_app_token
-    with:
+    with: &getGitHubAppTokenWith
       app_id: ${{ inputs.app_id }}
       installation_retrieval_mode: id
       installation_retrieval_payload: ${{ inputs.installation_id }}
       private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
       permissions: ${{ inputs.token_scope }}
+      repositories: >-
+        [ "${{ github.event.pull_request.head.repo.name }}" ]
 
   # optionally attempt to get AWS login short-lived session credentials over OIDC
   - &configureAWSCredentials # https://github.com/aws-actions/configure-aws-credentials
@@ -1095,7 +1097,18 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # include all repositories in token scope in order to generate embedded changelogs
+          repositories: ""
+          # admin permission is currently required to bypass branch protection rules
+          permissions: >-
+            {
+              "administration": "write",
+              "contents": "write",
+              "metadata": "read"
+            }
 
       # checkout merge ref for open PRs
       # https://github.com/actions/checkout

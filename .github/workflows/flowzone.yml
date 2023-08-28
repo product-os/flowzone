@@ -538,7 +538,13 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "administration": "write",
+              "contents": "write",
+              "metadata": "read"
+            }
+          repositories: ""
       - name: Checkout merge ref
         if: github.event.pull_request.state == 'open'
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
@@ -754,6 +760,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -873,6 +880,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -996,6 +1004,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1089,6 +1098,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1139,6 +1149,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1194,6 +1205,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1272,6 +1284,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1315,6 +1328,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1427,6 +1441,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1607,6 +1622,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Sort node versions
         id: node_versions
         env:
@@ -1658,6 +1674,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Sort node versions
         id: node_versions
         env:
@@ -1713,6 +1730,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2190,6 +2208,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2393,6 +2412,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2477,6 +2497,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2558,6 +2579,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2640,6 +2662,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2710,6 +2733,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2761,6 +2785,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2826,6 +2851,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -2861,6 +2887,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -2925,6 +2952,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3005,6 +3033,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3079,6 +3108,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3137,6 +3167,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3189,6 +3220,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3250,6 +3282,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3305,6 +3338,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3356,6 +3390,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3406,6 +3441,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3455,6 +3491,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3836,6 +3873,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3937,6 +3975,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -4021,6 +4060,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Get branch protection rules
         id: branch_protection
         env:
@@ -4206,6 +4246,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Configure repository
         env:
           GH_DEBUG: "true"
@@ -4355,6 +4396,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Get branch protection rules
         id: branch_protection
         env:
