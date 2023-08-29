@@ -1,4 +1,25 @@
 - commits:
+    - subject: Switch to latest skopeo testing image
+      hash: fea1c67bb93db6bedf0d096e140a5629e677ca68
+      body: |
+        The stable images have been deleted, possibly by mistake,
+        but this is blocking merges.
+
+        https://quay.io/repository/containers/skopeo?tab=history
+
+        We should install the skopeo binary in our self-hosted images
+        going forward.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.7.1
+  title: ""
+  date: 2023-08-29T14:43:44.076Z
+- commits:
     - subject: Only provide automatic GITHUB_TOKEN to compose vars
       hash: 83ed64c293e86aa16add5322222f5a362cc257f2
       body: |
