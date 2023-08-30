@@ -1,4 +1,19 @@
 - commits:
+    - subject: Revert to using installed skopeo binaries
+      hash: 352a4883cdbeb2b125785c16e39abcf5e59ffaf8
+      body: |
+        Our self-hosted runners include this package in v3.2.4
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.7.3
+  title: ""
+  date: 2023-08-30T12:57:39.029Z
+- commits:
     - subject: "patch: Pin Cloudflare Wrangler to latest version"
       hash: 1c35b2a500849795d5e335c69a48b8380a6c9468
       body: ""
