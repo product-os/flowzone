@@ -2067,9 +2067,7 @@ jobs:
 
             platform_tag="${LOCAL_TAG}-${platform}"
 
-            docker run --rm --network host -v "${tar}:${tar}:ro" \
-              quay.io/skopeo/testing:latest \
-              copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
+            skopeo copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
 
             docker buildx imagetools create -t ${LOCAL_TAG} --append "${platform_tag}" || \
               docker buildx imagetools create -t ${LOCAL_TAG} "${platform_tag}"
