@@ -1,4 +1,27 @@
 - commits:
+    - subject: Use `docker compose run` for testing
+      hash: 86aacf185acadf47b667047849a5c4a9d57ef913
+      body: >
+        From docker compose documentation:
+
+
+        > The `docker compose run` command is for running "one-off" or "adhoc" tasks. It requires the service name you want to run and only starts containers for services that the running service depends on. Use run to run tests or perform an administrative task such as removing or adding data to a data volume container. The `run` command acts like `docker run -ti` in that it opens an interactive terminal to the container and returns an exit status matching the exit status of the process in the container.
+
+
+        Using `docker compose up` may lead to a false negative test if one of
+
+        the other services (i.e. not the `sut` service), terminate before the
+
+        service gets a chance to finish.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 5.7.7
+  title: ""
+  date: 2023-09-05T00:48:41.699Z
+- commits:
     - subject: "chore(deps): update crazy-max/ghaction-import-gpg action to v5.4.0"
       hash: d5a1bc2e82ae6e14464b7130c0a73475465a685f
       body: |
