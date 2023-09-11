@@ -535,7 +535,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout merge ref
@@ -741,7 +742,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -859,7 +861,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -981,7 +984,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -1073,7 +1077,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -1122,7 +1127,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -1176,7 +1182,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -1253,7 +1260,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -1295,7 +1303,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -1406,7 +1415,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -1585,7 +1595,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Sort node versions
@@ -1635,7 +1646,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Sort node versions
@@ -1689,7 +1701,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -2165,7 +2178,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -2367,7 +2381,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -2450,7 +2465,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -2530,7 +2546,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -2611,7 +2628,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -2680,7 +2698,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -2730,7 +2749,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -2793,7 +2813,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Delete draft GitHub release
@@ -2827,7 +2848,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Delete draft GitHub release
@@ -2890,7 +2912,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -2969,7 +2992,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3042,7 +3066,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3099,7 +3124,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3150,7 +3176,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3210,7 +3237,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3264,7 +3292,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3314,7 +3343,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3363,7 +3393,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3411,7 +3442,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3791,7 +3823,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3891,7 +3924,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Checkout versioned sha
@@ -3974,7 +4008,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Get branch protection rules
@@ -4158,7 +4193,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Configure repository
@@ -4306,7 +4342,8 @@ jobs:
         id: gh_app_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
       - name: Get branch protection rules
@@ -4376,7 +4413,8 @@ jobs:
         id: non_admin_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: |-
             {

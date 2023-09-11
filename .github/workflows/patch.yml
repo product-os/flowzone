@@ -128,9 +128,10 @@ jobs:
         id: gh_token
         with:
           app_id: ${{ inputs.token_app_id }}
-          installation_id: ${{ inputs.token_installation_id || matrix.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.token_installation_id || matrix.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          repository: ${{ matrix.repository }}
+          repositories: ${{ matrix.repository }}
           permissions: >-
             {
               "contents": "write",

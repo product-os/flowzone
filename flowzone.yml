@@ -18,7 +18,8 @@
     id: gh_app_token
     with:
       app_id: ${{ inputs.app_id }}
-      installation_id: ${{ inputs.installation_id }}
+      installation_retrieval_mode: id
+      installation_retrieval_payload: ${{ inputs.installation_id }}
       private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
       permissions: ${{ inputs.token_scope }}
 
@@ -3841,7 +3842,8 @@ jobs:
         id: non_admin_token
         with:
           app_id: ${{ inputs.app_id }}
-          installation_id: ${{ inputs.installation_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: >-
             {
