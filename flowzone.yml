@@ -469,8 +469,16 @@
     with:
       version: v0.14.0
 
+  - &setupPython # https://github.com/actions/setup-python
+    name: Setup python
+    id: setup-python
+    uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4
+    with:
+      python-version: "3.9"
+
   - &setupPoetry # https://github.com/abatilo/actions-poetry
     name: Setup poetry
+    if: steps.setup-python.outputs.python-version != ''
     uses: abatilo/actions-poetry@192395c0d10c082a7c62294ab5d9a9de40e48974 # v2.3.0
     with:
       poetry-version: "1.5.1"
@@ -1554,9 +1562,7 @@ jobs:
             echo "pypi_publish=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Set up Python environment
-        if: steps.python_poetry.outputs.enabled == 'true'
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4
+      - <<: *setupPython
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
 
@@ -2547,8 +2553,7 @@ jobs:
       - *checkoutVersionedSha
       - *createLocalRefs
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4
+      - <<: *setupPython
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -2615,11 +2620,7 @@ jobs:
       - *checkoutVersionedSha
       - *createLocalRefs
 
-      - name: Set up Python
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4
-        with:
-          python-version: "3.9"
-
+      - *setupPython
       - *setupPoetry
 
       - *generatePythonMetadata
@@ -2654,11 +2655,7 @@ jobs:
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
-      - name: Set up Python
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4
-        with:
-          python-version: "3.9"
-
+      - *setupPython
       - *setupPoetry
 
       - name: Publish release
@@ -3878,9 +3875,7 @@ jobs:
       github.event.repository.private != true
 
     steps:
-      # setup python 3.11
-      - name: Set up Python 3.11
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4
+      - <<: *setupPython
         with:
           python-version: 3.11
 
