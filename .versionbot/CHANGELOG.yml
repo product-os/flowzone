@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update tibdex/github-app-token action to v2"
+      hash: f96258f1ba83151e1631da94652acbb7108e7555
+      body: |
+        Update tibdex/github-app-token from 1.9.0 to 2.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.7.14
+  title: ""
+  date: 2023-09-11T21:57:55.519Z
+- commits:
     - subject: Only setup poetry if python setup was successful
       hash: 32ff37d2925db71afc3d37a24b29c9ded24ef741
       body: ""
