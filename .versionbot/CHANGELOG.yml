@@ -1,4 +1,18 @@
 - commits:
+    - subject: Only setup poetry if python setup was successful
+      hash: 32ff37d2925db71afc3d37a24b29c9ded24ef741
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.7.13
+  title: ""
+  date: 2023-09-11T20:41:20.228Z
+- commits:
     - subject: "chore(deps): update tibdex/github-app-token action to v1.9.0"
       hash: e2f6323f552f0f86e81c538e17717fc6095ae770
       body: |
