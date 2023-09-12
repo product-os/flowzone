@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update aws-actions/configure-aws-credentials action to v4"
+      hash: b55b0a548cca32358e3d33b4f0813b5349046e9c
+      body: |
+        Update aws-actions/configure-aws-credentials from 3.0.2 to 4.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.7.17
+  title: ""
+  date: 2023-09-12T01:10:55.545Z
+- commits:
     - subject: Use full semver for aws-actions/configure-aws-credentials
       hash: 164233f69b44027fc10577ba3d3be311db38045d
       body: ""
