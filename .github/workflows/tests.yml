@@ -41,7 +41,8 @@ jobs:
       docker_runs_on: >
         {
           "linux/arm64": ["self-hosted","distro:jammy","ARM64"],
-          "linux/arm/v7": ["self-hosted","distro:jammy","ARM"]
+          "linux/arm/v7": ["self-hosted","distro:jammy","ARM64"],
+          "linux/arm/v6": ["self-hosted","distro:jammy","ARM64"]
         }
       # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
       custom_runs_on: >
