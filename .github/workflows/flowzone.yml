@@ -571,8 +571,7 @@ jobs:
           echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
           echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-      - name: Setup Node.js 18.x
-        if: inputs.disable_versioning != true
+      - name: Setup Node.js
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d
         with:
           node-version: 18.x
@@ -780,11 +779,11 @@ jobs:
             access="restricted"
           fi
           echo "access=${access}" >> $GITHUB_OUTPUT
-      - name: Setup Node.js 12.x
-        if: steps.npm.outputs.enabled == 'true'
+      - name: Setup Node.js
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d
         with:
           node-version: 12.x
+        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
@@ -792,11 +791,11 @@ jobs:
           then
             echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["12.x"]')" >> $GITHUB_ENV
           fi
-      - name: Setup Node.js 14.x
-        if: steps.npm.outputs.enabled == 'true'
+      - name: Setup Node.js
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d
         with:
           node-version: 14.x
+        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
@@ -804,11 +803,11 @@ jobs:
           then
             echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["14.x"]')" >> $GITHUB_ENV
           fi
-      - name: Setup Node.js 16.x
-        if: steps.npm.outputs.enabled == 'true'
+      - name: Setup Node.js
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d
         with:
           node-version: 16.x
+        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
@@ -816,11 +815,11 @@ jobs:
           then
             echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["16.x"]')" >> $GITHUB_ENV
           fi
-      - name: Setup Node.js 18.x
-        if: steps.npm.outputs.enabled == 'true'
+      - name: Setup Node.js
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d
         with:
           node-version: 18.x
+        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
@@ -1437,19 +1436,19 @@ jobs:
         run: |
           echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
           echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
-      - name: Setup Node.js - Cached
-        if: needs.is_npm.outputs.has_npm_lockfile == 'true'
+      - name: Setup Node.js
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
           cache: npm
+        if: needs.is_npm.outputs.has_npm_lockfile == 'true'
       - name: Setup Node.js
-        if: needs.is_npm.outputs.has_npm_lockfile != 'true'
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
+        if: needs.is_npm.outputs.has_npm_lockfile != 'true'
       - name: Generate metadata
         id: meta
         run: |
@@ -2764,7 +2763,8 @@ jobs:
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
-      - uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d
+      - name: Setup Node.js
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d
         with:
           node-version: 18
       - name: Docusaurus Builder
