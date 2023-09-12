@@ -1,4 +1,18 @@
 - commits:
+    - subject: Pin all actions to full semver
+      hash: 40660c72c19dd629cfde28a6bca47ad2f3945850
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.7.21
+  title: ""
+  date: 2023-09-12T15:13:37.010Z
+- commits:
     - subject: "chore(deps): update docker/metadata-action action to v5"
       hash: 2b7a84617491da1212ce68374514a0a595670b57
       body: |
