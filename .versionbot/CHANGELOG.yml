@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update docker/bake-action action to v4"
+      hash: 40ef4bd38b604c4eff448f8fca866b90e789abe7
+      body: |
+        Update docker/bake-action from 3.1.0 to 4.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.7.25
+  title: ""
+  date: 2023-09-12T17:53:51.962Z
+- commits:
     - subject: "chore(deps): update docker/login-action action to v3"
       hash: 98fbd0f5dd37e2f7af024e15744adeba1cc9b2f7
       body: |
