@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update docker/setup-buildx-action action to v3"
+      hash: bcac6280c21c55e6daa01af272b4c251a4f90230
+      body: |
+        Update docker/setup-buildx-action from 2.10.0 to 3.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.7.22
+  title: ""
+  date: 2023-09-12T15:58:51.686Z
+- commits:
     - subject: Pin all actions to full semver
       hash: 40660c72c19dd629cfde28a6bca47ad2f3945850
       body: ""
