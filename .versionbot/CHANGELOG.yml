@@ -1,4 +1,18 @@
 - commits:
+    - subject: Skip testing on armv7 self-hosted runners
+      hash: cab125d82ab92d655e9dea5755617bfc73e97ecb
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.7.23
+  title: ""
+  date: 2023-09-12T16:17:09.230Z
+- commits:
     - subject: "chore(deps): update docker/setup-buildx-action action to v3"
       hash: bcac6280c21c55e6daa01af272b4c251a4f90230
       body: |
