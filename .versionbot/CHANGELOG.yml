@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update docker/metadata-action action to v5"
+      hash: 2b7a84617491da1212ce68374514a0a595670b57
+      body: |
+        Update docker/metadata-action from 4.6.0 to 5.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.7.20
+  title: ""
+  date: 2023-09-12T14:52:26.723Z
+- commits:
     - subject: Track the docker/metadata-action full semver tag
       hash: ec9cbb801d4ed24b0ae43228af9213471e58edd6
       body: ""
