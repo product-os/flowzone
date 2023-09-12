@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update docker/setup-qemu-action action to v3"
+      hash: 8ef3350a2c2ddb9a76cc8aceabba02004a84a41e
+      body: |
+        Update docker/setup-qemu-action from 2.2.0 to 3.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.7.26
+  title: ""
+  date: 2023-09-12T18:54:33.350Z
+- commits:
     - subject: "chore(deps): update docker/bake-action action to v4"
       hash: 40ef4bd38b604c4eff448f8fca866b90e789abe7
       body: |
