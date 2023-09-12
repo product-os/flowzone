@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update docker/login-action action to v3"
+      hash: 98fbd0f5dd37e2f7af024e15744adeba1cc9b2f7
+      body: |
+        Update docker/login-action from 2.2.0 to 3.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.7.24
+  title: ""
+  date: 2023-09-12T16:54:22.505Z
+- commits:
     - subject: Skip testing on armv7 self-hosted runners
       hash: cab125d82ab92d655e9dea5755617bfc73e97ecb
       body: ""
