@@ -1,4 +1,18 @@
 - commits:
+    - subject: Return http response status codes for some gh api commands
+      hash: fc447c166ed104ef5365bf36f05d29804bcd7768
+      body: ""
+      footer:
+        CHange-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.7.27
+  title: ""
+  date: 2023-09-13T12:56:52.949Z
+- commits:
     - subject: "chore(deps): update docker/setup-qemu-action action to v3"
       hash: 8ef3350a2c2ddb9a76cc8aceabba02004a84a41e
       body: |
