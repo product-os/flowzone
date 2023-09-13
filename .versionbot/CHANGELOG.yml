@@ -1,4 +1,18 @@
 - commits:
+    - subject: Fall back to curl if github CLI fails to update objects
+      hash: 516501659b5fbbc389705f7ce33069ae8d7acbac
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.7.28
+  title: ""
+  date: 2023-09-13T16:51:12.960Z
+- commits:
     - subject: Return http response status codes for some gh api commands
       hash: fc447c166ed104ef5365bf36f05d29804bcd7768
       body: ""
