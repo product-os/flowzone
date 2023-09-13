@@ -712,7 +712,14 @@ jobs:
             /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
             -f sha='${{ steps.create_commit.outputs.sha }}' \
             -F force=true \
-            --include
+            --include || \
+          curl -v -L \
+            -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
+            -d '{"sha":"${{ steps.create_commit.outputs.sha }}","force":true}'
       - name: Create tag reference
         if: github.event.pull_request.merged == true && steps.create_tag.outputs.sha != ''
         env:
@@ -725,7 +732,14 @@ jobs:
             /repos/$GH_REPO/git/refs \
             -f ref='refs/tags/${{ steps.versionist.outputs.tag }}' \
             -f sha='${{ steps.create_tag.outputs.sha }}' \
-            --include
+            --include || \
+          curl -v -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/$GH_REPO/git/refs \
+            -d '{"ref":"refs/tags/${{ steps.versionist.outputs.tag }}","sha":"${{ steps.create_tag.outputs.sha }}"}'
   is_npm:
     name: Is npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
