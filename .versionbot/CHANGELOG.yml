@@ -1,4 +1,17 @@
 - commits:
+    - subject: Revert "Fall back to curl if github CLI fails to update objects"
+      hash: 8ebba340f542c468d0b4b91748f6ef185565eee0
+      body: |
+        This reverts commit 516501659b5fbbc389705f7ce33069ae8d7acbac.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Kyle Harding
+      nested: []
+  version: 5.7.29
+  title: ""
+  date: 2023-09-13T17:09:39.926Z
+- commits:
     - subject: Fall back to curl if github CLI fails to update objects
       hash: 516501659b5fbbc389705f7ce33069ae8d7acbac
       body: ""
