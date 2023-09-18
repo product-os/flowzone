@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update dawidd6/action-download-artifact action to v2.28.0"
+      hash: daea850f2600d6479864b8f18506638f940997c4
+      body: |
+        Update dawidd6/action-download-artifact from 2.27.0 to 2.28.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.7.30
+  title: ""
+  date: 2023-09-18T13:53:59.137Z
+- commits:
     - subject: Revert "Fall back to curl if github CLI fails to update objects"
       hash: 8ebba340f542c468d0b4b91748f6ef185565eee0
       body: |
