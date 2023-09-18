@@ -2081,7 +2081,7 @@ jobs:
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm artifact from last run
-        uses: dawidd6/action-download-artifact@246dbf436b23d7c49e21a7ab8204ca9ecd1fe615 # v2.27.0
+        uses: dawidd6/action-download-artifact@268677152d06ba59fcec7a7f0b5d961b6ccd7e1e # v2.28.0
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -2124,7 +2124,7 @@ jobs:
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm docs artifact from last run
-        uses: dawidd6/action-download-artifact@246dbf436b23d7c49e21a7ab8204ca9ecd1fe615 # v2.27.0
+        uses: dawidd6/action-download-artifact@268677152d06ba59fcec7a7f0b5d961b6ccd7e1e # v2.28.0
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
