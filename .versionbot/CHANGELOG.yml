@@ -1,4 +1,33 @@
 - commits:
+    - subject: Hardcode permissions for each non-custom job
+      hash: 275792de8baefe5b69f9977f3552d0333ba3f5e7
+      body: |
+        This provides granular control over the permissions needed to complete
+        each job while still exposing an input to use a custom scope for
+        custom jobs.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Limit the github installation token to current repo only
+      hash: a39bf52f63b5549820c4a565134e46cd9060db3e
+      body: |
+        This is much more secure than the default of access to all
+        repos where the app is installed.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.8.0
+  title: ""
+  date: 2023-09-19T13:22:04.712Z
+- commits:
     - subject: "chore(deps): update dawidd6/action-download-artifact action to v2.28.0"
       hash: daea850f2600d6479864b8f18506638f940997c4
       body: |
