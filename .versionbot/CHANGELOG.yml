@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore(deps): update tibdex/github-app-token action to v2.1.0"
+      hash: ee3ca271075755652a9a6e821b778eb67dafdc10
+      body: |
+        Update tibdex/github-app-token from 2.0.0 to 2.1.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.8.1
+  title: ""
+  date: 2023-09-19T16:57:16.103Z
+- commits:
     - subject: Hardcode permissions for each non-custom job
       hash: 275792de8baefe5b69f9977f3552d0333ba3f5e7
       body: |
