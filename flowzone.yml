@@ -16,12 +16,19 @@
     uses: tibdex/github-app-token@0914d50df753bbc42180d982a6550f195390069f # v2.0.0
     continue-on-error: true
     id: gh_app_token
-    with:
+    with: &getGitHubAppTokenWith
       app_id: ${{ inputs.app_id }}
       installation_retrieval_mode: id
       installation_retrieval_payload: ${{ inputs.installation_id }}
       private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-      permissions: ${{ inputs.token_scope }}
+      # permissions: ${{ inputs.token_scope }}
+      permissions: >-
+        {
+          "contents": "read",
+          "metadata": "read"
+        }
+      repositories: >-
+        [ "${{ github.event.pull_request.head.repo.name }}" ]
 
   # optionally attempt to get AWS login short-lived session credentials over OIDC
   - &configureAWSCredentials # https://github.com/aws-actions/configure-aws-credentials
@@ -1095,7 +1102,18 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # include all repositories in token scope in order to generate embedded changelogs
+          repositories: ""
+          # admin permission is currently required to bypass branch protection rules
+          permissions: >-
+            {
+              "administration": "write",
+              "contents": "write",
+              "metadata": "read"
+            }
 
       # checkout merge ref for open PRs
       # https://github.com/actions/checkout
@@ -1364,7 +1382,7 @@ jobs:
         if: steps.npm.outputs.enabled == 'true'
         with:
           node-version: 12.x
-      
+
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
@@ -1377,7 +1395,7 @@ jobs:
         if: steps.npm.outputs.enabled == 'true'
         with:
           node-version: 14.x
-        
+
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
@@ -1390,7 +1408,7 @@ jobs:
         if: steps.npm.outputs.enabled == 'true'
         with:
           node-version: 16.x
-        
+
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
@@ -2118,7 +2136,17 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # need permissions to publish to github pages
+          permissions: >-
+            {
+              "pages": "write",
+              "contents": "read",
+              "metadata": "read"
+            }
+
       - *sortNodeVersions
 
       # https://github.com/dawidd6/action-download-artifact
@@ -2739,7 +2767,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: '3.5.1' # latest - https://www.npmjs.com/package/wrangler
+          wranglerVersion: "3.5.1" # latest - https://www.npmjs.com/package/wrangler
           preCommands: wrangler --version
           command: pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ | tee -a $GITHUB_STEP_SUMMARY
 
@@ -2758,7 +2786,16 @@ jobs:
       github.event.pull_request.merged == false
     <<: *rootWorkingDirectory
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # contents:write permissions for managing releases
+          permissions: >-
+            {
+              "contents": "write",
+              "metadata": "read"
+            }
+
       - *deleteDraftGitHubRelease
 
   github_publish:
@@ -2778,7 +2815,16 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # contents:write permissions for managing releases
+          permissions: >-
+            {
+              "contents": "write",
+              "metadata": "read"
+            }
+
       - *deleteDraftGitHubRelease
 
       - name: Download all artifacts
@@ -2831,7 +2877,16 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # contents:write permissions for managing releases
+          permissions: >-
+            {
+              "contents": "write",
+              "metadata": "read"
+            }
+
       - *checkoutVersionedSha
       - *getReleaseNotes
 
@@ -3041,7 +3096,12 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # use permissions from the token_scope input
+          permissions: ${{ inputs.token_scope }}
+
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -3082,7 +3142,13 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *getGitHubAppToken
+
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # use permissions from the token_scope input
+          permissions: ${{ inputs.token_scope }}
+      
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -3116,7 +3182,13 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *getGitHubAppToken
+      
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # use permissions from the token_scope input
+          permissions: ${{ inputs.token_scope }}
+
       - *checkoutVersionedSha
 
       - name: Set the matrix value env var
@@ -3148,7 +3220,13 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *getGitHubAppToken
+      
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # use permissions from the token_scope input
+          permissions: ${{ inputs.token_scope }}
+
       - *checkoutVersionedSha
 
       - uses: ./.github/actions/clean
@@ -3178,7 +3256,13 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - *getGitHubAppToken
+      
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # use permissions from the token_scope input
+          permissions: ${{ inputs.token_scope }}
+
       - *checkoutVersionedSha
 
       - uses: ./.github/actions/always
@@ -3605,7 +3689,17 @@ jobs:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
 
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # admin permission is required to set branch protection
+          permissions: >-
+            {
+              "administration": "write",
+              "contents": "read",
+              "metadata": "read"
+            }
+
       - *getBranchProtectionRules
       - *isDraftPullRequest
 
@@ -3728,7 +3822,16 @@ jobs:
       github.event.pull_request.merged == true &&
       inputs.repo_config == true
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # admin permission is required modify repo config
+          permissions: >-
+            {
+              "administration": "write",
+              "contents": "read",
+              "metadata": "read"
+            }
 
       - name: Configure repository
         env:
@@ -3848,23 +3951,19 @@ jobs:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection
 
     steps:
-      - *getGitHubAppToken
-      - *getBranchProtectionRules
-      - *isDraftPullRequest
-
       - <<: *getGitHubAppToken
-        id: non_admin_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: id
-          installation_retrieval_payload: ${{ inputs.installation_id }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          <<: *getGitHubAppTokenWith
+          # avoid providing any permissions here that are able to bypass branch protections!
           permissions: >-
             {
               "contents": "write",
               "metadata": "read",
               "pull_requests": "write"
             }
+
+      - *getBranchProtectionRules
+      - *isDraftPullRequest
 
       # do not use automatic github token to enable auto-merge as it will not trigger merge events
       - name: Toggle auto-merge
@@ -3874,7 +3973,7 @@ jobs:
           steps.branch_protection.outputs.required_status_checks__contexts != '[]'
         env:
           <<: *gitHubCliEnvironment
-          GH_TOKEN: "${{ steps.non_admin_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
+          GH_TOKEN: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
 

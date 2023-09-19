@@ -538,7 +538,13 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "administration": "write",
+              "contents": "write",
+              "metadata": "read"
+            }
+          repositories: ""
       - name: Checkout merge ref
         if: github.event.pull_request.state == 'open'
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
@@ -753,7 +759,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -872,7 +883,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -995,7 +1011,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1088,7 +1109,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1138,7 +1164,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1193,7 +1224,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1271,7 +1307,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1314,7 +1355,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1426,7 +1472,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1606,7 +1657,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Sort node versions
         id: node_versions
         env:
@@ -1657,7 +1713,13 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "pages": "write",
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Sort node versions
         id: node_versions
         env:
@@ -1712,7 +1774,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2189,7 +2256,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2392,7 +2464,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2476,7 +2553,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2557,7 +2639,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2639,7 +2726,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2709,7 +2801,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2760,7 +2857,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2825,7 +2927,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "write",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -2860,7 +2967,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "write",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -2924,7 +3036,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "write",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3004,7 +3121,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3078,7 +3200,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3136,7 +3263,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3189,6 +3321,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3250,6 +3383,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3305,6 +3439,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3356,6 +3491,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3406,6 +3542,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3454,7 +3591,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3835,7 +3977,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3936,7 +4083,12 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -4020,7 +4172,13 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "administration": "write",
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Get branch protection rules
         id: branch_protection
         env:
@@ -4205,7 +4363,13 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "administration": "write",
+              "contents": "read",
+              "metadata": "read"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Configure repository
         env:
           GH_DEBUG: "true"
@@ -4354,7 +4518,13 @@ jobs:
           installation_retrieval_mode: id
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
+          permissions: |-
+            {
+              "contents": "write",
+              "metadata": "read",
+              "pull_requests": "write"
+            }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Get branch protection rules
         id: branch_protection
         env:
@@ -4416,21 +4586,6 @@ jobs:
           else
             echo "result=false" >> $GITHUB_OUTPUT
           fi
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@0914d50df753bbc42180d982a6550f195390069f
-        continue-on-error: true
-        id: non_admin_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: id
-          installation_retrieval_payload: ${{ inputs.installation_id }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "write",
-              "metadata": "read",
-              "pull_requests": "write"
-            }
       - name: Toggle auto-merge
         if: |
           steps.is_draft_pr.outputs.result == 'false' &&
@@ -4441,7 +4596,7 @@ jobs:
           GH_PAGER: cat
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.non_admin_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
   gpt-review:
