@@ -544,7 +544,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: ""
       - name: Checkout merge ref
         if: github.event.pull_request.state == 'open'
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
@@ -764,7 +763,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -888,7 +886,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1016,7 +1013,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1114,7 +1110,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1169,7 +1164,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1229,7 +1223,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1312,7 +1305,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1360,7 +1352,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1477,7 +1468,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -1662,7 +1652,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Sort node versions
         id: node_versions
         env:
@@ -1779,7 +1768,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2261,7 +2249,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2469,7 +2456,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2558,7 +2544,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2644,7 +2629,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2731,7 +2715,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2806,7 +2789,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -2862,7 +2844,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3041,7 +3022,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3126,7 +3106,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3205,7 +3184,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3268,7 +3246,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3321,7 +3298,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3383,7 +3359,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3439,7 +3414,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3491,7 +3465,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3542,7 +3515,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3596,7 +3568,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -3982,7 +3953,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -4088,7 +4058,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Checkout versioned sha
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
         with:
@@ -4520,6 +4489,7 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: |-
             {
+              "administration": "read",
               "contents": "write",
               "metadata": "read",
               "pull_requests": "write"

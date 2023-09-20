@@ -27,8 +27,6 @@
           "contents": "read",
           "metadata": "read"
         }
-      repositories: >-
-        [ "${{ github.event.pull_request.head.repo.name }}" ]
 
   # optionally attempt to get AWS login short-lived session credentials over OIDC
   - &configureAWSCredentials # https://github.com/aws-actions/configure-aws-credentials
@@ -1105,8 +1103,6 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
-          # include all repositories in token scope in order to generate embedded changelogs
-          repositories: ""
           # admin permission is currently required to bypass branch protection rules
           permissions: >-
             {
@@ -2146,6 +2142,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
 
       - *sortNodeVersions
 
@@ -2795,6 +2792,7 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
 
       - *deleteDraftGitHubRelease
 
@@ -2824,6 +2822,7 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
 
       - *deleteDraftGitHubRelease
 
@@ -3699,6 +3698,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
 
       - *getBranchProtectionRules
       - *isDraftPullRequest
@@ -3832,6 +3832,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
 
       - name: Configure repository
         env:
@@ -3957,10 +3958,12 @@ jobs:
           # avoid providing any permissions here that are able to bypass branch protections!
           permissions: >-
             {
+              "administration": "read",
               "contents": "write",
               "metadata": "read",
               "pull_requests": "write"
             }
+          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
 
       - *getBranchProtectionRules
       - *isDraftPullRequest
