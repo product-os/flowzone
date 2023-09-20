@@ -1,4 +1,21 @@
 - commits:
+    - subject: Restore access to all repositories when cloning sources
+      hash: 0046f09bcd921a5b058a9edf4408f3cf8c80eaa4
+      body: |
+        Otherwise we lose access to private submodules on clone.
+      footer:
+        See: https://github.com/product-os/flowzone/pull/730
+        see: https://github.com/product-os/flowzone/pull/730
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.8.2
+  title: ""
+  date: 2023-09-20T15:42:47.563Z
+- commits:
     - subject: "chore(deps): update tibdex/github-app-token action to v2.1.0"
       hash: ee3ca271075755652a9a6e821b778eb67dafdc10
       body: |
