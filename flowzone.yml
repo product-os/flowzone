@@ -3958,6 +3958,7 @@ jobs:
           # avoid providing any permissions here that are able to bypass branch protections!
           permissions: >-
             {
+              "administration": "read",
               "contents": "write",
               "metadata": "read",
               "pull_requests": "write"
