@@ -1,0 +1,231 @@
+name: Repo Manager
+
+on:
+  workflow_call:
+    secrets:
+      REPO_MGR_PRIVATE_KEY:
+        description: GitHub App to generate ephemeral access tokens
+        required: false
+    inputs:
+      owner:
+        description: The organization to manage, uses the organization of the triggering workflow if not provided
+        type: string
+        required: false
+      topics:
+        description: Comma-separated list of repository topics for filtering
+        type: string
+        required: false
+        default: repo-manager
+      topics-operator:
+        description: Logic operator to use when filtering repositories by topics (OR or AND)
+        type: string
+        required: false
+        default: AND
+      action:
+        description: "Action to run (validate, check, or apply)"
+        type: string
+        required: false
+        default: "check"
+  workflow_dispatch:
+    inputs:
+      org:
+        description: The organization to manage, uses the organization of the triggering workflow if not provided
+        type: string
+        required: false
+      topics:
+        description: Comma-separated list of repository topics for filtering
+        type: string
+        required: false
+        default: repo-manager
+      topics-operator:
+        description: Logic operator to use when filtering repositories by topics (OR or AND)
+        type: choice
+        required: false
+        options:
+          - AND
+          - OR
+        default: AND
+      action:
+        description: "Action to run (validate, check, or apply)"
+        type: choice
+        required: false
+        options:
+          - validate
+          - check
+          - apply
+        default: check
+
+# https://docs.github.com/en/actions/using-jobs/using-concurrency
+concurrency:
+  group: ${{ github.workflow }}
+  # cancel jobs in progress for updated PRs, but not merge or tag events
+  cancel-in-progress: ${{ github.event.action == 'synchronize' }}
+
+jobs:
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest
+
+    outputs:
+      repos: ${{ steps.get-repos.outputs.repos }}
+      action: ${{ inputs.action || steps.set-action.outputs.action || 'check' }}
+
+    steps:
+      # https://github.com/marketplace/actions/github-app-token
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+        id: github-app-token
+        with:
+          app_id: ${{ vars.REPO_MGR_APP_ID }}
+          installation_retrieval_mode: organization
+          installation_retrieval_payload: ${{ inputs.owner || github.event.repository.owner.login }}
+          private_key: ${{ secrets.REPO_MGR_PRIVATE_KEY }}
+          permissions: >-
+            {
+              "metadata": "read"
+            }
+
+      # https://github.com/raven-actions/get-repos
+      - name: Get organization repositories
+        id: get-repos
+        uses: raven-actions/get-repos@v1.0.2
+        with:
+          github-token: ${{ steps.github-app-token.outputs.token }}
+          owner: ${{ inputs.owner || github.event.repository.owner.login }}
+          topics: ${{ inputs.topics || 'repo-manager' }}
+          operator: ${{ inputs.topics-operator || 'AND' }}
+          format: json
+          matrix-use: true
+
+      - name: Set action to "apply"
+        id: set-action
+        if: inputs.action == '' && github.event_name == 'schedule'
+        run: echo 'action=apply' >> $GITHUB_OUTPUT
+
+  manage:
+    name: Manage
+    runs-on: ubuntu-latest
+    needs: [prepare]
+    if: ${{ needs.prepare.outputs.repos != '[]' }}
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: .
+
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        repo: ${{ fromJson(needs.prepare.outputs.repos) }}
+
+    steps:
+      # https://github.com/marketplace/actions/github-app-token
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+        id: github-app-token
+        with:
+          app_id: ${{ vars.REPO_MGR_APP_ID }}
+          installation_retrieval_mode: organization
+          installation_retrieval_payload: ${{ inputs.owner || github.event.repository.owner.login }}
+          private_key: ${{ secrets.REPO_MGR_PRIVATE_KEY }}
+          repositories: >-
+            [
+              "${{ matrix.repo.name }}"
+            ]
+          permissions: >-
+            {
+              "administration": "write",
+              "contents": "read",
+              "metadata": "read"
+            }
+
+      # Checkout the repo that triggered the workflow. This may be the .github repo
+      # at the root of an organization, or some other repo being used for testing.
+      # Either way, we need to checkout the repo that triggered the workflow so we
+      # have a default settings.yml file to apply.
+      # https://github.com/actions/checkout
+      - name: Checkout trigger repo
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
+        with:
+          repository: ${{ github.event.repository.full_name }}
+          path: ${{ github.event.repository.full_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Checkout the target repo. This is the repo that we are managing.
+      # If it has a .github/settings.yml, we will use that instead of the default
+      # from the triggering repo.
+      # https://github.com/actions/checkout
+      - name: Checkout target repo
+        # avoid checking out the same repo twice
+        if: matrix.repo.full_name != github.event.repository.full_name
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
+        with:
+          repository: ${{ matrix.repo.full_name }}
+          ref: ${{ matrix.repo.default_branch }}
+          path: ${{ matrix.repo.full_name }}
+          token: ${{ steps.github-app-token.outputs.token }}
+
+      # Create a symlink to the preferred settings file.
+      - name: Link to settings file
+        env:
+          FILES: >-
+            ${{ matrix.repo.full_name }}/.github/settings.yml
+            ${{ github.event.repository.full_name }}/repo-settings.yml
+            ${{ github.event.repository.full_name }}/.github/settings.yml
+        run: |
+          for file in $FILES; do
+            if [ -f "$file" ]; then
+              echo "Found settings file: $file"
+              ln -sv $file settings.yml
+              break
+            fi
+          done
+
+      - name: Substitute env vars
+        env:
+          DEFAULT_BRANCH: ${{ matrix.repo.default_branch }}
+        run: |
+          envsubst < settings.yml > settings.yml.tmp
+          mv settings.yml.tmp settings.yml
+          yq . settings.yml
+
+      - name: Save default branch required checks
+        continue-on-error: true
+        id: get-branch-protection
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: "cat"
+          GH_PROMPT_DISABLED: "true"
+          GH_TOKEN: ${{ steps.github-app-token.outputs.token }}
+        run: |
+          gh api repos/${{ matrix.repo.full_name }}/branches/${{ matrix.repo.default_branch }}/protection --jq '.required_status_checks.contexts' | yq eval -P > response.yml
+
+      - name: Remove any ResinCI checks
+        if: steps.get-branch-protection.outcome == 'success'
+        run: |
+          yq e 'del(.[] | select(. == "ResinCI*"))' response.yml > response.yml.tmp
+          mv response.yml.tmp response.yml
+
+      - name: Merge default branch required checks
+        if: steps.get-branch-protection.outcome == 'success'
+        run: |
+          yq eval-all '.branch_protections[0].protection.required_status_checks.checks += load("response.yml") | 
+            .branch_protections[0].protection.required_status_checks.checks |= unique' settings.yml > settings.yml.tmp
+          mv settings.yml.tmp settings.yml
+          yq . settings.yml
+
+      # https://github.com/andrewthetechie/gha-repo-manager
+      - name: Run repo manager
+        uses: andrewthetechie/gha-repo-manager@v1.7.1
+        id: repo-manager
+        continue-on-error: true
+        with:
+          action: ${{ needs.prepare.outputs.action }}
+          token: ${{ steps.github-app-token.outputs.token }}
+          settings_file: settings.yml
+
+      - name: Record diff
+        if: steps.repo-manager.outputs.diff != ''
+        run: |
+          echo "${{ steps.repo-manager.outputs.diff }}" | tee -a $GITHUB_STEP_SUMMARY

@@ -1,0 +1,21 @@
+name: Test Repo Manager
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - '.github/workflows/repo-manager.yml'
+      - '.github/settings.yml'
+
+jobs:
+  test-repo-manager:
+    name: Repo Manager
+    uses: ./.github/workflows/repo-manager.yml
+    secrets: inherit
+    with:
+      action: check
+      # these topics only exist in the test repo for now
+      topics: flowzone,repo-manager
+      topics-operator: AND

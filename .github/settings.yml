@@ -1,0 +1,191 @@
+# https://github.com/andrewthetechie/gha-repo-manager/blob/main/examples/settings.yml
+
+# settings.yml can live in two places:
+# 1. in the repo itself
+# 2. in a centralized repo
+
+# The Action is able to apply settings to any repo that its token can manage
+# You can run Action from each repo, acting on that repo's settings.yml, or
+# from a central repo, using a single settings.yml to control many repos.
+
+# Which method you choose is up to you. See README.md for more info and example
+# Workflows to implement these strategies.
+settings:
+  # See https://docs.github.com/en/rest/repos/repos#update-a-repository for all available settings.
+  # any of these settings can be ommitted to just leave the repo's current setting
+  # If a setting has a value in settings.yml, it will always overwrite what exists in the repo.
+
+  # A short description of the repository that will show up on GitHub. Set to an empty string to clear.
+  # description: description of repo
+
+  # A URL with more information about the repository. Set to an empty string to clear.
+  # homepage: https://example.github.io/
+
+  # A list of strings to apply as topics on the repo. Set to an empty string to clear topics. Omit or set to null to leave what repo already has
+  # topics:
+  #   - gha
+  #   - foo
+  #   - bar
+
+  # Either `true` to make the repository private, or `false` to make it public.
+  # private: false
+
+  # Either `true` to enable issues for this repository, `false` to disable them.
+  # has_issues: true
+
+  # Either `true` to enable projects for this repository, or `false` to disable them.
+  # If projects are disabled for the organization, passing `true` will cause an API error.
+  # has_projects: true
+
+  # Either `true` to enable the wiki for this repository, `false` to disable it.
+  # has_wiki: true
+
+  # Either `true` to enable downloads for this repository, `false` to disable them.
+  # has_downloads: true
+
+  # Set the default branch for this repository.
+  # default_branch: main
+
+  # Either `true` to allow squash-merging pull requests, or `false` to prevent
+  # squash-merging.
+  allow_squash_merge: false
+
+  # Either `true` to allow merging pull requests with a merge commit, or `false`
+  # to prevent merging pull requests with merge commits.
+  allow_merge_commit: true
+
+  # Either `true` to allow rebase-merging pull requests, or `false` to prevent
+  # rebase-merging.
+  allow_rebase_merge: false
+
+  # Either `true` to enable automatic deletion of branches on merge, or `false` to disable
+  delete_branch_on_merge: true
+
+  # Either `true` to enable automated security fixes, or `false` to disable
+  # automated security fixes.
+  # enable_automated_security_fixes: true
+
+  # Either `true` to enable vulnerability alerts, or `false` to disable
+  # vulnerability alerts.
+  # enable_vulnerability_alerts: true
+
+# Labels: define labels for Issues and Pull Requests
+# labels:
+#   - name: bug
+#     color: CC0000
+#     description: An issue with the system.
+
+#   - name: feature
+#     # If including a `#`, make sure to wrap it with quotes!
+#     color: "#336699"
+#     description: New functionality.
+
+#   - name: Help Wanted
+#     # Provide a new name to rename an existing label. A rename that results in a 'not found' will not fail a run
+#     new_name: first-timers-only
+
+#   - name: Old Label
+#     # set exists: false to delete a label. A delete that results in a "not found" will not fail a run
+#     exists: false
+
+branch_protections:
+  # branch protection can only be created for branches that exist.
+  - name: $DEFAULT_BRANCH
+    # https://docs.github.com/en/rest/branches/branch-protection#update-branch-protection
+    # Branch Protection settings. Leave a value out to leave set at current repo settings
+    protection:
+      # Require at least one approving review on a pull request, before merging. Set to null to disable.
+      pr_options:
+        # # The number of approvals required. (1-6)
+        # required_approving_review_count: 1
+        # # Dismiss approved reviews automatically when a new commit is pushed.
+        dismiss_stale_reviews: false
+        # # Blocks merge until code owners have reviewed.
+        require_code_owner_reviews: false
+        # # Specify which users and teams can dismiss pull request reviews. Pass an empty dismissal_restrictions object to disable. User and team dismissal_restrictions are only available for organization-owned repositories. Omit this parameter for personal repositories.
+        dismissal_restrictions: {}
+          # users: []
+          # teams: []
+      # Require status checks to pass before merging. Set to null to disable
+      required_status_checks:
+        # Require branches to be up to date before merging.
+        strict: true
+        # The list of status checks to require in order to merge into this branch
+        checks:
+          - Flowzone / All jobs
+          - "policy-bot: $DEFAULT_BRANCH"
+      # Blocks merge until all conversations on a pull request have been resolved
+      require_conversation_resolution: false
+      # Enforce all configured restrictions for administrators. Set to true to enforce required status checks for repository administrators. Set to null to disable.
+      enforce_admins: false
+      # Prevent merge commits from being pushed to matching branches
+      require_linear_history: false
+      # Permit force pushes for all users with push access.
+      allow_force_pushes: false
+      # Allow users with push access to delete matching branches.
+      allow_deletions: false
+      # If set to true, the restrictions branch protection settings which limits who can push will also block pushes which create new branches, unless the push is initiated by a user, team, or app which has the ability to push. Set to true to restrict new branch creation.
+      block_creations: false
+      # Restrict who can push to this branch. Team and user restrictions are only available for organization-owned repositories. Set to null to disable.
+      restrictions: null
+        # users: []
+        # teams: []
+  # - name: dev
+  #   # will clear any branch protection on the dev branch, IF the dev branch exists. If you setup protection for a non-existant branch, this action cannot delete it
+  #   exists: False
+  # # if the repo has a third branch named test with branch protections setup, by not adding a protection with name: test, this config will not change
+  # # those existing protections.
+  # - name: test
+  #   exists: True
+
+# secrets:
+#   # Manage secrets in your repo. Useful to manage secrets from a central repo for non organizations or to manage secrets org wide
+#   - key: SECRET_KEY
+#     # pull the value from an environment variable. If this variable is not found in the env, throw an error and fail the run
+#     # Set env vars on the github action job from secrets in your repo to sync screts across repos
+#     env: SECRET_VALUE
+#     # Set a dependabot secret on the repo
+#   - key: SECRET_KEY
+#     env: SECRET_VALUE
+#     type: dependabot
+#   - key: ANOTHER_SECRET
+#     # set a value directly in your yaml, probably not a good idea for things that are actually a secret
+#     value: bar
+#   - key: THIRD_SECRET
+#     # pull the value from an environment variable
+#     env: THIRD_VALUE
+#     # setting a value as not required allows you to not pass in an env var. if THIRD_VALUE is not set in the env, this secret won't be set but no error will be thrown
+#     required: false
+#   - key: DELETED_SECRET
+#     # setting exists to false will delete a secret. A delete that results in "not found" won't fail a run, so you can use this to make sure a secret is always deleted
+#     exists: false
+
+# # Can copy files from your local context to the repo.
+# # Manipulate files in the target repo
+# # * move files around
+# # * delete files
+# # Changes are automatically commited and pushed to a target branch (default is default branch)
+# # File operations are applied sequentially
+# files:
+#   # copy templates/actions/my_workflow.yml to .github/workflows/my_workflow.yml in your target repo
+#   # and commit it with the default commit message and to your repo's default branch.
+#   # default commit message is "repo_manager file commit"
+#   - src_file: templates/actions/my_workflow.yml
+#     dest_file: .github/workflows/my_workflow.yml
+#   - src_file: templates/issues/issue_template.md
+#     dest_file: .github/ISSUE_TEMPLATE/issue.md
+#     commit_msg: update issue template
+#     # Update this file in the dev branch. If the dev branch doesn't exist, this will fail the workflow
+#   - src_file: templates/dev/dev.md
+#     dest_file: dev.md
+#     target_branch: dev
+#   # This moves README.md to README.rst in the remote. If README.md doesn't exist, the workflow will not fail and will emit a warning.
+#   - src_file: remote://README.md
+#     dest_file: README.rst
+#     move: true
+#     commit_msg: "move readme"
+#   # This removes OLDDOC.md in the dev branch. If OLDDOC.md doesn't exist, the workflow will emit a warning
+#   - dest_file: OLDDOC.md
+#     exists: false
+#     branch: dev
+#     commit_msg: "remove OLDDOC.md from dev"
