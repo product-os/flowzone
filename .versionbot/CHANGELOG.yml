@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/checkout action to v4.1.0
+      hash: 3759171e61630690e9add9dba12c6691f1cf04fa
+      body: |
+        Update actions/checkout from 4.0.0 to 4.1.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.8.3
+  title: ""
+  date: 2023-09-22T17:54:46.066Z
+- commits:
     - subject: Restore access to all repositories when cloning sources
       hash: 0046f09bcd921a5b058a9edf4408f3cf8c80eaa4
       body: |
