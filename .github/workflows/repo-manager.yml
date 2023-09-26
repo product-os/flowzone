@@ -111,7 +111,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: .
+        working-directory: ${{ matrix.repo.full_name }}
 
     strategy:
       fail-fast: false
@@ -145,7 +145,7 @@ jobs:
       # Either way, we need to checkout the repo that triggered the workflow so we
       # have a default settings.yml file to apply.
       # https://github.com/actions/checkout
-      - name: Checkout trigger repo
+      - name: Checkout ${{ github.event.repository.full_name }}
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           repository: ${{ github.event.repository.full_name }}
@@ -156,7 +156,7 @@ jobs:
       # If it has a .github/settings.yml, we will use that instead of the default
       # from the triggering repo.
       # https://github.com/actions/checkout
-      - name: Checkout target repo
+      - name: Checkout ${{ matrix.repo.full_name }}
         # avoid checking out the same repo twice
         if: matrix.repo.full_name != github.event.repository.full_name
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
@@ -167,22 +167,27 @@ jobs:
           token: ${{ steps.github-app-token.outputs.token }}
 
       # Create a symlink to the preferred settings file.
-      - name: Link to settings file
+      - name: Select settings file
         env:
           FILES: >-
-            ${{ matrix.repo.full_name }}/.github/settings.yml
-            ${{ github.event.repository.full_name }}/repo-settings.yml
-            ${{ github.event.repository.full_name }}/.github/settings.yml
+            ${{ github.workspace}}/${{ github.event.repository.full_name }}/repo-settings.yml
+            ${{ github.workspace}}/${{ github.event.repository.full_name }}/.github/settings.yml
         run: |
+          mkdir -p .github
+
+          if [ -f .github/settings.yml ]; then
+            exit 0
+          fi
+
           for file in $FILES; do
             if [ -f "$file" ]; then
-              echo "Found settings file: $file"
-              ln -sv $file settings.yml
+              ln -sv $file .github/settings.yml
               break
             fi
           done
 
       - name: Substitute env vars
+        working-directory: ${{ matrix.repo.full_name }}/.github
         env:
           DEFAULT_BRANCH: ${{ matrix.repo.default_branch }}
         run: |
@@ -193,6 +198,7 @@ jobs:
       - name: Save default branch required checks
         continue-on-error: true
         id: get-branch-protection
+        working-directory: ${{ matrix.repo.full_name }}/.github
         env:
           GH_DEBUG: "true"
           GH_PAGER: "cat"
@@ -203,29 +209,98 @@ jobs:
 
       - name: Remove any ResinCI checks
         if: steps.get-branch-protection.outcome == 'success'
+        working-directory: ${{ matrix.repo.full_name }}/.github
         run: |
           yq e 'del(.[] | select(. == "ResinCI*"))' response.yml > response.yml.tmp
           mv response.yml.tmp response.yml
 
       - name: Merge default branch required checks
         if: steps.get-branch-protection.outcome == 'success'
+        working-directory: ${{ matrix.repo.full_name }}/.github
         run: |
-          yq eval-all '.branch_protections[0].protection.required_status_checks.checks += load("response.yml") | 
-            .branch_protections[0].protection.required_status_checks.checks |= unique' settings.yml > settings.yml.tmp
+          yq eval-all '.branches[0].protection.required_status_checks.checks += load("response.yml") | 
+            .branches[0].protection.required_status_checks.checks |= unique' settings.yml > settings.yml.tmp
           mv settings.yml.tmp settings.yml
           yq . settings.yml
 
-      # https://github.com/andrewthetechie/gha-repo-manager
-      - name: Run repo manager
-        uses: andrewthetechie/gha-repo-manager@v1.7.1
-        id: repo-manager
-        continue-on-error: true
+      # https://github.com/elstudio/actions-settings
+      # https://github.com/repository-settings/app
+      # https://github.com/apps/settings
+      - name: Checkout repository-settings/app
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
-          action: ${{ needs.prepare.outputs.action }}
-          token: ${{ steps.github-app-token.outputs.token }}
-          settings_file: settings.yml
+          repository: repository-settings/app
+          ref: v2.1.2
+          path: repository-settings/app
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Record diff
-        if: steps.repo-manager.outputs.diff != ''
+      # https://github.com/elstudio/actions-settings
+      # https://github.com/repository-settings/app
+      # https://github.com/apps/settings
+      - name: Install npm dependencies
+        working-directory: repository-settings/app
+        run: npm ci
+
+      # https://github.com/elstudio/actions-settings
+      # https://github.com/repository-settings/app
+      # https://github.com/apps/settings
+      - name: Apply repository settings
+        working-directory: repository-settings/app
+        env:
+          # https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
+          GITHUB_TOKEN: ${{ steps.github-app-token.outputs.token }}
+          ACTIONS_STEP_DEBUG: true
+          LOG_LEVEL: debug
+          # # The name of the event that triggered the workflow. For example, workflow_dispatch.
+          # GITHUB_EVENT_NAME:
+          # # The path to the file on the runner that contains the full event webhook payload. For example, /github/workflow/event.json.
+          # GITHUB_EVENT_PATH:
         run: |
-          echo "${{ steps.repo-manager.outputs.diff }}" | tee -a $GITHUB_STEP_SUMMARY
+          ./node_modules/.bin/probot receive -e $GITHUB_EVENT_NAME -p $GITHUB_EVENT_PATH -t $GITHUB_TOKEN index.js
+
+        # Usage: probot <command> [options]
+
+        # Options:
+        #   -V, --version   output the version number
+        #   -h, --help      display help for command
+
+        # Commands:
+        #   run             run the bot
+        #   receive         Receive a single event and payload
+        #   help [command]  display help for command
+
+        # Usage: probot-run [options] <apps...>
+
+        # Options:
+        #   -p, --port <n>             Port to start the server on (default: "3000")
+        #   -H --host <host>           Host to start the server on
+        #   -W, --webhook-proxy <url>  URL of the webhook proxy service.`
+        #   -w, --webhook-path <path>  URL path which receives webhooks. Ex: `/webhook`
+        #   -a, --app <id>             ID of the GitHub App
+        #   -s, --secret <secret>      Webhook secret of the GitHub App
+        #   -P, --private-key <file>   Path to private key file (.pem) for the GitHub App
+        #   -L, --log-level <level>    One of: "trace" | "debug" | "info" | "warn" | "error" | "fatal" (default: "info")
+        #   --log-format <format>      One of: "pretty", "json"
+        #   --log-level-in-string      Set to log levels (trace, debug, info, ...) as words instead of numbers (10, 20, 30, ...) (default: false)
+        #   --sentry-dsn <dsn>         Set to your Sentry DSN, e.g. "https://1234abcd@sentry.io/12345"
+        #   --redis-url <url>          Set to a "redis://" url in order to enable cluster support for request throttling. Example: "redis://:secret@redis-123.redislabs.com:12345/0"
+        #   --base-url <url>           GitHub API base URL. If you use GitHub Enterprise Server, and your hostname is "https://github.acme-inc.com", then the root URL is "https://github.acme-inc.com/api/v3" (default:
+        #                              "https://api.github.com")
+        #   -h, --help                 display help for command
+
+        # Usage: probot-receive [options] [path/to/app.js...]
+
+        # Options:
+        #   -e, --event <event-name>           Event name
+        #   -p, --payload-path <payload-path>  Path to the event payload
+        #   -t, --token <access-token>         Access token
+        #   -a, --app <id>                     ID of the GitHub App
+        #   -P, --private-key <file>           Path to private key file (.pem) for the GitHub App
+        #   -L, --log-level <level>            One of: "trace" | "debug" | "info" | "warn" | "error" | "fatal"
+        #   --log-format <format>              One of: "pretty", "json" (default: "pretty")
+        #   --log-level-in-string              Set to log levels (trace, debug, info, ...) as words instead of numbers (10, 20, 30, ...) (default: false)
+        #   --log-message-key                  Set to the string key for the 'message' in the log JSON object
+        #   --sentry-dsn <dsn>                 Set to your Sentry DSN, e.g. "https://1234abcd@sentry.io/12345"
+        #   --base-url <url>                   GitHub API base URL. If you use GitHub Enterprise Server, and your hostname is "https://github.acme-inc.com", then the root URL is "https://github.acme-inc.com/api/v3" (default:
+        #                                      "https://api.github.com")
+        #   -h, --help                         display help for command
