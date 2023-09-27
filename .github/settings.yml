@@ -128,7 +128,7 @@ repository:
 #     permission: push
 
 branches:
-  - name: $DEFAULT_BRANCH
+  - name: master
     # https://docs.github.com/en/rest/branches/branch-protection#update-branch-protection
     # Branch Protection settings. Set to null to disable
     protection:
@@ -150,14 +150,14 @@ branches:
         strict: true
         # Required. The list of status checks to require in order to merge into this branch
         contexts:
-          - "policy-bot: $DEFAULT_BRANCH"
+          - "policy-bot: master"
           - Flowzone / All jobs
       # Required. Enforce all configured restrictions for administrators. Set to true to enforce required status checks for repository administrators. Set to null to disable.
       enforce_admins: false
       # Prevent merge commits from being pushed to matching branches
       required_linear_history: false
       # Required. Restrict who can push to this branch. Team and user restrictions are only available for organization-owned repositories. Set to null to disable.
-      restrictions: null
-        # apps: []
+      restrictions:
+        apps: ["flowzone-app"]
         # users: []
         # teams: []
