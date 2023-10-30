@@ -1,4 +1,25 @@
 - commits:
+    - subject: Bump versionist to 7.0.3
+      hash: 3355f4af1b225f02d01712e2c7027d57b3ba7ca1
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+    - subject: Add pull:read repository permissions
+      hash: b01a8aae20ca747caa1d357ad9c20dafe4a31906
+      body: |
+        This is needed for changelog generation by versionist
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 5.8.15
+  title: ""
+  date: 2023-10-30T20:31:47.021Z
+- commits:
     - subject: Update actions/checkout action to v4.1.1
       hash: bc932a8e3f22673ba729c9b686b72239c8da8913
       body: |
