@@ -542,7 +542,8 @@ jobs:
             {
               "administration": "write",
               "contents": "write",
-              "metadata": "read"
+              "metadata": "read",
+              "pull_requests": "read"
             }
       - name: Checkout merge ref
         if: github.event.pull_request.state == 'open'
