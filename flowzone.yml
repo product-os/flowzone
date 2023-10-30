@@ -1108,7 +1108,8 @@ jobs:
             {
               "administration": "write",
               "contents": "write",
-              "metadata": "read"
+              "metadata": "read",
+              "pull_requests": "read"
             }
 
       # checkout merge ref for open PRs
@@ -1154,7 +1155,7 @@ jobs:
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |
-          npm install -g balena-versionist@~0.14.13 versionist@^7.0.1
+          npm install -g balena-versionist@~0.14.13 versionist@^7.0.3
           npm ls -g balena-versionist
           npm ls -g versionist
 
@@ -3148,7 +3149,7 @@ jobs:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-      
+
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -3182,7 +3183,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -3220,7 +3221,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -3256,7 +3257,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith

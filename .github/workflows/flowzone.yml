@@ -542,7 +542,8 @@ jobs:
             {
               "administration": "write",
               "contents": "write",
-              "metadata": "read"
+              "metadata": "read",
+              "pull_requests": "read"
             }
       - name: Checkout merge ref
         if: github.event.pull_request.state == 'open'
@@ -583,7 +584,7 @@ jobs:
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |
-          npm install -g balena-versionist@~0.14.13 versionist@^7.0.1
+          npm install -g balena-versionist@~0.14.13 versionist@^7.0.3
           npm ls -g balena-versionist
           npm ls -g versionist
       - name: Generate changelog
