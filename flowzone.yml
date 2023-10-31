@@ -115,6 +115,22 @@
       ref: "${{ needs.versioned_source.outputs.sha }}"
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
+  - &checkoutEventSha
+    # checkout the tip of BASE if the PR is from a fork,
+    # otherwise checkout the merge commit
+    # https://github.com/actions/checkout
+    name: Checkout event sha
+    uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    with:
+      fetch-depth: 1
+      # for external contributions github.sha is the tip of BASE, for internal it is the merge sha
+      ref: ${{ github.sha }}
+      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      # checkout to an isolated directory to avoid conflicts with the versioned source checkout
+      path: .github/base
+      sparse-checkout: |
+        .github
+
   - &describeGitState # Resolve tag, semver, sha, and description of current git working copy.
     name: Describe git state
     id: git_describe
@@ -176,21 +192,6 @@
     GH_REPO: "${{ github.repository }}"
     # default to automatic actions token
     GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-  - &rejectExternalWorkflowChanges
-    name: Reject external workflow changes
-    if: |
-      github.event.pull_request.state == 'open' &&
-      github.event.pull_request.head.repo.full_name != github.repository
-    env:
-      <<: *gitHubCliEnvironment
-    run: |
-      if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
-      then
-        echo "::error::Modifications to workflow files are not supported for external contributions. \
-          Please contact a member of the organization for assistance."
-        exit 1
-      fi
 
   - &rejectExternalCustomActions
     name: Reject external custom actions
@@ -1063,7 +1064,6 @@ jobs:
       - *rejectInternalPullRequestTarget
       - *rejectUnapprovedPullRequestTarget
       - *rejectMissingSecrets
-      - *rejectExternalWorkflowChanges
       - *warnGPTReviewSkipped
       - *logGitHubContext
 
@@ -1715,7 +1715,7 @@ jobs:
 
     steps:
       - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *checkoutEventSha
 
       - id: custom_test_matrix
         <<: *jsonArrayBuilder
@@ -1732,6 +1732,7 @@ jobs:
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
 
+      # check for custom actions in the event sha checkout path
       - name: Check for custom actions
         id: custom
         run: |
@@ -3097,6 +3098,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *checkoutEventSha
       - *createLocalRefs
 
       - name: Set the matrix value env var
@@ -3104,7 +3106,8 @@ jobs:
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
           echo "os_value=${{ matrix.os }}" >> $GITHUB_ENV
 
-      - uses: ./.github/actions/test
+      # run custom actions from the event sha checkout for security
+      - uses: ./.github/base/.github/actions/test
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
@@ -3144,6 +3147,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *checkoutEventSha
       - *createLocalRefs
 
       - name: Set the matrix value env var
@@ -3151,7 +3155,8 @@ jobs:
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
           echo "os_value=${{ matrix.os }}" >> $GITHUB_ENV
 
-      - uses: ./.github/actions/publish
+      # run custom actions from the event sha checkout for security
+      - uses: ./.github/base/.github/actions/publish
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
@@ -3184,13 +3189,15 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *checkoutEventSha
 
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
           echo "os_value=${{ matrix.os }}" >> $GITHUB_ENV
 
-      - uses: ./.github/actions/finalize
+      # run custom actions from the event sha checkout for security
+      - uses: ./.github/base/.github/actions/finalize
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
@@ -3222,8 +3229,10 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *checkoutEventSha
 
-      - uses: ./.github/actions/clean
+      # run custom actions from the event sha checkout for security
+      - uses: ./.github/base/.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
@@ -3258,8 +3267,10 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *checkoutEventSha
 
-      - uses: ./.github/actions/always
+      # run custom actions from the event sha checkout for security
+      - uses: ./.github/base/.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
