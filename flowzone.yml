@@ -229,28 +229,6 @@
         echo "result=false" >> $GITHUB_OUTPUT
       fi
 
-  - &isApprovedExternalPullRequest
-    name: Check if an external PR is approved
-    id: is_approved_external_pr
-    if: |
-      github.event.pull_request.state == 'open' &&
-      github.event.pull_request.head.repo.full_name != github.repository
-    env:
-      <<: *gitHubCliEnvironment
-    run: |
-      pr_labels="$(gh pr view ${{ github.event.pull_request.number }} --json labels -q .labels[].name)"
-      approve_label='run-ci-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}'
-
-      for label in "${pr_labels}"
-      do
-        if [[ "$label" =~ "$approve_label" ]]
-        then
-          echo "result=true" >> $GITHUB_OUTPUT
-          exit
-        fi
-      done
-      echo "result=false" >> $GITHUB_OUTPUT
-
   - &jsonArrayBuilder
     name: Build JSON array from comma-separated list
     id: to_json_array
@@ -418,6 +396,32 @@
         exit 1
       fi
 
+  # require the label 'ok-to-test' to be present on the PR before running checks
+  # and remove the label after every run so it must be re-added on push, retest, etc.
+  - &rejectUnapprovedPullRequestTarget
+    name: Reject unapproved pull_request_target events
+    if: |
+      inputs.ok_to_test_label != '' &&
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.head.repo.full_name != github.repository
+    env:
+      <<: *gitHubCliEnvironment
+    run: |
+      pr_labels="$(gh pr view ${{ github.event.pull_request.number }} --json labels -q .labels[].name)"
+
+      for label in "${pr_labels}"
+      do
+        if [[ "$label" =~ "${{ inputs.ok_to_test_label }}" ]]
+        then
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label "${{ inputs.ok_to_test_label }}"
+          exit 0
+        fi
+      done
+
+      echo "::error::External contributions must be approved with the label '${{ inputs.ok_to_test_label }}'. \
+        Please contact a member of the organization for assistance."
+      exit 1
+
   - &rejectExternalPullRequest
     name: Reject external pull_request events on pull_request
     if: |
@@ -436,21 +440,6 @@
     run: |
       echo "::error::Internal workflows should not be used with `pull_request_target` events. \
         Please consult the documentation for more information."
-      exit 1
-
-  - &rejectSelfHostedRunners
-    name: Reject self-hosted runners
-    if: |
-      steps.is_approved_external_pr.outputs.result == 'false' &&
-      github.event.pull_request.head.repo.full_name != github.repository &&
-      (
-        contains(inputs.runs_on, 'self-hosted') ||
-        contains(inputs.custom_runs_on, 'self-hosted') ||
-        contains(inputs.docker_runs_on, 'self-hosted')
-      )
-    run: |
-      echo "::error::External workflows can not be used with self-hosted runners. \
-        Please contact a member of the organization for assistance."
       exit 1
 
   - &setupQemuBinfmt # https://github.com/docker/setup-qemu-action
@@ -1026,6 +1015,11 @@ on:
         type: boolean
         required: false
         default: false
+      ok_to_test_label:
+        description: "Require a label before running checks for external contributions (forks)."
+        type: string
+        required: false
+        default: "ok-to-test"
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -1065,12 +1059,11 @@ jobs:
             event_action: ${{ github.event.action }}
 
     steps:
-      - *isApprovedExternalPullRequest
       - *rejectExternalPullRequest
       - *rejectInternalPullRequestTarget
+      - *rejectUnapprovedPullRequestTarget
       - *rejectMissingSecrets
       - *rejectExternalWorkflowChanges
-      - *rejectSelfHostedRunners
       - *warnGPTReviewSkipped
       - *logGitHubContext
 
