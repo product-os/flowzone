@@ -1,4 +1,20 @@
 - commits:
+    - subject: Require label 'ok-to-test' for all external contributions
+      hash: 5000974745aaa3efa55a5e729676d7a07f61cbba
+      body: |
+        This applies to all external contributions, not only ones
+        that are using self-hosted runners.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.9.0
+  title: ""
+  date: 2023-10-31T18:16:11.577Z
+- commits:
     - subject: Lock file maintenance
       hash: db29da3e91e20e7da788b7e608aa5bdf9ba68ae6
       body: |
