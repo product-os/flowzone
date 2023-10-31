@@ -479,6 +479,11 @@ jobs:
       # Required: false
       enable_gpt_review: false
 
+      # Require a label before running checks for external contributions (forks).
+      # Type: string
+      # Required: false
+      ok_to_test_label: ok-to-test
+
 
 ```
 <!-- end usage -->
