@@ -1237,6 +1237,9 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Reset .github directory to ${{ github.ref }}
+        run: |
+          git checkout ${{ github.sha }} -- .github
       - id: custom_test_matrix
         name: Build JSON array from comma-separated list
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
@@ -3313,6 +3316,9 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Reset .github directory to ${{ github.ref }}
+        run: |
+          git checkout ${{ github.sha }} -- .github
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3374,6 +3380,9 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Reset .github directory to ${{ github.ref }}
+        run: |
+          git checkout ${{ github.sha }} -- .github
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3429,6 +3438,9 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Reset .github directory to ${{ github.ref }}
+        run: |
+          git checkout ${{ github.sha }} -- .github
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
@@ -3480,6 +3492,9 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Reset .github directory to ${{ github.ref }}
+        run: |
+          git checkout ${{ github.sha }} -- .github
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -3530,6 +3545,9 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Reset .github directory to ${{ github.ref }}
+        run: |
+          git checkout ${{ github.sha }} -- .github
       - uses: ./.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}

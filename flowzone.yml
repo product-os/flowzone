@@ -115,6 +115,13 @@
       ref: "${{ needs.versioned_source.outputs.sha }}"
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
+  - &resetGitHubDirectory
+    # checkout the tip of BASE if the PR is from a fork,
+    # otherwise checkout the merge commit
+    name: Reset .github directory to ${{ github.ref }}
+    run: |
+      git checkout ${{ github.sha }} -- .github
+
   - &describeGitState # Resolve tag, semver, sha, and description of current git working copy.
     name: Describe git state
     id: git_describe
@@ -1729,6 +1736,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
 
       - id: custom_test_matrix
         <<: *jsonArrayBuilder
@@ -3110,6 +3118,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
       - *createLocalRefs
 
       - name: Set the matrix value env var
@@ -3157,6 +3166,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
       - *createLocalRefs
 
       - name: Set the matrix value env var
@@ -3197,6 +3207,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
 
       - name: Set the matrix value env var
         run: |
@@ -3235,6 +3246,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
 
       - uses: ./.github/actions/clean
         with:
@@ -3271,6 +3283,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
 
       - uses: ./.github/actions/always
         with:
