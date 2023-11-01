@@ -1420,6 +1420,19 @@ jobs:
             echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> $GITHUB_ENV
           fi
 
+      - <<: *setupNode
+        if: steps.npm.outputs.enabled == 'true'
+        with:
+          node-version: 20.x
+
+      - name: Check engine
+        if: steps.npm.outputs.enabled == 'true'
+        run: |
+          if npx -q -y -- check-engine
+          then
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> $GITHUB_ENV
+          fi
+
       # default to the current LTS version if none were matched
       # by the engine checks above
       - name: Set Node.js versions
