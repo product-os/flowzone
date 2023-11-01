@@ -1439,7 +1439,7 @@ jobs:
         if: steps.npm.outputs.enabled == 'true'
         id: node_versions
         run: |
-          echo "json=[\"16.x\"]" >> $GITHUB_OUTPUT
+          echo "json=[\"20.x\"]" >> $GITHUB_OUTPUT
           if [ "${NODE_VERSIONS}" != "[]" ]
           then
             echo "json=${NODE_VERSIONS}" >> $GITHUB_OUTPUT
