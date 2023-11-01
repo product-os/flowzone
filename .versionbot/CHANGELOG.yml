@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/setup-node action to v4
+      hash: 56d8d0daac4ef892a1ecf53ed9b4f427bc2aa068
+      body: |
+        Update actions/setup-node from 3.8.2 to 4.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.11.1
+  title: ""
+  date: 2023-11-01T17:17:45.540Z
+- commits:
     - subject: Bump the default fallback node version to 20.x
       hash: 7545ca6950de3db7b1729fdc7aac2416a2b699d5
       body: ""
