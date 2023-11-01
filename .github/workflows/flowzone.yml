@@ -840,6 +840,18 @@ jobs:
           then
             echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> $GITHUB_ENV
           fi
+      - name: Setup Node.js
+        uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7
+        with:
+          node-version: 20.x
+        if: steps.npm.outputs.enabled == 'true'
+      - name: Check engine
+        if: steps.npm.outputs.enabled == 'true'
+        run: |
+          if npx -q -y -- check-engine
+          then
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> $GITHUB_ENV
+          fi
       - name: Set Node.js versions
         if: steps.npm.outputs.enabled == 'true'
         id: node_versions
