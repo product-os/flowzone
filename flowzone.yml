@@ -184,21 +184,6 @@
     # default to automatic actions token
     GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-  - &rejectExternalWorkflowChanges
-    name: Reject external workflow changes
-    if: |
-      github.event.pull_request.state == 'open' &&
-      github.event.pull_request.head.repo.full_name != github.repository
-    env:
-      <<: *gitHubCliEnvironment
-    run: |
-      if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
-      then
-        echo "::error::Modifications to workflow files are not supported for external contributions. \
-          Please contact a member of the organization for assistance."
-        exit 1
-      fi
-
   - &rejectExternalCustomActions
     name: Reject external custom actions
     if: |
@@ -1070,7 +1055,6 @@ jobs:
       - *rejectInternalPullRequestTarget
       - *rejectUnapprovedPullRequestTarget
       - *rejectMissingSecrets
-      - *rejectExternalWorkflowChanges
       - *warnGPTReviewSkipped
       - *logGitHubContext
 

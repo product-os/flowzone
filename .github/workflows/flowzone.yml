@@ -471,23 +471,6 @@ jobs:
             echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
             false
           fi
-      - name: Reject external workflow changes
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
-          then
-            echo "::error::Modifications to workflow files are not supported for external contributions. \
-              Please contact a member of the organization for assistance."
-            exit 1
-          fi
       - name: Warn if GPT Review is skipped
         if: |
           github.event.pull_request.state == 'open' &&
