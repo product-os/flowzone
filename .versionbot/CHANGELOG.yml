@@ -1,4 +1,36 @@
 - commits:
+    - subject: Allow changes to .github via external contributions
+      hash: ff47650c13f8acacb234e6e150dde311c98e1954
+      body: |
+        PRs from forks are using workflows from the target
+        branch via pull_request_target, or they have had the .github
+        branch reset before running custom actions.
+
+        So this restriction is no longer required.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Reset the .github folder to the event commit for custom actions
+      hash: c5e6224061c505f2552dd79b37d6c33887f19d4f
+      body: |
+        The github.sha value is the tip of BASE for external PRs,
+        and the merge commit for internal PRs so it is ideal
+        from a security standpoint to run custom actions.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.12.0
+  title: ""
+  date: 2023-11-02T13:57:39.570Z
+- commits:
     - subject: Update actions/setup-node action to v4
       hash: 56d8d0daac4ef892a1ecf53ed9b4f427bc2aa068
       body: |
