@@ -115,6 +115,13 @@
       ref: "${{ needs.versioned_source.outputs.sha }}"
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
+  - &resetGitHubDirectory
+    # checkout the tip of BASE if the PR is from a fork,
+    # otherwise checkout the merge commit
+    name: Reset .github directory to ${{ github.ref }}
+    run: |
+      git checkout ${{ github.sha }} -- .github
+
   - &describeGitState # Resolve tag, semver, sha, and description of current git working copy.
     name: Describe git state
     id: git_describe
@@ -176,21 +183,6 @@
     GH_REPO: "${{ github.repository }}"
     # default to automatic actions token
     GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-  - &rejectExternalWorkflowChanges
-    name: Reject external workflow changes
-    if: |
-      github.event.pull_request.state == 'open' &&
-      github.event.pull_request.head.repo.full_name != github.repository
-    env:
-      <<: *gitHubCliEnvironment
-    run: |
-      if [[ $(gh pr diff ${{ github.event.pull_request.number }} --name-only) =~ ^\.github\/ ]]
-      then
-        echo "::error::Modifications to workflow files are not supported for external contributions. \
-          Please contact a member of the organization for assistance."
-        exit 1
-      fi
 
   - &rejectExternalCustomActions
     name: Reject external custom actions
@@ -1063,7 +1055,6 @@ jobs:
       - *rejectInternalPullRequestTarget
       - *rejectUnapprovedPullRequestTarget
       - *rejectMissingSecrets
-      - *rejectExternalWorkflowChanges
       - *warnGPTReviewSkipped
       - *logGitHubContext
 
@@ -1729,6 +1720,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
 
       - id: custom_test_matrix
         <<: *jsonArrayBuilder
@@ -3110,6 +3102,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
       - *createLocalRefs
 
       - name: Set the matrix value env var
@@ -3157,6 +3150,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
       - *createLocalRefs
 
       - name: Set the matrix value env var
@@ -3197,6 +3191,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
 
       - name: Set the matrix value env var
         run: |
@@ -3235,6 +3230,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
 
       - uses: ./.github/actions/clean
         with:
@@ -3271,6 +3267,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *resetGitHubDirectory
 
       - uses: ./.github/actions/always
         with:
