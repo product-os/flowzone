@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update hashicorp/setup-terraform action to v3
+      hash: 99d2b7440294c957fd9053d02a1421bcfcc32160
+      body: |
+        Update hashicorp/setup-terraform from 2.0.3 to 3.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.12.3
+  title: ""
+  date: 2023-11-02T16:57:59.160Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v1.1.0
       hash: da984d1c1069e99b23d9e79e232c23162b6606af
       body: |
