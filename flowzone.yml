@@ -162,6 +162,20 @@
       # so this will fail for external PRs as the automatic actions token will be read-only
       password: ${{ secrets.GITHUB_TOKEN }}
 
+  - &loginWithECRPublic
+    name: Login to AWS/ECR (public)
+    continue-on-error: true
+    uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+    with:
+      registry: public.ecr.aws
+
+  - &loginWithECRPrivate
+    name: Login to AWS/ECR (private)
+    continue-on-error: true
+    uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+    with:
+      registry: ${{ matrix.image }}
+
   - &customWorkingDirectory
     defaults:
       run:
@@ -420,7 +434,7 @@
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name != github.repository
     run: |
-      echo "::error::External workflows can not be used with `pull_request` events. \
+      echo "::error::External workflows can not be used with 'pull_request' events. \
         Please contact a member of the organization for assistance."
       exit 1
 
@@ -430,7 +444,7 @@
       github.event_name == 'pull_request_target' &&
       github.event.pull_request.head.repo.full_name == github.repository
     run: |
-      echo "::error::Internal workflows should not be used with `pull_request_target` events. \
+      echo "::error::Internal workflows should not be used with 'pull_request_target' events. \
         Please consult the documentation for more information."
       exit 1
 
@@ -557,6 +571,7 @@
 
   - &getAWSCallerIdentity
     name: Get caller identity (AWS/whoami)
+    continue-on-error: true
     run: aws sts get-caller-identity
 
   - &updateKubeconfig
@@ -2409,6 +2424,10 @@ jobs:
 
       - *loginWithGitHubContainerRegistry
       - *loginWithDockerHub
+      - *configureAWSCredentials
+      - *getAWSCallerIdentity
+      - *loginWithECRPublic
+      - *loginWithECRPrivate
 
       # https://github.com/akhilerm/tag-push-action
       - name: Publish manifest to remote(s)
@@ -2479,6 +2498,10 @@ jobs:
       - *setupCrane
       - *loginWithGitHubContainerRegistry
       - *loginWithDockerHub
+      - *configureAWSCredentials
+      - *getAWSCallerIdentity
+      - *loginWithECRPublic
+      - *loginWithECRPrivate
 
       # https://github.com/akhilerm/tag-push-action
       - name: Publish final tags

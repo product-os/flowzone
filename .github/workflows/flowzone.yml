@@ -427,7 +427,7 @@ jobs:
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name != github.repository
         run: |
-          echo "::error::External workflows can not be used with `pull_request` events. \
+          echo "::error::External workflows can not be used with 'pull_request' events. \
             Please contact a member of the organization for assistance."
           exit 1
       - name: Reject internal pull_request events on pull_request_target
@@ -435,7 +435,7 @@ jobs:
           github.event_name == 'pull_request_target' &&
           github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          echo "::error::Internal workflows should not be used with `pull_request_target` events. \
+          echo "::error::Internal workflows should not be used with 'pull_request_target' events. \
             Please consult the documentation for more information."
           exit 1
       - name: Reject unapproved pull_request_target events
@@ -2157,6 +2157,27 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+      - uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        with:
+          role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
+          role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          aws-region: ${{ matrix.region || inputs.aws_region }}
+          mask-aws-account-id: false
+      - name: Get caller identity (AWS/whoami)
+        continue-on-error: true
+        run: aws sts get-caller-identity
+      - name: Login to AWS/ECR (public)
+        continue-on-error: true
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: public.ecr.aws
+      - name: Login to AWS/ECR (private)
+        continue-on-error: true
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ matrix.image }}
       - name: Publish manifest to remote(s)
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
         with:
@@ -2350,6 +2371,27 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
+      - uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        with:
+          role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
+          role-session-name: github-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          aws-region: ${{ matrix.region || inputs.aws_region }}
+          mask-aws-account-id: false
+      - name: Get caller identity (AWS/whoami)
+        continue-on-error: true
+        run: aws sts get-caller-identity
+      - name: Login to AWS/ECR (public)
+        continue-on-error: true
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: public.ecr.aws
+      - name: Login to AWS/ECR (private)
+        continue-on-error: true
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ matrix.image }}
       - name: Publish final tags
         uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
         with:
@@ -3598,6 +3640,7 @@ jobs:
           aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
+        continue-on-error: true
         run: aws sts get-caller-identity
       - name: Convenience functions
         id: functions
@@ -3833,6 +3876,7 @@ jobs:
           aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
+        continue-on-error: true
         run: aws sts get-caller-identity
       - name: Wait for resources
         run: |
@@ -3983,6 +4027,7 @@ jobs:
           aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
+        continue-on-error: true
         run: aws sts get-caller-identity
       - name: Update kubeconfig
         run: |
@@ -4088,6 +4133,7 @@ jobs:
           aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
+        continue-on-error: true
         run: aws sts get-caller-identity
       - name: Update kubeconfig
         run: |
