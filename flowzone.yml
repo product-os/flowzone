@@ -451,7 +451,7 @@
   - &setupQemuBinfmt # https://github.com/docker/setup-qemu-action
     name: Setup QEMU
     uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
-    if: contains(matrix.runs_on, 'self-hosted') != true
+    if: contains(matrix.runs_on, 'self-hosted') != true || contains(matrix.runs_on, 'X64') == true
     with:
       platforms: all
       # https://hub.docker.com/r/tonistiigi/binfmt
