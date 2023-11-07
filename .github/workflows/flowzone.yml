@@ -522,22 +522,22 @@ jobs:
               "metadata": "read",
               "pull_requests": "read"
             }
-      - name: Checkout merge ref
-        if: github.event.pull_request.state == 'open'
+      - name: Checkout refs/pull/${{ github.event.number }}/merge
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
           submodules: recursive
           ref: refs/pull/${{ github.event.number }}/merge
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Checkout event sha
-        if: github.event.pull_request.state != 'open'
+        if: github.event.pull_request.state == 'open'
+      - name: Checkout ${{ github.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
           submodules: recursive
           ref: ${{ github.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        if: github.event.pull_request.state != 'open'
       - name: Reject merge commits
         if: github.event.pull_request.state == 'open'
         run: |
@@ -741,7 +741,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -876,7 +876,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -1003,7 +1003,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -1100,7 +1100,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -1154,7 +1154,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -1213,7 +1213,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -1222,7 +1222,8 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
-          git checkout ${{ github.sha }} -- .github
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
       - id: custom_test_matrix
         name: Build JSON array from comma-separated list
         uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
@@ -1298,7 +1299,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -1345,7 +1346,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -1461,7 +1462,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -1761,7 +1762,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -2263,7 +2264,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -2491,7 +2492,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -2579,7 +2580,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -2664,7 +2665,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -2750,7 +2751,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -2824,7 +2825,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -2879,7 +2880,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -3057,7 +3058,7 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -3141,7 +3142,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -3219,7 +3220,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -3281,7 +3282,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -3333,7 +3334,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -3342,7 +3343,8 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
-          git checkout ${{ github.sha }} -- .github
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3397,7 +3399,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -3406,7 +3408,8 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
-          git checkout ${{ github.sha }} -- .github
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3455,7 +3458,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -3464,7 +3467,8 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
-          git checkout ${{ github.sha }} -- .github
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
       - name: Set the matrix value env var
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
@@ -3509,7 +3513,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -3518,7 +3522,8 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
-          git checkout ${{ github.sha }} -- .github
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -3562,7 +3567,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -3571,7 +3576,8 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
-          git checkout ${{ github.sha }} -- .github
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
       - uses: ./.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}
@@ -3618,7 +3624,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -4005,7 +4011,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
@@ -4111,7 +4117,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned sha
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
