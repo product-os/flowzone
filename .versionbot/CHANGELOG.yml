@@ -1,4 +1,20 @@
 - commits:
+    - subject: Fetch and checkout merge ref when resetting github directory
+      hash: ee2b98f1589130190e5c42df96c97b21c08751a2
+      body: |
+        Don't assume that github.sha is the same as github.ref or even
+        exists in the clone. Instead fetch and checkout github.ref directly.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.12.8
+  title: ""
+  date: 2023-11-07T19:53:33.004Z
+- commits:
     - subject: Allow registering QEMU binfmt on self-hosted X64
       hash: d022d46ce4ebfe7e69e9a3837841805ed247f967
       body: ""
