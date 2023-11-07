@@ -106,8 +106,32 @@
             -d "{\"note\":${release_notes}}"
       fi
 
-  - &checkoutVersionedSha
-    name: Checkout versioned sha
+  - &checkoutMergeRef
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+    # https://github.com/actions/checkout
+    name: Checkout refs/pull/${{ github.event.number }}/merge
+    uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    with:
+      fetch-depth: 0
+      submodules: "recursive"
+      ref: "refs/pull/${{ github.event.number }}/merge"
+      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+
+  - &checkoutEventSha
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+    # https://github.com/actions/checkout
+    name: Checkout ${{ github.sha }}
+    uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    with:
+      fetch-depth: 0
+      submodules: "recursive"
+      ref: ${{ github.sha }}
+      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+
+  - &checkoutVersionedSha # https://github.com/actions/checkout
+    name: Checkout ${{ needs.versioned_source.outputs.sha }}
     uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     with:
       fetch-depth: 0
@@ -116,11 +140,13 @@
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &resetGitHubDirectory
-    # checkout the tip of BASE if the PR is from a fork,
-    # otherwise checkout the merge commit
+    # checkout the tip of BASE if the PR is from a fork
+    # or the merge commit if the PR is internal
     name: Reset .github directory to ${{ github.ref }}
+    # <<: *ifExternalPullRequest
     run: |
-      git checkout ${{ github.sha }} -- .github
+      git fetch origin ${{ github.ref }}
+      git checkout FETCH_HEAD -- .github
 
   - &describeGitState # Resolve tag, semver, sha, and description of current git working copy.
     name: Describe git state
@@ -1111,27 +1137,13 @@ jobs:
               "pull_requests": "read"
             }
 
-      # checkout merge ref for open PRs
-      # https://github.com/actions/checkout
-      - name: Checkout merge ref
+      # Checkout the merge ref for open PRs
+      - <<: *checkoutMergeRef
         if: github.event.pull_request.state == 'open'
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          fetch-depth: 0
-          submodules: "recursive"
-          ref: "refs/pull/${{ github.event.number }}/merge"
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
-      # otherwise use the event sha
-      # https://github.com/actions/checkout
-      - name: Checkout event sha
+      # Checkout the event sha for closed PRs
+      - <<: *checkoutEventSha
         if: github.event.pull_request.state != 'open'
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          fetch-depth: 0
-          submodules: "recursive"
-          ref: ${{ github.sha }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
       # fail on merge commits (ones with more than one parent)
       - name: Reject merge commits
