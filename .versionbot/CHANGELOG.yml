@@ -1,4 +1,30 @@
 - commits:
+    - subject: Remove hosted macos-12 runner from custom tests
+      hash: 99cc06c92e6d8328ea7f8114208e3ec52315eaa0
+      body: |
+        It often fails to generate a github token due to time sync
+        issues out of our control.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Add draft and final tags to docker cache sources
+      hash: 0ea38579ec88bd9ef8096a361f2ea57d709c46b4
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.12.9
+  title: ""
+  date: 2023-11-10T15:16:57.298Z
+- commits:
     - subject: Fetch and checkout merge ref when resetting github directory
       hash: ee2b98f1589130190e5c42df96c97b21c08751a2
       body: |
