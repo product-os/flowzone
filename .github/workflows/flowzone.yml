@@ -1839,25 +1839,6 @@ jobs:
           echo "prefix=${prefix_slug}" >> $GITHUB_OUTPUT
           echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
           echo "dockerhub=${dockerhub_slug}" >> $GITHUB_OUTPUT
-      - name: Generate docker metadata
-        id: test_meta
-        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934
-        with:
-          images: |
-            sut
-            localhost:5000/sut
-            ${{ needs.is_docker.outputs.docker_images_crlf }}
-          labels: |
-            org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
-            org.opencontainers.image.ref.name=${{ matrix.target }}
-          tags: |
-            type=raw,value=${{ github.event.pull_request.head.sha }}
-            type=raw,value=build-${{ github.event.pull_request.head.sha }}
-            type=raw,value=build-${{ github.event.pull_request.head.ref }}
-          flavor: |
-            latest=true
-            prefix=${{ steps.strings.outputs.prefix }}
-            suffix=${{ steps.strings.outputs.suffix }}
       - name: Setup QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3
         if: contains(matrix.runs_on, 'self-hosted') != true || contains(matrix.runs_on, 'X64') == true
@@ -1953,6 +1934,40 @@ jobs:
 
           yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
           yq . "${COMPOSE_FILE}"
+      - name: Generate docker metadata
+        id: test_meta
+        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934
+        with:
+          images: |
+            sut
+            localhost:5000/sut
+            ${{ needs.is_docker.outputs.docker_images_crlf }}
+          labels: |
+            org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
+            org.opencontainers.image.ref.name=${{ matrix.target }}
+          tags: |
+            type=raw,value=${{ github.event.pull_request.head.sha }}
+            type=raw,value=build-${{ github.event.pull_request.head.sha }}
+            type=raw,value=build-${{ github.event.pull_request.head.ref }}
+          flavor: |
+            latest=true
+            prefix=${{ steps.strings.outputs.prefix }}
+            suffix=${{ steps.strings.outputs.suffix }}
+      - name: Generate docker metadata
+        id: cache_meta
+        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934
+        with:
+          images: |
+            ${{ needs.is_docker.outputs.docker_images_crlf }}
+          tags: |
+            type=raw,value=${{ github.base_ref || github.ref_name }}
+            type=raw,value=${{ github.event.pull_request.head.sha }}
+            type=raw,value=build-${{ github.event.pull_request.head.sha }}
+            type=raw,value=build-${{ github.event.pull_request.head.ref }}
+          flavor: |
+            latest=true
+            prefix=${{ steps.strings.outputs.prefix }},onlatest=true
+            suffix=${{ steps.strings.outputs.suffix }},onlatest=true
       - name: Docker bake
         id: docker_bake
         uses: docker/bake-action@511fde2517761e303af548ec9e0ea74a8a100112
@@ -1971,6 +1986,14 @@ jobs:
             *.secrets=id=GH_TOKEN
             *.cache-to=type=gha,mode=min,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=type=gha,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[0] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[1] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[2] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[3] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[4] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[5] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[6] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[7] || ''}}
           load: true
           provenance: false
       - name: Save image to file

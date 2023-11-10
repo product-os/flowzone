@@ -371,6 +371,22 @@
         prefix=${{ steps.strings.outputs.prefix }}
         suffix=${{ steps.strings.outputs.suffix }}
 
+  - &dockerCacheFromMetadata
+    <<: *dockerTestMetadata
+    id: cache_meta
+    with:
+      images: |
+        ${{ needs.is_docker.outputs.docker_images_crlf }}
+      tags: |
+        type=raw,value=${{ github.base_ref || github.ref_name }}
+        type=raw,value=${{ github.event.pull_request.head.sha }}
+        type=raw,value=build-${{ github.event.pull_request.head.sha }}
+        type=raw,value=build-${{ github.event.pull_request.head.ref }}
+      flavor: |
+        latest=true
+        prefix=${{ steps.strings.outputs.prefix }},onlatest=true
+        suffix=${{ steps.strings.outputs.suffix }},onlatest=true
+
   - &dockerDraftMetadata
     <<: *dockerTestMetadata
     id: draft_meta
@@ -2224,7 +2240,6 @@ jobs:
       - *checkoutVersionedSha
       - *createLocalRefs
       - *sanitizeDockerStrings
-      - *dockerTestMetadata
       - *setupQemuBinfmt
       - *setupBuildx
 
@@ -2312,6 +2327,9 @@ jobs:
           yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
           yq . "${COMPOSE_FILE}"
 
+      - *dockerTestMetadata
+      - *dockerCacheFromMetadata
+
       # https://github.com/docker/bake-action
       - name: Docker bake
         id: docker_bake
@@ -2332,6 +2350,14 @@ jobs:
             *.secrets=id=GH_TOKEN
             *.cache-to=type=gha,mode=min,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=type=gha,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[0] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[1] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[2] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[3] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[4] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[5] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[6] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[7] || ''}}
           load: true
           provenance: false
 
