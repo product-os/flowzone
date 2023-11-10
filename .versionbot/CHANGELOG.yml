@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update product-os/docusaurus-builder action to v1.6.0
+      hash: 320a32b309763e523ffdf65aa602cb2951f332b1
+      body: |
+        Update product-os/docusaurus-builder from 1.5.4 to 1.6.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.12.10
+  title: ""
+  date: 2023-11-10T16:00:21.478Z
+- commits:
     - subject: Remove hosted macos-12 runner from custom tests
       hash: 99cc06c92e6d8328ea7f8114208e3ec52315eaa0
       body: |
