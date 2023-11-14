@@ -3026,19 +3026,7 @@ jobs:
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
         with:
           path: ${{ runner.temp }}
-      - name: Check if any release artifacts exist
-        id: gh_artifacts
-        env:
-          GH_ARTIFACTS: ${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-        run: |
-          set -ea
-
-          artifact_count=0
-          [ -d "$GH_ARTIFACTS" ] && \
-              artifact_count=$(ls "$GH_ARTIFACTS" | wc -l | sed 's/^ *//;s/ *$//')
-          echo "count=$artifact_count" >> $GITHUB_OUTPUT
       - name: Publish artifacts
-        if: steps.gh_artifacts.outputs.count != '0'
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
