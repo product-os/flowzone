@@ -1,4 +1,18 @@
 - commits:
+    - subject: Always publish GitHub releases even without artifacts
+      hash: 4fb48bac8828954aaf30fc7eb1a7cf4e1b1fecbc
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.13.0
+  title: ""
+  date: 2023-11-14T13:51:10.951Z
+- commits:
     - subject: Check that docker images list is provided before generating cache tags
       hash: d9253f933c0b23c72de3cea76b9eeb13e561b703
       body: ""
