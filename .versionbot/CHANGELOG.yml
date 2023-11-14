@@ -1,4 +1,18 @@
 - commits:
+    - subject: Handle a null value from the docker cache meta step
+      hash: 5042ca64a0994ae75962c39c03ba6f2ece2d28a8
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.13.1
+  title: ""
+  date: 2023-11-14T14:21:01.488Z
+- commits:
     - subject: Always publish GitHub releases even without artifacts
       hash: 4fb48bac8828954aaf30fc7eb1a7cf4e1b1fecbc
       body: ""
