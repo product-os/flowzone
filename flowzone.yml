@@ -374,6 +374,8 @@
   - &dockerCacheFromMetadata
     <<: *dockerTestMetadata
     id: cache_meta
+    # ensure docker_images_crlf is not an empty list
+    if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
     with:
       images: |
         ${{ needs.is_docker.outputs.docker_images_crlf }}

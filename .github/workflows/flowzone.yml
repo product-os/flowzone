@@ -1968,6 +1968,7 @@ jobs:
             latest=true
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
+        if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
       - name: Docker bake
         id: docker_bake
         uses: docker/bake-action@511fde2517761e303af548ec9e0ea74a8a100112
