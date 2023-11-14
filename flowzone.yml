@@ -2340,6 +2340,7 @@ jobs:
           # use automatic github token for untrusted user code
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CACHE_META_JSON: ${{ steps.cache_meta.outputs.json || '{}' }}
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
@@ -2352,14 +2353,14 @@ jobs:
             *.secrets=id=GH_TOKEN
             *.cache-to=type=gha,mode=min,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=type=gha,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[0] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[1] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[2] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[3] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[4] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[5] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[6] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json).tags[7] || ''}}
+            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[0] || ''}}
+            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[1] || ''}}
+            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[2] || ''}}
+            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[3] || ''}}
+            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[4] || ''}}
+            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[5] || ''}}
+            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[6] || ''}}
+            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[7] || ''}}
           load: true
           provenance: false
 
