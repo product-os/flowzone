@@ -1,4 +1,18 @@
 - commits:
+    - subject: Look for .zst artifacts when uploading
+      hash: ecdef49f66292b714a86d57697c38aa2efddb3f5
+      body: |
+        The job would previously look for .tar.gz artifacts which are no longer
+        generated since switching compression
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 5.13.2
+  title: ""
+  date: 2023-11-15T23:00:00.734Z
+- commits:
     - subject: Handle a null value from the docker cache meta step
       hash: 5042ca64a0994ae75962c39c03ba6f2ece2d28a8
       body: ""
