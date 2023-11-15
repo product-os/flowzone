@@ -3264,7 +3264,7 @@ jobs:
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32
         with:
           name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
+          path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst
           retention-days: 1
   cargo_finalize:
     name: Finalize rust
