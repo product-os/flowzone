@@ -1890,20 +1890,6 @@ jobs:
               echo "::add-mask::${secret}"
             done < ${COMPOSE_ENV_FILE}
           fi
-      - name: Add automatic GITHUB_TOKEN to compose env file
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if ! grep -q '^GH_TOKEN=' ${COMPOSE_ENV_FILE}
-          then
-            echo "GH_TOKEN=${GH_TOKEN}" >> ${COMPOSE_ENV_FILE}
-          fi
-
-          if ! grep -q '^GITHUB_TOKEN=' ${COMPOSE_ENV_FILE}
-          then
-            echo "GITHUB_TOKEN=${GITHUB_TOKEN}" >> ${COMPOSE_ENV_FILE}
-          fi
       - name: Write docker bake file
         run: |
           echo '${{ needs.is_docker.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
@@ -1972,10 +1958,6 @@ jobs:
       - name: Docker bake
         id: docker_bake
         uses: docker/bake-action@511fde2517761e303af548ec9e0ea74a8a100112
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CACHE_META_JSON: ${{ steps.cache_meta.outputs.json || '{}' }}
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
@@ -1984,18 +1966,16 @@ jobs:
           targets: ${{ matrix.target }}
           set: |
             *.platform=${{ matrix.platform }}
-            *.secrets=id=GITHUB_TOKEN
-            *.secrets=id=GH_TOKEN
             *.cache-to=type=gha,mode=min,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=type=gha,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
-            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[0] || ''}}
-            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[1] || ''}}
-            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[2] || ''}}
-            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[3] || ''}}
-            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[4] || ''}}
-            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[5] || ''}}
-            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[6] || ''}}
-            *.cache-from=${{fromJSON(env.CACHE_META_JSON).tags[7] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[0] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[1] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[2] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[3] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[4] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[5] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[6] || ''}}
+            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[7] || ''}}
           load: true
           provenance: false
       - name: Save image to file
