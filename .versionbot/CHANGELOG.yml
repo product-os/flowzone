@@ -1,4 +1,24 @@
 - commits:
+    - subject: Remove GitHub token secrets from docker tests
+      hash: bef60ca4dffb5724321e6c984ed1ef0ecb5e2f51
+      body: |
+        These were always a security concern and now there
+        appears to be no requirement for them.
+
+        The workaround for providing GitHub tokens to compose
+        tests is to encode a PAT as part of COMPOSE_VARS which
+        are only injected for private repositories.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.14.0
+  title: ""
+  date: 2023-11-16T15:53:02.689Z
+- commits:
     - subject: Look for .zst artifacts when uploading
       hash: ecdef49f66292b714a86d57697c38aa2efddb3f5
       body: |
