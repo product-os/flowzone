@@ -1,4 +1,20 @@
 - commits:
+    - subject: Create empty .env file if no COMPOSE_VARS exist
+      hash: dc8f6cf08276cf3bd03679f19ae18a3271b6a8cd
+      body: |
+        This should prevent failing docker compose tests due to a missing env
+        file.
+      footer:
+        See: docker/compose#10995
+        see: docker/compose#10995
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 5.14.1
+  title: ""
+  date: 2023-11-16T19:10:25.987Z
+- commits:
     - subject: Remove GitHub token secrets from docker tests
       hash: bef60ca4dffb5724321e6c984ed1ef0ecb5e2f51
       body: |
