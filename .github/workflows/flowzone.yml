@@ -1916,6 +1916,7 @@ jobs:
             fi
           done
 
+          touch ${COMPOSE_ENV_FILE}
           docker compose --env-file="${COMPOSE_ENV_FILE}" --project-directory="$(pwd)" ${args} config > "${COMPOSE_FILE}"
 
           yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
