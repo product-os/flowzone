@@ -4204,6 +4204,7 @@ jobs:
           repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Get branch protection rules
         id: branch_protection
+        shell: bash --noprofile --norc -eo pipefail -x {0}
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
@@ -4211,20 +4212,31 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
-          set -ex
-          result="$(gh api "${BRANCH_PROTECTION_URI}" --jq '.' ; echo $?)"
-          exit_status="${result##*$'\n'}"  # Extracts the last line which is the exit status
-          result="${result%$'\n'*}"       # Removes the last line (exit status) from the result
+          # Make the API call and get response with headers
+          full_response=$(gh api "${BRANCH_PROTECTION_URI}" -i --jq .)
 
-          if [[ "${exit_status}" -gt 0 ]]; then
-            message="$(echo "${result}" | jq -r '.message // ""')"
+          # Separate headers and body
+          headers=$(echo "$full_response" | sed -n '/HTTP/{:start /HTTP.*\n.*/{N;b start};p}')
+          result=$(echo "$full_response" | sed -e '1,/^\r$/d')
+
+          # Extract HTTP status code
+          http_status=$(echo "$headers" | grep HTTP/ | awk '{print $2}')
+
+          # Check for non-200 status codes
+          if [[ "$http_status" != "200" ]]; then
+            exit 1
+          fi
+
+          message="$(echo "${result}" | jq -r .message)"
+          if ! [[ $message =~ null ]]
+          then
             case "${message}" in
               "Branch not Found"|"Branch not protected")
-                echo  "::warning::Failed to get branch protection rules ${message} ${result}"
+                echo  "::warning::${message}"
                 exit 0
                 ;;
               *)
-                echo  "::error::Failed to get branch protection rules ${message} ${result}"
+                echo  "::error::${message}"
                 exit 1
                 ;;
             esac
@@ -4360,22 +4372,29 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
-          set -ex
-          result="$(echo '${{ fromJSON(steps.prepare_protection_rules.outputs.result) }}' \
-            | gh api --method PUT ${{ env.BRANCH_PROTECTION_URI }} --input - ; echo $?)"
-          exit_status="${result##*$'\n'}"  # Extracts the last line which is the exit status
-          result="${result%$'\n'*}"       # Removes the last line (exit status) from the result
+          # Make the API call and get response with headers
+          full_response=$(echo '${{ fromJSON(steps.prepare_protection_rules.outputs.result) }}' \
+            | gh api -i --method PUT ${{ env.BRANCH_PROTECTION_URI }} --input -)
 
-          if [[ "${exit_status}" -gt 0 ]]; then
+          # Separate headers and body
+          headers=$(echo "$full_response" | sed -n '/HTTP/{:start /HTTP.*\n.*/{N;b start};p}')
+          result=$(echo "$full_response" | sed -e '1,/^\r$/d')
+
+          # Extract HTTP status code
+          http_status=$(echo "$headers" | grep HTTP/ | awk '{print $2}')
+
+          # Check for non-200 status codes
+          if [[ "$http_status" != "200" ]]; then
             exit 1
           fi
 
           message="$(echo "${result}" | jq -r .message)"
           if ! [[ $message =~ null ]]
           then
-            echo "::error::Failed to apply branch protection rules with ${message} ${result} "
+            echo "::error::${message}"
             exit 1
           fi
+
           echo "::notice::Branch protection rules have been updated"
   repo_config:
     name: Apply repo settings
@@ -4561,6 +4580,7 @@ jobs:
           repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
       - name: Get branch protection rules
         id: branch_protection
+        shell: bash --noprofile --norc -eo pipefail -x {0}
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
@@ -4568,20 +4588,31 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
-          set -ex
-          result="$(gh api "${BRANCH_PROTECTION_URI}" --jq '.' ; echo $?)"
-          exit_status="${result##*$'\n'}"  # Extracts the last line which is the exit status
-          result="${result%$'\n'*}"       # Removes the last line (exit status) from the result
+          # Make the API call and get response with headers
+          full_response=$(gh api "${BRANCH_PROTECTION_URI}" -i --jq .)
 
-          if [[ "${exit_status}" -gt 0 ]]; then
-            message="$(echo "${result}" | jq -r '.message // ""')"
+          # Separate headers and body
+          headers=$(echo "$full_response" | sed -n '/HTTP/{:start /HTTP.*\n.*/{N;b start};p}')
+          result=$(echo "$full_response" | sed -e '1,/^\r$/d')
+
+          # Extract HTTP status code
+          http_status=$(echo "$headers" | grep HTTP/ | awk '{print $2}')
+
+          # Check for non-200 status codes
+          if [[ "$http_status" != "200" ]]; then
+            exit 1
+          fi
+
+          message="$(echo "${result}" | jq -r .message)"
+          if ! [[ $message =~ null ]]
+          then
             case "${message}" in
               "Branch not Found"|"Branch not protected")
-                echo  "::warning::Failed to get branch protection rules ${message} ${result}"
+                echo  "::warning::${message}"
                 exit 0
                 ;;
               *)
-                echo  "::error::Failed to get branch protection rules ${message} ${result}"
+                echo  "::error::${message}"
                 exit 1
                 ;;
             esac
