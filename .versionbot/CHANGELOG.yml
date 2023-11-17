@@ -1,4 +1,18 @@
 - commits:
+    - subject: Catch errors when fetching branch protection rules
+      hash: 7c2b53b84978af88883597ea9c183c84bb072d8c
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.14.3
+  title: ""
+  date: 2023-11-17T13:55:25.838Z
+- commits:
     - subject: Update docker/bake-action action to v4.1.0
       hash: b843660963639912c20f16d065037ce75e45790a
       body: |
