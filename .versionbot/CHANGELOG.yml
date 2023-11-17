@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/bake-action action to v4.1.0
+      hash: b843660963639912c20f16d065037ce75e45790a
+      body: |
+        Update docker/bake-action from 4.0.0 to 4.1.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.14.2
+  title: ""
+  date: 2023-11-17T10:53:07.410Z
+- commits:
     - subject: Create empty .env file if no COMPOSE_VARS exist
       hash: dc8f6cf08276cf3bd03679f19ae18a3271b6a8cd
       body: |
