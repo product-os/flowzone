@@ -1,4 +1,28 @@
 - commits:
+    - subject: Only register QEMU binfmt if not supported by the host
+      hash: 139491f338da03b24f00cca05501478e15cc00fb
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Update QEMU binfmt to v8.0.4-33
+      hash: 12eb5339c3dcb1c260c90af45d081830c166d97d
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.15.0
+  title: ""
+  date: 2023-11-21T20:03:22.111Z
+- commits:
     - subject: Update cloudflare/wrangler-action action to v3.3.2
       hash: 5f73422fde86c162695d906dad5c63f10842c9ac
       body: |
