@@ -42,7 +42,7 @@ jobs:
         {
           "linux/arm64": ["self-hosted","ARM64"],
           "linux/arm/v7": ["self-hosted","ARM64"],
-          "linux/arm/v6": ["self-hosted","ARM64"]
+          "linux/arm/v6": ["self-hosted","X64"]
         }
       # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
       custom_runs_on: >
