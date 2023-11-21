@@ -496,10 +496,13 @@
     name: Setup QEMU
     uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
     if: contains(matrix.runs_on, 'self-hosted') != true || contains(matrix.runs_on, 'X64') == true
+    env:
+      LOG_LEVEL: debug
+      BINFMT_VERSION: qemu-v8.0.4-33 # renovate: datasource=docker depName=binfmt packageName=tonistiigi/binfmt
     with:
       platforms: all
       # https://hub.docker.com/r/tonistiigi/binfmt
-      image: tonistiigi/binfmt:qemu-v6.2.0
+      image: tonistiigi/binfmt:${{ env.BINFMT_VERSION }}
 
   - &setupBuildx # https://github.com/docker/setup-buildx-action
     name: Setup buildx
