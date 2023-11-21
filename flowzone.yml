@@ -2816,13 +2816,13 @@ jobs:
           echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@4b3eae832ab5113c67958be31ca062ad46c593b6 # v3.3.1
+        uses: cloudflare/wrangler-action@5e8484995321734668f14981c316aa9188d76ed1 # v3.3.2
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           wranglerVersion: "3.5.1" # latest - https://www.npmjs.com/package/wrangler
           preCommands: wrangler --version
-          command: pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ | tee -a $GITHUB_STEP_SUMMARY
+          command: pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/
 
   ###################################################
   # GitHub
