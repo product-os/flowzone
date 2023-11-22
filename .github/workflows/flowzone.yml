@@ -2935,8 +2935,8 @@ jobs:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           wranglerVersion: 3.5.1
-          preCommands: wrangler --version
-          command: pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/
+          command: --version
+          postCommands: npx pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ | tee -a $GITHUB_STEP_SUMMARY
   github_clean:
     name: Clean GitHub release
     runs-on: ${{ fromJSON(inputs.runs_on) }}

@@ -2835,8 +2835,8 @@ jobs:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           wranglerVersion: "3.5.1" # latest - https://www.npmjs.com/package/wrangler
-          preCommands: wrangler --version
-          command: pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/
+          command: --version
+          postCommands: npx pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ | tee -a $GITHUB_STEP_SUMMARY
 
   ###################################################
   # GitHub
