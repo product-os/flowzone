@@ -1,4 +1,18 @@
 - commits:
+    - subject: "Workaround: Pipe Cloudflare command output in Summary"
+      hash: c63a4b385648a473953679d15c3ea74bed33d6c8
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Vipul Gupta (@vipulgupta2048) <vipulgupta2048@gmail.com>
+        signed-off-by: Vipul Gupta (@vipulgupta2048) <vipulgupta2048@gmail.com>
+      author: Vipul Gupta (@vipulgupta2048)
+      nested: []
+  version: 5.15.1
+  title: ""
+  date: 2023-11-22T08:26:24.961Z
+- commits:
     - subject: Only register QEMU binfmt if not supported by the host
       hash: 139491f338da03b24f00cca05501478e15cc00fb
       body: ""
