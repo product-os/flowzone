@@ -1,4 +1,22 @@
 - commits:
+    - subject: Use buildx as a more reliable check of platform support
+      hash: 42ce12f108c98af66b7f22283614f8bc11545f59
+      body: |
+        When running binfmt in a guest docker daemon on arm64 the
+        native support for arm/v6 and arm/v7 is not reflected.
+
+        However buildx detects support for those platforms just fine.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.15.4
+  title: ""
+  date: 2023-11-28T20:36:13.425Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v1.1.9
       hash: 8d4289145b41c28d8c31e2137f7edee91d2611a0
       body: |
