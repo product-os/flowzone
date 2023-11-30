@@ -1937,7 +1937,7 @@ jobs:
           yq . "${COMPOSE_FILE}"
       - name: Generate docker metadata
         id: test_meta
-        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934
+        uses: docker/metadata-action@f19c3691d56f26e3f97547999df66a9ecbf0d9b0
         with:
           images: |
             sut
@@ -1956,7 +1956,7 @@ jobs:
             suffix=${{ steps.strings.outputs.suffix }}
       - name: Generate docker metadata
         id: cache_meta
-        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934
+        uses: docker/metadata-action@f19c3691d56f26e3f97547999df66a9ecbf0d9b0
         with:
           images: |
             ${{ needs.is_docker.outputs.docker_images_crlf }}
@@ -2110,7 +2110,7 @@ jobs:
           echo "dockerhub=${dockerhub_slug}" >> $GITHUB_OUTPUT
       - name: Generate docker metadata
         id: draft_meta
-        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934
+        uses: docker/metadata-action@f19c3691d56f26e3f97547999df66a9ecbf0d9b0
         with:
           images: |
             ${{ matrix.image }}
@@ -2360,7 +2360,7 @@ jobs:
           echo "dockerhub=${dockerhub_slug}" >> $GITHUB_OUTPUT
       - name: Generate docker metadata
         id: final_meta
-        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934
+        uses: docker/metadata-action@f19c3691d56f26e3f97547999df66a9ecbf0d9b0
         with:
           images: |
             ${{ matrix.image }}
