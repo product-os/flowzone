@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/metadata-action action to v5.1.0
+      hash: 44cf786efd5938ddaf896e9e97ed7dd9e5af9e60
+      body: |
+        Update docker/metadata-action from 5.0.0 to 5.1.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.15.6
+  title: ""
+  date: 2023-11-30T14:54:35.327Z
+- commits:
     - subject: Fix native platform check before registering QEMU binfmt
       hash: 326be25afa1ccc5f0857e321ed95863e592f5f3e
       body: |
