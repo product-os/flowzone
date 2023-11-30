@@ -1,4 +1,20 @@
 - commits:
+    - subject: Fix native platform check before registering QEMU binfmt
+      hash: 326be25afa1ccc5f0857e321ed95863e592f5f3e
+      body: |
+        This avoids matching substrings of the natively supported platforms
+        by converting the list to json first.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.15.5
+  title: ""
+  date: 2023-11-30T14:19:14.836Z
+- commits:
     - subject: Use buildx as a more reliable check of platform support
       hash: 42ce12f108c98af66b7f22283614f8bc11545f59
       body: |
