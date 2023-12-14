@@ -1703,7 +1703,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
       - name: Sort node versions
         id: node_versions
         env:
@@ -2970,7 +2970,7 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -3010,7 +3010,7 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -4216,7 +4216,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
       - name: Get branch protection rules
         id: branch_protection
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4436,7 +4436,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
       - name: Configure repository
         env:
           GH_DEBUG: "true"
@@ -4592,7 +4592,7 @@ jobs:
               "metadata": "read",
               "pull_requests": "write"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
       - name: Get branch protection rules
         id: branch_protection
         shell: bash --noprofile --norc -eo pipefail -x {0}

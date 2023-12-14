@@ -2204,7 +2204,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - *sortNodeVersions
 
@@ -2861,7 +2861,7 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - *deleteDraftGitHubRelease
 
@@ -2891,7 +2891,7 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - *deleteDraftGitHubRelease
 
@@ -3759,7 +3759,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - *getBranchProtectionRules
       - *isDraftPullRequest
@@ -3908,7 +3908,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - name: Configure repository
         env:
@@ -4039,7 +4039,7 @@ jobs:
               "metadata": "read",
               "pull_requests": "write"
             }
-          repositories: '[ "${{ github.event.pull_request.head.repo.name }}" ]'
+          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - *getBranchProtectionRules
       - *isDraftPullRequest
