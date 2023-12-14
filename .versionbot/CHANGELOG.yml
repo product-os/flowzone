@@ -1,4 +1,20 @@
 - commits:
+    - subject: For repo scoped tokens make sure we use the base repo
+      hash: c275830feaf38097e19407aafada4592297db06c
+      body: |
+        External contributions were using head, the fork, as the
+        repo name when it should have been using the base repo.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.15.10
+  title: ""
+  date: 2023-12-14T19:47:51.413Z
+- commits:
     - subject: Update actions/setup-python action to v4.8.0
       hash: e27ce8f3a776ed3209f683d5cb5a8ccfc37e4aab
       body: |
