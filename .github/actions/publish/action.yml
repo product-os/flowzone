@@ -43,6 +43,6 @@ runs:
     - name: Upload generated flowzone.yml
       uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
       with:
-        name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+        name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}-${{ strategy.job-index }}
         path: .github/workflows/flowzone.yml
         retention-days: 1
