@@ -1,4 +1,26 @@
 - commits:
+    - subject: Update actions/download-artifact action to v4
+      hash: c3adc786cea2aefa04eaf0f2b9cb7db64bb163e4
+      body: |
+        Update actions/download-artifact from 3.0.2 to 4.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+    - subject: Update actions/upload-artifact action to v4
+      hash: c6e7eeb0c9d1ba3f1def3491fe865eccc5d234f5
+      body: |
+        Update actions/upload-artifact from 3.1.3 to 4.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.15.12
+  title: ""
+  date: 2023-12-14T23:05:54.936Z
+- commits:
     - subject: Update actions/setup-python action to v5
       hash: dcca0a67168b5b27279a1bd73275e9912db55f36
       body: |
