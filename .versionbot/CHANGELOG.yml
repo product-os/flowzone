@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/setup-python action to v5
+      hash: dcca0a67168b5b27279a1bd73275e9912db55f36
+      body: |
+        Update actions/setup-python from 4.8.0 to 5.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 5.15.11
+  title: ""
+  date: 2023-12-14T21:05:31.815Z
+- commits:
     - subject: For repo scoped tokens make sure we use the base repo
       hash: c275830feaf38097e19407aafada4592297db06c
       body: |
