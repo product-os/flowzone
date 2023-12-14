@@ -1,4 +1,18 @@
 - commits:
+    - subject: Handle errors when there are no artifacts to publish
+      hash: b136cbe5bf29602b559f9bb1bee819a0a34aef3d
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.15.13
+  title: ""
+  date: 2023-12-14T23:26:53.637Z
+- commits:
     - subject: Update actions/download-artifact action to v4
       hash: c3adc786cea2aefa04eaf0f2b9cb7db64bb163e4
       body: |
