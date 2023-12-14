@@ -2057,7 +2057,7 @@ jobs:
 
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
@@ -2074,7 +2074,7 @@ jobs:
 
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/docs.tar.zst
@@ -2387,7 +2387,7 @@ jobs:
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
         if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
         with:
           # this docker-{sha}-{target}-{platform} naming scheme is used by docker_publish to find the correct artifact
           name: docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${{ steps.strings.outputs.platform }}
@@ -3093,7 +3093,7 @@ jobs:
           tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
         with:
           name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst
