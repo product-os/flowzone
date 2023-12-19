@@ -3034,7 +3034,7 @@ jobs:
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
           prerelease: true
-          files: ${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}/*
+          files: ${{ runner.temp }}/gh-release-*/*
   github_finalize:
     name: Finalize GitHub release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3262,7 +3262,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392
         with:
-          name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+          name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}-${{ strategy.job-index }}
           path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst
           retention-days: 1
   cargo_finalize:
