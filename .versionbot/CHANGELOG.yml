@@ -1,4 +1,31 @@
 - commits:
+    - subject: Add unique artifact names to cargo publish
+      hash: bc22356ab2ceae9b46187263d91dff8c92c030fa
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Allow wildcards in the GH release artifact names
+      hash: 63d8366abf617bc1375cf396346cfa330a14c277
+      body: |
+        Since the release of upload/download artifact v4, artifact names
+        must be unique. As such we must allow additional qualifiers at the end
+        of the artifact name.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.16.0
+  title: ""
+  date: 2023-12-19T18:05:26.379Z
+- commits:
     - subject: Update docker/metadata-action action to v5.4.0
       hash: b05a78eac1efb3ecccab2b633666cf3ce647a60b
       body: |
