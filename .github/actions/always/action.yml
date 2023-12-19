@@ -27,14 +27,3 @@ runs:
         echo "${INPUTS}"
         echo "${SECRETS}"
         echo "${VARIABLES}"
-
-    # https://github.com/marketplace/actions/github-app-token
-    - name: Generate GitHub App installation token
-      uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
-      id: gh_app_installation_token
-      with:
-        app_id: ${{ fromJSON(inputs.json).app_id }}
-        installation_retrieval_mode: id
-        installation_retrieval_payload: ${{ fromJSON(inputs.json).installation_id }}
-        private_key: ${{ fromJSON(inputs.secrets).GH_APP_PRIVATE_KEY }}
-        permissions: ${{ fromJSON(inputs.json).token_scope }}

@@ -39,14 +39,3 @@ runs:
         echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
         echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
         echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
-    # https://github.com/marketplace/actions/github-app-token
-    - name: Generate GitHub App installation token
-      uses: tibdex/github-app-token@0914d50df753bbc42180d982a6550f195390069f # v2.0.0
-      id: gh_app_installation_token
-      with:
-        app_id: ${{ fromJSON(inputs.json).app_id }}
-        installation_retrieval_mode: id
-        installation_retrieval_payload: ${{ fromJSON(inputs.json).installation_id }}
-        private_key: ${{ fromJSON(inputs.secrets).GH_APP_PRIVATE_KEY }}
-        permissions: ${{ fromJSON(inputs.json).token_scope }}
