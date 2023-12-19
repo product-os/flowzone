@@ -3034,7 +3034,7 @@ jobs:
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
           prerelease: true
-          files: ${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}/*
+          files: ${{ runner.temp }}/gh-release-*/*
   github_finalize:
     name: Finalize GitHub release
     runs-on: ${{ fromJSON(inputs.runs_on) }}

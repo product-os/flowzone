@@ -2912,8 +2912,8 @@ jobs:
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
           prerelease: true
-          # Publish anything added to with the gh-release name
-          files: ${{ runner.temp }}/gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}/*
+          # Publish anything added to with the gh-release- prefix
+          files: ${{ runner.temp }}/gh-release-*/*
 
   github_finalize:
     name: Finalize GitHub release
