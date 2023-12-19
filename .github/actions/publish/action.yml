@@ -28,21 +28,18 @@ runs:
         echo "${SECRETS}"
         echo "${VARIABLES}"
 
-    # https://github.com/marketplace/actions/github-app-token
-    - name: Generate GitHub App installation token
-      uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
-      id: gh_app_installation_token
-      with:
-        app_id: ${{ fromJSON(inputs.json).app_id }}
-        installation_retrieval_mode: id
-        installation_retrieval_payload: ${{ fromJSON(inputs.json).installation_id }}
-        private_key: ${{ fromJSON(inputs.secrets).GH_APP_PRIVATE_KEY }}
-        permissions: ${{ fromJSON(inputs.json).token_scope }}
+    - name: Create artifact
+      id: artifact
+      shell: bash
+      run: |
+        path="$(mktemp)"
+        echo "Hello, World!" > "${path}"
+        echo "path=${path}" >> "${GITHUB_OUTPUT}"
 
     # Test publishing release artifacts to github
     - name: Upload generated flowzone.yml
       uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
       with:
         name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}-${{ strategy.job-index }}
-        path: .github/workflows/flowzone.yml
+        path: ${{ steps.artifact.outputs.path }}
         retention-days: 1
