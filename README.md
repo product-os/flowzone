@@ -387,7 +387,7 @@ jobs:
       # Required: false
       tests_run_on: 
 
-      # JSON array of runner label strings for generic jobs.
+      # JSON array of runner label strings for default jobs.
       # Type: string
       # Required: false
       runs_on: >
@@ -398,16 +398,18 @@ jobs:
       # JSON 2-dimensional matrix of runner label strings for custom jobs.
       # Type: string
       # Required: false
-      custom_runs_on: >
-        [
-          ["ubuntu-22.04"]
-        ]
+      custom_runs_on:
 
       # JSON key-value pairs mapping platforms to arrays of runner labels. Unlisted platforms will
       # use `runs_on`.
       # Type: string
       # Required: false
       docker_runs_on: {}
+
+      # JSON array of runner label strings for cloudformation jobs.
+      # Type: string
+      # Required: false
+      cloudformation_runs_on:
 
       # Setting this to your existing CF pages project name will generate and deploy a website.
       # Skipped if empty.

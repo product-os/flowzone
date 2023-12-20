@@ -300,7 +300,7 @@ on:
         required: false
         default: ""
       runs_on:
-        description: JSON array of runner label strings for generic jobs.
+        description: JSON array of runner label strings for default jobs.
         type: string
         required: false
         default: |
@@ -311,15 +311,15 @@ on:
         description: JSON 2-dimensional matrix of runner label strings for custom jobs.
         type: string
         required: false
-        default: |
-          [
-            ["ubuntu-22.04"]
-          ]
       docker_runs_on:
         description: JSON key-value pairs mapping platforms to arrays of runner labels. Unlisted platforms will use `runs_on`.
         type: string
         required: false
         default: "{}"
+      cloudformation_runs_on:
+        description: JSON array of runner label strings for cloudformation jobs.
+        type: string
+        required: false
       cloudflare_website:
         description: Setting this to your existing CF pages project name will generate and deploy a website. Skipped if empty.
         type: string
@@ -3326,7 +3326,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
-        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
+        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     steps:
       - name: Reject external custom actions
         if: |
@@ -3391,7 +3391,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
-        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
+        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     steps:
       - name: Reject external custom actions
         if: |
@@ -3450,7 +3450,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
-        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
+        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     steps:
       - name: Reject external custom actions
         if: |
@@ -3497,7 +3497,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
+        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -3548,7 +3548,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on) }}
+        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - custom_test
@@ -3598,7 +3598,7 @@ jobs:
           variables: ${{ toJSON(vars) }}
   cloudformation_test:
     name: Test CloudFormation
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ fromJSON(inputs.cloudformation_runs_on || inputs.runs_on) }}
     strategy:
       fail-fast: true
       matrix:
@@ -3860,7 +3860,7 @@ jobs:
           fi
   cloudformation_finalize:
     name: Finalize CloudFormation
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ fromJSON(inputs.cloudformation_runs_on || inputs.runs_on) }}
     strategy:
       fail-fast: false
       matrix:
