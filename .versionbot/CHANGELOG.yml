@@ -1,4 +1,21 @@
 - commits:
+    - subject: Only install python when poetry projects are detected
+      hash: f7d7725828bfee12dcc241ecc658386ae412b0a3
+      body: |
+        This should avoid failures where compatible python releases
+        are not available on some os/arch combinations but the
+        project is not a python composition anyway.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.16.2
+  title: ""
+  date: 2023-12-20T17:59:19.183Z
+- commits:
     - subject: Update cloudflare/wrangler-action action to v3.4.0
       hash: fd77f28e5a5710fc7f2dce78e70c3ba772a5e097
       body: |
