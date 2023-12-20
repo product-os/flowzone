@@ -1657,6 +1657,7 @@ jobs:
           fi
 
       - <<: *setupPython
+        if: steps.python_poetry.outputs.enabled == 'true'
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
 

@@ -1044,6 +1044,7 @@ jobs:
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
+        if: steps.python_poetry.outputs.enabled == 'true'
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@192395c0d10c082a7c62294ab5d9a9de40e48974
