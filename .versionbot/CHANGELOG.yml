@@ -1,4 +1,20 @@
 - commits:
+    - subject: Allow custom runners for cloudformation jobs
+      hash: 694d36e60a6dc734b8e29439dd5f8dfe4e34f095
+      body: |
+        For cases we would like to use self-hosted runners
+        for CF jobs but GitHub hosted runners for supporting jobs.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 5.16.3
+  title: ""
+  date: 2023-12-21T13:01:08.252Z
+- commits:
     - subject: Only install python when poetry projects are detected
       hash: f7d7725828bfee12dcc241ecc658386ae412b0a3
       body: |
