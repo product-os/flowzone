@@ -1,4 +1,35 @@
 - commits:
+    - subject: "BREAKING: Remove opt-in repo configuration"
+      hash: f90ec2144cf1bd7dbf15f006ee9050bf3e968ddb
+      body: >
+        Allowing Flowzone to make repo configuration changes
+
+        via administrator tokens effectively grants any user with
+
+        write permissions the ability to make admin changes.
+
+
+        Repo configuration should be handled outside of the CI
+
+        context where administrator permissions can be granted to
+
+        a central authority only.
+
+
+        This is a breaking change for repos that previously opted into these settings.
+
+        This workflow will not run unless the calling workflow omits the related inputs.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 6.0.0
+  title: ""
+  date: 2024-01-02T15:42:32.665Z
+- commits:
     - subject: Update abatilo/actions-poetry action to v2.4.0
       hash: b2f9eb4ebfcae6f05b555761e65c4de442a9b863
       body: |
