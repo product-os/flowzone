@@ -1517,7 +1517,7 @@ jobs:
           echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
           echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
       - name: Download npm artifact
-        uses: actions/download-artifact@f44cd7b40bfd40b6aa1cc1b9b5b7bf03d3c67110
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935
         with:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
@@ -2065,7 +2065,7 @@ jobs:
         if: needs.is_docker.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
       - name: Download all artifacts
-        uses: actions/download-artifact@f44cd7b40bfd40b6aa1cc1b9b5b7bf03d3c67110
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935
         with:
           path: ${{ runner.temp }}
       - name: Decompress artifacts
@@ -2946,7 +2946,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Download all artifacts
-        uses: actions/download-artifact@f44cd7b40bfd40b6aa1cc1b9b5b7bf03d3c67110
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935
         continue-on-error: true
         id: download
         with:
