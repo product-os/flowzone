@@ -4419,8 +4419,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - protect_branch
+      - all_jobs
     if: |
+      always() &&
+      needs.all_jobs.result == 'success' &&
       github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'

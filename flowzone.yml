@@ -3871,8 +3871,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - protect_branch
+      - all_jobs
     if: |
+      always() &&
+      needs.all_jobs.result == 'success' &&
       github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
@@ -3897,7 +3899,7 @@ jobs:
       - *getBranchProtectionRules
       - *isDraftPullRequest
 
-      # do not use automatic github token to enable auto-merge as it will not trigger merge events
+      # Only toggle auto-merge if there is one or more required status checks on the branch
       - name: Toggle auto-merge
         if: |
           steps.is_draft_pr.outputs.result == 'false' &&
@@ -3905,6 +3907,8 @@ jobs:
           steps.branch_protection.outputs.required_status_checks__contexts != '[]'
         env:
           <<: *gitHubCliEnvironment
+          # DO NOT include any permissions here that would bypass branch protections!
+          # DO NOT use the automatic github token (GITHUB_TOKEN) as it will not trigger merge events!
           GH_TOKEN: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
