@@ -374,28 +374,6 @@ jobs:
       # Required: false
       custom_finalize_matrix: 
 
-      # Set to false to disable updating branch protection rules after a successful run.
-      # Type: boolean
-      # Required: false
-      protect_branch: true
-
-      # Count of GitHub approved reviews required for Pull Requests to be merged. Set to 0 if
-      # using palantir/policy-bot for PR merge conditions.
-      # Type: string
-      # Required: false
-      required_approving_review_count: 0
-
-      # JSON array of status checks that must pass before a Pull Requests can be merged. Skipped
-      # if `protect_branch` is false.
-      # Type: string
-      # Required: false
-      required_status_checks: >
-        [
-          "Flowzone / All tests",
-          "Flowzone / All jobs",
-          "policy-bot: ${{ github.event.repository.default_branch }}"
-        ]
-
       # Set to false to disable toggling auto-merge on PRs.
       # Type: boolean
       # Required: false
