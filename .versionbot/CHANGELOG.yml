@@ -1,4 +1,20 @@
 - commits:
+    - subject: Remove options to apply branch protections at runtime
+      hash: 2f91a208d21698def1536b1d0d6adde95a8ddbe5
+      body: |
+        Applying branch protections at runtime is a security
+        risk and historically has been prone to bugs.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 7.0.0
+  title: ""
+  date: 2024-01-11T21:08:40.524Z
+- commits:
     - subject: Update actions/download-artifact action to v4.1.1
       hash: 8a0313ff3ee0aeb74df871987bb8aeef823acd6e
       body: |
