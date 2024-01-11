@@ -979,26 +979,6 @@ on:
         type: string
         required: false
         default: ""
-      protect_branch:
-        description: "Set to false to disable updating branch protection rules after a successful run."
-        type: boolean
-        required: false
-        default: true
-      required_approving_review_count:
-        description: "Count of GitHub approved reviews required for Pull Requests to be merged. Set to 0 if using palantir/policy-bot for PR merge conditions."
-        type: string
-        required: false
-        default: "0"
-      required_status_checks:
-        description: "JSON array of status checks that must pass before a Pull Requests can be merged. Skipped if `protect_branch` is false."
-        type: string
-        required: false
-        default: >
-          [
-            "Flowzone / All tests",
-            "Flowzone / All jobs",
-            "policy-bot: ${{ github.event.repository.default_branch }}"
-          ]
       toggle_auto_merge:
         description: "Set to false to disable toggling auto-merge on PRs."
         type: boolean
@@ -3659,160 +3639,6 @@ jobs:
               false
           fi
 
-  protect_branch:
-    name: Protect branch
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      - versioned_source
-    # do not run on forks and on non-default branch
-    if: |
-      github.event.pull_request.state == 'open' &&
-      inputs.protect_branch == true &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.repository.default_branch == github.event.pull_request.base.ref
-
-    <<: *rootWorkingDirectory
-
-    env:
-      BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection
-
-    steps:
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # admin permission is required to set branch protection
-          permissions: >-
-            {
-              "administration": "write",
-              "contents": "read",
-              "metadata": "read"
-            }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
-
-      - *getBranchProtectionRules
-      - *isDraftPullRequest
-
-      - name: Prepare protection rules
-        id: prepare_protection_rules
-        if: steps.branch_protection.outputs.json != ''
-        env:
-          REQUIRED_STATUS_CHECKS_INPUT: ${{ inputs.required_status_checks }}
-          REQUIRED_APROVING_REVIEW_COUNT_INPUT: ${{ inputs.required_approving_review_count }}
-          required_status_checks__strict: ${{ steps.branch_protection.outputs.required_status_checks__strict }}
-          required_status_checks__contexts: ${{ steps.branch_protection.outputs.required_status_checks__contexts }}
-          required_pull_request_reviews__required_approving_review_count: ${{ steps.branch_protection.outputs.required_pull_request_reviews__required_approving_review_count }}
-          required_pull_request_reviews__dismissal_restrictions__users: ${{ steps.branch_protection.outputs.required_pull_request_reviews__dismissal_restrictions__users }}
-          required_pull_request_reviews__dismissal_restrictions__teams: ${{ steps.branch_protection.outputs.required_pull_request_reviews__dismissal_restrictions__teams }}
-          required_pull_request_reviews__dismissal_restrictions__apps: ${{ steps.branch_protection.outputs.required_pull_request_reviews__dismissal_restrictions__apps }}
-          required_pull_request_reviews__dismiss_stale_reviews: ${{ steps.branch_protection.outputs.required_pull_request_reviews__dismiss_stale_reviews }}
-          required_pull_request_reviews__require_code_owner_reviews: ${{ steps.branch_protection.outputs.required_pull_request_reviews__require_code_owner_reviews }}
-          enforce_admins__enabled: ${{ steps.branch_protection.outputs.enforce_admins__enabled }}
-          required_linear_history__enabled: ${{ steps.branch_protection.outputs.required_linear_history__enabled }}
-          required_conversation_resolution__enabled: ${{ steps.branch_protection.outputs.required_conversation_resolution__enabled }}
-          allow_force_pushes__enabled: ${{ steps.branch_protection.outputs.allow_force_pushes__enabled }}
-          allow_deletions__enabled: ${{ steps.branch_protection.outputs.allow_deletions__enabled }}
-          required_signatures__enabled: ${{ steps.branch_protection.outputs.required_signatures__enabled }}
-          block_creations__enabled: ${{ steps.branch_protection.outputs.block_creations__enabled }}
-
-        run: |
-          new_required_status_checks__contexts="$(echo $required_status_checks__contexts | \
-            jq -r "map(
-              select(
-                test(\"^${{ inputs.job_name }} /\";\"i\") | not
-              )
-            ) | . + ${REQUIRED_STATUS_CHECKS_INPUT} | unique"
-          )"
-
-          if [ $(echo ${new_required_status_checks__contexts} | jq 'length') -lt 1 ]
-          then
-            echo "::error::Not applying empty list of status checks"
-            exit 1
-          fi
-
-          newjson=$(cat <<-END
-            {
-              "required_status_checks": {
-                  "strict": ${required_status_checks__strict},
-                  "contexts": ${new_required_status_checks__contexts}
-              },
-              "required_pull_request_reviews": {
-                  "dismissal_restrictions": {
-                      "users": ${required_pull_request_reviews__dismissal_restrictions__users},
-                      "teams": ${required_pull_request_reviews__dismissal_restrictions__teams},
-                      "apps": ${required_pull_request_reviews__dismissal_restrictions__apps}
-                  },
-                  "dismiss_stale_reviews": ${required_pull_request_reviews__dismiss_stale_reviews},
-                  "require_code_owner_reviews": ${required_pull_request_reviews__require_code_owner_reviews},
-                  "required_approving_review_count": ${REQUIRED_APROVING_REVIEW_COUNT_INPUT},
-                  "bypass_pull_request_allowances": {
-                      "users": [],
-                      "teams": []
-                  }
-              },
-              "enforce_admins": ${enforce_admins__enabled},
-              "required_signatures": ${required_signatures__enabled},
-              "restrictions": null,
-              "required_linear_history": ${required_linear_history__enabled},
-              "allow_force_pushes": ${allow_force_pushes__enabled},
-              "allow_deletions": ${allow_deletions__enabled},
-              "block_creations": ${block_creations__enabled},
-              "required_conversation_resolution": ${required_conversation_resolution__enabled}
-            }
-          END
-          )
-
-          # unsupported restrictions outside of Github organisations
-          if [[ -z '${{ github.event.organization }}' ]]; then
-              newjson="$(echo "${newjson}" | jq -r 'del(.required_pull_request_reviews.dismissal_restrictions, .required_pull_request_reviews.bypass_pull_request_allowances)')"
-          fi
-
-          diff_exit_code="$(diff -Z <(echo ${new_required_status_checks__contexts} | jq 'sort_by(.)') <(echo ${required_status_checks__contexts} | jq 'sort_by(.)') 1>&2; echo $?)"
-
-          if [ ${diff_exit_code} -eq 0 ] && [ ${required_pull_request_reviews__required_approving_review_count} -eq ${REQUIRED_APROVING_REVIEW_COUNT_INPUT} ]
-          then
-            echo "::debug::Branch protection rules are unchanged, skipping update"
-            exit 0
-          fi
-
-          result=$(echo "${newjson}" | jq -c '. | @json' )
-          echo "result=${result}" >> $GITHUB_OUTPUT
-
-      # https://github.com/cli/cli/issues/3528
-      - name: Apply branch protection rules
-        id: apply_branch_protection_rules
-        if: |
-          steps.is_draft_pr.outputs.result == 'false' &&
-          steps.prepare_protection_rules.outputs.result != ''
-        env:
-          <<: *gitHubCliEnvironment
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          # Make the API call and get response with headers
-          full_response=$(echo '${{ fromJSON(steps.prepare_protection_rules.outputs.result) }}' \
-            | gh api -i --method PUT ${{ env.BRANCH_PROTECTION_URI }} --input -)
-
-          # Separate headers and body
-          headers=$(echo "$full_response" | sed -n '/HTTP/{:start /HTTP.*\n.*/{N;b start};p}')
-          result=$(echo "$full_response" | sed -e '1,/^\r$/d')
-
-          # Extract HTTP status code
-          http_status=$(echo "$headers" | grep HTTP/ | awk '{print $2}')
-
-          # Check for non-200 status codes
-          if [[ "$http_status" != "200" ]]; then
-            exit 1
-          fi
-
-          message="$(echo "${result}" | jq -r .message)"
-          if ! [[ $message =~ null ]]
-          then
-            echo "::error::${message}"
-            exit 1
-          fi
-
-          echo "::notice::Branch protection rules have been updated"
-
   all_tests:
     name: All tests
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3856,7 +3682,6 @@ jobs:
       - cargo_publish
       - custom_publish
       - custom_always
-      - protect_branch
       - gpt-review
     if: |
       always() &&
@@ -3871,8 +3696,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - protect_branch
+      - all_jobs
     if: |
+      always() &&
+      needs.all_jobs.result == 'success' &&
       github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
@@ -3897,7 +3724,7 @@ jobs:
       - *getBranchProtectionRules
       - *isDraftPullRequest
 
-      # do not use automatic github token to enable auto-merge as it will not trigger merge events
+      # Only toggle auto-merge if there is one or more required status checks on the branch
       - name: Toggle auto-merge
         if: |
           steps.is_draft_pr.outputs.result == 'false' &&
@@ -3905,6 +3732,8 @@ jobs:
           steps.branch_protection.outputs.required_status_checks__contexts != '[]'
         env:
           <<: *gitHubCliEnvironment
+          # DO NOT include any permissions here that would bypass branch protections!
+          # DO NOT use the automatic github token (GITHUB_TOKEN) as it will not trigger merge events!
           GH_TOKEN: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
