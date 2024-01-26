@@ -24,38 +24,3 @@ jobs:
     secrets: inherit
     with:
       working_directory: ./tests
-      docker_images: |
-        ghcr.io/product-os/flowzone
-      balena_slugs: |
-        product_os/flowzone
-      cargo_targets: |
-        x86_64-unknown-linux-gnu,
-        armv7-unknown-linux-gnueabi,
-        aarch64-unknown-linux-gnu
-      cloudflare_website: "flowzone"
-      bake_targets: default,multiarch
-      jobs_timeout_minutes: 30
-      docker_publish_platform_tags: true
-      docker_runs_on: >
-        {
-          "linux/arm64": ["self-hosted","ARM64"],
-          "linux/arm/v7": ["self-hosted","ARM64"],
-          "linux/arm/v6": ["self-hosted","X64"]
-        }
-      # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
-      custom_runs_on: >
-        [
-          ["ubuntu-20.04"],
-          ["ubuntu-22.04"],
-          ["macos-13"],
-          ["windows-2019"],
-          ["windows-2022"],
-          ["self-hosted"]
-        ]
-      runs_on: >
-        [
-          "self-hosted",
-          "X64"
-        ]
-      # enable GPT review for self-tests
-      enable_gpt_review: false
