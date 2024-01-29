@@ -204,25 +204,7 @@ jobs:
       # GitHub App id to impersonate
       # Type: string
       # Required: false
-      app_id: ${{ vars.APP_ID || '291899' }}
-
-      # GitHub App installation id
-      # Type: string
-      # Required: false
-      installation_id: ${{ vars.INSTALLATION_ID || '34040165' }}
-
-      # Ephemeral token scope(s)
-      # Type: string
-      # Required: false
-      token_scope: >
-        {
-          "administration": "write",
-          "contents": "write",
-          "metadata": "read",
-          "packages": "write",
-          "pages": "write",
-          "pull_requests": "read"
-        }
+      app_id: ${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}
 
       # Timeout for the job(s).
       # Type: number

@@ -11,22 +11,16 @@
   - &ifPublicRepository
     if: github.event.repository.private != true
 
-  - &getGitHubAppToken # https://github.com/marketplace/actions/github-app-token
-    name: Generate GitHub App installation token
-    uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
-    continue-on-error: true
+  - &getGitHubAppToken # https://github.com/actions/create-github-app-token
+    name: Create GitHub App installation token
+    uses: actions/create-github-app-token@v1.6.2
+    if: inputs.app_id != ''
     id: gh_app_token
-    with: &getGitHubAppTokenWith
-      app_id: ${{ inputs.app_id }}
-      installation_retrieval_mode: id
-      installation_retrieval_payload: ${{ inputs.installation_id }}
-      private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-      # permissions: ${{ inputs.token_scope }}
-      permissions: >-
-        {
-          "contents": "read",
-          "metadata": "read"
-        }
+    with:
+      app-id: ${{ inputs.app_id }}
+      private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      # Create a token for all repositories in the current owner's installation
+      owner: ${{ github.repository_owner }}
 
   # optionally attempt to get AWS login short-lived session credentials over OIDC
   - &configureAWSCredentials # https://github.com/aws-actions/configure-aws-credentials
@@ -812,32 +806,7 @@ on:
         description: "GitHub App id to impersonate"
         type: string
         required: false
-        # https://github.com/organizations/product-os/settings/apps/flowzone-app
-        # https://github.com/organizations/product-os/settings/variables/actions/APP_ID
-        default: "${{ vars.APP_ID || '291899' }}"
-      # not needed if installed on this current org/repo
-      installation_id:
-        description: "GitHub App installation id"
-        type: string
-        required: false
-        # https://github.com/organizations/product-os/settings/installations
-        # https://github.com/organizations/product-os/settings/variables/actions/INSTALLATION_ID
-        default: "${{ vars.INSTALLATION_ID || '34040165' }}"
-      token_scope:
-        description: "Ephemeral token scope(s)"
-        type: string
-        required: false
-        # https://github.com/organizations/product-os/settings/installations/34040165
-        # https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-a-scoped-access-token
-        default: >-
-          {
-            "administration": "write",
-            "contents": "write",
-            "metadata": "read",
-            "packages": "write",
-            "pages": "write",
-            "pull_requests": "read"
-          }
+        default: "${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}"
       jobs_timeout_minutes:
         description: "Timeout for the job(s)."
         type: number
@@ -1066,17 +1035,8 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # admin permission is currently required to bypass branch protection rules
-          permissions: >-
-            {
-              "administration": "write",
-              "contents": "write",
-              "metadata": "read",
-              "pull_requests": "read"
-            }
+      # currently requires repo:admin:write to bypass branch protection
+      - *getGitHubAppToken
 
       # Checkout the merge ref for open PRs
       - <<: *checkoutMergeRef
@@ -2100,18 +2060,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # need permissions to publish to github pages
-          permissions: >-
-            {
-              "pages": "write",
-              "contents": "read",
-              "metadata": "read"
-            }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
-
+      - *getGitHubAppToken
       - *sortNodeVersions
 
       # https://github.com/dawidd6/action-download-artifact
@@ -2756,19 +2705,11 @@ jobs:
     if: |
       github.event.action == 'closed' &&
       github.event.pull_request.merged == false
-    <<: *rootWorkingDirectory
-    steps:
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # contents:write permissions for managing releases
-          permissions: >-
-            {
-              "contents": "write",
-              "metadata": "read"
-            }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
+    <<: *rootWorkingDirectory
+
+    steps:
+      - *getGitHubAppToken
       - *deleteDraftGitHubRelease
 
   github_publish:
@@ -2788,17 +2729,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # contents:write permissions for managing releases
-          permissions: >-
-            {
-              "contents": "write",
-              "metadata": "read"
-            }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
-
+      - *getGitHubAppToken
       - *deleteDraftGitHubRelease
 
       - name: Download all artifacts
@@ -2841,16 +2772,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # contents:write permissions for managing releases
-          permissions: >-
-            {
-              "contents": "write",
-              "metadata": "read"
-            }
-
+      - *getGitHubAppToken
       - *checkoutVersionedSha
       - *getReleaseNotes
 
@@ -3060,12 +2982,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # use permissions from the token_scope input
-          permissions: ${{ inputs.token_scope }}
-
+      - *getGitHubAppToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
       - *createLocalRefs
@@ -3107,13 +3024,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # use permissions from the token_scope input
-          permissions: ${{ inputs.token_scope }}
-
+      - *getGitHubAppToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
       - *createLocalRefs
@@ -3148,13 +3059,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # use permissions from the token_scope input
-          permissions: ${{ inputs.token_scope }}
-
+      - *getGitHubAppToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
 
@@ -3187,13 +3092,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # use permissions from the token_scope input
-          permissions: ${{ inputs.token_scope }}
-
+      - *getGitHubAppToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
 
@@ -3224,13 +3123,7 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
-
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # use permissions from the token_scope input
-          permissions: ${{ inputs.token_scope }}
-
+      - *getGitHubAppToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
 
@@ -3708,10 +3601,20 @@ jobs:
       BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection
 
     steps:
-      - <<: *getGitHubAppToken
+      # https://github.com/marketplace/actions/github-app-token
+      # FIXME: switch to actions/create-github-app-token as soon as custom permissions are supported
+      # https://github.com/actions/create-github-app-token/issues/3
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+        continue-on-error: true
+        id: gh_app_token
         with:
-          <<: *getGitHubAppTokenWith
-          # avoid providing any permissions here that are able to bypass branch protections!
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: organization
+          installation_retrieval_payload: ${{ github.repository_owner }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          # DO NOT include any permissions here that would bypass branch protections!
+          # e.g. admin:write would merge PRs before required checks have passed
           permissions: >-
             {
               "administration": "read",
