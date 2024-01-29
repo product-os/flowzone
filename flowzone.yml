@@ -548,7 +548,7 @@
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
     run: |
       # Make the API call and get response with headers
-      full_response=$(gh api "${BRANCH_PROTECTION_URI}" -i --jq .)
+      full_response=$(gh api "${BRANCH_PROTECTION_URI}" -i --jq . || true)
 
       # Separate headers and body
       headers=$(echo "$full_response" | sed -n '/HTTP/{:start /HTTP.*\n.*/{N;b start};p}')
@@ -557,13 +557,8 @@
       # Extract HTTP status code
       http_status=$(echo "$headers" | grep HTTP/ | awk '{print $2}')
 
-      # Check for non-200 status codes
-      if [[ "$http_status" != "200" ]]; then
-        exit 1
-      fi
-
       message="$(echo "${result}" | jq -r .message)"
-      if ! [[ $message =~ null ]]
+      if ! [[ $message =~ null ]] || [[ "$http_status" != "200" ]]
       then
         case "${message}" in
           "Branch not Found"|"Branch not protected")
