@@ -1,4 +1,26 @@
 - commits:
+    - subject: Enable automerge regardless of branch protection rules
+      hash: b372598b47411bdfa4ab311031869ef132926448
+      body: |
+        Without the --admin flag there should be no chance of
+        accidentally bypassing branch protection rules.
+
+        This allows us to use GitHub rulesets instead of branch
+        protection and Flowzone doesn't need admin:read to verify
+        if there are rules in place.
+
+        See: https://cli.github.com/manual/gh_pr_merge
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 8.1.0
+  title: ""
+  date: 2024-02-05T15:54:45.098Z
+- commits:
     - subject: Avoid failing workflow when branch is unprotected
       hash: 840e041136911e385025a3f9227376b2471949bc
       body: ""
