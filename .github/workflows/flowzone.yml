@@ -4154,13 +4154,11 @@ jobs:
     needs:
       - all_jobs
     if: |
-      always() &&
+      !failure() && !cancelled() &&
       needs.all_jobs.result == 'success' &&
       github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
-    env:
-      BRANCH_PROTECTION_URI: repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -4173,67 +4171,11 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: |-
             {
-              "administration": "read",
               "contents": "write",
               "metadata": "read",
               "pull_requests": "write"
             }
           repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
-      - name: Get branch protection rules
-        id: branch_protection
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-        env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          # Make the API call and get response with headers
-          full_response=$(gh api "${BRANCH_PROTECTION_URI}" -i --jq . || true)
-
-          # Separate headers and body
-          headers=$(echo "$full_response" | sed -n '/HTTP/{:start /HTTP.*\n.*/{N;b start};p}')
-          result=$(echo "$full_response" | sed -e '1,/^\r$/d')
-
-          # Extract HTTP status code
-          http_status=$(echo "$headers" | grep HTTP/ | awk '{print $2}')
-
-          message="$(echo "${result}" | jq -r .message)"
-          if ! [[ $message =~ null ]] || [[ "$http_status" != "200" ]]
-          then
-            case "${message}" in
-              "Branch not Found"|"Branch not protected")
-                echo  "::warning::${message}"
-                exit 0
-                ;;
-              *)
-                echo  "::error::${message}"
-                exit 1
-                ;;
-            esac
-          fi
-
-          echo "json=${result}" >> $GITHUB_OUTPUT
-
-          echo "required_status_checks__strict=$(jq -cr '.required_status_checks.strict // true' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "required_status_checks__contexts=$(jq -cr '.required_status_checks.contexts // []' <<< "${result}")" >> $GITHUB_OUTPUT
-
-          echo "required_pull_request_reviews__required_approving_review_count=$(jq -cr '.required_pull_request_reviews.required_approving_review_count // 0' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "required_pull_request_reviews__dismiss_stale_reviews=$(jq -cr '.required_pull_request_reviews.dismiss_stale_reviews // false' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "required_pull_request_reviews__require_code_owner_reviews=$(jq -cr '.required_pull_request_reviews.require_code_owner_reviews // false' <<< "${result}")" >> $GITHUB_OUTPUT
-
-          echo "required_pull_request_reviews__dismissal_restrictions__users=$(jq -cr '.required_pull_request_reviews.dismissal_restrictions.users // []' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "required_pull_request_reviews__dismissal_restrictions__teams=$(jq -cr '.required_pull_request_reviews.dismissal_restrictions.teams // []' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "required_pull_request_reviews__dismissal_restrictions__apps=$(jq -cr '.required_pull_request_reviews.dismissal_restrictions.apps // []' <<< "${result}")" >> $GITHUB_OUTPUT
-
-          echo "required_linear_history__enabled=$(jq -cr '.required_linear_history.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "allow_force_pushes__enabled=$(jq -cr '.allow_force_pushes.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "allow_deletions__enabled=$(jq -cr '.allow_deletions.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "required_conversation_resolution__enabled=$(jq -cr '.required_conversation_resolution.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "required_signatures__enabled=$(jq -cr '.required_signatures.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "enforce_admins__enabled=$(jq -cr '.enforce_admins.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
-          echo "block_creations__enabled=$(jq -cr '.block_creations.enabled // false' <<< "${result}")" >> $GITHUB_OUTPUT
       - name: Check if PR is draft
         id: is_draft_pr
         env:
@@ -4250,10 +4192,7 @@ jobs:
             echo "result=false" >> $GITHUB_OUTPUT
           fi
       - name: Toggle auto-merge
-        if: |
-          steps.is_draft_pr.outputs.result == 'false' &&
-          steps.branch_protection.outputs.json != '' &&
-          steps.branch_protection.outputs.required_status_checks__contexts != '[]'
+        if: steps.is_draft_pr.outputs.result == 'false'
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
