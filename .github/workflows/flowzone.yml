@@ -1919,15 +1919,15 @@ jobs:
 
             if [ ! -f .env ]
             then
-              yq '.services.*.env_file |= map(with(select(. == ".env") ; . = "${{ env.COMPOSE_ENV_FILE }}"))' -i "${file}"
+              yq e '.services.*.env_file |= map(with(select(. == ".env") ; . = "${{ env.COMPOSE_ENV_FILE }}"))' -i "${file}"
             fi
           done
 
           touch ${COMPOSE_ENV_FILE}
           docker compose --env-file="${COMPOSE_ENV_FILE}" --project-directory="$(pwd)" ${args} config > "${COMPOSE_FILE}"
 
-          yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
-          yq . "${COMPOSE_FILE}"
+          yq e '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
+          yq e . "${COMPOSE_FILE}"
       - name: Generate docker metadata
         id: test_meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81

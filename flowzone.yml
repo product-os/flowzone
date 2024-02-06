@@ -2162,15 +2162,15 @@ jobs:
 
             if [ ! -f .env ]
             then
-              yq '.services.*.env_file |= map(with(select(. == ".env") ; . = "${{ env.COMPOSE_ENV_FILE }}"))' -i "${file}"
+              yq e '.services.*.env_file |= map(with(select(. == ".env") ; . = "${{ env.COMPOSE_ENV_FILE }}"))' -i "${file}"
             fi
           done
 
           touch ${COMPOSE_ENV_FILE}
           docker compose --env-file="${COMPOSE_ENV_FILE}" --project-directory="$(pwd)" ${args} config > "${COMPOSE_FILE}"
 
-          yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
-          yq . "${COMPOSE_FILE}"
+          yq e '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
+          yq e . "${COMPOSE_FILE}"
 
       - *dockerTestMetadata
       - *dockerCacheFromMetadata
