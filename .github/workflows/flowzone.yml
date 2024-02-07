@@ -3147,12 +3147,12 @@ jobs:
         run: llvm-strip target/${{ matrix.target }}/release/${{ needs.cargo_test.outputs.package }}
       - name: Compress
         run: |
-          tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
+          tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
       - name: Upload artifact
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8
         with:
           name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}-${{ strategy.job-index }}
-          path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.zst
+          path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
           retention-days: 1
   cargo_finalize:
     name: Finalize rust
