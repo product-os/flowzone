@@ -2068,7 +2068,7 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-      - uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -2282,7 +2282,7 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-      - uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -3538,7 +3538,7 @@ jobs:
           random=$(((RANDOM % DELAY) + 1))
           echo "sleeping for ${random}s"
           sleep "${random}s"
-      - uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -3774,7 +3774,7 @@ jobs:
           random=$(((RANDOM % DELAY) + 1))
           echo "sleeping for ${random}s"
           sleep "${random}s"
-      - uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -3925,7 +3925,7 @@ jobs:
           random=$(((RANDOM % DELAY) + 1))
           echo "sleeping for ${random}s"
           sleep "${random}s"
-      - uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -4031,7 +4031,7 @@ jobs:
           random=$(((RANDOM % DELAY) + 1))
           echo "sleeping for ${random}s"
           sleep "${random}s"
-      - uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
