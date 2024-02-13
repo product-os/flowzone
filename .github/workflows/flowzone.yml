@@ -1887,6 +1887,12 @@ jobs:
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
           zstd -v ${DOCKER_TAR}
+      - name: Enable KVM group perms
+        if: contains(matrix.runs_on,'ubuntu-latest') || contains(matrix.runs_on,'ubuntu-22.04')
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger -v --name-match=kvm
       - name: Run docker compose tests
         if: needs.is_docker.outputs.docker_compose_tests == 'true'
         run: |
@@ -3251,9 +3257,10 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Set the matrix value env var
+        shell: bash
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
-          echo "os_value=${{ matrix.os }}" >> $GITHUB_ENV
+          echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
       - uses: ./.github/actions/test
         with:
           json: ${{ toJSON(inputs) }}
@@ -3316,9 +3323,10 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Set the matrix value env var
+        shell: bash
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
-          echo "os_value=${{ matrix.os }}" >> $GITHUB_ENV
+          echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
       - uses: ./.github/actions/publish
         with:
           json: ${{ toJSON(inputs) }}
@@ -3371,9 +3379,10 @@ jobs:
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
       - name: Set the matrix value env var
+        shell: bash
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
-          echo "os_value=${{ matrix.os }}" >> $GITHUB_ENV
+          echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
       - uses: ./.github/actions/finalize
         with:
           json: ${{ toJSON(inputs) }}
