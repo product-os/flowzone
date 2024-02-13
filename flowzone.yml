@@ -55,7 +55,7 @@
       echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
 
   - &deployToBalenaAction
-    uses: balena-io/deploy-to-balena-action@a66b381b745932a1e689d6592340a5b8e0f38cef # v2.0.24
+    uses: balena-io/deploy-to-balena-action@12296358299d02b4516de8e2130310573e63f294 # v2.0.27
     id: balena_deploy
     with:
       balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
