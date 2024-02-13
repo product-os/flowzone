@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/metadata-action action to v5.5.1
+      hash: c49c571ecba7b65c759bca10fd114bf371ed53ce
+      body: |
+        Update docker/metadata-action from 5.5.0 to 5.5.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 9.0.9
+  title: ""
+  date: 2024-02-13T21:52:09.403Z
+- commits:
     - subject: Enable KVM features on GitHub hosted runners
       hash: d4ffd7226ec6838f471ebbb5fecbc6e2c94aec20
       body: ""
