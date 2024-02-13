@@ -935,7 +935,7 @@ jobs:
         if: steps.python_poetry.outputs.enabled == 'true'
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
-        uses: abatilo/actions-poetry@a5643c67b5fcc9ac5eddb395c7f61b1b66d86034
+        uses: abatilo/actions-poetry@7b6d33e44b4f08d7021a1dee3c044e9c253d6439
         with:
           poetry-version: 1.5.1
       - name: Validate project Python requirements
@@ -2599,7 +2599,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
-        uses: abatilo/actions-poetry@a5643c67b5fcc9ac5eddb395c7f61b1b66d86034
+        uses: abatilo/actions-poetry@7b6d33e44b4f08d7021a1dee3c044e9c253d6439
         with:
           poetry-version: 1.5.1
       - name: Run poetry install
@@ -2685,7 +2685,7 @@ jobs:
           python-version: "3.9"
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
-        uses: abatilo/actions-poetry@a5643c67b5fcc9ac5eddb395c7f61b1b66d86034
+        uses: abatilo/actions-poetry@7b6d33e44b4f08d7021a1dee3c044e9c253d6439
         with:
           poetry-version: 1.5.1
       - name: Generate Python metadata
@@ -2755,7 +2755,7 @@ jobs:
           python-version: "3.9"
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
-        uses: abatilo/actions-poetry@a5643c67b5fcc9ac5eddb395c7f61b1b66d86034
+        uses: abatilo/actions-poetry@7b6d33e44b4f08d7021a1dee3c044e9c253d6439
         with:
           poetry-version: 1.5.1
       - name: Publish release
