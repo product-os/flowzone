@@ -27,6 +27,8 @@ runs:
         echo "${INPUTS}"
         echo "${SECRETS}"
         echo "${VARIABLES}"
+        echo "matrix_value=${matrix_value}"
+        echo "os_value=${os_value}"
 
     # Resolve tag, semver, sha, and description of current git working copy.
     - name: Describe git state
@@ -50,3 +52,27 @@ runs:
         installation_retrieval_payload: ${{ fromJSON(inputs.json).installation_id }}
         private_key: ${{ fromJSON(inputs.secrets).GH_APP_PRIVATE_KEY }}
         permissions: ${{ fromJSON(inputs.json).token_scope }}
+
+    # https://github.com/actions/runner-images/discussions/7191#discussioncomment-8351370
+    # https://github.com/reactivecircus/android-emulator-runner?tab=readme-ov-file#running-hardware-accelerated-emulators-on-linux-runners
+    # https://github.com/ankidroid/Anki-Android/commit/3a5ecaa9837691817022d11b0dbe383b8e82d9fe
+    # https://github.blog/changelog/2023-02-23-hardware-accelerated-android-virtualization-on-actions-windows-and-linux-larger-hosted-runners/
+    - name: Enable KVM group perms
+      if: contains(fromJSON(env.os_value),'ubuntu-latest') || contains(fromJSON(env.os_value),'ubuntu-22.04')
+      shell: bash
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger -v --name-match=kvm
+
+    - name: Test KVM
+      if: contains(fromJSON(env.os_value),'ubuntu-latest') || contains(fromJSON(env.os_value),'ubuntu-22.04')
+      shell: bash
+      run: |
+        set -x
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends cpu-checker
+
+        ls -al /dev/kvm
+        test -w /dev/kvm
+        kvm-ok

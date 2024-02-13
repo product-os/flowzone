@@ -47,13 +47,9 @@ jobs:
         [
           ["ubuntu-20.04"],
           ["ubuntu-22.04"],
+          ["ubuntu-latest"],
           ["macos-13"],
           ["windows-2019"],
           ["windows-2022"],
           ["self-hosted"]
-        ]
-      runs_on: >
-        [
-          "self-hosted",
-          "X64"
         ]
