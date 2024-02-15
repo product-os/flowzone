@@ -1,4 +1,23 @@
 - commits:
+    - subject: Remove deprecated tests_run_on input
+      hash: aabfe5cc48af47c41ed7536348dcc58a2e8f20a8
+      body: |
+        The `custom_runs_on` array supports multiple runner labels
+        in nested arrays.
+
+        The new input also allows the use of self-hosted runners
+        as they require multiple labels to identify.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 10.0.0
+  title: ""
+  date: 2024-02-15T05:37:59.667Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.27
       hash: aa0a33dc8ce6a37e91afc7069b86ea2110c488a0
       body: |
