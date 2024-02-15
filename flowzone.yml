@@ -844,11 +844,6 @@ on:
         type: number
         required: false
         default: 1
-      tests_run_on:
-        description: "Deprecated, use 'custom_runs_on' input instead."
-        type: string
-        required: false
-        default: ""
       runs_on:
         description: "JSON array of runner label strings for default jobs."
         type: string
@@ -2987,7 +2982,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
-        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
 
     steps:
       - *rejectExternalCustomActions
@@ -3035,7 +3030,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
-        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
 
     steps:
       - *rejectExternalCustomActions
@@ -3077,7 +3072,7 @@ jobs:
       fail-fast: false
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
-        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
 
     steps:
       - *rejectExternalCustomActions
@@ -3109,7 +3104,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -3143,7 +3138,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: ${{ fromJSON(inputs.tests_run_on || inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - custom_test

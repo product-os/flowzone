@@ -299,11 +299,6 @@ jobs:
       # Required: false
       checkout_fetch_depth: 1
 
-      # Deprecated, use 'custom_runs_on' input instead.
-      # Type: string
-      # Required: false
-      tests_run_on: 
-
       # JSON array of runner label strings for default jobs.
       # Type: string
       # Required: false
