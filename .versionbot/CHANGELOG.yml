@@ -1,4 +1,22 @@
 - commits:
+    - subject: Ignore KVM setup failure
+      hash: 4a9f3ce41b9f581ca78b88e01ec59b704d4b10f1
+      body: |
+        We've seen cases where the KVM device is not found
+        on ubuntu-22.04 runners, so continue on error for now.
+
+        Failed to open the device 'kvm': No such file or directory
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 10.0.1
+  title: ""
+  date: 2024-02-15T13:46:53.825Z
+- commits:
     - subject: Remove deprecated tests_run_on input
       hash: aabfe5cc48af47c41ed7536348dcc58a2e8f20a8
       body: |
