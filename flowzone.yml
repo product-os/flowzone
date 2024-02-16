@@ -262,12 +262,26 @@
       fi
 
   - &jsonArrayBuilder
-    name: Build JSON array from comma-separated list
+    name: Build JSON array
     id: to_json_array
-    uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5 # v0.2.1
-    with:
-      cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-      separator: ","
+    shell: bash
+    run: |
+      set -x
+
+      # Remove spaces and newlines from the input
+      INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+      # Convert to JSON array using jq to split the string by the given delimiter
+      # Add a step to check if the array is empty, default to [""] if so
+      JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+        if $input == "" then
+          [""] # Default to a single empty string element if input is empty
+        else
+          $input | split($delim) # Split the input by the delimiter
+        end
+      ')"
+
+      echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
 
   - &newlineListBuilder
     name: Build newline-separated list from JSON array
@@ -1345,6 +1359,7 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.docker_images }}
+          DELIMITER: ","
 
       - id: docker_images_crlf
         <<: *newlineListBuilder
@@ -1355,6 +1370,7 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.bake_targets }}
+          DELIMITER: ","
 
       - name: Check for docker compose test files
         id: docker_compose_tests
@@ -1533,6 +1549,7 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.cargo_targets }}
+          DELIMITER: ","
 
       - name: Check Cargo.toml
         id: cargo_yml
@@ -1568,6 +1585,7 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.balena_slugs }}
+          DELIMITER: ","
 
       - name: Check for balena.yml
         id: balena_yml
@@ -1610,16 +1628,19 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_test_matrix }}
+          DELIMITER: ","
 
       - id: custom_publish_matrix
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
+          DELIMITER: ","
 
       - id: custom_finalize_matrix
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
+          DELIMITER: ","
 
       - name: Check for custom actions
         id: custom
@@ -2088,6 +2109,7 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ steps.setup_buildx.outputs.platforms }}
+          DELIMITER: ","
 
       # only register qemu binfmt if the target platform is not supported by the host natively
       - <<: *setupQemuBinfmt
