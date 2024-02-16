@@ -1,4 +1,19 @@
 - commits:
+    - subject: Delete legacy patch workflow
+      hash: 10e1a28035b74c0d97e28d9fa77712e9ef6ce3b0
+      body: |
+        This workflow was deemed insecure and not worth maintaining any longer.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 10.0.3
+  title: ""
+  date: 2024-02-16T18:22:26.723Z
+- commits:
     - subject: Use bash to build json arrays and drop unmaintained action
       hash: c55206e8f705624fbf800c685c0ceec6e2f2d70d
       body: ""
