@@ -767,13 +767,21 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: docker_images_json
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
           INPUT: ${{ inputs.docker_images }}
+          DELIMITER: ","
       - id: docker_images_crlf
         name: Build newline-separated list from JSON array
         run: |
@@ -785,13 +793,21 @@ jobs:
         env:
           INPUT: ${{ steps.docker_images_json.outputs.build }}
       - id: bake_targets_json
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
           INPUT: ${{ inputs.bake_targets }}
+          DELIMITER: ","
       - name: Check for docker compose test files
         id: docker_compose_tests
         run: |
@@ -993,13 +1009,21 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: cargo_targets
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
           INPUT: ${{ inputs.cargo_targets }}
+          DELIMITER: ","
       - name: Check Cargo.toml
         id: cargo_yml
         run: |
@@ -1047,13 +1071,21 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: balena_slugs
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
           INPUT: ${{ inputs.balena_slugs }}
+          DELIMITER: ","
       - name: Check for balena.yml
         id: balena_yml
         run: |
@@ -1110,29 +1142,53 @@ jobs:
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
       - id: custom_test_matrix
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
           INPUT: ${{ inputs.custom_test_matrix }}
+          DELIMITER: ","
       - id: custom_publish_matrix
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
+          DELIMITER: ","
       - id: custom_finalize_matrix
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
+          DELIMITER: ","
       - name: Check for custom actions
         id: custom
         run: |
@@ -1731,13 +1787,21 @@ jobs:
           driver-opts: network=host
           install: true
       - id: native_platforms
-        name: Build JSON array from comma-separated list
-        uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
-        with:
-          cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
-          separator: ","
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
           INPUT: ${{ steps.setup_buildx.outputs.platforms }}
+          DELIMITER: ","
       - name: Setup QEMU
         id: qemu_binfmt
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3
