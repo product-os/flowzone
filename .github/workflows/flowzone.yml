@@ -776,7 +776,14 @@ jobs:
           INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
 
           # Convert to JSON array using jq to split the string by the given delimiter
-          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
 
           echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
@@ -802,7 +809,14 @@ jobs:
           INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
 
           # Convert to JSON array using jq to split the string by the given delimiter
-          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
 
           echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
@@ -1018,7 +1032,14 @@ jobs:
           INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
 
           # Convert to JSON array using jq to split the string by the given delimiter
-          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
 
           echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
@@ -1080,7 +1101,14 @@ jobs:
           INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
 
           # Convert to JSON array using jq to split the string by the given delimiter
-          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
 
           echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
@@ -1151,7 +1179,14 @@ jobs:
           INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
 
           # Convert to JSON array using jq to split the string by the given delimiter
-          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
 
           echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
@@ -1167,7 +1202,14 @@ jobs:
           INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
 
           # Convert to JSON array using jq to split the string by the given delimiter
-          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
 
           echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
@@ -1183,7 +1225,14 @@ jobs:
           INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
 
           # Convert to JSON array using jq to split the string by the given delimiter
-          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
 
           echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
@@ -1796,7 +1845,14 @@ jobs:
           INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
 
           # Convert to JSON array using jq to split the string by the given delimiter
-          JSON_ARRAY="$(jq -Rcn --arg delim "$DELIMITER" --arg input "$INPUT" '$input | split($delim)')"
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
 
           echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
