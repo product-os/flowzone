@@ -4,14 +4,14 @@
   "scripts": {
     "build": "node build",
     "test": "npm run build && git diff --exit-code ./.github/workflows/flowzone.yml ./README.md",
-    "prepare": "node -e \"try { require('husky').install() } catch (e) {if (e.code !== 'MODULE_NOT_FOUND') throw e}\""
+    "prepare": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/product-os/flowzone.git"
   },
   "devDependencies": {
-    "husky": "^8.0.1"
+    "husky": "^9.0.0"
   },
   "dependencies": {
     "yaml": "^2.1.3"
