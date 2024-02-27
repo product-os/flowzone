@@ -2039,11 +2039,11 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
-          # need permissions to publish to github pages
+          # need permissions to push to docs branch and publish to github pages
           permissions: >-
             {
               "pages": "write",
-              "contents": "read",
+              "contents": "write",
               "metadata": "read"
             }
           repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
