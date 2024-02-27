@@ -1689,7 +1689,7 @@ jobs:
           permissions: |-
             {
               "pages": "write",
-              "contents": "read",
+              "contents": "write",
               "metadata": "read"
             }
           repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
