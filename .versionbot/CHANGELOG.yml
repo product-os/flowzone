@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v3.1.0
+      hash: fcaa4af28360b209b5b3406c86e5ab3a3844ed38
+      body: |
+        Update docker/setup-buildx-action from 3.0.0 to 3.1.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 10.0.14
+  title: ""
+  date: 2024-02-27T08:51:37.424Z
+- commits:
     - subject: Update actions/download-artifact action to v4.1.3
       hash: e23ccbcf94de1f1ace081204fd388dd91444a949
       body: |
