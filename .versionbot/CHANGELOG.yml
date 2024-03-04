@@ -1,4 +1,32 @@
 - commits:
+    - subject: Add nodejs 21 to the potential nodejs test matrix
+      hash: c146a106a7bd0148b5f6294e3011244a33804b9e
+      body: |
+        This is the latest version and allows for testing if we support the
+        latest nodejs version and subsequently whether we are likely to support
+        the next LTS release out of the box, and if not apply fixes in the
+        meantime
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+    - subject: Remove nodejs 12 and 14 versions from the potential nodejs test matrix
+      hash: c0d3deef63cc94ec3225b44b88357ac15db27196
+      body: |
+        These versions have been EOL for a significant period and continuing to
+        include them in the potential test matrix provides negligible benefit.
+        We continue to include nodejs 16 however even though it is also EOL as
+        of 2023-09-11
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 10.0.18
+  title: ""
+  date: 2024-03-04T14:58:15.038Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.33
       hash: 388d43db950df8a83ad4c6fb6a5b77d47ace95a9
       body: |
