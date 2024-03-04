@@ -1259,32 +1259,6 @@ jobs:
       - <<: *setupNode
         if: steps.npm.outputs.enabled == 'true'
         with:
-          node-version: 12.x
-
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["12.x"]')" >> $GITHUB_ENV
-          fi
-
-      - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
-        with:
-          node-version: 14.x
-
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["14.x"]')" >> $GITHUB_ENV
-          fi
-
-      - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
-        with:
           node-version: 16.x
 
       - name: Check engine

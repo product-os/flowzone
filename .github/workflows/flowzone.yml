@@ -661,30 +661,6 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
-          node-version: 12.x
-        if: steps.npm.outputs.enabled == 'true'
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["12.x"]')" >> $GITHUB_ENV
-          fi
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
-        with:
-          node-version: 14.x
-        if: steps.npm.outputs.enabled == 'true'
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["14.x"]')" >> $GITHUB_ENV
-          fi
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
-        with:
           node-version: 16.x
         if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
