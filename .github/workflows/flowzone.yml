@@ -3175,7 +3175,7 @@ jobs:
       - name: Install cross
         run: cargo install cross --locked
       - name: Lint with clippy
-        run: cross -v clippy --all-targets --all-features -- -D warnings
+        run: cross -v clippy --all-targets --all-features --target ${{ matrix.target }} -- -D warnings
       - name: Run tests for toolchain ${{ matrix.target }}
         run: cross -v test --target ${{ matrix.target }}
       - name: Generate metadata
