@@ -1,4 +1,58 @@
 - commits:
+    - subject: Pass the build target when invoking clippy
+      hash: 55ed9e7e1f690cf8bf4473741f485755f53f296f
+      body: >
+        The motivation for this change was to allow us to properly request the C
+
+        Runtime (CRT) to be statically linked.
+
+
+        In summary, each target defaults to either static or dynamic CRT
+
+        linking, but we can request static linking regardless of defaults by
+
+        using the `crt-static` target feature. The usual way to achieve that is
+
+        setting the `RUSTFLAGS="-C target-feature=+crt-static"` environment
+
+        variable. (See
+
+        https://doc.rust-lang.org/reference/linkage.html#static-and-dynamic-c-runtimes)
+
+
+        Rust projects using Flowzone can already do that by using `cross` for
+
+        building and setting the environment variable in a `Cross.toml` file
+
+        (see
+
+        https://github.com/cross-rs/cross/blob/main/docs/environment_variables.md#environment-variable-passthrough).
+
+
+        So far so good. The problem is, the `--target` option is required when
+
+        using `crt-static`, and Flowzone was not passing it to `cargo clippy`.
+
+        (See
+
+        https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux/ for
+
+        an overview of the issue, and
+
+        https://github.com/rust-lang/rust/issues/78210#issuecomment-714776007
+
+        for some more specific details.)
+      footer:
+        Signed-off-by: Leandro Motta Barros <leandro@balena.io>
+        signed-off-by: Leandro Motta Barros <leandro@balena.io>
+        Change-type: patch
+        change-type: patch
+      author: Leandro Motta Barros
+      nested: []
+  version: 10.0.19
+  title: ""
+  date: 2024-03-06T13:30:53.457Z
+- commits:
     - subject: Add nodejs 21 to the potential nodejs test matrix
       hash: c146a106a7bd0148b5f6294e3011244a33804b9e
       body: |
@@ -924,9 +978,11 @@
         a central authority only.
 
 
-        This is a breaking change for repos that previously opted into these settings.
+        This is a breaking change for repos that previously opted into these
+        settings.
 
-        This workflow will not run unless the calling workflow omits the related inputs.
+        This workflow will not run unless the calling workflow omits the related
+        inputs.
       footer:
         Change-type: major
         change-type: major
@@ -2333,7 +2389,14 @@
         From docker compose documentation:
 
 
-        > The `docker compose run` command is for running "one-off" or "adhoc" tasks. It requires the service name you want to run and only starts containers for services that the running service depends on. Use run to run tests or perform an administrative task such as removing or adding data to a data volume container. The `run` command acts like `docker run -ti` in that it opens an interactive terminal to the container and returns an exit status matching the exit status of the process in the container.
+        > The `docker compose run` command is for running "one-off" or "adhoc"
+        tasks. It requires the service name you want to run and only starts
+        containers for services that the running service depends on. Use run to
+        run tests or perform an administrative task such as removing or adding
+        data to a data volume container. The `run` command acts like `docker run
+        -ti` in that it opens an interactive terminal to the container and
+        returns an exit status matching the exit status of the process in the
+        container.
 
 
         Using `docker compose up` may lead to a false negative test if one of
@@ -2783,7 +2846,8 @@
         This is to prevent bugs from dependencies from breaking the build.
 
 
-        See: https://github.com/balena-io-modules/node-systemd/actions/runs/5740095381/job/15557192112
+        See:
+        https://github.com/balena-io-modules/node-systemd/actions/runs/5740095381/job/15557192112
 
         Caused by: https://github.com/bytecodealliance/rustix/issues/767
       footer:
@@ -3729,7 +3793,8 @@
 
         and `poetry run pytest` in a `script -q -e -c` to allow tests that
 
-        require pseudo-tty (e.g. for applications that work with terminal colors)
+        require pseudo-tty (e.g. for applications that work with terminal
+        colors)
 
         to be able to operate as they would in a local dev environment.
       footer:
@@ -7261,7 +7326,8 @@
 
         dependencies may sometimes require external packages, which are provided
 
-        by `cross` [pre-build hook](https://github.com/cross-rs/cross#pre-build-hook) feature.
+        by `cross` [pre-build
+        hook](https://github.com/cross-rs/cross#pre-build-hook) feature.
 
 
         This PR changes the rust steps order so clippy is run using cross
@@ -7318,7 +7384,8 @@
         events and skip the other to avoid duplicate workflows.
 
 
-        Modifications to workflow files will be ignored for `pull_request_target`
+        Modifications to workflow files will be ignored for
+        `pull_request_target`
 
         events by GitHub so we just need to make sure we aren't sharing secrets
 
@@ -7357,7 +7424,8 @@
         tests we cannot allow it to be used with external contributions.
 
 
-        Similarly, modifications to workflow files are considered trusted code and
+        Similarly, modifications to workflow files are considered trusted code
+        and
 
         not enabled for external contributions.
       footer:
@@ -7557,12 +7625,14 @@
       body: >
         This may extend to more valid uses than intended, but for now we need
 
-        to prevent merging PRs that have had master merged into them. This scenario
+        to prevent merging PRs that have had master merged into them. This
+        scenario
 
         will break versioning in master.
 
 
-        The intended workflow at balena has always been to rebase PRs, so we have
+        The intended workflow at balena has always been to rebase PRs, so we
+        have
 
         to continue to force this for now and avoid breaking merges.
       footer:
@@ -7870,7 +7940,8 @@
         npm doesn't allow to unpublish it.
 
 
-        Prompted by: https://balena.zulipchat.com/#narrow/stream/345890-loop.2Fbalena-io/topic/Test.20docker.20on.20open-balena-api
+        Prompted by:
+        https://balena.zulipchat.com/#narrow/stream/345890-loop.2Fbalena-io/topic/Test.20docker.20on.20open-balena-api
       footer:
         Change-type: patch
         change-type: patch
@@ -8426,22 +8497,27 @@
 
         + git push origin HEAD:master --follow-tags
 
-        warning: not sending a push certificate since the receiving end does not support --signed push
+        warning: not sending a push certificate since the receiving end does not
+        support --signed push
 
         To ...
          * [new tag]         v1.4.23 -> v1.4.23
          ! [rejected]        HEAD -> master (fetch first)
-        error: failed to push some refs to 'https://github.com/product-os/environment-production'
+        error: failed to push some refs to
+        'https://github.com/product-os/environment-production'
 
         hint: Updates were rejected because the remote contains work that you do
 
-        hint: not have locally. This is usually caused by another repository pushing
+        hint: not have locally. This is usually caused by another repository
+        pushing
 
-        hint: to the same ref. You may want to first integrate the remote changes
+        hint: to the same ref. You may want to first integrate the remote
+        changes
 
         hint: (e.g., 'git pull ...') before pushing again.
 
-        hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+        hint: See the 'Note about fast-forwards' in 'git push --help' for
+        details.
 
         ```
 
