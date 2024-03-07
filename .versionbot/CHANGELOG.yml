@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update balena-io/deploy-to-balena-action action to v2.0.34
+      hash: 4c83fcd0309226a419af1fd707964954e6875d45
+      body: |
+        Update balena-io/deploy-to-balena-action from 2.0.33 to 2.0.34
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 10.0.20
+  title: ""
+  date: 2024-03-07T17:51:37.382Z
+- commits:
     - subject: Pass the build target when invoking clippy
       hash: 55ed9e7e1f690cf8bf4473741f485755f53f296f
       body: >
