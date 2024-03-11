@@ -1,4 +1,18 @@
 - commits:
+    - subject: Clean up errors when aws region is unset
+      hash: 03ac232a0848dc65a25de66e80bd0c1eb1d362ea
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 10.0.25
+  title: ""
+  date: 2024-03-11T14:39:57.612Z
+- commits:
     - subject: Update softprops/action-gh-release action to v2
       hash: 56a8566a6608a6a9cbd561a6f2337fc5774e35aa
       body: |
