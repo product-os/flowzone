@@ -2523,7 +2523,7 @@ jobs:
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
-      - uses: balena-io/deploy-to-balena-action@4af1aca2373e2d41642d5781015441c7107c9d2c
+      - uses: balena-io/deploy-to-balena-action@c44d246cd84f7595ab48495f9db9708dfe8ed48f
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
@@ -2607,7 +2607,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - uses: balena-io/deploy-to-balena-action@4af1aca2373e2d41642d5781015441c7107c9d2c
+      - uses: balena-io/deploy-to-balena-action@c44d246cd84f7595ab48495f9db9708dfe8ed48f
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
