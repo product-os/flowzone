@@ -30,8 +30,13 @@
 
   # optionally attempt to get AWS login short-lived session credentials over OIDC
   - &configureAWSCredentials # https://github.com/aws-actions/configure-aws-credentials
+    name: Configure AWS credentials
+    id: aws_credentials
     uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
-    <<: *ifInternalPullRequest
+    # skip if the PR is from a fork or aws region is unset
+    if: |
+      ( matrix.region != '' || inputs.aws_region != '' ) && 
+      github.event.pull_request.head.repo.full_name == github.repository
     continue-on-error: true
     with:
       role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -190,6 +195,7 @@
 
   - &loginWithECRPublic
     name: Login to AWS/ECR (public)
+    if: steps.aws_credentials.outcome == 'success'
     continue-on-error: true
     uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
     with:
@@ -197,6 +203,7 @@
 
   - &loginWithECRPrivate
     name: Login to AWS/ECR (private)
+    if: steps.aws_credentials.outcome == 'success'
     continue-on-error: true
     uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
     with:
@@ -587,6 +594,7 @@
 
   - &getAWSCallerIdentity
     name: Get caller identity (AWS/whoami)
+    if: steps.aws_credentials.outcome == 'success'
     continue-on-error: true
     run: aws sts get-caller-identity
 
