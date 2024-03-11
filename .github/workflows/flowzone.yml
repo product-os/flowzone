@@ -2207,7 +2207,7 @@ jobs:
         with:
           registry: ${{ matrix.image }}
       - name: Publish manifest to remote(s)
-        uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
+        uses: akhilerm/tag-push-action@f35ff2cb99d407368b5c727adbcc14a2ed81d509
         with:
           src: ${{ env.LOCAL_TAG }}
           dst: |
@@ -2428,7 +2428,7 @@ jobs:
         with:
           registry: ${{ matrix.image }}
       - name: Publish final tags
-        uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
+        uses: akhilerm/tag-push-action@f35ff2cb99d407368b5c727adbcc14a2ed81d509
         with:
           src: ${{ matrix.image }}:${{ steps.strings.outputs.prefix }}build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}${{ steps.strings.outputs.suffix }}
           dst: |
