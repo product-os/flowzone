@@ -2747,23 +2747,31 @@ jobs:
 
       - name: Download all artifacts
         uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
-        continue-on-error: true
         id: download
         with:
-          path: ${{ runner.temp }}
+          path: ${{ runner.temp }}/artifacts
+
+      # Publish anything with the gh-release- prefix
+      - name: Filter artifacts
+        id: filter
+        run: |
+          files="$(ls -1 ${{ runner.temp }}/artifacts/gh-release-*/* || true)"
+          DELIMITER=$(echo $RANDOM | md5sum | head -c 32)
+          echo "files<<${DELIMITER}" >> $GITHUB_OUTPUT
+          echo "${files}" >> $GITHUB_OUTPUT
+          echo "${DELIMITER}" >> $GITHUB_OUTPUT
 
       # https://github.com/softprops/action-gh-release
-      - name: Publish artifacts
+      - name: Publish draft release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v0.1.15
-        if: steps.download.outcome == 'success'
         with:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
           prerelease: true
-          # Publish anything added to with the gh-release- prefix
-          files: ${{ runner.temp }}/gh-release-*/*
+          files: |
+            ${{ steps.filter.outputs.files }}
 
   github_finalize:
     name: Finalize GitHub release
