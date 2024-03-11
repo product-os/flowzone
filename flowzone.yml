@@ -2754,7 +2754,7 @@ jobs:
 
       # https://github.com/softprops/action-gh-release
       - name: Publish artifacts
-        uses: softprops/action-gh-release@d99959edae48b5ffffd7b00da66dcdb0a33a52ee # v2.0.2
+        uses: softprops/action-gh-release@3198ee18f814cdf787321b4a32a26ddbf37acc52 # v2.0.3
         if: steps.download.outcome == 'success'
         with:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
