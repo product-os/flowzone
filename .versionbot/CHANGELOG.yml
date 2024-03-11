@@ -1,4 +1,29 @@
 - commits:
+    - subject: Update softprops/action-gh-release action to v2
+      hash: f471e8f6849614c5de6be12939f0861fb1959ccf
+      body: |
+        Update softprops/action-gh-release from 0.1.15 to 2.0.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+    - subject: Filter GH release artifacts before calling release action
+      hash: 85a47794fa50ad75be6226f76fcd7784131c2cad
+      body: |
+        There is an issue in v2 of softprops/action-gh-release
+        when providing glob patterns with no matches.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 10.0.29
+  title: ""
+  date: 2024-03-11T17:52:35.920Z
+- commits:
     - subject: Update akhilerm/tag-push-action action to v2.2.0
       hash: 01383796e6df0894a2518790897e84d4700fa8a2
       body: |
