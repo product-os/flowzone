@@ -2178,8 +2178,12 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
-        if: github.event.pull_request.head.repo.full_name == github.repository
+      - name: Configure AWS credentials
+        id: aws_credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        if: |
+          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -2187,14 +2191,17 @@ jobs:
           aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
+        if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
         run: aws sts get-caller-identity
       - name: Login to AWS/ECR (public)
+        if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: public.ecr.aws
       - name: Login to AWS/ECR (private)
+        if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
@@ -2392,8 +2399,12 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
-        if: github.event.pull_request.head.repo.full_name == github.repository
+      - name: Configure AWS credentials
+        id: aws_credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        if: |
+          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -2401,14 +2412,17 @@ jobs:
           aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
+        if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
         run: aws sts get-caller-identity
       - name: Login to AWS/ECR (public)
+        if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: public.ecr.aws
       - name: Login to AWS/ECR (private)
+        if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
@@ -3651,8 +3665,12 @@ jobs:
           random=$(((RANDOM % DELAY) + 1))
           echo "sleeping for ${random}s"
           sleep "${random}s"
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
-        if: github.event.pull_request.head.repo.full_name == github.repository
+      - name: Configure AWS credentials
+        id: aws_credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        if: |
+          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -3660,6 +3678,7 @@ jobs:
           aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
+        if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
         run: aws sts get-caller-identity
       - name: Convenience functions
@@ -3887,8 +3906,12 @@ jobs:
           random=$(((RANDOM % DELAY) + 1))
           echo "sleeping for ${random}s"
           sleep "${random}s"
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
-        if: github.event.pull_request.head.repo.full_name == github.repository
+      - name: Configure AWS credentials
+        id: aws_credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        if: |
+          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -3896,6 +3919,7 @@ jobs:
           aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
+        if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
         run: aws sts get-caller-identity
       - name: Wait for resources
@@ -4038,8 +4062,12 @@ jobs:
           random=$(((RANDOM % DELAY) + 1))
           echo "sleeping for ${random}s"
           sleep "${random}s"
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
-        if: github.event.pull_request.head.repo.full_name == github.repository
+      - name: Configure AWS credentials
+        id: aws_credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        if: |
+          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -4047,6 +4075,7 @@ jobs:
           aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
+        if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
         run: aws sts get-caller-identity
       - name: Update kubeconfig
@@ -4144,8 +4173,12 @@ jobs:
           random=$(((RANDOM % DELAY) + 1))
           echo "sleeping for ${random}s"
           sleep "${random}s"
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
-        if: github.event.pull_request.head.repo.full_name == github.repository
+      - name: Configure AWS credentials
+        id: aws_credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        if: |
+          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -4153,6 +4186,7 @@ jobs:
           aws-region: ${{ matrix.region || inputs.aws_region }}
           mask-aws-account-id: false
       - name: Get caller identity (AWS/whoami)
+        if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
         run: aws sts get-caller-identity
       - name: Update kubeconfig
