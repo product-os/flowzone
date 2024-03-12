@@ -3034,17 +3034,8 @@ jobs:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Download all artifacts
         uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427
-        id: download
         with:
           path: ${{ runner.temp }}/artifacts
-      - name: Filter artifacts
-        id: filter
-        run: |
-          files="$(ls -1 ${{ runner.temp }}/artifacts/gh-release-*/* || true)"
-          DELIMITER=$(echo $RANDOM | md5sum | head -c 32)
-          echo "files<<${DELIMITER}" >> $GITHUB_OUTPUT
-          echo "${files}" >> $GITHUB_OUTPUT
-          echo "${DELIMITER}" >> $GITHUB_OUTPUT
       - name: Publish draft release
         uses: softprops/action-gh-release@9d7c94cfd0a1f3ed45544c887983e9fa900f0564
         with:
@@ -3053,8 +3044,8 @@ jobs:
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
           prerelease: true
-          files: |
-            ${{ steps.filter.outputs.files }}
+          files: ${{ runner.temp }}/artifacts/gh-release-*/*
+          fail_on_unmatched_files: false
   github_finalize:
     name: Finalize GitHub release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
