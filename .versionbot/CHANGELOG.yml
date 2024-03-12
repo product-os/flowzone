@@ -1,4 +1,21 @@
 - commits:
+    - subject: Do not fail releases on unmatched files
+      hash: d2ba8c803d3d64a66415193ba55fb5c5d2fa1435
+      body: >
+        The default behaviour was fixed upstream via
+
+        https://github.com/softprops/action-gh-release/pull/425/commits/f4bd9669044d0fa04ba1b4b0785e05e2b6055d66
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 10.0.35
+  title: ""
+  date: 2024-03-12T18:46:18.604Z
+- commits:
     - subject: Update softprops/action-gh-release action to v2.0.4
       hash: 75446785e760430912af51f7647a58460cf1dfe2
       body: |
