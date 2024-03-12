@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update balena-io/deploy-to-balena-action action to v2.0.39
+      hash: 5d1114d97eac5bfef1d2b9d2f4960d49b94e76cd
+      body: |
+        Update balena-io/deploy-to-balena-action from 2.0.38 to 2.0.39
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 10.0.36
+  title: ""
+  date: 2024-03-12T19:50:57.545Z
+- commits:
     - subject: Do not fail releases on unmatched files
       hash: d2ba8c803d3d64a66415193ba55fb5c5d2fa1435
       body: >
