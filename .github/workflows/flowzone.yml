@@ -1973,8 +1973,8 @@ jobs:
           targets: ${{ matrix.target }}
           set: |
             *.platform=${{ matrix.platform }}
-            *.cache-to=type=gha,mode=min,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
-            *.cache-from=type=gha,scope=${{ github.head_ref }}-${{ matrix.target }}-${{ matrix.platform }}
+            *.cache-to=type=gha,mode=max,scope=buildkit
+            *.cache-from=type=gha,scope=buildkit
             *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[0] || ''}}
             *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[1] || ''}}
             *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[2] || ''}}
