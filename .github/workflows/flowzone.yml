@@ -1632,7 +1632,7 @@ jobs:
           echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
           echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
       - name: Download npm artifact from last run
-        uses: dawidd6/action-download-artifact@a430ac5786b39ad5869da25a98130624d2ce340c
+        uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -1689,7 +1689,7 @@ jobs:
           echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
           echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
       - name: Download npm docs artifact from last run
-        uses: dawidd6/action-download-artifact@a430ac5786b39ad5869da25a98130624d2ce340c
+        uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
