@@ -1,4 +1,18 @@
 - commits:
+    - subject: use balena cli to set release notes
+      hash: 15eec36fa97e7df8537f43386f313542cce00d16
+      body: |
+        * use GH release action to set notes on draft releases
+
+        Co-authored-by: Kyle Harding <kyle@balena.io>
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 10.0.49
+  title: ""
+  date: 2024-03-21T18:39:23.664Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.46
       hash: 5592a4690630d3e5aadcc3e007cd70271d4ade79
       body: |
