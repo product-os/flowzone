@@ -3732,6 +3732,12 @@ jobs:
           }
           $EOF
           echo "with_backoff=${with_backoff}" >> $GITHUB_OUTPUT
+      - name: Setup python
+        id: setup-python
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c
+        with:
+          cache: pip
+          python-version: 3.11
       - name: Create templates bucket
         id: make_bucket
         run: |
@@ -3818,6 +3824,17 @@ jobs:
           fi
 
           echo "caps=${caps}" >> $GITHUB_OUTPUT
+      - name: Install cfn-lint
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install cfn-lint==0.83.7
+      - name: Lint template
+        run: |
+          cfn-lint -i ${DEFAULT_IGNORE} ${{ steps.shared.outputs.ignore_lint }} \
+            -t '${{ steps.shared.outputs.template_file }}'
+        env:
+          PATH: ${HOME}/.local/bin:${PATH}
+          DEFAULT_IGNORE: W2001 W3002 W4002 W6001 W8003 E3026 E2520
       - name: Validate template
         run: |
           source '${{ steps.functions.outputs.with_backoff }}'
