@@ -913,6 +913,12 @@ on:
         type: string
         required: false
         default: ""
+      custom_matrices_includes:
+        description: "Custom matrices include object."
+        type: string
+        required: false
+        default: >
+          []
       toggle_auto_merge:
         description: "Set to false to disable toggling auto-merge on PRs."
         type: boolean
@@ -2995,6 +3001,9 @@ jobs:
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        include: ${{ fromJSON(inputs.custom_matrices_includes) }}
+
+    environment: ${{ matrix.environment || null }}
 
     steps:
       - *rejectExternalCustomActions
@@ -3043,6 +3052,9 @@ jobs:
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        include: ${{ fromJSON(inputs.custom_matrices_includes) }}
+
+    environment: ${{ matrix.environment }}
 
     steps:
       - *rejectExternalCustomActions
@@ -3085,6 +3097,9 @@ jobs:
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        include: ${{ fromJSON(inputs.custom_matrices_includes) }}
+
+    environment: ${{ matrix.environment }}
 
     steps:
       - *rejectExternalCustomActions

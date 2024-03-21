@@ -361,6 +361,11 @@ jobs:
       # Required: false
       custom_finalize_matrix: 
 
+      # Custom matrices include object.
+      # Type: string
+      # Required: false
+      custom_matrices_includes: []
+
       # Set to false to disable toggling auto-merge on PRs.
       # Type: boolean
       # Required: false
