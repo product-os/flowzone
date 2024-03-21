@@ -371,6 +371,11 @@ jobs:
       # Required: false
       ok_to_test_label: ok-to-test
 
+      # Create git tags and a PR comment with detailed change log.
+      # Type: boolean
+      # Required: false
+      release_notes: false
+
 
 ```
 <!-- end usage -->
