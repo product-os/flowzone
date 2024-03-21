@@ -35,7 +35,7 @@
     uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
     # skip if the PR is from a fork or aws region is unset
     if: |
-      ( matrix.region != '' || inputs.aws_region != '' ) && 
+      ( matrix.region != '' || inputs.aws_region != '' ) &&
       github.event.pull_request.head.repo.full_name == github.repository
     continue-on-error: true
     with:
@@ -67,6 +67,7 @@
       environment: ${{ inputs.balena_environment }}
       fleet: ${{ matrix.slug }}
       source: ${{ inputs.working_directory }}
+      note: ${{ steps.release_notes.outputs.note }}
       registry_secrets: |
         {
           "ghcr.io": {
@@ -82,34 +83,24 @@
   - &getReleaseNotes
     name: Generate release notes
     id: release_notes
+    env:
+      look_back: 1
     run: |
       set -ea
       # prevent git from existing with 141
       set +o pipefail
-      previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n2 | tail -n1)"
-      release_notes_file="$(mktemp)"
-      git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes_file}"
-      echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
 
-  # FIXME: https://github.com/balena-io/deploy-to-balena-action/issues/194
-  - &updateBalenaReleaseNotes
-    name: Update balena release notes
-    run: |
-      set -ea
-      release_notes="$(cat < '${{ steps.release_notes.outputs.file }}' | jq -R -s .)"
-      app_id="$(curl --silent --retry 3 --fail \
-        "https://api.${{ inputs.balena_environment }}/v6/application?\$filter=slug%20eq%20%27${{ matrix.slug }}%27&\$select=id" \
-        -H 'Content-Type: application/json' \
-        -H 'Authorization: Bearer ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}' \
-        | jq -r '.d[].id')"
-      release_id='${{ steps.balena_deploy.outputs.release_id }}'
-      if [[ -n $release_notes ]] && [[ -n $app_id ]] && [[ -n $release_id ]]; then
-          curl --silent --retry 3 --fail \
-            -X PATCH "https://api.${{ inputs.balena_environment }}/v6/release?\$filter=belongs_to__application%20eq%20${app_id}%20and%20id%20eq%20${release_id}" \
-            -H 'Content-Type: application/json' \
-            -H 'Authorization: Bearer ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}' \
-            -d "{\"note\":${release_notes}}"
-      fi
+      previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
+
+      release_notes_file="$(mktemp)"
+      release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+      EOF="$(openssl rand -hex 16)"
+      echo "note<<$EOF" >> $GITHUB_OUTPUT
+      echo "${release_notes}" >> $GITHUB_OUTPUT
+      echo "$EOF" >> $GITHUB_OUTPUT
+
+      echo "${release_notes}" > "${release_notes_file}"
+      echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
 
   - &checkoutMergeRef
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
@@ -2456,10 +2447,9 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - <<: *getReleaseNotes
       - *createLocalRefs
       - *deployToBalenaAction
-      - *getReleaseNotes
-      - *updateBalenaReleaseNotes
 
   balena_finalize:
     name: Finalize balena
@@ -2481,9 +2471,10 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - <<: *getReleaseNotes
+        env:
+          look_back: 2
       - *deployToBalenaAction
-      - *getReleaseNotes
-      - *updateBalenaReleaseNotes
 
   ###################################################
   ## Python
@@ -2744,6 +2735,8 @@ jobs:
           repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - *deleteDraftGitHubRelease
+      - *checkoutVersionedSha
+      - <<: *getReleaseNotes
 
       - name: Download all artifacts
         uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
@@ -2761,6 +2754,8 @@ jobs:
           prerelease: true
           files: ${{ runner.temp }}/artifacts/gh-release-*/*
           fail_on_unmatched_files: false
+          body: ${{ steps.release_notes.outputs.note }}
+          body_path: ${{ steps.release_notes.outputs.file }}
 
   github_finalize:
     name: Finalize GitHub release
@@ -2793,7 +2788,9 @@ jobs:
             }
 
       - *checkoutVersionedSha
-      - *getReleaseNotes
+      - <<: *getReleaseNotes
+        env:
+          look_back: 2
 
       # https://docs.github.com/en/rest/releases
       - name: Finalize GitHub release (if any)

@@ -2182,7 +2182,7 @@ jobs:
         id: aws_credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: |
-          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          ( matrix.region != '' || inputs.aws_region != '' ) &&
           github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -2403,7 +2403,7 @@ jobs:
         id: aws_credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: |
-          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          ( matrix.region != '' || inputs.aws_region != '' ) &&
           github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -2533,6 +2533,26 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Generate release notes
+        id: release_notes
+        env:
+          look_back: 1
+        run: |
+          set -ea
+          # prevent git from existing with 141
+          set +o pipefail
+
+          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
+
+          release_notes_file="$(mktemp)"
+          release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+          EOF="$(openssl rand -hex 16)"
+          echo "note<<$EOF" >> $GITHUB_OUTPUT
+          echo "${release_notes}" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+          echo "${release_notes}" > "${release_notes_file}"
+          echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -2544,6 +2564,7 @@ jobs:
           environment: ${{ inputs.balena_environment }}
           fleet: ${{ matrix.slug }}
           source: ${{ inputs.working_directory }}
+          note: ${{ steps.release_notes.outputs.note }}
           registry_secrets: |
             {
               "ghcr.io": {
@@ -2555,33 +2576,6 @@ jobs:
                 "password": "${{ secrets.DOCKERHUB_TOKEN }}"
               }
             }
-      - name: Generate release notes
-        id: release_notes
-        run: |
-          set -ea
-          # prevent git from existing with 141
-          set +o pipefail
-          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n2 | tail -n1)"
-          release_notes_file="$(mktemp)"
-          git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes_file}"
-          echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
-      - name: Update balena release notes
-        run: |
-          set -ea
-          release_notes="$(cat < '${{ steps.release_notes.outputs.file }}' | jq -R -s .)"
-          app_id="$(curl --silent --retry 3 --fail \
-            "https://api.${{ inputs.balena_environment }}/v6/application?\$filter=slug%20eq%20%27${{ matrix.slug }}%27&\$select=id" \
-            -H 'Content-Type: application/json' \
-            -H 'Authorization: Bearer ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}' \
-            | jq -r '.d[].id')"
-          release_id='${{ steps.balena_deploy.outputs.release_id }}'
-          if [[ -n $release_notes ]] && [[ -n $app_id ]] && [[ -n $release_id ]]; then
-              curl --silent --retry 3 --fail \
-                -X PATCH "https://api.${{ inputs.balena_environment }}/v6/release?\$filter=belongs_to__application%20eq%20${app_id}%20and%20id%20eq%20${release_id}" \
-                -H 'Content-Type: application/json' \
-                -H 'Authorization: Bearer ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}' \
-                -d "{\"note\":${release_notes}}"
-          fi
   balena_finalize:
     name: Finalize balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -2621,6 +2615,26 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Generate release notes
+        id: release_notes
+        env:
+          look_back: 2
+        run: |
+          set -ea
+          # prevent git from existing with 141
+          set +o pipefail
+
+          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
+
+          release_notes_file="$(mktemp)"
+          release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+          EOF="$(openssl rand -hex 16)"
+          echo "note<<$EOF" >> $GITHUB_OUTPUT
+          echo "${release_notes}" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+          echo "${release_notes}" > "${release_notes_file}"
+          echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
       - uses: balena-io/deploy-to-balena-action@6480e2b453faac80bf8343e3d366a9126151afe9
         id: balena_deploy
         with:
@@ -2628,6 +2642,7 @@ jobs:
           environment: ${{ inputs.balena_environment }}
           fleet: ${{ matrix.slug }}
           source: ${{ inputs.working_directory }}
+          note: ${{ steps.release_notes.outputs.note }}
           registry_secrets: |
             {
               "ghcr.io": {
@@ -2639,33 +2654,6 @@ jobs:
                 "password": "${{ secrets.DOCKERHUB_TOKEN }}"
               }
             }
-      - name: Generate release notes
-        id: release_notes
-        run: |
-          set -ea
-          # prevent git from existing with 141
-          set +o pipefail
-          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n2 | tail -n1)"
-          release_notes_file="$(mktemp)"
-          git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes_file}"
-          echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
-      - name: Update balena release notes
-        run: |
-          set -ea
-          release_notes="$(cat < '${{ steps.release_notes.outputs.file }}' | jq -R -s .)"
-          app_id="$(curl --silent --retry 3 --fail \
-            "https://api.${{ inputs.balena_environment }}/v6/application?\$filter=slug%20eq%20%27${{ matrix.slug }}%27&\$select=id" \
-            -H 'Content-Type: application/json' \
-            -H 'Authorization: Bearer ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}' \
-            | jq -r '.d[].id')"
-          release_id='${{ steps.balena_deploy.outputs.release_id }}'
-          if [[ -n $release_notes ]] && [[ -n $app_id ]] && [[ -n $release_id ]]; then
-              curl --silent --retry 3 --fail \
-                -X PATCH "https://api.${{ inputs.balena_environment }}/v6/release?\$filter=belongs_to__application%20eq%20${app_id}%20and%20id%20eq%20${release_id}" \
-                -H 'Content-Type: application/json' \
-                -H 'Authorization: Bearer ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}' \
-                -d "{\"note\":${release_notes}}"
-          fi
   python_test:
     name: Test python poetry
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3032,6 +3020,33 @@ jobs:
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Generate release notes
+        id: release_notes
+        env:
+          look_back: 1
+        run: |
+          set -ea
+          # prevent git from existing with 141
+          set +o pipefail
+
+          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
+
+          release_notes_file="$(mktemp)"
+          release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+          EOF="$(openssl rand -hex 16)"
+          echo "note<<$EOF" >> $GITHUB_OUTPUT
+          echo "${release_notes}" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+          echo "${release_notes}" > "${release_notes_file}"
+          echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
       - name: Download all artifacts
         uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427
         with:
@@ -3046,6 +3061,8 @@ jobs:
           prerelease: true
           files: ${{ runner.temp }}/artifacts/gh-release-*/*
           fail_on_unmatched_files: false
+          body: ${{ steps.release_notes.outputs.note }}
+          body_path: ${{ steps.release_notes.outputs.file }}
   github_finalize:
     name: Finalize GitHub release
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3090,13 +3107,23 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Generate release notes
         id: release_notes
+        env:
+          look_back: 2
         run: |
           set -ea
           # prevent git from existing with 141
           set +o pipefail
-          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n2 | tail -n1)"
+
+          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
+
           release_notes_file="$(mktemp)"
-          git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference > "${release_notes_file}"
+          release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+          EOF="$(openssl rand -hex 16)"
+          echo "note<<$EOF" >> $GITHUB_OUTPUT
+          echo "${release_notes}" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+          echo "${release_notes}" > "${release_notes_file}"
           echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
       - name: Finalize GitHub release (if any)
         env:
@@ -3667,7 +3694,7 @@ jobs:
         id: aws_credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: |
-          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          ( matrix.region != '' || inputs.aws_region != '' ) &&
           github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -3908,7 +3935,7 @@ jobs:
         id: aws_credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: |
-          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          ( matrix.region != '' || inputs.aws_region != '' ) &&
           github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -4064,7 +4091,7 @@ jobs:
         id: aws_credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: |
-          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          ( matrix.region != '' || inputs.aws_region != '' ) &&
           github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
@@ -4175,7 +4202,7 @@ jobs:
         id: aws_credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         if: |
-          ( matrix.region != '' || inputs.aws_region != '' ) && 
+          ( matrix.region != '' || inputs.aws_region != '' ) &&
           github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
         with:
