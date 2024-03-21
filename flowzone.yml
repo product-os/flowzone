@@ -102,6 +102,48 @@
       echo "${release_notes}" > "${release_notes_file}"
       echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
 
+  - &getTimeStamp
+    name: Get and format timestamp
+    id: timestamp
+    env:
+      FORMAT: '%Y-%m-%d-%H%M%S'
+    run: |
+      echo "datetime=$(date +"${FORMAT}")" >> $GITHUB_OUTPUT
+
+  # https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
+  - &updateGitReference
+    name: Update git reference
+    if: github.event.pull_request.merged == true && steps.create_commit.outputs.sha != ''
+    env:
+      GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      REF: '/repos/$GH_REPO/git/refs/heads/${{ github.base_ref }}'
+    run: |
+      gh api \
+        -X PATCH \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "${REF}" \
+        -f sha='${{ steps.create_commit.outputs.sha }}' \
+        -F force=true \
+        --include
+
+  # https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#create-a-reference
+  - &createGitReference
+    name: Create git reference
+    if: github.event.pull_request.merged == true && steps.create_tag.outputs.sha != ''
+    env:
+      GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      REF: 'refs/tags/${{ steps.versionist.outputs.tag }}'
+    run: |
+      gh api \
+        -X POST \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        /repos/$GH_REPO/git/refs \
+        -f ref="${REF}" \
+        -f sha='${{ steps.create_tag.outputs.sha }}' \
+        --include
+
   - &checkoutMergeRef
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
@@ -1170,35 +1212,20 @@ jobs:
           echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
           echo "json=$(echo $response | jq -c .)" >> $GITHUB_OUTPUT
 
-      # https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
-      - name: Update branch reference
-        if: github.event.pull_request.merged == true && steps.create_commit.outputs.sha != ''
-        env:
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          gh api \
-            -X PATCH \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
-            -f sha='${{ steps.create_commit.outputs.sha }}' \
-            -F force=true \
-            --include
+      - <<: *updateGitReference
+      - <<: *createGitReference
+      - <<: *getTimeStamp
 
-      # https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#create-a-reference
-      - name: Create tag reference
-        if: github.event.pull_request.merged == true && steps.create_tag.outputs.sha != ''
+      # required by https://github.com/balena-io-modules/balena-deploy-request
+      - <<: *updateGitReference
+        continue-on-error: true
         env:
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          gh api \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/$GH_REPO/git/refs \
-            -f ref='refs/tags/${{ steps.versionist.outputs.tag }}' \
-            -f sha='${{ steps.create_tag.outputs.sha }}' \
-            --include
+          REF: '/repos/$GH_REPO/git/refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
+
+      - <<: *createGitReference
+        continue-on-error: true
+        env:
+          REF: 'refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
 
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
