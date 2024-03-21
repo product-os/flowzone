@@ -81,7 +81,7 @@
         }
 
   - &getReleaseNotes
-    name: Generate release notes
+    name: Generate short release note
     id: release_notes
     env:
       look_back: 1
@@ -101,6 +101,50 @@
 
       echo "${release_notes}" > "${release_notes_file}"
       echo "file=${release_notes_file}" >> "${GITHUB_OUTPUT}"
+
+  - &getTimeStamp
+    name: Get and format timestamp
+    id: timestamp
+    env:
+      FORMAT: '%Y-%m-%d-%H%M%S'
+    run: |
+      echo "datetime=$(date +"${FORMAT}")" >> $GITHUB_OUTPUT
+
+  # https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
+  - &updateGitReference
+    name: Update git reference
+    if: github.event.pull_request.merged == true && steps.create_commit.outputs.sha != ''
+    env:
+      GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      REF: '/repos/$GH_REPO/git/refs/heads/${{ github.base_ref }}'
+      SHA: ${{ steps.create_commit.outputs.sha }}
+    run: |
+      gh api \
+        -X PATCH \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "${REF}" \
+        -f sha="${SHA}" \
+        -F force=true \
+        --include
+
+  # https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#create-a-reference
+  - &createGitReference
+    name: Create git reference
+    if: github.event.pull_request.merged == true && steps.create_tag.outputs.sha != ''
+    env:
+      GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      REF: 'refs/tags/${{ steps.versionist.outputs.tag }}'
+      SHA: ${{ steps.create_commit.outputs.sha }}
+    run: |
+      gh api \
+        -X POST \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        /repos/$GH_REPO/git/refs \
+        -f ref="${REF}" \
+        -f sha="${SHA}" \
+        --include
 
   - &checkoutMergeRef
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
@@ -683,6 +727,9 @@ on:
       PYPI_TEST_TOKEN:
         description: "Token to publish to test.pypi.org"
         required: false
+      ZULIP_API_KEY:
+        description: "API key to post Zulip messages."
+        required: false
       CUSTOM_JOB_SECRET_1:
         description: "Optional secret for using with custom jobs"
         required: false
@@ -914,6 +961,11 @@ on:
         type: string
         required: false
         default: "ok-to-test"
+      release_notes:
+        description: "Create git tags and a PR comment with detailed change log."
+        type: boolean
+        required: false
+        default: false
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -979,6 +1031,7 @@ jobs:
       # whereas this will be the merge commit sha for PRs or the tagged commit sha for tags.
       sha: ${{ steps.create_tag.outputs.sha || steps.git_describe.outputs.sha }}
       commit_sha: ${{ steps.create_commit.outputs.sha }}
+      author: ${{ steps.create_commit.outputs.bot }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
 
     env:
@@ -1023,12 +1076,14 @@ jobs:
         with:
           node-version: 18.x
 
-      - name: Install versionist
+      - name: Install versioning tools
         if: inputs.disable_versioning != true
         run: |
-          npm install -g balena-versionist@~0.14.13 versionist@^7.0.3
-          npm ls -g balena-versionist
-          npm ls -g versionist
+          npm install -g \
+            balena-versionist@~0.14.13 \
+            versionist@^7.0.3
+
+          npm ls -g
 
       - name: Generate changelog
         if: inputs.disable_versioning != true
@@ -1139,8 +1194,9 @@ jobs:
             -F "parents[]=$PARENT_COMMIT_SHA")"
 
           echo "$response" | jq .
-          echo "sha=$(echo $response | jq -r .sha)" >> "${GITHUB_OUTPUT}"
-          echo "json=$(echo $response | jq -c .)" >> "${GITHUB_OUTPUT}"
+          echo "sha=$(echo "$response" | jq -r .sha)" >> "${GITHUB_OUTPUT}"
+          echo "json=$(echo "$response" | jq -c .)" >> "${GITHUB_OUTPUT}"
+          echo "bot=$(echo "$response" | jq -r .author.name | sed 's/\[bot\]//g')" >> "${GITHUB_OUTPUT}"
 
       # https://docs.github.com/en/rest/git/tags?apiVersion=2022-11-28#create-a-tag-object
       - name: Create tag object
@@ -1161,35 +1217,156 @@ jobs:
           echo "sha=$(echo $response | jq -r .sha)" >> "${GITHUB_OUTPUT}"
           echo "json=$(echo $response | jq -c .)" >> "${GITHUB_OUTPUT}"
 
-      # https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
-      - name: Update branch reference
-        if: github.event.pull_request.merged == true && steps.create_commit.outputs.sha != ''
-        env:
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          gh api \
-            -X PATCH \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
-            -f sha='${{ steps.create_commit.outputs.sha }}' \
-            -F force=true \
-            --include
+      - *updateGitReference
+      - *createGitReference
 
-      # https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#create-a-reference
-      - name: Create tag reference
-        if: github.event.pull_request.merged == true && steps.create_tag.outputs.sha != ''
+  release_notes:
+    name: Generate release notes
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+    if: |
+      (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      && inputs.release_notes == true
+
+    <<: *rootWorkingDirectory
+
+    env:
+      <<: *gitHubCliEnvironment
+
+    steps:
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          permissions: >-
+            {
+              "contents": "read",
+              "metadata": "read",
+              "pull_requests": "write"
+            }
+
+      # Get Renovate release notes from PR body, massage a little and draft a comment.
+      - name: Draft PR comment
+        id: format_release_notes
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
-          gh api \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/$GH_REPO/git/refs \
-            -f ref='refs/tags/${{ steps.versionist.outputs.tag }}' \
-            -f sha='${{ steps.create_tag.outputs.sha }}' \
-            --include
+          set -x
+
+          # if Renovate did this, extract its release notes from pull request body and
+          # massage until they resemble balena-io-modules/balena-deploy-request output
+          renovate_bot="$(gh pr view ${{ github.event.pull_request.number }} --json author --jq \
+            'select((.author.is_bot==true) and (.author.login | contains("renovate"))).author.login')"
+
+          if [[ -n "$renovate_bot" ]]; then
+              pr_title="$(gh pr view ${{ github.event.pull_request.number }} --json title --jq .title)"
+
+              raw_body="$(gh pr view ${{ github.event.pull_request.number }} --json body --jq .body)"
+
+              if [[ -n "$pr_title" ]] && [[ "$raw_body" =~ '### Release Notes' ]]; then
+                  pr_body="$(echo "${raw_body}" \
+                    | sed -n '/^### Release Notes$/,/^---$/p' \
+                    | sed "s|^### Release Notes$||g" \
+                    | sed 's/^---$//g')"
+
+                  # TODO: (remove duplicate lines)
+                  # https://github.com/renovatebot/renovate/issues/13037
+                  notable_changes="$(echo "${pr_body}" \
+                    | grep -E '^> -|^-|^<summary>$' \
+                    | sed 's|^<summary>$||g' \
+                    | sed 's|^</summary>$||g' \
+                    | sed 1d)"
+
+                  notable_changes="$(echo "${notable_changes}" | sed -E 's|^|* |g')"
+                  notable_changes="$(printf 'Notable changes\n* [only keep the important and rephrase]\n%s' "${notable_changes}")"
+                  release_notes="$(printf '#release-notes %s\n\n%s%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
+
+                  if [[ -n "$release_notes" ]]; then
+                      EOF="$(openssl rand -hex 16)"
+                      echo "text<<$EOF" >> $GITHUB_OUTPUT
+                      echo "${release_notes}" >> $GITHUB_OUTPUT
+                      echo "$EOF" >> $GITHUB_OUTPUT
+                  fi
+              fi
+          fi
+
+      - uses: peter-evans/find-comment@v3
+        id: find_comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'flowzone-app[bot]'
+          body-includes: '#release-notes'
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+
+      - uses: peter-evans/create-or-update-comment@v4
+        if: steps.format_release_notes.outputs.text != ''
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ${{ steps.format_release_notes.outputs.text }}
+          edit-mode: replace
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+
+      - <<: *getTimeStamp
+        if: |
+          github.event.pull_request.merged == true
+          && needs.versioned_source.outputs.commit_sha != ''
+
+      # required by https://github.com/balena-io-modules/balena-deploy-request
+      - <<: *createGitReference
+        if: |
+          github.event.pull_request.merged == true
+          && needs.versioned_source.outputs.commit_sha != ''
+        continue-on-error: true
+        env:
+          REF: 'refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
+          SHA: ${{ needs.versioned_source.outputs.commit_sha }}
+
+      - <<: *updateGitReference
+        if: |
+          github.event.pull_request.merged == true
+          && needs.versioned_source.outputs.commit_sha != ''
+        env:
+          REF: '/repos/$GH_REPO/git/refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
+          SHA: ${{ needs.versioned_source.outputs.commit_sha }}
+
+      - name: Renovate release notes
+        id: renovate_release_notes
+        if: github.event.pull_request.merged == true
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          comment="$(gh pr view ${{ github.event.pull_request.number }} --json comments \
+            --jq '.[].[] | select(.author.login=="${{ needs.versioned_source.outputs.author }}").body')"
+
+          EOF="$(openssl rand -hex 16)"
+          echo "text<<$EOF" >> $GITHUB_OUTPUT
+          echo "${comment}" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+      # https://github.com/zulip/github-actions-zulip/blob/main/send-message/README.md
+      - uses: zulip/github-actions-zulip/send-message@v1
+        if: |
+          github.event.pull_request.merged == true
+          && vars.ZULIP_STREAM != ''
+          && vars.ZULIP_TOPIC != ''
+          && vars.ZULIP_BOT_EMAIL != ''
+          && vars.ZULIP_API_URL != ''
+          && steps.renovate_release_notes.outcome == 'success'
+          && steps.renovate_release_notes.outputs.text != ''
+        continue-on-error: true
+        with:
+          api-key: ${{ secrets.ZULIP_API_KEY }}
+          email: ${{ vars.ZULIP_BOT_EMAIL }}
+          organization-url: ${{ vars.ZULIP_API_URL }}
+          to: '${{ vars.ZULIP_STREAM }}'
+          type: stream
+          topic: '${{ vars.ZULIP_TOPIC }}'
+          content: '${{ steps.renovate_release_notes.outputs.text }}'
 
   lint_workflows:
     name: Lint workflows
@@ -2598,7 +2775,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
-      - <<: *getReleaseNotes
+      - *getReleaseNotes
       - *createLocalRefs
       - *deployToBalenaAction
 
@@ -2625,6 +2802,7 @@ jobs:
       - <<: *getReleaseNotes
         env:
           look_back: 2
+
       - *deployToBalenaAction
 
   ###################################################
@@ -2886,7 +3064,7 @@ jobs:
 
       - *deleteDraftGitHubRelease
       - *checkoutVersionedSha
-      - <<: *getReleaseNotes
+      - *getReleaseNotes
 
       - name: Download all artifacts
         uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7

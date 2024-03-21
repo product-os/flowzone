@@ -48,6 +48,9 @@ on:
       PYPI_TEST_TOKEN:
         description: Token to publish to test.pypi.org
         required: false
+      ZULIP_API_KEY:
+        description: API key to post Zulip messages.
+        required: false
       CUSTOM_JOB_SECRET_1:
         description: Optional secret for using with custom jobs
         required: false
@@ -271,6 +274,11 @@ on:
         type: string
         required: false
         default: ok-to-test
+      release_notes:
+        description: Create git tags and a PR comment with detailed change log.
+        type: boolean
+        required: false
+        default: false
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: ${{ github.event.action == 'synchronize' }}
@@ -373,6 +381,7 @@ jobs:
       semver: ${{ steps.versionist.outputs.semver || steps.git_describe.outputs.semver }}
       sha: ${{ steps.create_tag.outputs.sha || steps.git_describe.outputs.sha }}
       commit_sha: ${{ steps.create_commit.outputs.sha }}
+      author: ${{ steps.create_commit.outputs.bot }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
     env:
       GH_DEBUG: "true"
@@ -433,12 +442,14 @@ jobs:
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
           node-version: 18.x
-      - name: Install versionist
+      - name: Install versioning tools
         if: inputs.disable_versioning != true
         run: |
-          npm install -g balena-versionist@~0.14.13 versionist@^7.0.3
-          npm ls -g balena-versionist
-          npm ls -g versionist
+          npm install -g \
+            balena-versionist@~0.14.13 \
+            versionist@^7.0.3
+
+          npm ls -g
       - name: Generate changelog
         if: inputs.disable_versioning != true
         env:
@@ -539,8 +550,9 @@ jobs:
             -F "parents[]=$PARENT_COMMIT_SHA")"
 
           echo "$response" | jq .
-          echo "sha=$(echo $response | jq -r .sha)" >> "${GITHUB_OUTPUT}"
-          echo "json=$(echo $response | jq -c .)" >> "${GITHUB_OUTPUT}"
+          echo "sha=$(echo "$response" | jq -r .sha)" >> "${GITHUB_OUTPUT}"
+          echo "json=$(echo "$response" | jq -c .)" >> "${GITHUB_OUTPUT}"
+          echo "bot=$(echo "$response" | jq -r .author.name | sed 's/\[bot\]//g')" >> "${GITHUB_OUTPUT}"
       - name: Create tag object
         if: inputs.disable_versioning != true
         id: create_tag
@@ -558,32 +570,205 @@ jobs:
           echo "$response" | jq .
           echo "sha=$(echo $response | jq -r .sha)" >> "${GITHUB_OUTPUT}"
           echo "json=$(echo $response | jq -c .)" >> "${GITHUB_OUTPUT}"
-      - name: Update branch reference
+      - name: Update git reference
         if: github.event.pull_request.merged == true && steps.create_commit.outputs.sha != ''
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          REF: /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }}
+          SHA: ${{ steps.create_commit.outputs.sha }}
         run: |
           gh api \
             -X PATCH \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
-            -f sha='${{ steps.create_commit.outputs.sha }}' \
+            "${REF}" \
+            -f sha="${SHA}" \
             -F force=true \
             --include
-      - name: Create tag reference
+      - name: Create git reference
         if: github.event.pull_request.merged == true && steps.create_tag.outputs.sha != ''
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          REF: refs/tags/${{ steps.versionist.outputs.tag }}
+          SHA: ${{ steps.create_commit.outputs.sha }}
         run: |
           gh api \
             -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/$GH_REPO/git/refs \
-            -f ref='refs/tags/${{ steps.versionist.outputs.tag }}' \
-            -f sha='${{ steps.create_tag.outputs.sha }}' \
+            -f ref="${REF}" \
+            -f sha="${SHA}" \
             --include
+  release_notes:
+    name: Generate release notes
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+    if: |
+      (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      && inputs.release_notes == true
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      GH_DEBUG: "true"
+      GH_PAGER: cat
+      GH_PROMPT_DISABLED: "true"
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read",
+              "pull_requests": "write"
+            }
+      - name: Draft PR comment
+        id: format_release_notes
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          set -x
+
+          # if Renovate did this, extract its release notes from pull request body and
+          # massage until they resemble balena-io-modules/balena-deploy-request output
+          renovate_bot="$(gh pr view ${{ github.event.pull_request.number }} --json author --jq \
+            'select((.author.is_bot==true) and (.author.login | contains("renovate"))).author.login')"
+
+          if [[ -n "$renovate_bot" ]]; then
+              pr_title="$(gh pr view ${{ github.event.pull_request.number }} --json title --jq .title)"
+
+              raw_body="$(gh pr view ${{ github.event.pull_request.number }} --json body --jq .body)"
+
+              if [[ -n "$pr_title" ]] && [[ "$raw_body" =~ '### Release Notes' ]]; then
+                  pr_body="$(echo "${raw_body}" \
+                    | sed -n '/^### Release Notes$/,/^---$/p' \
+                    | sed "s|^### Release Notes$||g" \
+                    | sed 's/^---$//g')"
+
+                  # TODO: (remove duplicate lines)
+                  # https://github.com/renovatebot/renovate/issues/13037
+                  notable_changes="$(echo "${pr_body}" \
+                    | grep -E '^> -|^-|^<summary>$' \
+                    | sed 's|^<summary>$||g' \
+                    | sed 's|^</summary>$||g' \
+                    | sed 1d)"
+
+                  notable_changes="$(echo "${notable_changes}" | sed -E 's|^|* |g')"
+                  notable_changes="$(printf 'Notable changes\n* [only keep the important and rephrase]\n%s' "${notable_changes}")"
+                  release_notes="$(printf '#release-notes %s\n\n%s%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
+
+                  if [[ -n "$release_notes" ]]; then
+                      EOF="$(openssl rand -hex 16)"
+                      echo "text<<$EOF" >> $GITHUB_OUTPUT
+                      echo "${release_notes}" >> $GITHUB_OUTPUT
+                      echo "$EOF" >> $GITHUB_OUTPUT
+                  fi
+              fi
+          fi
+      - uses: peter-evans/find-comment@v3
+        id: find_comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: flowzone-app[bot]
+          body-includes: "#release-notes"
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - uses: peter-evans/create-or-update-comment@v4
+        if: steps.format_release_notes.outputs.text != ''
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ${{ steps.format_release_notes.outputs.text }}
+          edit-mode: replace
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Get and format timestamp
+        id: timestamp
+        env:
+          FORMAT: "%Y-%m-%d-%H%M%S"
+        run: |
+          echo "datetime=$(date +"${FORMAT}")" >> $GITHUB_OUTPUT
+        if: |
+          github.event.pull_request.merged == true
+          && needs.versioned_source.outputs.commit_sha != ''
+      - name: Create git reference
+        if: |
+          github.event.pull_request.merged == true
+          && needs.versioned_source.outputs.commit_sha != ''
+        env:
+          REF: refs/tags/production-${{ steps.timestamp.outputs.datetime }}
+          SHA: ${{ needs.versioned_source.outputs.commit_sha }}
+        run: |
+          gh api \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/$GH_REPO/git/refs \
+            -f ref="${REF}" \
+            -f sha="${SHA}" \
+            --include
+        continue-on-error: true
+      - name: Update git reference
+        if: |
+          github.event.pull_request.merged == true
+          && needs.versioned_source.outputs.commit_sha != ''
+        env:
+          REF: /repos/$GH_REPO/git/refs/tags/production-${{ steps.timestamp.outputs.datetime }}
+          SHA: ${{ needs.versioned_source.outputs.commit_sha }}
+        run: |
+          gh api \
+            -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "${REF}" \
+            -f sha="${SHA}" \
+            -F force=true \
+            --include
+      - name: Renovate release notes
+        id: renovate_release_notes
+        if: github.event.pull_request.merged == true
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          comment="$(gh pr view ${{ github.event.pull_request.number }} --json comments \
+            --jq '.[].[] | select(.author.login=="${{ needs.versioned_source.outputs.author }}").body')"
+
+          EOF="$(openssl rand -hex 16)"
+          echo "text<<$EOF" >> $GITHUB_OUTPUT
+          echo "${comment}" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+      - uses: zulip/github-actions-zulip/send-message@v1
+        if: |
+          github.event.pull_request.merged == true
+          && vars.ZULIP_STREAM != ''
+          && vars.ZULIP_TOPIC != ''
+          && vars.ZULIP_BOT_EMAIL != ''
+          && vars.ZULIP_API_URL != ''
+          && steps.renovate_release_notes.outcome == 'success'
+          && steps.renovate_release_notes.outputs.text != ''
+        continue-on-error: true
+        with:
+          api-key: ${{ secrets.ZULIP_API_KEY }}
+          email: ${{ vars.ZULIP_BOT_EMAIL }}
+          organization-url: ${{ vars.ZULIP_API_URL }}
+          to: ${{ vars.ZULIP_STREAM }}
+          type: stream
+          topic: ${{ vars.ZULIP_TOPIC }}
+          content: ${{ steps.renovate_release_notes.outputs.text }}
   lint_workflows:
     name: Lint workflows
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -2618,7 +2803,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Generate release notes
+      - name: Generate short release note
         id: release_notes
         env:
           look_back: 1
@@ -2700,7 +2885,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Generate release notes
+      - name: Generate short release note
         id: release_notes
         env:
           look_back: 2
@@ -3111,7 +3296,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Generate release notes
+      - name: Generate short release note
         id: release_notes
         env:
           look_back: 1
@@ -3189,7 +3374,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Generate release notes
+      - name: Generate short release note
         id: release_notes
         env:
           look_back: 2
