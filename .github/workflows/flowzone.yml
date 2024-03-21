@@ -1680,7 +1680,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
       - name: Sort node versions
         id: node_versions
         env:
@@ -2971,7 +2970,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -3011,7 +3009,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
       - name: Delete draft GitHub release
         run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
         env:
@@ -4347,7 +4344,6 @@ jobs:
               "metadata": "read",
               "pull_requests": "write"
             }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
       - name: Check if PR is draft
         id: is_draft_pr
         env:
