@@ -2032,7 +2032,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - *sortNodeVersions
 
@@ -2702,7 +2701,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - *deleteDraftGitHubRelease
 
@@ -2732,7 +2730,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - *deleteDraftGitHubRelease
       - *checkoutVersionedSha
@@ -3654,7 +3651,6 @@ jobs:
               "metadata": "read",
               "pull_requests": "write"
             }
-          repositories: '[ "${{ github.event.pull_request.base.repo.name }}" ]'
 
       - *isDraftPullRequest
 
