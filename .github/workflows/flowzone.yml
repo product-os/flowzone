@@ -3833,7 +3833,6 @@ jobs:
           cfn-lint -i ${DEFAULT_IGNORE} ${{ steps.shared.outputs.ignore_lint }} \
             -t '${{ steps.shared.outputs.template_file }}'
         env:
-          PATH: ${HOME}/.local/bin:${PATH}
           DEFAULT_IGNORE: W2001 W3002 W4002 W6001 W8003 E3026 E2520
       - name: Validate template
         run: |
