@@ -1,4 +1,16 @@
 - commits:
+    - subject: ignore S3 linter warning
+      hash: 99270e4906f6b9f80b0c84b87548349a38f21d81
+      body: |
+        * W3045 Consider using AWS::S3::BucketPolicy instead of AccessControl
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 10.0.54
+  title: ""
+  date: 2024-03-25T18:40:30.911Z
+- commits:
     - subject: run steps on X64 only
       hash: f9aef1a1c844b6037b49ba0aedc1607369ccda2d
       body: >
