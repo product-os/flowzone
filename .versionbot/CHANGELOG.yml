@@ -1,4 +1,17 @@
 - commits:
+    - subject: revert product-os/flowzone/pull/953
+      hash: e1a2c76bc9795cf6067a95c1948a692f2ea90726
+      body: >
+        * installing Python dependencies on runner breaks other dependencies
+        (e.g. AWS-CLI)
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 10.0.55
+  title: ""
+  date: 2024-03-25T22:08:09.164Z
+- commits:
     - subject: ignore S3 linter warning
       hash: 99270e4906f6b9f80b0c84b87548349a38f21d81
       body: |
