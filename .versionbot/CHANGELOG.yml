@@ -1,4 +1,19 @@
 - commits:
+    - subject: run steps on X64 only
+      hash: f9aef1a1c844b6037b49ba0aedc1607369ccda2d
+      body: >
+        * https://github.com/actions/setup-python/issues/705
+
+        *
+        https://github.com/balena-io/environment-production/actions/runs/8423822603/job/23066477310?pr=2178#step:8:24
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 10.0.53
+  title: ""
+  date: 2024-03-25T17:42:50.148Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.47
       hash: 6d37b48f14680455bb1fcc61529b7ae57f231a49
       body: |
