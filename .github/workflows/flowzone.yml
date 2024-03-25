@@ -3818,9 +3818,16 @@ jobs:
           fi
 
           echo "caps=${caps}" >> $GITHUB_OUTPUT
+      - name: Setup python
+        id: setup-python
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c
+        with:
+          cache: pip
+          python-version: 3.11
       - name: Install cfn-lint
         run: |
-          python3 -m pip install cfn-lint==0.83.7
+          python -m pip install --upgrade pip
+          python -m pip install cfn-lint==0.83.7
       - name: Lint template
         run: |
           cfn-lint -i ${DEFAULT_IGNORE} ${{ steps.shared.outputs.ignore_lint }} \
