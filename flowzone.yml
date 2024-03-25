@@ -3284,9 +3284,15 @@ jobs:
 
           echo "caps=${caps}" >> $GITHUB_OUTPUT
 
+      - <<: *setupPython
+        with:
+          cache: 'pip' # caching pip dependencies
+          python-version: 3.11
+
       - name: Install cfn-lint
         run: |
-          python3 -m pip install cfn-lint==0.83.7
+          python -m pip install --upgrade pip
+          python -m pip install cfn-lint==0.83.7
 
       - name: Lint template
         run: |
