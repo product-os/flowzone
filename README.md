@@ -361,6 +361,11 @@ jobs:
       # Required: false
       custom_finalize_matrix: 
 
+      # Comma-delimited string of environments that will be used for all custom actions.
+      # Type: string
+      # Required: false
+      custom_environments: 
+
       # Set to false to disable toggling auto-merge on PRs.
       # Type: boolean
       # Required: false
