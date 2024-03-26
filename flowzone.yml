@@ -903,6 +903,11 @@ on:
         type: string
         required: false
         default: ""
+      custom_environments:
+        description: "Comma-delimited string of environments that will be used for all custom actions."
+        type: string
+        required: false
+        default: ""
       toggle_auto_merge:
         description: "Set to false to disable toggling auto-merge on PRs."
         type: boolean
@@ -1693,6 +1698,8 @@ jobs:
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
 
+      custom_environments_matrix: ${{ steps.custom_environments_matrix.outputs.build }}
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -1714,6 +1721,12 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
+          DELIMITER: ","
+
+      - id: custom_environments_matrix
+        <<: *jsonArrayBuilder
+        env:
+          INPUT: ${{ inputs.custom_environments }}
           DELIMITER: ","
 
       - name: Check for custom actions
@@ -3080,6 +3093,9 @@ jobs:
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+
+    environment: ${{ matrix.environment }}
 
     steps:
       - *rejectExternalCustomActions
@@ -3098,6 +3114,7 @@ jobs:
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
           echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
+          echo "environment=${{ matrix.environment }}" >> $GITHUB_ENV
 
       - uses: ./.github/actions/test
         with:
@@ -3128,6 +3145,9 @@ jobs:
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+
+    environment: ${{ matrix.environment }}
 
     steps:
       - *rejectExternalCustomActions
@@ -3147,6 +3167,7 @@ jobs:
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
           echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
+          echo "environment=${{ matrix.environment }}" >> $GITHUB_ENV
 
       - uses: ./.github/actions/publish
         with:
@@ -3170,6 +3191,9 @@ jobs:
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+
+    environment: ${{ matrix.environment }}
 
     steps:
       - *rejectExternalCustomActions
@@ -3188,6 +3212,7 @@ jobs:
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
           echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
+          echo "environment=${{ matrix.environment }}" >> $GITHUB_ENV
 
       - uses: ./.github/actions/finalize
         with:

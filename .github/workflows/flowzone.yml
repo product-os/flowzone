@@ -269,6 +269,11 @@ on:
         type: string
         required: false
         default: ""
+      custom_environments:
+        description: Comma-delimited string of environments that will be used for all custom actions.
+        type: string
+        required: false
+        default: ""
       toggle_auto_merge:
         description: Set to false to disable toggling auto-merge on PRs.
         type: boolean
@@ -1193,6 +1198,7 @@ jobs:
       custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
+      custom_environments_matrix: ${{ steps.custom_environments_matrix.outputs.build }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1287,6 +1293,29 @@ jobs:
           echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
+          DELIMITER: ","
+      - id: custom_environments_matrix
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+        env:
+          INPUT: ${{ inputs.custom_environments }}
           DELIMITER: ","
       - name: Check for custom actions
         id: custom
@@ -3354,6 +3383,8 @@ jobs:
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+    environment: ${{ matrix.environment }}
     steps:
       - name: Reject external custom actions
         if: |
@@ -3394,6 +3425,7 @@ jobs:
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
           echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
+          echo "environment=${{ matrix.environment }}" >> $GITHUB_ENV
       - uses: ./.github/actions/test
         with:
           json: ${{ toJSON(inputs) }}
@@ -3420,6 +3452,8 @@ jobs:
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+    environment: ${{ matrix.environment }}
     steps:
       - name: Reject external custom actions
         if: |
@@ -3460,6 +3494,7 @@ jobs:
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
           echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
+          echo "environment=${{ matrix.environment }}" >> $GITHUB_ENV
       - uses: ./.github/actions/publish
         with:
           json: ${{ toJSON(inputs) }}
@@ -3480,6 +3515,8 @@ jobs:
       matrix:
         value: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
+        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+    environment: ${{ matrix.environment }}
     steps:
       - name: Reject external custom actions
         if: |
@@ -3516,6 +3553,7 @@ jobs:
         run: |
           echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
           echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
+          echo "environment=${{ matrix.environment }}" >> $GITHUB_ENV
       - uses: ./.github/actions/finalize
         with:
           json: ${{ toJSON(inputs) }}
