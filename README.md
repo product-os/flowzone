@@ -177,22 +177,6 @@ jobs:
       # Required: false
       cloudformation_templates: 
 
-      # Terraform projects to deploy (e.g.)
-      # ```
-      # {
-      # "projects": [
-      # {
-      # "main_tf": "terraform/foo"
-      # }
-      # ]
-      # }
-      # ```
-      # * assumes `terraform/foo/main.tf` exists
-      # * GitHub `vars` and `secrets` contexts injected into TF plan/apply steps
-      # Type: string
-      # Required: false
-      terraform_projects: 
-
       # GitHub App id to impersonate
       # Type: string
       # Required: false
