@@ -970,6 +970,19 @@ on:
         type: boolean
         required: false
         default: false
+      release_notes_zulip_stream:
+        description: "Zulip stream to notify."
+        type: string
+        required: false
+      release_notes_zulip_topic:
+        description: "Send release notes to this Zulip topic whin the stream."
+        type: string
+        required: false
+      release_notes_zulip_url:
+        description: "Send message to this Zulip URL."
+        type: string
+        required: false
+        default: "https://balena.zulipchat.com"
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -1198,6 +1211,7 @@ jobs:
           echo "$response" | jq .
           echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
           echo "json=$(echo $response | jq -c .)" >> $GITHUB_OUTPUT
+          echo "bot=$(echo $response | jq -r .author.name | sed 's/\[bot\]//g')" >> $GITHUB_OUTPUT
 
       # https://docs.github.com/en/rest/git/tags?apiVersion=2022-11-28#create-a-tag-object
       - name: Create tag object
@@ -1222,7 +1236,7 @@ jobs:
       - *createGitReference
 
       - <<: *getGitHubAppToken
-        id: pull_requests_write_token
+        id: pull_requests_write
         with:
           <<: *getGitHubAppTokenWith
           permissions: >-
@@ -1236,7 +1250,7 @@ jobs:
         if: inputs.disable_versioning != true && inputs.release_notes == true
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ steps.pull_requests_write_token.outputs.token }}
+          GH_TOKEN: ${{ steps.pull_requests_write.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           release_notes="$(mktemp)"
           npx balena-deploy-request >"${release_notes}"
@@ -1276,6 +1290,47 @@ jobs:
           && inputs.release_notes == true
         env:
           REF: '/repos/$GH_REPO/git/refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
+
+      - name: Format comment
+        id: format
+        if: |
+          github.event.pull_request.merged == true
+          && inputs.disable_versioning != true
+          && inputs.release_notes == true
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          comment="$(gh pr view ${{ github.event.pull_request.number }} --json comments \
+            --jq '.[].[] | select(.author.login=="${{ steps.create_commit.outputs.bot }}").body')"
+
+          comment="$(printf '%s\n%s' '#release-notes' "${comment}")"
+
+          EOF="$(openssl rand -hex 16)"
+          echo "comment<<$EOF" >> $GITHUB_OUTPUT
+          echo "${comment}" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+      # https://github.com/zulip/github-actions-zulip/blob/main/send-message/README.md
+      - uses: zulip/github-actions-zulip/send-message@v1
+        if: |
+          github.event.pull_request.merged == true
+          && inputs.disable_versioning != true
+          && inputs.release_notes == true
+          && inputs.release_notes_zulip_stream != ''
+          && inputs.release_notes_zulip_topic != ''
+          && vars.FLOWZONE_ZULIP_BOT_EMAIL != ''
+          && steps.format.outcome == 'success'
+          && steps.format.outputs.comment != ''
+        continue-on-error: true
+        with:
+          api-key: ${{ secrets.FLOWZONE_ZULIP_API_KEY }}
+          email: ${{ vars.FLOWZONE_ZULIP_BOT_EMAIL }}
+          organization-url: ${{ inputs.release_notes_zulip_url }}
+          to: '${{ inputs.release_notes_zulip_stream }}'
+          type: stream
+          topic: '${{ inputs.release_notes_zulip_topic }}'
+          content: '${{ steps.format.outputs.comment }}'
 
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
