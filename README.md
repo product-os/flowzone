@@ -371,6 +371,26 @@ jobs:
       # Required: false
       ok_to_test_label: ok-to-test
 
+      # Create git tags and a PR comment with detailed change log.
+      # Type: boolean
+      # Required: false
+      release_notes: false
+
+      # Zulip stream to notify.
+      # Type: string
+      # Required: false
+      release_notes_zulip_stream:
+
+      # Send release notes to this Zulip topic whin the stream.
+      # Type: string
+      # Required: false
+      release_notes_zulip_topic:
+
+      # Send message to this Zulip URL.
+      # Type: string
+      # Required: false
+      release_notes_zulip_url: https://balena.zulipchat.com
+
 
 ```
 <!-- end usage -->
