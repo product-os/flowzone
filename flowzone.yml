@@ -1703,7 +1703,7 @@ jobs:
       - name: Validate CloudFormation input
         id: validate_json
         run: |
-          if echo '${{ inputs.cloudformation_templates }}' | jq -r .stacks
+          if echo '${{ inputs.cloudformation_templates }}' | yq e -P - | yq e -o=json - | jq -r .stacks
           then
             if [[ '${{ github.event.pull_request.head.repo.full_name }}' != '${{ github.repository }}' ]]; then
               echo '::warning:: CloudFormation stacks are skipped for external contributions.'
@@ -1720,9 +1720,11 @@ jobs:
         id: cloudformation_stacks
         run: |
           stacks="$(echo '${{ inputs.cloudformation_templates }}' \
+            | yq e -P - | yq e -o=json - \
             | jq -r '.stacks[].name' | jq -Rcn '[inputs'])"
 
           includes="$(echo '${{ inputs.cloudformation_templates }}' \
+            | yq e -P - | yq e -o=json - \
             | jq -r '.stacks[] | with_entries(if .key == "name" then .key = "stack" else . end)' \
             | jq -rsc)"
 
@@ -3209,6 +3211,9 @@ jobs:
       ATTEMPTS: 5
       TIMEOUT: 3
 
+    # sets the GH environment context for secrets and variables
+    environment: ${{ matrix.environment }}
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -3252,12 +3257,14 @@ jobs:
             '${{ toJSON(matrix.tags) }}' \
             '${{ toJSON(matrix.capabilities) }}'
 
-          stack="$(echo '${{ inputs.cloudformation_templates }}' | jq -r '.stacks[] | select(.name=="${{ matrix.stack }}")')"
+          stacks="$(echo '${{ inputs.cloudformation_templates }}' | yq e -P - | yq e -o=json -)"
+          stack="$(echo "${stacks}" | jq -r '.stacks[] | select(.name=="${{ matrix.stack }}")')"
           template_file="$(echo "${stack}" | jq -rc .template)"
           tags="$(echo "${stack}" | jq -rc .tags[] | paste -sd' ' -) github_pull_request=${{ github.event.pull_request.number }} github_sha=${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
-          params="$(echo "${stack}" | jq -rc .params[] | paste -sd' ' - || echo '')"
+          params="$(echo "${stack}" | jq -c .params[] | paste -sd' ' - || echo '')"
           kvparams="$(echo "${stack}" | jq -rc .params | jq -r 'map(split("=") as [$ParameterKey, $ParameterValue] | {$ParameterKey, $ParameterValue})[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue' | paste -sd' ' - || echo '')"
           caps="$(echo "${stack}" | jq -rc .capabilities[] | paste -sd' ' -)"
+          ignore_lint="$(echo "${stack}" | jq -rc .ignore_lint)"
 
           echo "${SECRETS_CONTEXT}" | to_envs > .env
           echo "${VARS_CONTEXT}" | to_envs >> .env
@@ -3266,6 +3273,7 @@ jobs:
           echo "stack_name=${{ matrix.stack }}" >> $GITHUB_OUTPUT
           echo "template_file=${template_file}" >> $GITHUB_OUTPUT
           echo "tags=${tags}" >> $GITHUB_OUTPUT
+          echo "ignore_lint=${ignore_lint}" >> $GITHUB_OUTPUT
 
           EOF="$(openssl rand -hex 16)"
 
@@ -3415,6 +3423,8 @@ jobs:
       AWS_DEFAULT_REGION: ${{ matrix.region || inputs.aws_region }}
       ATTEMPTS: 5
       TIMEOUT: 3
+
+    environment: ${{ matrix.environment }}
 
     steps:
       - *randomDelay
