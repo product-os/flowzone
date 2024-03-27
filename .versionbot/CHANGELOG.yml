@@ -1,4 +1,24 @@
 - commits:
+    - subject: Fix missing dependency on versioned source
+      hash: e4b7c97c8dbaf2771d38bcfd4dcbce7ecdf10e89
+      body: |
+        Without this dependency, we were cloning the default
+        sha in the checkoutVersionedSha sha step. It was a coincidence
+        that this worked for internal PRs.
+
+        It became obvious when I saw the step in the workflow reported
+        as "Checkout" instead of "Checkout abc123..."
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 10.0.58
+  title: ""
+  date: 2024-03-27T19:13:39.614Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.48
       hash: 97ea892f159b8771f7135f45672e9ae6a5cf095b
       body: |
