@@ -2986,6 +2986,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - versioned_source
       - npm_publish
       - python_publish
       - cargo_publish
