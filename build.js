@@ -1,17 +1,17 @@
-const fs = require('fs');
-const yaml = require('yaml');
+const fs = require("fs");
+const yaml = require("yaml");
 
 // Using yaml.parse means that anything not supported by json will be dropped, in practice
 // this means that yaml anchors will be "exploded" and not present in the github workflow
 // we write out, which means we can use anchors when developing flowzone but not have to
 // worry about github actions not supporting them
-const flowzone = yaml.parse(fs.readFileSync('./flowzone.yml', 'utf8'), {
+const flowzone = yaml.parse(fs.readFileSync("./flowzone.yml", "utf8"), {
 	merge: true,
 });
-delete flowzone['.flowzone'];
+delete flowzone[".flowzone"];
 fs.writeFileSync(
-	'./.github/workflows/flowzone.yml',
-	'# DO NOT EDIT MANUALLY - This file is auto-generated from `/flowzone.yml`\n' +
+	"./.github/workflows/flowzone.yml",
+	"# DO NOT EDIT MANUALLY - This file is auto-generated from `/flowzone.yml`\n" +
 		yaml.stringify(flowzone, {
 			// Disable aliasing of duplicate objects to ensure none of the anchors are
 			// auto-detected and added back into the output file
@@ -19,15 +19,15 @@ fs.writeFileSync(
 			// Disable line-wrapping, it looks very confusing to have embedded scripts be
 			// line-wrapped and will be a red herring if we ever need to debug
 			lineWidth: 0,
-		}),
+		})
 );
 
 function injectYamlIntoMarkdown(startTag, endTag) {
-	const yamlFilePath = '.github/workflows/flowzone.yml';
-	const markdownFilePath = 'README.md';
+	const yamlFilePath = ".github/workflows/flowzone.yml";
+	const markdownFilePath = "README.md";
 
 	// Read the YAML file
-	const yamlContents = fs.readFileSync(yamlFilePath, 'utf8');
+	const yamlContents = fs.readFileSync(yamlFilePath, "utf8");
 
 	// Parse the YAML contents
 	const yamlData = yaml.parse(yamlContents);
@@ -68,31 +68,31 @@ jobs:
 	// Function to handle multiline comments
 	function formatMultilineComment(value, wrapLength = 90) {
 		// Convert value to a string if it's not already
-		let valueStr = typeof value === 'string' ? value : JSON.stringify(value);
+		let valueStr = typeof value === "string" ? value : JSON.stringify(value);
 
 		// Trim whitespace from the start and end of the value
 		valueStr = valueStr.trim();
 
 		// Check if the value is a multiline string
-		const isMultiline = valueStr.includes('\n');
+		const isMultiline = valueStr.includes("\n");
 
 		// Split multiline strings and prepend each line with a comment sign and spaces
-		const valueLines = valueStr.split('\n');
-		let formattedComment = '';
+		const valueLines = valueStr.split("\n");
+		let formattedComment = "";
 
 		valueLines.forEach((line, _) => {
 			let prefix = isMultiline ? `# ` : `# `;
 			const wrappedPrefix = `# `;
 
 			// Break long comments into chunks
-			const words = line.split(' ');
-			let commentLine = '';
+			const words = line.split(" ");
+			let commentLine = "";
 			for (const word of words) {
 				if (commentLine.length + word.length <= wrapLength) {
-					commentLine += word + ' ';
+					commentLine += word + " ";
 				} else {
 					formattedComment += `      ${prefix}${commentLine.trim()}\n`;
-					commentLine = word + ' ';
+					commentLine = word + " ";
 					// Reset the prefix to the wrapped version without label
 					prefix = wrappedPrefix;
 				}
@@ -110,17 +110,17 @@ jobs:
 	// Function to handle multiline strings
 	function formatMultilineString(value) {
 		// Convert value to a string if it's not already
-		let valueStr = typeof value === 'string' ? value : JSON.stringify(value);
+		let valueStr = typeof value === "string" ? value : JSON.stringify(value);
 
 		// Trim whitespace from the start and end of the value
 		valueStr = valueStr.trim();
 
 		// Check if the value is a multiline string
-		const isMultiline = valueStr.includes('\n');
+		const isMultiline = valueStr.includes("\n");
 
 		// If it's a multiline string, use the folded block syntax, otherwise return the string as is
 		return isMultiline
-			? `>\n        ${valueStr.split('\n').join('\n        ')}`
+			? `>\n        ${valueStr.split("\n").join("\n        ")}`
 			: valueStr;
 	}
 
@@ -170,7 +170,7 @@ jobs:
 	}
 
 	// Read the Markdown file
-	let markdownContents = fs.readFileSync(markdownFilePath, 'utf8');
+	let markdownContents = fs.readFileSync(markdownFilePath, "utf8");
 
 	// Find the start and end positions of the tags
 	const startIndex = markdownContents.indexOf(startTag);
@@ -181,18 +181,18 @@ jobs:
 		// Replace the content between the tags with the injected YAML code
 		markdownContents =
 			markdownContents.slice(0, startIndex + startTag.length) +
-			'\n\n<!---\n' +
-			'DO NOT EDIT MANUALLY - This section is auto-generated from flowzone.yml\n' +
-			'-->\n\n```yaml\n' +
+			"\n\n<!---\n" +
+			"DO NOT EDIT MANUALLY - This section is auto-generated from flowzone.yml\n" +
+			"-->\n\n```yaml\n" +
 			injectedYamlCode +
-			'\n```\n' +
+			"\n```\n" +
 			markdownContents.slice(endIndex);
 
 		// Write the modified content back to the Markdown file
-		fs.writeFileSync(markdownFilePath, markdownContents, 'utf8');
+		fs.writeFileSync(markdownFilePath, markdownContents, "utf8");
 	} else {
-		console.log('Start and/or end tags not found in the Markdown file.');
+		console.log("Start and/or end tags not found in the Markdown file.");
 	}
 }
 
-injectYamlIntoMarkdown('<!-- start usage -->', '<!-- end usage -->');
+injectYamlIntoMarkdown("<!-- start usage -->", "<!-- end usage -->");
