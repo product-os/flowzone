@@ -345,7 +345,7 @@ jobs:
           do
             if [[ "$label" =~ "${{ inputs.ok_to_test_label }}" ]]
             then
-              gh pr edit ${{ github.event.pull_request.number }} --remove-label "${{ inputs.ok_to_test_label }}"
+              # gh pr edit ${{ github.event.pull_request.number }} --remove-label "${{ inputs.ok_to_test_label }}"
               exit 0
             fi
           done
@@ -1880,7 +1880,6 @@ jobs:
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> $GITHUB_ENV
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> $GITHUB_ENV
       - name: Add COMPOSE_VARS to compose env file
-        if: github.event.pull_request.head.repo.full_name == github.repository
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         shell: bash
@@ -2538,8 +2537,10 @@ jobs:
           look_back: 1
         run: |
           set -ea
-          # prevent git from existing with 141
+          # prevent git from exiting with 141
           set +o pipefail
+
+          git log -3 | cat
 
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -2620,8 +2621,10 @@ jobs:
           look_back: 2
         run: |
           set -ea
-          # prevent git from existing with 141
+          # prevent git from exiting with 141
           set +o pipefail
+
+          git log -3 | cat
 
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -3030,8 +3033,10 @@ jobs:
           look_back: 1
         run: |
           set -ea
-          # prevent git from existing with 141
+          # prevent git from exiting with 141
           set +o pipefail
+
+          git log -3 | cat
 
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -3108,8 +3113,10 @@ jobs:
           look_back: 2
         run: |
           set -ea
-          # prevent git from existing with 141
+          # prevent git from exiting with 141
           set +o pipefail
+
+          git log -3 | cat
 
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 

@@ -6,7 +6,7 @@ on:
     branches: [main, master]
   pull_request_target:
     types: [opened, synchronize, closed]
-    branches: [main, master]
+    branches: [main, master, kyle/release-notes-sha]
 
 jobs:
   flowzone:
@@ -53,3 +53,4 @@ jobs:
           ["windows-2022"],
           ["self-hosted"]
         ]
+      restrict_custom_actions: false

@@ -87,8 +87,10 @@
       look_back: 1
     run: |
       set -ea
-      # prevent git from existing with 141
+      # prevent git from exiting with 141
       set +o pipefail
+
+      git log -3 | cat
 
       previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -475,7 +477,7 @@
       do
         if [[ "$label" =~ "${{ inputs.ok_to_test_label }}" ]]
         then
-          gh pr edit ${{ github.event.pull_request.number }} --remove-label "${{ inputs.ok_to_test_label }}"
+          # gh pr edit ${{ github.event.pull_request.number }} --remove-label "${{ inputs.ok_to_test_label }}"
           exit 0
         fi
       done
@@ -2120,7 +2122,7 @@ jobs:
 
       # these secrets are being used in untrusted user code so only allow for internal PRs
       - name: Add COMPOSE_VARS to compose env file
-        <<: *ifInternalPullRequest
+        # <<: *ifInternalPullRequest
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         # do not use shell tracing to avoid leaking secrets
