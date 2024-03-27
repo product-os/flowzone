@@ -90,6 +90,8 @@
       # prevent git from existing with 141
       set +o pipefail
 
+      git log -3 | cat
+
       previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
       release_notes_file="$(mktemp)"
