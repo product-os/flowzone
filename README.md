@@ -447,8 +447,7 @@ Typically, the `sut` container will execute your e2e or integration tests and wi
 If you need to provide environment variables to the compose environment you can add a repository secret called `COMPOSE_VARS` that should be a base64 encoded `.env` file.
 This will be decoded and written to a `.env` file inside the test worker at runtime.
 
-> **WARNING**: The `COMPOSE_VARS` secret is not well protected from leaking and we recommend alternate methods where possible.
-> See <https://github.com/product-os/flowzone/issues/236>.
+> **WARNING**: The `COMPOSE_VARS` secret is not well protected from leaking and we recommend alternate methods where possible ([issue](https://github.com/product-os/flowzone/issues/236)).
 
 To enable publishing of Docker artifacts set the `docker_images` input to correct value of docker image repositories without tags - eg `ghcr.io/product-os/flowzone`.
 
@@ -457,7 +456,7 @@ For advanced Docker build options, including multi-arch, add one or more [Docker
 To publish multiple image variants, set the `bake_targets` input to the name of each target in the Docker bake file(s).
 All targets except `default` will have the target name prefixed to the tags - eg. `v1.2.3`, `debug-v1.2.3`.
 
-An example of multiple bake targets can be found here: <https://github.com/balena-io-modules/open-balena-base/blob/master/docker-bake.hcl>
+An example of multiple bake targets can be found [here](https://github.com/balena-io-modules/open-balena-base/blob/master/docker-bake.hcl)
 
 ### balena
 
@@ -476,7 +475,7 @@ Examples:
 
 Python tests will be run if a `pyproject.toml` file is found in the root of the repository and Poetry is used as a package manager.
 
-Multiple versions (>=3.7, <3.11) of Python will be tested as long as they meet the range in the `pyproject.toml` file.
+Multiple versions (`>=3.7, <3.11`) of Python will be tested as long as they meet the range in the `pyproject.toml` file.
 
 If your `pyproject.toml` file contains a `packages` property under `[tool.poetry]` tag, this package will also be deployed to [PyPI registry](https://pypi.org/) on master and [PyPI test registry](https://test.pypi.org/) on PRs.
 
@@ -551,7 +550,7 @@ If you intend to use a custom framework for your docs build, then you can make u
 ## Help
 
 If you're having trouble getting the project running,
-submit an issue or post on the forums at <https://forums.balena.io>.
+submit an issue or post on the [forums](https://forums.balena.io).
 
 ## Contributing
 
