@@ -1,4 +1,21 @@
 - commits:
+    - subject: Verify that all required docker artifacts exist
+      hash: f10da62de01f99f94c1ba13edec228c63af8cbe9
+      body: |
+        By setting up the publish matrix ahead of time with
+        the expected platforms, slugs, etc. we can process each
+        artifact by name rather than glob matching.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 10.1.2
+  title: ""
+  date: 2024-03-29T00:41:13.967Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2
       hash: bd1dfe4800549055937fc47dc0254a5e8c333d80
       body: |
