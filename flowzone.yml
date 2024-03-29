@@ -2462,8 +2462,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix:
-        matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
+      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
 
     steps:
       - *getGitHubAppToken
