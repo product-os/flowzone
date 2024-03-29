@@ -311,9 +311,7 @@
     name: Sanitize docker strings
     id: strings
     env:
-      <<: *dockerPlatformSlugMap
       TARGET: ${{ matrix.target }}
-      PLATFORM: ${{ matrix.platform }}
       IMAGE: ${{ matrix.image }}
     run: |
       target_slug="$(echo "${TARGET}" | sed 's/[^[:alnum:]]/-/g')"
@@ -333,13 +331,6 @@
         fi
       fi
 
-      platform_slug="$(jq -cr --arg platform "${PLATFORM}" '.[$platform] // ""' <<< "${PLATFORM_SLUG_MAP}")"
-
-      if [ -n "${PLATFORM}" ] && [ -z "${platform_slug}" ]
-      then
-        echo "::error::Unsupported platform: ${PLATFORM}"
-      fi
-
       if [ -n "${IMAGE}" ]
       then
         if [[ "${IMAGE}" =~ ^(.*\/)?([^\/]+)\/([^\/\:]+)(\:.+)?$ ]]
@@ -357,7 +348,6 @@
 
       echo "image=${image_slug}" >> $GITHUB_OUTPUT
       echo "target=${target_slug}" >> $GITHUB_OUTPUT
-      echo "platform=${platform_slug}" >> $GITHUB_OUTPUT
       echo "prefix=${prefix_slug}" >> $GITHUB_OUTPUT
       echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
       echo "dockerhub=${dockerhub_slug}" >> $GITHUB_OUTPUT
@@ -1336,6 +1326,7 @@ jobs:
       bake_targets: ${{ steps.bake_targets_json.outputs.build }}
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
       docker_test_matrix: ${{ steps.docker_test.outputs.build }}
+      docker_publish_matrix: ${{ steps.docker_publish.outputs.build }}
 
     steps:
       - *getGitHubAppToken
@@ -1406,10 +1397,55 @@ jobs:
 
           echo "json=${json}">> $GITHUB_OUTPUT
 
+      # generate a test matrix with this structure
+      # {
+      #   "include": [
+      #     {
+      #       "target": "default",
+      #       "platform": "linux/amd64",
+      #       "runs_on": ["ubuntu-22.04"],
+      #       "platform_slug": "amd64",
+      #       "target_slug": "default"
+      #     },
+      #     {
+      #       "target": "multiarch",
+      #       "platform": "linux/amd64",
+      #       "runs_on": ["ubuntu-22.04"],
+      #       "platform_slug": "amd64",
+      #       "target_slug": "multiarch",
+      #       "tag_suffix": "-multiarch"
+      #     },
+      #     {
+      #       "target": "multiarch",
+      #       "platform": "linux/arm64",
+      #       "runs_on": ["self-hosted", "ARM64"],
+      #       "platform_slug": "arm64v8",
+      #       "target_slug": "multiarch",
+      #       "tag_suffix": "-multiarch"
+      #     },
+      #     {
+      #       "target": "multiarch",
+      #       "platform": "linux/arm/v7",
+      #       "runs_on": ["self-hosted", "ARM64"],
+      #       "platform_slug": "arm32v7",
+      #       "target_slug": "multiarch",
+      #       "tag_suffix": "-multiarch"
+      #     },
+      #     {
+      #       "target": "multiarch",
+      #       "platform": "linux/arm/v6",
+      #       "runs_on": ["self-hosted", "X64"],
+      #       "platform_slug": "arm32v6",
+      #       "target_slug": "multiarch",
+      #       "tag_suffix": "-multiarch"
+      #     }
+      #   ]
+      # }
       - name: Build docker test matrix
         id: docker_test
         if: steps.docker_bake.outputs.json != ''
         env:
+          <<: *dockerPlatformSlugMap
           BAKE_JSON: "${{ steps.docker_bake.outputs.json }}"
           RUNS_ON: "${{ inputs.runs_on }}"
           DOCKER_RUNS_ON: "${{ inputs.docker_runs_on }}"
@@ -1422,6 +1458,58 @@ jobs:
           matrix="$(jq -cr --argjson in "$DOCKER_RUNS_ON" --argjson default "$RUNS_ON" '.include |=
             map(.platform as $p |
             .runs_on = if ($in | has($p)) then $in[$p] else $default end)' <<< "${matrix}")"
+
+          matrix="$(jq -cr --argjson in "$PLATFORM_SLUG_MAP" '.include |=
+            map(.platform as $p |
+            .platform_slug = if ($in | has($p)) then $in[$p] else error("Unsupported platform: \($p)") end)' <<< "${matrix}")"
+
+          matrix="$(jq -cr '.include[] |= . + {"target_slug": (.target | gsub("[^[:alnum:]]"; "-"))}' <<< "${matrix}")"
+
+          if [ "${{ inputs.docker_invert_tags }}" = "true" ]
+          then
+            matrix="$(jq -cr '.include[] |= (if .target != "default" then .tag_prefix = .target + "-" else . end)'  <<< "${matrix}")"
+          else
+            matrix="$(jq -cr '.include[] |= (if .target != "default" then .tag_suffix = "-" + .target else . end)'  <<< "${matrix}")"
+          fi
+
+          echo "build=${matrix}">> $GITHUB_OUTPUT
+
+      # generate a publish matrix with this structure
+      # {
+      #   "include": [
+      #     {
+      #       "image": "ghcr.io/product-os/flowzone",
+      #       "target": "default",
+      #       "target_slug": "default",
+      #       "platform_slugs": "amd64"
+      #     },
+      #     {
+      #       "image": "ghcr.io/product-os/flowzone",
+      #       "target": "multiarch",
+      #       "target_slug": "multiarch",
+      #       "platform_slugs": "amd64 arm64v8 arm32v7 arm32v6"
+      #     }
+      #   ]
+      # }
+      - name: Build docker publish matrix
+        id: docker_publish
+        env:
+          <<: *dockerPlatformSlugMap
+          BAKE_JSON: "${{ steps.docker_bake.outputs.json }}"
+        if: |
+          join(fromJSON(steps.docker_images_json.outputs.build)) != '' && join(fromJSON(steps.bake_targets_json.outputs.build)) != ''
+        run: |
+          matrix="$(jq -ncr \
+            --argjson images '${{ steps.docker_images_json.outputs.build }}' \
+            --argjson targets '${{ steps.bake_targets_json.outputs.build }}' \
+            '{include: [([$images, $targets] | combinations | {image: .[0], target: .[1]})]}')"
+
+          matrix="$(jq -cr '.include[] |= . + {"target_slug": (.target | gsub("[^[:alnum:]]"; "-"))}' <<< "${matrix}")"
+
+          matrix="$(jq -cr --argjson in "$BAKE_JSON" --argjson slugs "$PLATFORM_SLUG_MAP" '.include |=
+            map(.target as $t |
+            .platform_slugs = if ($in.target | has($t)) then ($in.target[$t].platforms | map($slugs[.]) | join(" ")) 
+            else error("Unsupported target: \($t)") end)' <<< "${matrix}")"
 
           echo "build=${matrix}">> $GITHUB_OUTPUT
 
@@ -2232,7 +2320,7 @@ jobs:
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           # this docker-{sha}-{target}-{platform} naming scheme is used by docker_publish to find the correct artifact
-          name: docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-${{ steps.strings.outputs.platform }}
+          name: docker-${{ github.event.pull_request.head.sha }}-${{ matrix.target_slug }}-${{ matrix.platform_slug }}
           path: ${{ env.DOCKER_TAR }}.zst
           retention-days: 1
 
@@ -2263,9 +2351,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix:
-        image: ${{ fromJSON(needs.is_docker.outputs.docker_images) }}
-        target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
+      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
 
     env:
       LOCAL_TAG: localhost:5000/sut:latest
@@ -2281,27 +2367,28 @@ jobs:
         run: echo "::warning::Publishing Docker images without docker compose tests!"
 
       # https://github.com/actions/download-artifact
-      - name: Download all artifacts
+      - name: Download required artifacts
         uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
         with:
           path: ${{ runner.temp }}
+          pattern: docker-${{ github.event.pull_request.head.sha }}-${{ matrix.target_slug }}-*
 
       - name: Decompress artifacts
+        env:
+          PATH_PREFIX: ${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ matrix.target_slug }}
         run: |
-          for gz in ${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ steps.strings.outputs.target }}-*/docker.tar.zst
+          for platform in ${{ matrix.platform_slugs }}
           do
-            zstd -vd "${gz}"
+            zstd -vd "${PATH_PREFIX}-${platform}/docker.tar.zst"
           done
 
       - name: Create local manifest
+        env:
+          PATH_PREFIX: ${{ runner.temp }}/docker-${{ github.event.pull_request.head.sha }}-${{ matrix.target_slug }}
         run: |
-          for tar in "${{ runner.temp }}"/*/docker.tar
+          for platform in ${{ matrix.platform_slugs }}
           do
-            artifact_name="$(basename "$(dirname "${tar}")")"
-            sha="$(echo "${artifact_name}" | awk -F- '{print $2}')"
-            target="$(echo "${artifact_name}" | awk -F- '{print $3}')"
-            platform="$(echo "${artifact_name}" | awk -F- '{print $4}')"
-
+            tar="${PATH_PREFIX}-${platform}/docker.tar"
             platform_tag="${LOCAL_TAG}-${platform}"
 
             skopeo copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
@@ -2376,8 +2463,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ${{ fromJSON(needs.is_docker.outputs.docker_images) }}
-        target: ${{ fromJSON(needs.is_docker.outputs.bake_targets) }}
+        matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
 
     steps:
       - *getGitHubAppToken
