@@ -30,6 +30,14 @@ runs:
         echo "matrix_value=${matrix_value}"
         echo "os_value=${os_value}"
 
+    - name: Check vars from environment
+      shell: bash
+      run: |
+        echo "environment=${environment}"
+        echo "FLOWZONE_TEST_VAR=${{ fromJSON(inputs.variables).FLOWZONE_TEST_VAR }}"
+        echo "FLOWZONE_TEST_SECRET=${{ fromJSON(inputs.secrets).FLOWZONE_TEST_SECRET }}"
+        test "${{ fromJSON(inputs.variables).FLOWZONE_TEST_VAR }}" = "Flowzone says hi!"
+
     # Resolve tag, semver, sha, and description of current git working copy.
     - name: Describe git state
       id: git_describe
