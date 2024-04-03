@@ -128,6 +128,14 @@ jobs:
       # Required: false
       CF_API_TOKEN:
 
+      # Token to access pypi.org Python packages.
+      # Required: false
+      PYPI_TOKEN:
+
+      # TODO: do we need both PyPi tokens?
+      # Required: false
+      PYPI_TEST_TOKEN:
+
       # Optional secret for using with custom jobs
       # Required: false
       CUSTOM_JOB_SECRET_1:

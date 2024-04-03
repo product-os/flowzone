@@ -55,9 +55,9 @@
       decimal_sha=$(echo "ibase=16; $commit_sha" | bc)
       version_tag="${version}-dev${decimal_sha}"
 
-      echo "package=${package}" >> $GITHUB_OUTPUT
-      echo "version=${version}" >> $GITHUB_OUTPUT
-      echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+      echo "package=${package}" >> "${GITHUB_OUTPUT}"
+      echo "version=${version}" >> "${GITHUB_OUTPUT}"
+      echo "version_tag=${version_tag}" >> "${GITHUB_OUTPUT}"
 
   - &deployToBalenaAction
     uses: balena-io/deploy-to-balena-action@3628206a0a2ecbc3a4fa717c77336545558e1447 # v2.0.49
@@ -95,12 +95,12 @@
       release_notes_file="$(mktemp)"
       release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
       EOF="$(openssl rand -hex 16)"
-      echo "note<<$EOF" >> $GITHUB_OUTPUT
-      echo "${release_notes}" >> $GITHUB_OUTPUT
-      echo "$EOF" >> $GITHUB_OUTPUT
+      echo "note<<$EOF" >> "${GITHUB_OUTPUT}"
+      echo "${release_notes}" >> "${GITHUB_OUTPUT}"
+      echo "$EOF" >> "${GITHUB_OUTPUT}"
 
       echo "${release_notes}" > "${release_notes_file}"
-      echo "file=${release_notes_file}" >> $GITHUB_OUTPUT
+      echo "file=${release_notes_file}" >> "${GITHUB_OUTPUT}"
 
   - &checkoutMergeRef
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
@@ -149,10 +149,10 @@
     id: git_describe
     run: |
       tag="$(git tag --points-at HEAD | tail -n1)"
-      echo "tag=${tag}" >> $GITHUB_OUTPUT
-      echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-      echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
-      echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+      echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> "${GITHUB_OUTPUT}"
+      echo "describe=$(git describe --tags --always --dirty | cat)" >> "${GITHUB_OUTPUT}"
+      echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
   - &createLocalRefs
     # Create a local reference for the versioned tag so that it
@@ -241,10 +241,11 @@
 
   - &deleteDraftGitHubRelease
     name: Delete draft GitHub release
-    run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
+    run: gh release delete --yes "${PR_HEAD_REF}" || true
     env:
       <<: *gitHubCliEnvironment
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
 
   - &isDraftPullRequest # check both the github context (static) and via the gh cli (dynamic)
     name: Check if PR is draft
@@ -254,9 +255,9 @@
     run: |
       if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
       then
-        echo "result=true" >> $GITHUB_OUTPUT
+        echo "result=true" >> "${GITHUB_OUTPUT}"
       else
-        echo "result=false" >> $GITHUB_OUTPUT
+        echo "result=false" >> "${GITHUB_OUTPUT}"
       fi
 
   - &jsonArrayBuilder
@@ -279,7 +280,7 @@
         end
       ')"
 
-      echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+      echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
 
   - &newlineListBuilder
     name: Build newline-separated list from JSON array
@@ -287,9 +288,9 @@
     run: |
       build="$(echo "${{ join(fromJSON(env.INPUT),' ') }}" | tr " " "\n")"
       DELIMITER=$(echo $RANDOM | md5sum | head -c 32)
-      echo "build<<${DELIMITER}" >> $GITHUB_OUTPUT
-      echo "${build}" >> $GITHUB_OUTPUT
-      echo "${DELIMITER}" >> $GITHUB_OUTPUT
+      echo "build<<${DELIMITER}" >> "${GITHUB_OUTPUT}"
+      echo "${build}" >> "${GITHUB_OUTPUT}"
+      echo "${DELIMITER}" >> "${GITHUB_OUTPUT}"
 
   - &dockerPlatformSlugMap
     PLATFORM_SLUG_MAP: >
@@ -346,11 +347,11 @@
         dockerhub_slug="${BASH_REMATCH[1]}"
       fi
 
-      echo "image=${image_slug}" >> $GITHUB_OUTPUT
-      echo "target=${target_slug}" >> $GITHUB_OUTPUT
-      echo "prefix=${prefix_slug}" >> $GITHUB_OUTPUT
-      echo "suffix=${suffix_slug}" >> $GITHUB_OUTPUT
-      echo "dockerhub=${dockerhub_slug}" >> $GITHUB_OUTPUT
+      echo "image=${image_slug}" >> "${GITHUB_OUTPUT}"
+      echo "target=${target_slug}" >> "${GITHUB_OUTPUT}"
+      echo "prefix=${prefix_slug}" >> "${GITHUB_OUTPUT}"
+      echo "suffix=${suffix_slug}" >> "${GITHUB_OUTPUT}"
+      echo "dockerhub=${dockerhub_slug}" >> "${GITHUB_OUTPUT}"
 
   - &dockerTestMetadata # https://github.com/docker/metadata-action
     name: Generate docker metadata
@@ -461,11 +462,11 @@
     run: |
       pr_labels="$(gh pr view ${{ github.event.pull_request.number }} --json labels -q .labels[].name)"
 
-      for label in "${pr_labels}"
+      for label in ${pr_labels}
       do
-        if [[ "$label" =~ "${{ inputs.ok_to_test_label }}" ]]
+        if [[ "$label" =~ '${{ inputs.ok_to_test_label }}' ]]
         then
-          gh pr edit ${{ github.event.pull_request.number }} --remove-label "${{ inputs.ok_to_test_label }}"
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label '${{ inputs.ok_to_test_label }}'
           exit 0
         fi
       done
@@ -546,8 +547,8 @@
     env:
       VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
     run: |
-      echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
-      echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
+      echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
+      echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
 
   - &waitForCloudFormation
     name: Wait for resources
@@ -582,12 +583,13 @@
   - &updateKubeconfig
     name: Update kubeconfig
     run: |
-      aws eks update-kubeconfig --name $(echo "${KUBE_CTX}" | awk -F'/' '{print $2}')
+      aws eks update-kubeconfig --name "$(echo "${KUBE_CTX}" | awk -F'/' '{print $2}')"
 
   - &convenienceFunctions
     name: Convenience functions
     id: functions
     run: |
+      # shellcheck disable=SC2034
       EOF="$(openssl rand -hex 16)"
 
       # https://sre.google/sre-book/addressing-cascading-failures/
@@ -613,13 +615,13 @@
           return \$exitCode
       }
       $EOF
-      echo "with_backoff=${with_backoff}" >> $GITHUB_OUTPUT
+      echo "with_backoff=${with_backoff}" >> "${GITHUB_OUTPUT}"
 
   - &randomDelay
     name: Random delay
     run: |
-      DELAY=${DELAY-5}
-      random=$(((RANDOM % DELAY) + 1))
+      DELAY="${DELAY-5}"
+      random="$(((RANDOM % DELAY) + 1))"
       echo "sleeping for ${random}s"
       sleep "${random}s"
 
@@ -667,6 +669,12 @@ on:
         required: false
       CF_API_TOKEN:
         description: "Cloudflare API token with limited access for Pages projects"
+        required: false
+      PYPI_TOKEN:
+        description: "Token to access pypi.org Python packages."
+        required: false
+      PYPI_TEST_TOKEN:
+        description: "TODO: do we need both PyPi tokens?"
         required: false
       CUSTOM_JOB_SECRET_1:
         description: "Optional secret for using with custom jobs"
@@ -1027,6 +1035,17 @@ jobs:
         with:
           node-version: 18.x
 
+      # https://github.com/rhysd/actionlint/blob/main/docs/usage.md#problem-matchers
+      - name: Check workflow files
+        run: |
+          echo "::add-matcher::.github/actionlint-matcher.json"
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) "${ACTIONLINT_VERSION}"
+          ./actionlint -color
+        shell: bash
+        env:
+          SHELLCHECK_OPTS: --exclude=SC2129
+          ACTIONLINT_VERSION: 1.6.27
+
       - name: Install versionist
         if: inputs.disable_versioning != true
         run: |
@@ -1074,8 +1093,8 @@ jobs:
           [ -f .versionbot/CHANGELOG.yml ] && versions+=($(yq e '.[0].version' .versionbot/CHANGELOG.yml))
           semver="${versions[0]}"
 
-          echo "semver=${semver}" >> $GITHUB_OUTPUT
-          echo "tag=v${semver}" >> $GITHUB_OUTPUT
+          echo "semver=${semver}" >> "${GITHUB_OUTPUT}"
+          echo "tag=v${semver}" >> "${GITHUB_OUTPUT}"
 
       # https://github.com/orgs/community/discussions/50055
       # https://www.levibotelho.com/development/commit-a-file-with-the-github-api/
@@ -1098,35 +1117,35 @@ jobs:
 
             echo "Creating blob of file $file..."
             base64 -w0 "$file" > content.base64
-            response=$(gh api -X POST /repos/$GH_REPO/git/blobs \
+            response=$(gh api -X POST "/repos/${GH_REPO}/git/blobs" \
               -F 'content=@content.base64' \
               -F 'encoding=base64')
             rm content.base64
 
-            echo "$response" | jq .
-            blob_sha=$(echo $response | jq -r .sha)
+            echo "${response}" | jq .
+            blob_sha="$(echo "${response}" | jq -r .sha)"
 
             # Add blob to our tree
             tree_array+=("{\"path\":\"$file\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$blob_sha\"}")
           done
 
           # Get the SHA of the tree the parent commit points to
-          base_tree_sha=$(git show -s --format=%T $PARENT_COMMIT_SHA)
+          base_tree_sha=$(git show -s --format=%T "${PARENT_COMMIT_SHA}")
 
           # Create JSON array for tree creation
-          tree_json=$(printf ",%s" "${tree_array[@]}")
-          tree_json=${tree_json:1}
-          tree_json="[$tree_json]"
-          tree_json="{\"tree\": $tree_json, \"base_tree\": \"$base_tree_sha\"}"
+          tree_json="$(printf ",%s" "${tree_array[@]}")"
+          tree_json="${tree_json:1}"
+          tree_json="[${tree_json}]"
+          tree_json="$(printf '{"tree": %s, "base_tree": "%s"}' "${tree_json}" "${base_tree_sha}")"
 
           echo "Creating tree..."
-          echo "$tree_json" | jq .
+          echo "${tree_json}" | jq .
 
-          response=$(echo $tree_json | gh api -X POST /repos/$GH_REPO/git/trees --input -)
+          response="$(echo "${tree_json}" | gh api -X POST "/repos/${GH_REPO}/git/trees" --input -)"
 
-          echo "$response" | jq .
-          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
-          echo "json=$(echo $response | jq -c .)" >> $GITHUB_OUTPUT
+          echo "${response}" | jq .
+          echo "sha=$(echo "${response}" | jq -r .sha)" >> "${GITHUB_OUTPUT}"
+          echo "json=$(echo "${response}" | jq -c .)" >> "${GITHUB_OUTPUT}"
 
       # https://docs.github.com/en/rest/git/commits?apiVersion=2022-11-28#create-a-commit
       - name: Create commit object
@@ -1137,14 +1156,14 @@ jobs:
           MESSAGE: ${{ steps.versionist.outputs.tag }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         run: |
-          response=$(gh api -X POST /repos/$GH_REPO/git/commits \
+          response="$(gh api -X POST "/repos/${GH_REPO}/git/commits" \
             -F "message=$MESSAGE" \
             -F "tree=${{ steps.create_tree.outputs.sha }}" \
-            -F "parents[]=$PARENT_COMMIT_SHA")
+            -F "parents[]=${PARENT_COMMIT_SHA}")"
 
-          echo "$response" | jq .
-          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
-          echo "json=$(echo $response | jq -c .)" >> $GITHUB_OUTPUT
+          echo "${response}" | jq .
+          echo "sha=$(echo "${response}" | jq -r .sha)" >> "${GITHUB_OUTPUT}"
+          echo "json=$(echo "${response}" | jq -c .)" >> "${GITHUB_OUTPUT}"
 
       # https://docs.github.com/en/rest/git/tags?apiVersion=2022-11-28#create-a-tag-object
       - name: Create tag object
@@ -1155,15 +1174,15 @@ jobs:
           TAG: ${{ steps.versionist.outputs.tag }}
           MESSAGE: ${{ steps.versionist.outputs.tag }}
         run: |
-          response=$(gh api -X POST repos/$GH_REPO/git/tags \
+          response="$(gh api -X POST "repos/${GH_REPO}/git/tags" \
             -F "tag=${TAG}" \
             -F "message=${MESSAGE}" \
             -F "object=${{ steps.create_commit.outputs.sha }}" \
-            -F "type=commit")
+            -F "type=commit")"
 
-          echo "$response" | jq .
-          echo "sha=$(echo $response | jq -r .sha)" >> $GITHUB_OUTPUT
-          echo "json=$(echo $response | jq -c .)" >> $GITHUB_OUTPUT
+          echo "${response}" | jq .
+          echo "sha=$(echo "${response}" | jq -r .sha)" >> "${GITHUB_OUTPUT}"
+          echo "json=$(echo "${response}" | jq -c .)" >> "${GITHUB_OUTPUT}"
 
       # https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
       - name: Update branch reference
@@ -1175,7 +1194,7 @@ jobs:
             -X PATCH \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/$GH_REPO/git/refs/heads/${{ github.base_ref }} \
+            "/repos/${GH_REPO}/git/refs/heads/${{ github.base_ref }}" \
             -f sha='${{ steps.create_commit.outputs.sha }}' \
             -F force=true \
             --include
@@ -1190,7 +1209,7 @@ jobs:
             -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/$GH_REPO/git/refs \
+            "/repos/${GH_REPO}/git/refs" \
             -f ref='refs/tags/${{ steps.versionist.outputs.tag }}' \
             -f sha='${{ steps.create_tag.outputs.sha }}' \
             --include
@@ -1223,19 +1242,19 @@ jobs:
           if test -f "package.json"
           then
             echo "found package.json"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-            echo "private=$(jq -r '.private' package.json)" >> $GITHUB_OUTPUT
-            echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> $GITHUB_OUTPUT
-            echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
+            echo "enabled=true" >> "${GITHUB_OUTPUT}"
+            echo "private=$(jq -r '.private' package.json)" >> "${GITHUB_OUTPUT}"
+            echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> "${GITHUB_OUTPUT}"
+            echo "NODE_VERSIONS=[]" >> "${GITHUB_ENV}"
           else
-            echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Check for package locks
         id: npm_lock
         run: |
           has_npm_lockfile="$([ -e package-lock.json ] || [ -e npm-shrinkwrap.json ] && echo true || echo false)"
-          echo "has_npm_lockfile=${has_npm_lockfile}" >> $GITHUB_OUTPUT
+          echo "has_npm_lockfile=${has_npm_lockfile}" >> "${GITHUB_OUTPUT}"
 
       - name: Set access
         id: access
@@ -1245,7 +1264,7 @@ jobs:
           then
             access="restricted"
           fi
-          echo "access=${access}" >> $GITHUB_OUTPUT
+          echo "access=${access}" >> "${GITHUB_OUTPUT}"
 
       # check which past and current and future Node.js LTS releases meet the engine requirements
       # if there are no engine requirements then the current LTS will be used
@@ -1260,7 +1279,7 @@ jobs:
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["16.x"]')" >> $GITHUB_ENV
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["16.x"]')" >> "${GITHUB_ENV}"
           fi
 
       - <<: *setupNode
@@ -1273,7 +1292,7 @@ jobs:
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> $GITHUB_ENV
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> "${GITHUB_ENV}"
           fi
 
       - <<: *setupNode
@@ -1286,7 +1305,7 @@ jobs:
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> $GITHUB_ENV
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> "${GITHUB_ENV}"
           fi
 
       - <<: *setupNode
@@ -1299,7 +1318,7 @@ jobs:
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["21.x"]')" >> $GITHUB_ENV
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["21.x"]')" >> "${GITHUB_ENV}"
           fi
 
       # default to the current LTS version if none were matched
@@ -1308,10 +1327,10 @@ jobs:
         if: steps.npm.outputs.enabled == 'true'
         id: node_versions
         run: |
-          echo "json=[\"20.x\"]" >> $GITHUB_OUTPUT
+          echo "json=[\"20.x\"]" >> "${GITHUB_OUTPUT}"
           if [ "${NODE_VERSIONS}" != "[]" ]
           then
-            echo "json=${NODE_VERSIONS}" >> $GITHUB_OUTPUT
+            echo "json=${NODE_VERSIONS}" >> "${GITHUB_OUTPUT}"
           fi
 
   # pre-process any docker-compose and docker-bake files
@@ -1359,9 +1378,9 @@ jobs:
         run: |
           if [ -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" ]
           then
-            echo "found=true" >> $GITHUB_OUTPUT
+            echo "found=true" >> "${GITHUB_OUTPUT}"
           else
-            echo "found=false" >> $GITHUB_OUTPUT
+            echo "found=false" >> "${GITHUB_OUTPUT}"
           fi
 
       - <<: *setupBuildx
@@ -1400,7 +1419,7 @@ jobs:
               if .group == {} then del(.group) else . end
             ')"
 
-          echo "json=${json}">> $GITHUB_OUTPUT
+          echo "json=${json}">> "${GITHUB_OUTPUT}"
 
       # generate a test matrix with this structure
       # {
@@ -1477,7 +1496,7 @@ jobs:
             matrix="$(jq -cr '.include[] |= (if .target != "default" then .tag_suffix = "-" + .target else . end)'  <<< "${matrix}")"
           fi
 
-          echo "build=${matrix}">> $GITHUB_OUTPUT
+          echo "build=${matrix}">> "${GITHUB_OUTPUT}"
 
       # generate a publish matrix with this structure
       # {
@@ -1513,10 +1532,10 @@ jobs:
 
           matrix="$(jq -cr --argjson in "$BAKE_JSON" --argjson slugs "$PLATFORM_SLUG_MAP" '.include |=
             map(.target as $t |
-            .platform_slugs = if ($in.target | has($t)) then ($in.target[$t].platforms | map($slugs[.]) | join(" ")) 
+            .platform_slugs = if ($in.target | has($t)) then ($in.target[$t].platforms | map($slugs[.]) | join(" "))
             else error("Unsupported target: \($t)") end)' <<< "${matrix}")"
 
-          echo "build=${matrix}">> $GITHUB_OUTPUT
+          echo "build=${matrix}">> "${GITHUB_OUTPUT}"
 
   is_python:
     name: Is python
@@ -1551,24 +1570,24 @@ jobs:
             if grep 'build-backend.*poetry' pyproject.toml
             then
               echo "Poetry used"
-              echo "enabled=true" >> $GITHUB_OUTPUT
-              echo "PYTHON_VERSIONS=[]" >> $GITHUB_ENV
+              echo "enabled=true" >> "${GITHUB_OUTPUT}"
+              echo "PYTHON_VERSIONS=[]" >> "${GITHUB_ENV}"
             else
               echo "Poetry not used"
-              echo "enabled=false" >> $GITHUB_OUTPUT
+              echo "enabled=false" >> "${GITHUB_OUTPUT}"
             fi
 
             has_package=$(awk -F "=" '/^packages/ {print $2}' pyproject.toml)
             if [ -n "${has_package}" ] && [ "${{ github.event.repository.visibility }}" = "public" ]
             then
-              echo "pypi_publish=true" >> $GITHUB_OUTPUT
+              echo "pypi_publish=true" >> "${GITHUB_OUTPUT}"
             else
-              echo "pypi_publish=false" >> $GITHUB_OUTPUT
+              echo "pypi_publish=false" >> "${GITHUB_OUTPUT}"
             fi
 
           else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-            echo "pypi_publish=false" >> $GITHUB_OUTPUT
+            echo "enabled=false" >> "${GITHUB_OUTPUT}"
+            echo "pypi_publish=false" >> "${GITHUB_OUTPUT}"
           fi
 
       - <<: *setupPython
@@ -1591,7 +1610,7 @@ jobs:
               echo "Python $version does not meet project requirements."
             fi
           done <<< "$(echo -n "${SUPPORTED_VERSIONS}")"
-          echo "PYTHON_VERSIONS=[$(IFS=,; echo "${versions[*]}")]" >> $GITHUB_ENV
+          echo "PYTHON_VERSIONS=[$(IFS=,; echo "${versions[*]}")]" >> "${GITHUB_ENV}"
 
       # default to the latest version on the runner
       # if none were matched by the checks above
@@ -1599,10 +1618,10 @@ jobs:
         if: steps.python_poetry.outputs.enabled == 'true'
         id: python_versions
         run: |
-          echo "json=[\"3.x\"]" >> $GITHUB_OUTPUT
+          echo "json=[\"3.x\"]" >> "${GITHUB_OUTPUT}"
           if [ "${PYTHON_VERSIONS}" != "[]" ]
           then
-            echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
+            echo "json=${PYTHON_VERSIONS}" >> "${GITHUB_OUTPUT}"
           fi
 
   # check for Cargo.toml in source
@@ -1636,9 +1655,9 @@ jobs:
           if test -f "Cargo.toml"
           then
             echo "found Cargo.toml"
-            echo "enabled=true" >> $GITHUB_OUTPUT
+            echo "enabled=true" >> "${GITHUB_OUTPUT}"
           else
-            echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
 
   # check for balena.yml in source
@@ -1672,9 +1691,9 @@ jobs:
           if test -f balena.yml
           then
             echo "found balena.yml"
-            echo "enabled=true" >> $GITHUB_OUTPUT
+            echo "enabled=true" >> "${GITHUB_OUTPUT}"
           else
-            echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
 
   # check for custom actions in source
@@ -1734,23 +1753,23 @@ jobs:
         run: |
           if [ -d .github/actions/test ]
           then
-            echo "test=true" >> $GITHUB_OUTPUT
+            echo "test=true" >> "${GITHUB_OUTPUT}"
           fi
           if [ -d .github/actions/publish ]
           then
-            echo "publish=true" >> $GITHUB_OUTPUT
+            echo "publish=true" >> "${GITHUB_OUTPUT}"
           fi
           if [ -d .github/actions/finalize ]
           then
-            echo "finalize=true" >> $GITHUB_OUTPUT
+            echo "finalize=true" >> "${GITHUB_OUTPUT}"
           fi
           if [ -d .github/actions/clean ]
           then
-            echo "clean=true" >> $GITHUB_OUTPUT
+            echo "clean=true" >> "${GITHUB_OUTPUT}"
           fi
           if [ -d .github/actions/always ]
           then
-            echo "always=true" >> $GITHUB_OUTPUT
+            echo "always=true" >> "${GITHUB_OUTPUT}"
           fi
 
   is_website:
@@ -1777,9 +1796,9 @@ jobs:
           if test -e "README.md"
           then
             echo "found README.md"
-            echo "enabled=true" >> $GITHUB_OUTPUT
+            echo "enabled=true" >> "${GITHUB_OUTPUT}"
           else
-            echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
 
   is_cloudformation:
@@ -1808,13 +1827,13 @@ jobs:
           then
             if [[ '${{ github.event.pull_request.head.repo.full_name }}' != '${{ github.repository }}' ]]; then
               echo '::warning:: CloudFormation stacks are skipped for external contributions.'
-              echo "enabled=false" >> $GITHUB_OUTPUT
+              echo "enabled=false" >> "${GITHUB_OUTPUT}"
               exit 0
             fi
-            echo "enabled=true" >> $GITHUB_OUTPUT
+            echo "enabled=true" >> "${GITHUB_OUTPUT}"
           else
             echo '::warning::invalid JSON or no CloudFormation stacks?'
-            echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Generate stacks matrix
@@ -1829,8 +1848,8 @@ jobs:
             | jq -r '.stacks[] | with_entries(if .key == "name" then .key = "stack" else . end)' \
             | jq -rsc)"
 
-          echo "matrix=${stacks}" >> $GITHUB_OUTPUT
-          echo "includes=${includes}" >> $GITHUB_OUTPUT
+          echo "matrix=${stacks}" >> "${GITHUB_OUTPUT}"
+          echo "includes=${includes}" >> "${GITHUB_OUTPUT}"
 
   is_terraform:
     name: Is Terraform
@@ -1855,13 +1874,13 @@ jobs:
           then
             if [[ '${{ github.event.pull_request.head.repo.full_name }}' != '${{ github.repository }}' ]]; then
               echo '::warning:: Terraform projects are skipped for external contributions.'
-              echo "enabled=false" >> $GITHUB_OUTPUT
+              echo "enabled=false" >> "${GITHUB_OUTPUT}"
               exit 0
             fi
-            echo "enabled=true" >> $GITHUB_OUTPUT
+            echo "enabled=true" >> "${GITHUB_OUTPUT}"
           else
             echo '::warning::invalid JSON or no Terraform projects?'
-            echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Generate projects matrix
@@ -1874,8 +1893,8 @@ jobs:
             | jq -r '.projects[] | with_entries(if .key == "main_tf" then .key = "project" else . end)' \
             | jq -rsc)"
 
-          echo "deploy=${projects}" >> $GITHUB_OUTPUT
-          echo "includes=${includes}" >> $GITHUB_OUTPUT
+          echo "deploy=${projects}" >> "${GITHUB_OUTPUT}"
+          echo "includes=${includes}" >> "${GITHUB_OUTPUT}"
 
   ###################################################
   ## npm
@@ -1930,15 +1949,18 @@ jobs:
         run: |
           package="$(jq -r '.name' package.json)"
           version="$(jq -r '.version' package.json)"
-          branch_tag="$(echo 'build-${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          branch_tag="$(echo "build-${PR_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
-          echo "package=${package}" >> $GITHUB_OUTPUT
-          echo "version=${version}" >> $GITHUB_OUTPUT
-          echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
-          echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
-          echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+          echo "package=${package}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "branch_tag=${branch_tag}" >> "${GITHUB_OUTPUT}"
+          echo "sha_tag=${sha_tag}" >> "${GITHUB_OUTPUT}"
+          echo "version_tag=${version_tag}" >> "${GITHUB_OUTPUT}"
+
+        env:
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
 
       - name: Install native dependencies (if necessary)
         run: |
@@ -2214,12 +2236,12 @@ jobs:
 
       - name: Export common env vars
         run: |
-          echo "DOCKER_BAKE_FILE=${{ runner.temp }}/docker-bake.json" >> $GITHUB_ENV
-          echo "DOCKER_TAR=${{ runner.temp }}/docker.tar" >> $GITHUB_ENV
+          echo "DOCKER_BAKE_FILE=${{ runner.temp }}/docker-bake.json" >> "${GITHUB_ENV}"
+          echo "DOCKER_TAR=${{ runner.temp }}/docker.tar" >> "${GITHUB_ENV}"
 
-          echo "COMPOSE_PROJECT_NAME=${{ github.run_id }}" >> $GITHUB_ENV
-          echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> $GITHUB_ENV
-          echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> $GITHUB_ENV
+          echo "COMPOSE_PROJECT_NAME=${{ github.run_id }}" >> "${GITHUB_ENV}"
+          echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> "${GITHUB_ENV}"
+          echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> "${GITHUB_ENV}"
 
       # these secrets are being used in untrusted user code so only allow for internal PRs
       - name: Add COMPOSE_VARS to compose env file
@@ -2231,13 +2253,13 @@ jobs:
         run: |
           if [ -n "${COMPOSE_VARS}" ]
           then
-            echo "${COMPOSE_VARS}" | base64 --decode > ${COMPOSE_ENV_FILE}
+            echo "${COMPOSE_VARS}" | base64 --decode > "${COMPOSE_ENV_FILE}"
 
             while read -r line
             do
               secret="$(echo "${line}" | awk -F'=' '{print $2}')"
               echo "::add-mask::${secret}"
-            done < ${COMPOSE_ENV_FILE}
+            done < "${COMPOSE_ENV_FILE}"
           fi
 
       - name: Write docker bake file
@@ -2267,7 +2289,7 @@ jobs:
             fi
           done
 
-          touch ${COMPOSE_ENV_FILE}
+          touch "${COMPOSE_ENV_FILE}"
           docker compose --env-file="${COMPOSE_ENV_FILE}" --project-directory="$(pwd)" ${args} config > "${COMPOSE_FILE}"
 
           yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
@@ -2343,6 +2365,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_docker
+      - versioned_source
       - npm_test
       - custom_test
       - docker_test
@@ -2766,7 +2789,7 @@ jobs:
       - name: Update deploy branch for merged PRs
         if: github.event.pull_request.state != 'open'
         run: |
-          echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
+          echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> "${GITHUB_ENV}"
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@7c01cc48d88a1f83b4716e0557c168854a9dcdb8 # v3.4.1
@@ -2895,11 +2918,12 @@ jobs:
         env:
           <<: *gitHubCliEnvironment
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           set -ea
 
-          if gh release view '${{ github.event.pull_request.head.ref }}'; then
-            gh release edit '${{ github.event.pull_request.head.ref }}' \
+          if gh release view "${PR_HEAD_REF}"; then
+            gh release edit "${PR_HEAD_REF}" \
               --notes-file '${{ steps.release_notes.outputs.file }}' \
               --title '${{ needs.versioned_source.outputs.tag }}' \
               --tag '${{ needs.versioned_source.outputs.tag }}' \
@@ -2975,15 +2999,18 @@ jobs:
         run: |
           package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
           version="${{ needs.versioned_source.outputs.semver }}"
-          branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          branch_tag="$(echo "${PR_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
-          echo "package=${package}" >> $GITHUB_OUTPUT
-          echo "version=${version}" >> $GITHUB_OUTPUT
-          echo "branch_tag=${branch_tag}" >> $GITHUB_OUTPUT
-          echo "sha_tag=${sha_tag}" >> $GITHUB_OUTPUT
-          echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+          echo "package=${package}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "branch_tag=${branch_tag}" >> "${GITHUB_OUTPUT}"
+          echo "sha_tag=${sha_tag}" >> "${GITHUB_OUTPUT}"
+          echo "version_tag=${version_tag}" >> "${GITHUB_OUTPUT}"
+
+        env:
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
 
   cargo_publish:
     name: Publish rust
@@ -3061,7 +3088,7 @@ jobs:
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
-      - name: Set up toolchain ${{ matrix.target }}
+      - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
 
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
@@ -3112,9 +3139,9 @@ jobs:
       - name: Set the matrix value env var
         shell: bash
         run: |
-          echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
-          echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
-          echo "environment=${{ matrix.environment }}" >> $GITHUB_ENV
+          echo "matrix_value=${{ matrix.value }}" >> "${GITHUB_ENV}"
+          echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> "${GITHUB_ENV}"
+          echo "environment=${{ matrix.environment }}" >> "${GITHUB_ENV}"
 
       - uses: ./.github/actions/test
         with:
@@ -3165,9 +3192,9 @@ jobs:
       - name: Set the matrix value env var
         shell: bash
         run: |
-          echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
-          echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
-          echo "environment=${{ matrix.environment }}" >> $GITHUB_ENV
+          echo "matrix_value=${{ matrix.value }}" >> "${GITHUB_ENV}"
+          echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> "${GITHUB_ENV}"
+          echo "environment=${{ matrix.environment }}" >> "${GITHUB_ENV}"
 
       - uses: ./.github/actions/publish
         with:
@@ -3210,9 +3237,9 @@ jobs:
       - name: Set the matrix value env var
         shell: bash
         run: |
-          echo "matrix_value=${{ matrix.value }}" >> $GITHUB_ENV
-          echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> $GITHUB_ENV
-          echo "environment=${{ matrix.environment }}" >> $GITHUB_ENV
+          echo "matrix_value=${{ matrix.value }}" >> "${GITHUB_ENV}"
+          echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" >> "${GITHUB_ENV}"
+          echo "environment=${{ matrix.environment }}" >> "${GITHUB_ENV}"
 
       - uses: ./.github/actions/finalize
         with:
@@ -3346,7 +3373,7 @@ jobs:
               bucket="${result#*:}"
               bucket="${bucket//[[:space:]]/}"
           fi
-          echo "s3_bucket=${bucket}" >> $GITHUB_OUTPUT
+          echo "s3_bucket=${bucket}" >> "${GITHUB_OUTPUT}"
 
       - *waitForCloudFormation
 
@@ -3360,6 +3387,7 @@ jobs:
 
           trap 'rm -f .env' EXIT
 
+          # shellcheck disable=SC2140
           to_envs() { jq -r "to_entries[] | \"\(.key)="\'"\(.value)"\'"\""; }
 
           printf "matrix: params='%s' tags='%s' caps='%s'" \
@@ -3380,28 +3408,28 @@ jobs:
           echo "${VARS_CONTEXT}" | to_envs >> .env
           source .env && rm -f .env
 
-          echo "stack_name=${{ matrix.stack }}" >> $GITHUB_OUTPUT
-          echo "template_file=${template_file}" >> $GITHUB_OUTPUT
-          echo "tags=${tags}" >> $GITHUB_OUTPUT
-          echo "ignore_lint=${ignore_lint}" >> $GITHUB_OUTPUT
+          echo "stack_name=${{ matrix.stack }}" >> "${GITHUB_OUTPUT}"
+          echo "template_file=${template_file}" >> "${GITHUB_OUTPUT}"
+          echo "tags=${tags}" >> "${GITHUB_OUTPUT}"
+          echo "ignore_lint=${ignore_lint}" >> "${GITHUB_OUTPUT}"
 
           EOF="$(openssl rand -hex 16)"
 
           if [[ -n "$params" ]]; then
               params="$(echo "${params}" | envsubst)"
-              echo "params<<$EOF" >> $GITHUB_OUTPUT
-              echo --parameter-overrides ${params} >> $GITHUB_OUTPUT
-              echo $EOF >> $GITHUB_OUTPUT
+              echo "params<<$EOF" >> "${GITHUB_OUTPUT}"
+              echo --parameter-overrides ${params} >> "${GITHUB_OUTPUT}"
+              echo $EOF >> "${GITHUB_OUTPUT}"
           fi
 
           if [[ -n "$kvparams" ]]; then
               kvparams="$(echo "${kvparams}" | envsubst)"
-              echo "kvparams<<$EOF" >> $GITHUB_OUTPUT
-              echo --parameters ${kvparams} >> $GITHUB_OUTPUT
-              echo $EOF >> $GITHUB_OUTPUT
+              echo "kvparams<<$EOF" >> "${GITHUB_OUTPUT}"
+              echo --parameters ${kvparams} >> "${GITHUB_OUTPUT}"
+              echo $EOF >> "${GITHUB_OUTPUT}"
           fi
 
-          echo "caps=${caps}" >> $GITHUB_OUTPUT
+          echo "caps=${caps}" >> "${GITHUB_OUTPUT}"
 
       - <<: *setupPython
         with:
@@ -3490,7 +3518,7 @@ jobs:
           if ! [[ "$result" =~ 'No changes to deploy' ]]; then
               cmd="${result#*:}"
               cmd=${cmd//$'\n'/}
-              echo "command=${cmd}" >> $GITHUB_OUTPUT
+              echo "command=${cmd}" >> "${GITHUB_OUTPUT}"
           else
               echo '::notice::no changes'
           fi
@@ -3624,6 +3652,7 @@ jobs:
 
           trap 'rm -f .env "${json_plan}"' EXIT
 
+          # shellcheck disable=SC2140
           to_envs() { jq -r "to_entries[] | \"\(.key)="\'"\(.value)"\'"\""; }
 
           echo "${SECRETS_CONTEXT}" | to_envs > .env
@@ -3631,16 +3660,14 @@ jobs:
           source .env && rm -f .env
 
           rc=0
-          terraform plan -lock-timeout=${LOCK_TIMEOUT} -detailed-exitcode || rc=$?
+          terraform plan -lock-timeout="${LOCK_TIMEOUT}" -detailed-exitcode || rc=$?
           if [[ $rc -eq 1 ]]; then
               false
           fi
 
           json_plan="$(mktemp)"
-          terraform plan -lock-timeout=${LOCK_TIMEOUT} -json > "${json_plan}"
+          terraform plan -lock-timeout="${LOCK_TIMEOUT}" -json > "${json_plan}"
           msg=$(cat < "${json_plan}" | jq -rs '.[] | select(.type=="change_summary")."@message"')
-          add=$(cat < "${json_plan}" | jq -rs '.[] | select(.type=="change_summary").changes.add')
-          change=$(cat < "${json_plan}" | jq -rs '.[] | select(.type=="change_summary").changes.change')
           remove=$(cat < "${json_plan}" | jq -rs '.[] | select(.type=="change_summary").changes.remove')
 
           if [[ -n "$remove" ]] && [[ "$remove" -gt 0 ]]; then
@@ -3660,6 +3687,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_terraform
+      - versioned_source
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_terraform.outputs.terraform == 'true'
@@ -3699,6 +3727,7 @@ jobs:
 
           trap 'rm -f .env' EXIT
 
+          # shellcheck disable=SC2140
           to_envs() { jq -r "to_entries[] | \"\(.key)="\'"\(.value)"\'"\""; }
 
           echo "${SECRETS_CONTEXT}" | to_envs > .env
@@ -3706,9 +3735,9 @@ jobs:
           source .env && rm -f .env
 
           rc=0
-          terraform plan -lock-timeout=${LOCK_TIMEOUT} -detailed-exitcode || rc=$?
+          terraform plan -lock-timeout="${LOCK_TIMEOUT}" -detailed-exitcode || rc=$?
           if [[ $rc -eq 2 ]]; then
-              terraform apply -lock-timeout=${LOCK_TIMEOUT} -auto-approve
+              terraform apply -lock-timeout="${LOCK_TIMEOUT}" -auto-approve
           elif [[ $rc -eq 0 ]]; then
               true
           else
