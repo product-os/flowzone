@@ -1038,8 +1038,14 @@ jobs:
       # https://github.com/rhysd/actionlint/blob/main/docs/usage.md#problem-matchers
       - name: Check workflow files
         run: |
+          set -xe
+
           echo "::add-matcher::.github/actionlint-matcher.json"
-          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) "${ACTIONLINT_VERSION}"
+
+          bash <(curl --fail --silent --retry 3 \
+            https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) \
+            "${ACTIONLINT_VERSION}"
+
           ./actionlint -color
         shell: bash
         env:
