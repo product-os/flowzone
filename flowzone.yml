@@ -241,7 +241,7 @@
 
   - &deleteDraftGitHubRelease
     name: Delete draft GitHub release
-    run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
+    run: gh release delete --yes "${GITHUB_HEAD_REF}" || true
     env:
       <<: *gitHubCliEnvironment
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -667,6 +667,12 @@ on:
         required: false
       CF_API_TOKEN:
         description: "Cloudflare API token with limited access for Pages projects"
+        required: false
+      PYPI_TOKEN:
+        description: "Token to publish to pypi.org"
+        required: false
+      PYPI_TEST_TOKEN:
+        description: "Token to publish to test.pypi.org"
         required: false
       CUSTOM_JOB_SECRET_1:
         description: "Optional secret for using with custom jobs"
@@ -1866,7 +1872,7 @@ jobs:
         run: |
           package="$(jq -r '.name' package.json)"
           version="$(jq -r '.version' package.json)"
-          branch_tag="$(echo 'build-${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
@@ -2278,6 +2284,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - versioned_source
       - is_docker
       - npm_test
       - custom_test
@@ -2834,8 +2841,8 @@ jobs:
         run: |
           set -ea
 
-          if gh release view '${{ github.event.pull_request.head.ref }}'; then
-            gh release edit '${{ github.event.pull_request.head.ref }}' \
+          if gh release view "${GITHUB_HEAD_REF}"; then
+            gh release edit "${GITHUB_HEAD_REF}" \
               --notes-file '${{ steps.release_notes.outputs.file }}' \
               --title '${{ needs.versioned_source.outputs.tag }}' \
               --tag '${{ needs.versioned_source.outputs.tag }}' \
@@ -2911,7 +2918,7 @@ jobs:
         run: |
           package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
           version="${{ needs.versioned_source.outputs.semver }}"
-          branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          branch_tag="$(echo "${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
@@ -2997,7 +3004,7 @@ jobs:
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
-      - name: Set up toolchain ${{ matrix.target }}
+      - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
 
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}

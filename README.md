@@ -128,6 +128,14 @@ jobs:
       # Required: false
       CF_API_TOKEN:
 
+      # Token to publish to pypi.org
+      # Required: false
+      PYPI_TOKEN:
+
+      # Token to publish to test.pypi.org
+      # Required: false
+      PYPI_TEST_TOKEN:
+
       # Optional secret for using with custom jobs
       # Required: false
       CUSTOM_JOB_SECRET_1:
