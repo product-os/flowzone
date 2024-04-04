@@ -4,6 +4,7 @@
   "scripts": {
     "build": "node build",
     "test": "npm run build && git diff --exit-code ./.github/workflows/flowzone.yml ./README.md",
+    "lint": "docker run --rm -v $(pwd):/repo --workdir /repo rhysd/actionlint:1.6.27 -color -shellcheck=",
     "prepare": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module"
   },
   "repository": {
