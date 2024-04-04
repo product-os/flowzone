@@ -1,4 +1,20 @@
 - commits:
+    - subject: Remove support for terraform projects
+      hash: b57215859d7704ebdc10e0d717ce08820e783f8c
+      body: |
+        These features are not being used or tested anymore
+        and instead Cloudformation is the primary deployment.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.0.0
+  title: ""
+  date: 2024-04-04T19:22:14.000Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.50
       hash: 993b716e9bec6e53c646db1d0db59aa82368a1f8
       body: |
