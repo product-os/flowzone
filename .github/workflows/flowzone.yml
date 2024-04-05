@@ -42,6 +42,12 @@ on:
       CF_API_TOKEN:
         description: Cloudflare API token with limited access for Pages projects
         required: false
+      PYPI_TOKEN:
+        description: Token to publish to pypi.org
+        required: false
+      PYPI_TEST_TOKEN:
+        description: Token to publish to test.pypi.org
+        required: false
       CUSTOM_JOB_SECRET_1:
         description: Optional secret for using with custom jobs
         required: false
@@ -578,6 +584,46 @@ jobs:
             -f ref='refs/tags/${{ steps.versionist.outputs.tag }}' \
             -f sha='${{ steps.create_tag.outputs.sha }}' \
             --include
+  lint_workflows:
+    name: Lint workflows
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Add problem matcher
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/.github/actionlint-matcher.json > ${{ runner.temp }}/actionlint-matcher.json
+          echo ::add-matcher::${{ runner.temp }}/actionlint-matcher.json
+      - name: Check workflow files
+        uses: docker://rhysd/actionlint:1.6.27
+        with:
+          args: -color -shellcheck=
   is_npm:
     name: Is npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1507,7 +1553,7 @@ jobs:
         run: |
           package="$(jq -r '.name' package.json)"
           version="$(jq -r '.version' package.json)"
-          branch_tag="$(echo 'build-${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
@@ -2021,6 +2067,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - versioned_source
       - is_docker
       - npm_test
       - custom_test
@@ -2930,7 +2977,7 @@ jobs:
               "metadata": "read"
             }
       - name: Delete draft GitHub release
-        run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
+        run: gh release delete --yes "${GITHUB_HEAD_REF}" || true
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
@@ -2970,7 +3017,7 @@ jobs:
               "metadata": "read"
             }
       - name: Delete draft GitHub release
-        run: gh release delete --yes '${{ github.event.pull_request.head.ref }}' || true
+        run: gh release delete --yes "${GITHUB_HEAD_REF}" || true
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
@@ -3092,8 +3139,8 @@ jobs:
         run: |
           set -ea
 
-          if gh release view '${{ github.event.pull_request.head.ref }}'; then
-            gh release edit '${{ github.event.pull_request.head.ref }}' \
+          if gh release view "${GITHUB_HEAD_REF}"; then
+            gh release edit "${GITHUB_HEAD_REF}" \
               --notes-file '${{ steps.release_notes.outputs.file }}' \
               --title '${{ needs.versioned_source.outputs.tag }}' \
               --tag '${{ needs.versioned_source.outputs.tag }}' \
@@ -3179,7 +3226,7 @@ jobs:
         run: |
           package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
           version="${{ needs.versioned_source.outputs.semver }}"
-          branch_tag="$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/[^[:alnum:]]/-/g')"
+          branch_tag="$(echo "${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
@@ -3296,7 +3343,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Set up toolchain ${{ matrix.target }}
+      - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
         env:
@@ -4035,6 +4082,7 @@ jobs:
       - cargo_test
       - custom_test
       - cloudformation_test
+      - lint_workflows
     if: |
       always() &&
       github.event.pull_request.state == 'open'

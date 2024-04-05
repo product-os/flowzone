@@ -1,3 +1,5 @@
 
+set -e
 npm run build
+npm run lint
 git add .github/workflows/flowzone.yml README.md
