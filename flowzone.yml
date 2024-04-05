@@ -136,10 +136,10 @@
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &resetGitHubDirectory
-    # checkout the tip of BASE if the PR is from a fork
+    # github.ref will be the tip of BASE if the PR is from a fork
     # or the merge commit if the PR is internal
     name: Reset .github directory to ${{ github.ref }}
-    # <<: *ifExternalPullRequest
+    working-directory: .
     run: |
       git fetch origin ${{ github.ref }}
       git checkout FETCH_HEAD -- .github
@@ -360,7 +360,7 @@
       images: |
         sut
         localhost:5000/sut
-        ${{ needs.is_docker.outputs.docker_images_crlf }}
+        ${{ needs.is_docker.outputs.images_crlf }}
       labels: |
         org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
         org.opencontainers.image.ref.name=${{ matrix.target }}
@@ -376,11 +376,11 @@
   - &dockerCacheFromMetadata
     <<: *dockerTestMetadata
     id: cache_meta
-    # ensure docker_images_crlf is not an empty list
-    if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+    # ensure images_crlf is not an empty list
+    if: join(fromJSON(needs.is_docker.outputs.images_json)) != ''
     with:
       images: |
-        ${{ needs.is_docker.outputs.docker_images_crlf }}
+        ${{ needs.is_docker.outputs.images_crlf }}
       tags: |
         type=raw,value=${{ github.base_ref || github.ref_name }}
         type=raw,value=${{ github.event.pull_request.head.sha }}
@@ -1189,8 +1189,6 @@ jobs:
     needs:
       - versioned_source
 
-    <<: *customWorkingDirectory
-
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -1209,117 +1207,122 @@ jobs:
           # disable shellcheck for now
           args: -color -shellcheck=
 
+  process_files:
+    name: Process files
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+
+    outputs:
+      json: ${{ steps.process_files.outputs.json }}
+      root_json: ${{ steps.process_files_root.outputs.json }}
+
+    steps:
+      - *getGitHubAppToken
+
+      # Checkout the merge ref for open PRs
+      - <<: *checkoutMergeRef
+        if: github.event.pull_request.state == 'open'
+
+      # Checkout the event sha for closed PRs
+      - <<: *checkoutEventSha
+        if: github.event.pull_request.state != 'open'
+
+      # Reset workflow files in case they were modified by a fork
+      - *resetGitHubDirectory
+
+      # note that files within submodules are not included
+      - name: Generate file list json
+        id: process_files
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          echo "json=$(git ls-files | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+
+      # note that files within submodules are not included
+      - name: Generate file list json
+        id: process_files_root
+        working-directory: .
+        run: |
+          echo "json=$(git ls-files | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
-    name: Is npm
+    name: Setup npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.json), 'package.json')
 
     <<: *customWorkingDirectory
 
     outputs:
-      npm: ${{ steps.npm.outputs.enabled }}
-      has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
-      npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
-      npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
+      has_lockfile: ${{ contains(fromJSON(needs.process_files.outputs.json), 'package-lock.json') || 
+        contains(fromJSON(needs.process_files.outputs.json), 'npm-shrinkwrap.json') }}
+      is_private: ${{ fromJSON(steps.package_json.outputs.json).private == true }}
+      has_docs: ${{ fromJSON(steps.package_json.outputs.json).scripts.doc != '' }}
       node_versions: ${{ steps.node_versions.outputs.json }}
-      npm_access: ${{ steps.access.outputs.access }}
+      npm_access: ${{ steps.access.outputs.value || 'public' }}
 
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
-      - name: Check for package.json
-        id: npm
+      - name: Process package.json
+        id: package_json
         run: |
-          if test -f "package.json"
-          then
-            echo "found package.json"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-            echo "private=$(jq -r '.private' package.json)" >> $GITHUB_OUTPUT
-            echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> $GITHUB_OUTPUT
-            echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Check for package locks
-        id: npm_lock
-        run: |
-          has_npm_lockfile="$([ -e package-lock.json ] || [ -e npm-shrinkwrap.json ] && echo true || echo false)"
-          echo "has_npm_lockfile=${has_npm_lockfile}" >> $GITHUB_OUTPUT
+          echo "json=$(jq -c . package.json)" >> $GITHUB_OUTPUT
+          echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
 
       - name: Set access
         id: access
-        run: |
-          access="public"
-          if [ "${{ github.event.repository.private }}" = "true" ]
-          then
-            access="restricted"
-          fi
-          echo "access=${access}" >> $GITHUB_OUTPUT
+        if: github.event.repository.private
+        run: echo "value=restricted" >> $GITHUB_OUTPUT
 
       # check which past and current and future Node.js LTS releases meet the engine requirements
       # if there are no engine requirements then the current LTS will be used
 
       - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
         with:
           node-version: 16.x
 
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+      - &checkEngine
+        name: Check engine
+        env:
+          node-version: 16.x
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["16.x"]')" >> $GITHUB_ENV
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS:-[]}" | jq -c '. + ["${{ env.node-version }}"]')" >> $GITHUB_ENV
           fi
 
       - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
         with:
           node-version: 18.x
 
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> $GITHUB_ENV
-          fi
+      - <<: *checkEngine
+        env:
+          node-version: 18.x
 
       - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
         with:
           node-version: 20.x
 
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> $GITHUB_ENV
-          fi
+      - <<: *checkEngine
+        env:
+          node-version: 20.x
 
       - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
         with:
           node-version: 21.x
 
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["21.x"]')" >> $GITHUB_ENV
-          fi
+      - <<: *checkEngine
+        env:
+          node-version: 21.x
 
       # default to the current LTS version if none were matched
       # by the engine checks above
       - name: Set Node.js versions
-        if: steps.npm.outputs.enabled == 'true'
         id: node_versions
         run: |
           echo "json=[\"20.x\"]" >> $GITHUB_OUTPUT
@@ -1330,53 +1333,47 @@ jobs:
 
   # pre-process any docker-compose and docker-bake files
   is_docker:
-    name: Is docker
+    name: Setup docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - process_files
+    if: inputs.docker_images != '' ||
+      contains(fromJSON(needs.process_files.outputs.json), 'docker-compose.test.yml') || 
+      contains(fromJSON(needs.process_files.outputs.json), 'docker-compose.test.yaml')
 
     <<: *customWorkingDirectory
 
     outputs:
-      docker_images: ${{ steps.docker_images_json.outputs.build }}
-      docker_images_crlf: ${{ steps.docker_images_crlf.outputs.build }}
-      docker_compose_tests: ${{ steps.docker_compose_tests.outputs.found }}
-      bake_targets: ${{ steps.bake_targets_json.outputs.build }}
-      docker_bake_json: ${{ steps.docker_bake.outputs.json }}
-      docker_test_matrix: ${{ steps.docker_test.outputs.build }}
-      docker_publish_matrix: ${{ steps.docker_publish.outputs.build }}
+      images_json: ${{ steps.images_json.outputs.build }}
+      images_crlf: ${{ steps.images_crlf.outputs.build }}
+      has_compose_tests: ${{ contains(fromJSON(needs.process_files.outputs.json), 'docker-compose.test.yml') || 
+        contains(fromJSON(needs.process_files.outputs.json), 'docker-compose.test.yaml') }}
+      bake_file_json: ${{ steps.bake_file.outputs.json }}
+      test_matrix: ${{ steps.test_matrix.outputs.build || '[]' }}
+      publish_matrix: ${{ steps.publish_matrix.outputs.build || '[]' }}
 
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
-      - id: docker_images_json
+      - id: images_json
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.docker_images }}
           DELIMITER: ","
 
-      - id: docker_images_crlf
+      - id: images_crlf
         <<: *newlineListBuilder
         env:
-          INPUT: ${{ steps.docker_images_json.outputs.build }}
+          INPUT: ${{ steps.images_json.outputs.build }}
 
-      - id: bake_targets_json
+      - id: targets_json
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.bake_targets }}
           DELIMITER: ","
-
-      - name: Check for docker compose test files
-        id: docker_compose_tests
-        run: |
-          if [ -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" ]
-          then
-            echo "found=true" >> $GITHUB_OUTPUT
-          else
-            echo "found=false" >> $GITHUB_OUTPUT
-          fi
 
       - <<: *setupBuildx
         with:
@@ -1388,10 +1385,7 @@ jobs:
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
       # in this custom bake json we also set some default cache values, and inherit the docker-metadata-action
       - name: Pre-process Docker bake files
-        id: docker_bake
-        if: |
-          join(fromJSON(steps.docker_images_json.outputs.build)) != '' ||
-          steps.docker_compose_tests.outputs.found == 'true'
+        id: bake_file
         env:
           BAKE_FILE: /tmp/docker-bake.json
         run: |
@@ -1399,14 +1393,14 @@ jobs:
           then
             files="$(echo $(ls -1 docker-bake{.override,}.{json,hcl} 2>/dev/null) | sed 's/ / -f /')"
           else
-            echo '${{ steps.bake_targets_json.outputs.build }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
+            echo '${{ steps.targets_json.outputs.build }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
             files="${BAKE_FILE}"
           fi
 
           # log merged files and targets
-          docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.build),' ') }} -f ${files}
+          docker buildx bake --print ${{ join(fromJSON(steps.targets_json.outputs.build),' ') }} -f ${files}
 
-          json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.build),' ') }} -f ${files} \
+          json="$(docker buildx bake --print ${{ join(fromJSON(steps.targets_json.outputs.build),' ') }} -f ${files} \
             | jq -cr '
               .target |= map_values(."inherits" += ["docker-metadata-action"]) |
               .target |= map_values(."platforms" //= ["linux/amd64"]) |
@@ -1461,11 +1455,10 @@ jobs:
       #   ]
       # }
       - name: Build docker test matrix
-        id: docker_test
-        if: steps.docker_bake.outputs.json != ''
+        id: test_matrix
         env:
           <<: *dockerPlatformSlugMap
-          BAKE_JSON: "${{ steps.docker_bake.outputs.json }}"
+          BAKE_JSON: "${{ steps.bake_file.outputs.json }}"
           RUNS_ON: "${{ inputs.runs_on }}"
           DOCKER_RUNS_ON: "${{ inputs.docker_runs_on }}"
         run: |
@@ -1511,16 +1504,15 @@ jobs:
       #   ]
       # }
       - name: Build docker publish matrix
-        id: docker_publish
+        id: publish_matrix
         env:
           <<: *dockerPlatformSlugMap
-          BAKE_JSON: "${{ steps.docker_bake.outputs.json }}"
-        if: |
-          join(fromJSON(steps.docker_images_json.outputs.build)) != '' && join(fromJSON(steps.bake_targets_json.outputs.build)) != ''
+          BAKE_JSON: "${{ steps.bake_file.outputs.json }}"
+        if: join(fromJSON(steps.images_json.outputs.build)) != ''
         run: |
           matrix="$(jq -ncr \
-            --argjson images '${{ steps.docker_images_json.outputs.build }}' \
-            --argjson targets '${{ steps.bake_targets_json.outputs.build }}' \
+            --argjson images '${{ steps.images_json.outputs.build }}' \
+            --argjson targets '${{ steps.targets_json.outputs.build }}' \
             '{include: [([$images, $targets] | combinations | {image: .[0], target: .[1]})]}')"
 
           matrix="$(jq -cr '.include[] |= . + {"target_slug": (.target | gsub("[^[:alnum:]]"; "-"))}' <<< "${matrix}")"
@@ -1533,7 +1525,7 @@ jobs:
           echo "build=${matrix}">> $GITHUB_OUTPUT
 
   is_python:
-    name: Is python
+    name: Setup python
     env:
       SUPPORTED_VERSIONS: |
         3.8
@@ -1544,56 +1536,37 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.json), 'pyproject.toml')
 
     <<: *customWorkingDirectory
 
     outputs:
-      python_poetry: ${{ steps.python_poetry.outputs.enabled }}
-      python_versions: ${{ steps.python_versions.outputs.json }}
-      pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
+      is_poetry: ${{ contains(fromJSON(steps.pyproject_json.outputs.json).build-system.build-backend, 'poetry') }}
+      versions_json: ${{ steps.python_versions.outputs.json }}
+      pypi_publish: ${{ fromJSON(steps.pyproject_json.outputs.json).tool.poetry.packages != null && github.event.repository.private != true }}
+      pyproject_json: ${{ steps.pyproject_json.outputs.json }}
 
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
 
-      - name: Identify Poetry project
-        id: python_poetry
-        run: |
-          if test -f "pyproject.toml"
-          then
-            echo "found pyproject.toml"
-            if grep 'build-backend.*poetry' pyproject.toml
-            then
-              echo "Poetry used"
-              echo "enabled=true" >> $GITHUB_OUTPUT
-              echo "PYTHON_VERSIONS=[]" >> $GITHUB_ENV
-            else
-              echo "Poetry not used"
-              echo "enabled=false" >> $GITHUB_OUTPUT
-            fi
-
-            has_package=$(awk -F "=" '/^packages/ {print $2}' pyproject.toml)
-            if [ -n "${has_package}" ] && [ "${{ github.event.repository.visibility }}" = "public" ]
-            then
-              echo "pypi_publish=true" >> $GITHUB_OUTPUT
-            else
-              echo "pypi_publish=false" >> $GITHUB_OUTPUT
-            fi
-
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-            echo "pypi_publish=false" >> $GITHUB_OUTPUT
-          fi
-
       - <<: *setupPython
-        if: steps.python_poetry.outputs.enabled == 'true'
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
 
-      - *setupPoetry
+      - name: Convert pyproject.toml to json
+        id: pyproject_json
+        run: |
+          pip install toml
+          python -c "import toml, json; print(json.dumps(toml.load(open('pyproject.toml'))))" > pyproject.json
+          echo "json=$(<pyproject.json)" >> $GITHUB_OUTPUT
+
+      - <<: *setupPoetry
+        if: contains(fromJSON(steps.pyproject_json.outputs.json).build-system.build-backend, 'poetry')
 
       - name: Validate project Python requirements
-        if: steps.python_poetry.outputs.enabled == 'true'
+        if: contains(fromJSON(steps.pyproject_json.outputs.json).build-system.build-backend, 'poetry')
         run: |
           versions=()
           while IFS= read -r version; do
@@ -1610,7 +1583,7 @@ jobs:
       # default to the latest version on the runner
       # if none were matched by the checks above
       - name: Output compatible Python versions
-        if: steps.python_poetry.outputs.enabled == 'true'
+        if: contains(fromJSON(steps.pyproject_json.outputs.json).build-system.build-backend, 'poetry')
         id: python_versions
         run: |
           echo "json=[\"3.x\"]" >> $GITHUB_OUTPUT
@@ -1619,20 +1592,20 @@ jobs:
             echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
           fi
 
-  # check for Cargo.toml in source
   is_cargo:
-    name: Is rust
+    name: Setup rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: inputs.cargo_targets != ''
+      - process_files
+    if: inputs.cargo_targets != '' &&
+      contains(fromJSON(needs.process_files.outputs.json), 'Cargo.toml')
 
     <<: *customWorkingDirectory
 
     outputs:
-      cargo_targets: ${{ steps.cargo_targets.outputs.build }}
-      cargo: ${{ steps.cargo_yml.outputs.enabled }}
+      targets_json: ${{ steps.cargo_targets.outputs.build }}
 
     steps:
       - *getGitHubAppToken
@@ -1644,20 +1617,8 @@ jobs:
           INPUT: ${{ inputs.cargo_targets }}
           DELIMITER: ","
 
-      - name: Check Cargo.toml
-        id: cargo_yml
-        run: |
-          if test -f "Cargo.toml"
-          then
-            echo "found Cargo.toml"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
-
-  # check for balena.yml in source
   is_balena:
-    name: Is balena
+    name: Setup balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1667,8 +1628,7 @@ jobs:
     <<: *customWorkingDirectory
 
     outputs:
-      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
-      balena_yml: ${{ steps.balena_yml.outputs.enabled }}
+      slugs_json: ${{ steps.balena_slugs.outputs.build }}
 
     steps:
       - *getGitHubAppToken
@@ -1680,124 +1640,71 @@ jobs:
           INPUT: ${{ inputs.balena_slugs }}
           DELIMITER: ","
 
-      - name: Check for balena.yml
-        id: balena_yml
-        run: |
-          if test -f balena.yml
-          then
-            echo "found balena.yml"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
-
-  # check for custom actions in source
-  is_custom:
-    name: Is custom
+  custom_test_setup: &custom_setup
+    name: Setup custom test
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.root_json), '.github/actions/test/action.yml')
 
     <<: *rootWorkingDirectory
 
+    env:
+      MATRIX_INPUT: ${{ inputs.custom_finalize_matrix }}
+
     outputs:
-      custom_test: ${{ steps.custom.outputs.test }}
-      custom_publish: ${{ steps.custom.outputs.publish }}
-      custom_finalize: ${{ steps.custom.outputs.finalize }}
-      custom_clean: ${{ steps.custom.outputs.clean }}
-      custom_always: ${{ steps.custom.outputs.always }}
-
-      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
-
-      custom_environments_matrix: ${{ steps.custom_environments_matrix.outputs.build }}
+      matrix_json: ${{ steps.matrix_json.outputs.build }}
+      environments_json: ${{ steps.environments_json.outputs.build }}
 
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
 
-      - id: custom_test_matrix
+      - id: matrix_json
         <<: *jsonArrayBuilder
         env:
-          INPUT: ${{ inputs.custom_test_matrix }}
+          INPUT: ${{ env.MATRIX_INPUT }}
           DELIMITER: ","
 
-      - id: custom_publish_matrix
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.custom_publish_matrix }}
-          DELIMITER: ","
-
-      - id: custom_finalize_matrix
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.custom_finalize_matrix }}
-          DELIMITER: ","
-
-      - id: custom_environments_matrix
+      - id: environments_json
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_environments }}
           DELIMITER: ","
 
-      - name: Check for custom actions
-        id: custom
-        run: |
-          if [ -d .github/actions/test ]
-          then
-            echo "test=true" >> $GITHUB_OUTPUT
-          fi
-          if [ -d .github/actions/publish ]
-          then
-            echo "publish=true" >> $GITHUB_OUTPUT
-          fi
-          if [ -d .github/actions/finalize ]
-          then
-            echo "finalize=true" >> $GITHUB_OUTPUT
-          fi
-          if [ -d .github/actions/clean ]
-          then
-            echo "clean=true" >> $GITHUB_OUTPUT
-          fi
-          if [ -d .github/actions/always ]
-          then
-            echo "always=true" >> $GITHUB_OUTPUT
-          fi
+  custom_publish_setup:
+    <<: *custom_setup
+    name: Setup custom publish
+    if: contains(fromJSON(needs.process_files.outputs.root_json), '.github/actions/publish/action.yml')
+    env:
+      MATRIX_INPUT: ${{ inputs.custom_publish_matrix }}
 
-  is_website:
-    name: Is website
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      - versioned_source
-    if: inputs.cloudflare_website != ''
+  custom_finalize_setup:
+    <<: *custom_setup
+    name: Setup custom finalize
+    if: contains(fromJSON(needs.process_files.outputs.root_json), '.github/actions/finalize/action.yml')
+    env:
+      MATRIX_INPUT: ${{ inputs.custom_finalize_matrix }}
 
-    <<: *customWorkingDirectory
+  custom_always_setup:
+    <<: *custom_setup
+    name: Setup custom always
+    if: contains(fromJSON(needs.process_files.outputs.root_json), '.github/actions/always/action.yml')
+    env:
+      MATRIX_INPUT: ''
 
-    outputs:
-      has_readme: ${{ steps.has_readme.outputs.enabled }}
-
-    steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-
-      # Check if we have at least a README to build a website from
-      - name: Check for README for building a website
-        id: has_readme
-        run: |
-          if test -e "README.md"
-          then
-            echo "found README.md"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
+  custom_clean_setup:
+    <<: *custom_setup
+    name: Setup custom clean
+    if: contains(fromJSON(needs.process_files.outputs.root_json), '.github/actions/clean/action.yml')
+    env:
+      MATRIX_INPUT: ''
 
   is_cloudformation:
-    name: Is CloudFormation
+    name: Setup CloudFormation
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1807,7 +1714,7 @@ jobs:
     <<: *customWorkingDirectory
 
     outputs:
-      cloudformation: ${{ steps.validate_json.outputs.enabled }}
+      is_valid: ${{ steps.validate_json.outputs.enabled }}
       stacks: ${{ steps.cloudformation_stacks.outputs.matrix }}
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
 
@@ -1858,8 +1765,7 @@ jobs:
       - is_npm
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
-      needs.is_npm.outputs.npm == 'true'
+      github.event.pull_request.state == 'open'
 
     <<: *customWorkingDirectory
 
@@ -1882,14 +1788,14 @@ jobs:
       - *sortNodeVersions
 
       - <<: *setupNode
-        if: needs.is_npm.outputs.has_npm_lockfile == 'true'
+        if: needs.is_npm.outputs.has_lockfile == 'true'
         with:
           node-version: "${{ matrix.node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
           cache: "npm"
 
       - <<: *setupNode
-        if: needs.is_npm.outputs.has_npm_lockfile != 'true'
+        if: needs.is_npm.outputs.has_lockfile != 'true'
         with:
           node-version: "${{ matrix.node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
@@ -1926,7 +1832,7 @@ jobs:
           index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
 
           if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
-              if [ ${{ needs.is_npm.outputs.has_npm_lockfile }} == 'true' ]; then
+              if [ ${{ needs.is_npm.outputs.has_lockfile }} == 'true' ]; then
                 npm ci
               else
                 npm i
@@ -1948,7 +1854,7 @@ jobs:
         run: npm test
 
       - name: Run pack
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.is_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: |
           mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
@@ -1956,7 +1862,7 @@ jobs:
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
 
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.is_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1964,16 +1870,16 @@ jobs:
           retention-days: 90
 
       - name: Generate docs (if present)
-        if: needs.is_npm.outputs.npm_docs == 'true'
+        if: needs.is_npm.outputs.has_docs == 'true'
         shell: bash
         run: npm run doc
 
       - name: Compress docs
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.has_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
 
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.has_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1995,7 +1901,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
-      needs.is_npm.outputs.npm_private != 'true'
+      needs.is_npm.outputs.is_private != 'true'
 
     <<: *rootWorkingDirectory
 
@@ -2045,8 +1951,7 @@ jobs:
       - is_npm
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_npm.outputs.npm == 'true' &&
-      needs.is_npm.outputs.npm_private != 'true'
+      needs.is_npm.outputs.is_private != 'true'
 
     <<: *rootWorkingDirectory
 
@@ -2089,7 +1994,7 @@ jobs:
       - is_npm
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_npm.outputs.npm_docs == 'true'
+      needs.is_npm.outputs.has_docs == 'true'
 
     <<: *rootWorkingDirectory
 
@@ -2142,14 +2047,13 @@ jobs:
       - is_docker
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
-      needs.is_docker.outputs.docker_bake_json != ''
+      github.event.pull_request.state == 'open'
 
     <<: *customWorkingDirectory
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_test_matrix) }}
+      matrix: ${{ fromJSON(needs.is_docker.outputs.test_matrix) }}
 
     env:
       DOCKER_BUILDKIT: "1"
@@ -2211,11 +2115,11 @@ jobs:
 
       - name: Write docker bake file
         run: |
-          echo '${{ needs.is_docker.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
+          echo '${{ needs.is_docker.outputs.bake_file_json }}' > "${DOCKER_BAKE_FILE}"
           jq . "${DOCKER_BAKE_FILE}"
 
       - name: Write docker compose file
-        if: needs.is_docker.outputs.docker_compose_tests == 'true'
+        if: needs.is_docker.outputs.has_compose_tests == 'true'
         run: |
           files="
             docker-compose.yml
@@ -2272,7 +2176,7 @@ jobs:
 
       # save image to file before running compose tests to avoid tainting the published image
       - name: Save image to file
-        if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+        if: join(fromJSON(needs.is_docker.outputs.images_json)) != ''
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
           zstd -v ${DOCKER_TAR}
@@ -2291,14 +2195,14 @@ jobs:
 
       # run docker compose tests and print the logs from all services
       - name: Run docker compose tests
-        if: needs.is_docker.outputs.docker_compose_tests == 'true'
+        if: needs.is_docker.outputs.has_compose_tests == 'true'
         run: |
           docker compose run sut || { docker compose logs ; exit 1 ; }
           docker compose logs
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
-        if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+        if: join(fromJSON(needs.is_docker.outputs.images_json)) != ''
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           # this docker-{sha}-{target}-{platform} naming scheme is used by docker_publish to find the correct artifact
@@ -2321,8 +2225,7 @@ jobs:
     # allow some dependencies to be skipped
     if: |
       !failure() && !cancelled() &&
-      needs.docker_test.result == 'success' &&
-      join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+      needs.docker_test.result == 'success'
 
     <<: *rootWorkingDirectory
 
@@ -2334,7 +2237,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
+      matrix: ${{ fromJSON(needs.is_docker.outputs.publish_matrix) }}
 
     env:
       LOCAL_TAG: localhost:5000/sut:latest
@@ -2346,7 +2249,7 @@ jobs:
       - *setupCrane
 
       - name: Warn if tests skipped
-        if: needs.is_docker.outputs.docker_compose_tests != 'true'
+        if: needs.is_docker.outputs.has_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
 
       # https://github.com/actions/download-artifact
@@ -2438,14 +2341,13 @@ jobs:
       - is_docker
       - versioned_source
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+      github.event.pull_request.merged == true || github.event_name == 'push'
 
     <<: *rootWorkingDirectory
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
+      matrix: ${{ fromJSON(needs.is_docker.outputs.publish_matrix) }}
 
     steps:
       - *getGitHubAppToken
@@ -2509,7 +2411,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.is_balena.outputs.slugs_json) }}
 
     <<: *customWorkingDirectory
 
@@ -2533,7 +2435,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.is_balena.outputs.slugs_json) }}
 
     <<: *customWorkingDirectory
 
@@ -2558,14 +2460,14 @@ jobs:
       - versioned_source
     if: |
       github.event.pull_request.state == 'open' &&
-      needs.is_python.outputs.python_poetry == 'true'
+      needs.is_python.outputs.is_poetry == 'true'
 
     <<: *customWorkingDirectory
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
+        python-version: ${{ fromJSON(needs.is_python.outputs.versions_json) }}
 
     steps:
       - *getGitHubAppToken
@@ -2629,7 +2531,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.python_test.result == 'success' &&
-      needs.is_python.outputs.python_poetry == 'true' &&
+      needs.is_python.outputs.is_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
 
     <<: *customWorkingDirectory
@@ -2666,7 +2568,7 @@ jobs:
       - versioned_source
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_python.outputs.python_poetry == 'true' &&
+      needs.is_python.outputs.is_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
 
     <<: *customWorkingDirectory
@@ -2688,25 +2590,22 @@ jobs:
   # Website
   ###################################################
 
-  website_publish:
+  website_publish: &website_publish
     name: Publish website
     runs-on: ${{fromJSON(inputs.runs_on)}}
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
-      - is_website
       - npm_test
       - custom_test
       - docker_test
       - cargo_test
       - python_test
       - versioned_source
+      - process_files
     # allow some dependencies to be skipped
-    # skip unmerged closed PRs, allow all other events
     if: |
-      !failure() && !cancelled() &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
-      needs.is_website.result == 'success'
+      !failure() && !cancelled() && inputs.cloudflare_website != ''
 
     steps:
       - *getGitHubAppToken
@@ -2719,7 +2618,7 @@ jobs:
 
       - name: Docusaurus Builder
         if: |
-          needs.is_website.outputs.has_readme == 'true' &&
+          contains(fromJSON(needs.process_files.outputs.json), 'README.md') &&
           inputs.docusaurus_website != false
         uses: product-os/docusaurus-builder@ff2fcb1c5a93f4b843f6fa556a764977ef053dfc # v2.0.2
         with:
@@ -2729,14 +2628,8 @@ jobs:
           url: https://${{ inputs.cloudflare_website }}.pages.dev/
 
       - name: Custom Website Builder
-        if: |
-          inputs.docusaurus_website == false
+        if: inputs.docusaurus_website == false
         run: npm run deploy-docs --if-present
-
-      - name: Update deploy branch for merged PRs
-        if: github.event.pull_request.state != 'open'
-        run: |
-          echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@7c01cc48d88a1f83b4716e0557c168854a9dcdb8 # v3.4.1
@@ -2746,6 +2639,16 @@ jobs:
           wranglerVersion: "3.5.1" # latest - https://www.npmjs.com/package/wrangler
           command: --version
           postCommands: npx wrangler pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ | tee -a $GITHUB_STEP_SUMMARY
+
+  website_finalize:
+    <<: *website_publish
+    name: Finalize website
+    needs:
+      - versioned_source
+      - process_files
+    if: github.event.pull_request.merged == true && inputs.cloudflare_website != ''
+    env:
+      CF_BRANCH: ${{ github.event.repository.default_branch }}
 
   ###################################################
   # GitHub
@@ -2899,15 +2802,14 @@ jobs:
       - is_cargo
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
-      needs.is_cargo.outputs.cargo == 'true'
+      github.event.pull_request.state == 'open'
 
     <<: *customWorkingDirectory
 
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
+        target: ${{ fromJSON(needs.is_cargo.outputs.targets_json) }}
 
     outputs:
       package: ${{ steps.meta.outputs.package }}
@@ -2978,7 +2880,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
+        target: ${{ fromJSON(needs.is_cargo.outputs.targets_json) }}
 
     steps:
       - *getGitHubAppToken
@@ -3021,9 +2923,7 @@ jobs:
     needs:
       - is_cargo
       - versioned_source
-    if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_cargo.outputs.cargo == 'true'
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
 
     <<: *customWorkingDirectory
 
@@ -3052,18 +2952,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_custom
+      - custom_test_setup
       - versioned_source
-    if: |
-      github.event.pull_request.state == 'open' &&
-      needs.is_custom.outputs.custom_test == 'true'
+    if: github.event.pull_request.state == 'open'
 
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
+        value: ${{ fromJSON(needs.custom_test_setup.outputs.matrix_json) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
-        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+        environment: ${{ fromJSON(needs.custom_test_setup.outputs.environments_json) }}
 
     environment: ${{ matrix.environment }}
 
@@ -3097,7 +2995,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_custom
+      - custom_publish_setup
       - npm_test
       - custom_test
       - docker_test
@@ -3108,14 +3006,14 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open' &&
-      needs.is_custom.outputs.custom_publish == 'true'
+      needs.custom_publish_setup.result == 'success'
 
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
+        value: ${{ fromJSON(needs.custom_publish_setup.outputs.matrix_json) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
-        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+        environment: ${{ fromJSON(needs.custom_publish_setup.outputs.environments_json) }}
 
     environment: ${{ matrix.environment }}
 
@@ -3150,18 +3048,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_custom
+      - custom_finalize_setup
       - versioned_source
-    if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_custom.outputs.custom_finalize == 'true'
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
 
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
+        value: ${{ fromJSON(needs.custom_finalize_setup.outputs.matrix_json) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
-        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+        environment: ${{ fromJSON(needs.custom_finalize_setup.outputs.environments_json) }}
 
     environment: ${{ matrix.environment }}
 
@@ -3199,12 +3095,11 @@ jobs:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_custom
+      - custom_clean_setup
       - versioned_source
     if: |
       github.event.action == 'closed' &&
-      github.event.pull_request.merged == false &&
-      needs.is_custom.outputs.custom_clean == 'true'
+      github.event.pull_request.merged == false
 
     steps:
       - *rejectExternalCustomActions
@@ -3237,11 +3132,10 @@ jobs:
       - custom_publish
       - custom_finalize
       - custom_clean
-      - is_custom
+      - custom_always_setup
       - versioned_source
     if: |
-      always() &&
-      needs.is_custom.outputs.custom_always == 'true'
+      always()
 
     steps:
       - *rejectExternalCustomActions
@@ -3279,7 +3173,7 @@ jobs:
       - versioned_source
     if: |
       github.event.pull_request.state == 'open' &&
-      needs.is_cloudformation.outputs.cloudformation == 'true'
+      needs.is_cloudformation.outputs.is_valid == 'true'
 
     <<: *customWorkingDirectory
 
@@ -3493,7 +3387,7 @@ jobs:
       - is_cloudformation
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_cloudformation.outputs.cloudformation == 'true'
+      needs.is_cloudformation.outputs.is_valid == 'true'
 
     env:
       # https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-retries.html#cli-usage-retries-modes-adaptive
@@ -3559,13 +3453,17 @@ jobs:
     needs:
       - event_types
       - versioned_source
+      - process_files
       - is_npm
       - is_docker
       - is_python
       - is_cargo
       - is_balena
-      - is_custom
-      - is_website
+      - custom_test_setup
+      - custom_publish_setup
+      - custom_finalize_setup
+      - custom_always_setup
+      - custom_clean_setup
       - all_tests
       - npm_publish
       - docker_publish

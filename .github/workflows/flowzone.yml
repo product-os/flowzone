@@ -590,10 +590,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -624,23 +620,77 @@ jobs:
         uses: docker://rhysd/actionlint:1.6.27
         with:
           args: -color -shellcheck=
+  process_files:
+    name: Process files
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    outputs:
+      json: ${{ steps.process_files.outputs.json }}
+      root_json: ${{ steps.process_files_root.outputs.json }}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout refs/pull/${{ github.event.number }}/merge
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: refs/pull/${{ github.event.number }}/merge
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        if: github.event.pull_request.state == 'open'
+      - name: Checkout ${{ github.sha }}
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ github.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        if: github.event.pull_request.state != 'open'
+      - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
+        run: |
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
+      - name: Generate file list json
+        id: process_files
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          echo "json=$(git ls-files | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+      - name: Generate file list json
+        id: process_files_root
+        working-directory: .
+        run: |
+          echo "json=$(git ls-files | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
   is_npm:
-    name: Is npm
+    name: Setup npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.json), 'package.json')
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      npm: ${{ steps.npm.outputs.enabled }}
-      has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
-      npm_private: ${{ steps.npm.outputs.private }}
-      npm_docs: ${{ steps.npm.outputs.docs }}
+      has_lockfile: ${{ contains(fromJSON(needs.process_files.outputs.json), 'package-lock.json') || contains(fromJSON(needs.process_files.outputs.json), 'npm-shrinkwrap.json') }}
+      is_private: ${{ fromJSON(steps.package_json.outputs.json).private == true }}
+      has_docs: ${{ fromJSON(steps.package_json.outputs.json).scripts.doc != '' }}
       node_versions: ${{ steps.node_versions.outputs.json }}
-      npm_access: ${{ steps.access.outputs.access }}
+      npm_access: ${{ steps.access.outputs.value || 'public' }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -663,83 +713,64 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Check for package.json
-        id: npm
+      - name: Process package.json
+        id: package_json
         run: |
-          if test -f "package.json"
-          then
-            echo "found package.json"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-            echo "private=$(jq -r '.private' package.json)" >> $GITHUB_OUTPUT
-            echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> $GITHUB_OUTPUT
-            echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
-      - name: Check for package locks
-        id: npm_lock
-        run: |
-          has_npm_lockfile="$([ -e package-lock.json ] || [ -e npm-shrinkwrap.json ] && echo true || echo false)"
-          echo "has_npm_lockfile=${has_npm_lockfile}" >> $GITHUB_OUTPUT
+          echo "json=$(jq -c . package.json)" >> $GITHUB_OUTPUT
+          echo "NODE_VERSIONS=[]" >> $GITHUB_ENV
       - name: Set access
         id: access
-        run: |
-          access="public"
-          if [ "${{ github.event.repository.private }}" = "true" ]
-          then
-            access="restricted"
-          fi
-          echo "access=${access}" >> $GITHUB_OUTPUT
+        if: github.event.repository.private
+        run: echo "value=restricted" >> $GITHUB_OUTPUT
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
           node-version: 16.x
-        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+        env:
+          node-version: 16.x
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["16.x"]')" >> $GITHUB_ENV
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS:-[]}" | jq -c '. + ["${{ env.node-version }}"]')" >> $GITHUB_ENV
           fi
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
           node-version: 18.x
-        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+        env:
+          node-version: 18.x
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> $GITHUB_ENV
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS:-[]}" | jq -c '. + ["${{ env.node-version }}"]')" >> $GITHUB_ENV
           fi
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
           node-version: 20.x
-        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+        env:
+          node-version: 20.x
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> $GITHUB_ENV
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS:-[]}" | jq -c '. + ["${{ env.node-version }}"]')" >> $GITHUB_ENV
           fi
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
           node-version: 21.x
-        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+        env:
+          node-version: 21.x
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["21.x"]')" >> $GITHUB_ENV
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS:-[]}" | jq -c '. + ["${{ env.node-version }}"]')" >> $GITHUB_ENV
           fi
       - name: Set Node.js versions
-        if: steps.npm.outputs.enabled == 'true'
         id: node_versions
         run: |
           echo "json=[\"20.x\"]" >> $GITHUB_OUTPUT
@@ -748,23 +779,24 @@ jobs:
             echo "json=${NODE_VERSIONS}" >> $GITHUB_OUTPUT
           fi
   is_docker:
-    name: Is docker
+    name: Setup docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - process_files
+    if: inputs.docker_images != '' || contains(fromJSON(needs.process_files.outputs.json), 'docker-compose.test.yml') || contains(fromJSON(needs.process_files.outputs.json), 'docker-compose.test.yaml')
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      docker_images: ${{ steps.docker_images_json.outputs.build }}
-      docker_images_crlf: ${{ steps.docker_images_crlf.outputs.build }}
-      docker_compose_tests: ${{ steps.docker_compose_tests.outputs.found }}
-      bake_targets: ${{ steps.bake_targets_json.outputs.build }}
-      docker_bake_json: ${{ steps.docker_bake.outputs.json }}
-      docker_test_matrix: ${{ steps.docker_test.outputs.build }}
-      docker_publish_matrix: ${{ steps.docker_publish.outputs.build }}
+      images_json: ${{ steps.images_json.outputs.build }}
+      images_crlf: ${{ steps.images_crlf.outputs.build }}
+      has_compose_tests: ${{ contains(fromJSON(needs.process_files.outputs.json), 'docker-compose.test.yml') || contains(fromJSON(needs.process_files.outputs.json), 'docker-compose.test.yaml') }}
+      bake_file_json: ${{ steps.bake_file.outputs.json }}
+      test_matrix: ${{ steps.test_matrix.outputs.build || '[]' }}
+      publish_matrix: ${{ steps.publish_matrix.outputs.build || '[]' }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -787,7 +819,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - id: docker_images_json
+      - id: images_json
         name: Build JSON array
         shell: bash
         run: |
@@ -810,7 +842,7 @@ jobs:
         env:
           INPUT: ${{ inputs.docker_images }}
           DELIMITER: ","
-      - id: docker_images_crlf
+      - id: images_crlf
         name: Build newline-separated list from JSON array
         run: |
           build="$(echo "${{ join(fromJSON(env.INPUT),' ') }}" | tr " " "\n")"
@@ -819,8 +851,8 @@ jobs:
           echo "${build}" >> $GITHUB_OUTPUT
           echo "${DELIMITER}" >> $GITHUB_OUTPUT
         env:
-          INPUT: ${{ steps.docker_images_json.outputs.build }}
-      - id: bake_targets_json
+          INPUT: ${{ steps.images_json.outputs.build }}
+      - id: targets_json
         name: Build JSON array
         shell: bash
         run: |
@@ -843,25 +875,13 @@ jobs:
         env:
           INPUT: ${{ inputs.bake_targets }}
           DELIMITER: ","
-      - name: Check for docker compose test files
-        id: docker_compose_tests
-        run: |
-          if [ -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" ]
-          then
-            echo "found=true" >> $GITHUB_OUTPUT
-          else
-            echo "found=false" >> $GITHUB_OUTPUT
-          fi
       - name: Setup buildx
         id: setup_buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb
         with:
           version: v0.9.1
       - name: Pre-process Docker bake files
-        id: docker_bake
-        if: |
-          join(fromJSON(steps.docker_images_json.outputs.build)) != '' ||
-          steps.docker_compose_tests.outputs.found == 'true'
+        id: bake_file
         env:
           BAKE_FILE: /tmp/docker-bake.json
         run: |
@@ -869,14 +889,14 @@ jobs:
           then
             files="$(echo $(ls -1 docker-bake{.override,}.{json,hcl} 2>/dev/null) | sed 's/ / -f /')"
           else
-            echo '${{ steps.bake_targets_json.outputs.build }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
+            echo '${{ steps.targets_json.outputs.build }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
             files="${BAKE_FILE}"
           fi
 
           # log merged files and targets
-          docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.build),' ') }} -f ${files}
+          docker buildx bake --print ${{ join(fromJSON(steps.targets_json.outputs.build),' ') }} -f ${files}
 
-          json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.build),' ') }} -f ${files} \
+          json="$(docker buildx bake --print ${{ join(fromJSON(steps.targets_json.outputs.build),' ') }} -f ${files} \
             | jq -cr '
               .target |= map_values(."inherits" += ["docker-metadata-action"]) |
               .target |= map_values(."platforms" //= ["linux/amd64"]) |
@@ -886,8 +906,7 @@ jobs:
 
           echo "json=${json}">> $GITHUB_OUTPUT
       - name: Build docker test matrix
-        id: docker_test
-        if: steps.docker_bake.outputs.json != ''
+        id: test_matrix
         env:
           PLATFORM_SLUG_MAP: |
             {
@@ -903,7 +922,7 @@ jobs:
               "linux/riscv64": "riscv64",
               "windows/amd64": "windows-amd64"
             }
-          BAKE_JSON: ${{ steps.docker_bake.outputs.json }}
+          BAKE_JSON: ${{ steps.bake_file.outputs.json }}
           RUNS_ON: ${{ inputs.runs_on }}
           DOCKER_RUNS_ON: ${{ inputs.docker_runs_on }}
         run: |
@@ -931,7 +950,7 @@ jobs:
 
           echo "build=${matrix}">> $GITHUB_OUTPUT
       - name: Build docker publish matrix
-        id: docker_publish
+        id: publish_matrix
         env:
           PLATFORM_SLUG_MAP: |
             {
@@ -947,13 +966,12 @@ jobs:
               "linux/riscv64": "riscv64",
               "windows/amd64": "windows-amd64"
             }
-          BAKE_JSON: ${{ steps.docker_bake.outputs.json }}
-        if: |
-          join(fromJSON(steps.docker_images_json.outputs.build)) != '' && join(fromJSON(steps.bake_targets_json.outputs.build)) != ''
+          BAKE_JSON: ${{ steps.bake_file.outputs.json }}
+        if: join(fromJSON(steps.images_json.outputs.build)) != ''
         run: |
           matrix="$(jq -ncr \
-            --argjson images '${{ steps.docker_images_json.outputs.build }}' \
-            --argjson targets '${{ steps.bake_targets_json.outputs.build }}' \
+            --argjson images '${{ steps.images_json.outputs.build }}' \
+            --argjson targets '${{ steps.targets_json.outputs.build }}' \
             '{include: [([$images, $targets] | combinations | {image: .[0], target: .[1]})]}')"
 
           matrix="$(jq -cr '.include[] |= . + {"target_slug": (.target | gsub("[^[:alnum:]]"; "-"))}' <<< "${matrix}")"
@@ -965,7 +983,7 @@ jobs:
 
           echo "build=${matrix}">> $GITHUB_OUTPUT
   is_python:
-    name: Is python
+    name: Setup python
     env:
       SUPPORTED_VERSIONS: |
         3.8
@@ -976,14 +994,17 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.json), 'pyproject.toml')
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      python_poetry: ${{ steps.python_poetry.outputs.enabled }}
-      python_versions: ${{ steps.python_versions.outputs.json }}
-      pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
+      is_poetry: ${{ contains(fromJSON(steps.pyproject_json.outputs.json).build-system.build-backend, 'poetry') }}
+      versions_json: ${{ steps.python_versions.outputs.json }}
+      pypi_publish: ${{ fromJSON(steps.pyproject_json.outputs.json).tool.poetry.packages != null && github.event.repository.private != true }}
+      pyproject_json: ${{ steps.pyproject_json.outputs.json }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1006,47 +1027,24 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Identify Poetry project
-        id: python_poetry
-        run: |
-          if test -f "pyproject.toml"
-          then
-            echo "found pyproject.toml"
-            if grep 'build-backend.*poetry' pyproject.toml
-            then
-              echo "Poetry used"
-              echo "enabled=true" >> $GITHUB_OUTPUT
-              echo "PYTHON_VERSIONS=[]" >> $GITHUB_ENV
-            else
-              echo "Poetry not used"
-              echo "enabled=false" >> $GITHUB_OUTPUT
-            fi
-
-            has_package=$(awk -F "=" '/^packages/ {print $2}' pyproject.toml)
-            if [ -n "${has_package}" ] && [ "${{ github.event.repository.visibility }}" = "public" ]
-            then
-              echo "pypi_publish=true" >> $GITHUB_OUTPUT
-            else
-              echo "pypi_publish=false" >> $GITHUB_OUTPUT
-            fi
-
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-            echo "pypi_publish=false" >> $GITHUB_OUTPUT
-          fi
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
-        if: steps.python_poetry.outputs.enabled == 'true'
+      - name: Convert pyproject.toml to json
+        id: pyproject_json
+        run: |
+          pip install toml
+          python -c "import toml, json; print(json.dumps(toml.load(open('pyproject.toml'))))" > pyproject.json
+          echo "json=$(<pyproject.json)" >> $GITHUB_OUTPUT
       - name: Setup poetry
-        if: steps.setup-python.outputs.python-version != ''
+        if: contains(fromJSON(steps.pyproject_json.outputs.json).build-system.build-backend, 'poetry')
         uses: abatilo/actions-poetry@7b6d33e44b4f08d7021a1dee3c044e9c253d6439
         with:
           poetry-version: 1.5.1
       - name: Validate project Python requirements
-        if: steps.python_poetry.outputs.enabled == 'true'
+        if: contains(fromJSON(steps.pyproject_json.outputs.json).build-system.build-backend, 'poetry')
         run: |
           versions=()
           while IFS= read -r version; do
@@ -1060,7 +1058,7 @@ jobs:
           done <<< "$(echo -n "${SUPPORTED_VERSIONS}")"
           echo "PYTHON_VERSIONS=[$(IFS=,; echo "${versions[*]}")]" >> $GITHUB_ENV
       - name: Output compatible Python versions
-        if: steps.python_poetry.outputs.enabled == 'true'
+        if: contains(fromJSON(steps.pyproject_json.outputs.json).build-system.build-backend, 'poetry')
         id: python_versions
         run: |
           echo "json=[\"3.x\"]" >> $GITHUB_OUTPUT
@@ -1069,19 +1067,19 @@ jobs:
             echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
           fi
   is_cargo:
-    name: Is rust
+    name: Setup rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: inputs.cargo_targets != ''
+      - process_files
+    if: inputs.cargo_targets != '' && contains(fromJSON(needs.process_files.outputs.json), 'Cargo.toml')
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      cargo_targets: ${{ steps.cargo_targets.outputs.build }}
-      cargo: ${{ steps.cargo_yml.outputs.enabled }}
+      targets_json: ${{ steps.cargo_targets.outputs.build }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1127,18 +1125,8 @@ jobs:
         env:
           INPUT: ${{ inputs.cargo_targets }}
           DELIMITER: ","
-      - name: Check Cargo.toml
-        id: cargo_yml
-        run: |
-          if test -f "Cargo.toml"
-          then
-            echo "found Cargo.toml"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
   is_balena:
-    name: Is balena
+    name: Setup balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1149,8 +1137,7 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
-      balena_yml: ${{ steps.balena_yml.outputs.enabled }}
+      slugs_json: ${{ steps.balena_slugs.outputs.build }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1196,36 +1183,23 @@ jobs:
         env:
           INPUT: ${{ inputs.balena_slugs }}
           DELIMITER: ","
-      - name: Check for balena.yml
-        id: balena_yml
-        run: |
-          if test -f balena.yml
-          then
-            echo "found balena.yml"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
-  is_custom:
-    name: Is custom
+  custom_test_setup:
+    name: Setup custom test
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.root_json), '.github/actions/test/action.yml')
     defaults:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      MATRIX_INPUT: ${{ inputs.custom_finalize_matrix }}
     outputs:
-      custom_test: ${{ steps.custom.outputs.test }}
-      custom_publish: ${{ steps.custom.outputs.publish }}
-      custom_finalize: ${{ steps.custom.outputs.finalize }}
-      custom_clean: ${{ steps.custom.outputs.clean }}
-      custom_always: ${{ steps.custom.outputs.always }}
-      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
-      custom_environments_matrix: ${{ steps.custom_environments_matrix.outputs.build }}
+      matrix_json: ${{ steps.matrix_json.outputs.build }}
+      environments_json: ${{ steps.environments_json.outputs.build }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1249,10 +1223,11 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
-      - id: custom_test_matrix
+      - id: matrix_json
         name: Build JSON array
         shell: bash
         run: |
@@ -1273,55 +1248,9 @@ jobs:
 
           echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
         env:
-          INPUT: ${{ inputs.custom_test_matrix }}
+          INPUT: ${{ env.MATRIX_INPUT }}
           DELIMITER: ","
-      - id: custom_publish_matrix
-        name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
-        env:
-          INPUT: ${{ inputs.custom_publish_matrix }}
-          DELIMITER: ","
-      - id: custom_finalize_matrix
-        name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
-        env:
-          INPUT: ${{ inputs.custom_finalize_matrix }}
-          DELIMITER: ","
-      - id: custom_environments_matrix
+      - id: environments_json
         name: Build JSON array
         shell: bash
         run: |
@@ -1344,42 +1273,23 @@ jobs:
         env:
           INPUT: ${{ inputs.custom_environments }}
           DELIMITER: ","
-      - name: Check for custom actions
-        id: custom
-        run: |
-          if [ -d .github/actions/test ]
-          then
-            echo "test=true" >> $GITHUB_OUTPUT
-          fi
-          if [ -d .github/actions/publish ]
-          then
-            echo "publish=true" >> $GITHUB_OUTPUT
-          fi
-          if [ -d .github/actions/finalize ]
-          then
-            echo "finalize=true" >> $GITHUB_OUTPUT
-          fi
-          if [ -d .github/actions/clean ]
-          then
-            echo "clean=true" >> $GITHUB_OUTPUT
-          fi
-          if [ -d .github/actions/always ]
-          then
-            echo "always=true" >> $GITHUB_OUTPUT
-          fi
-  is_website:
-    name: Is website
+  custom_publish_setup:
+    name: Setup custom publish
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: inputs.cloudflare_website != ''
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.root_json), '.github/actions/publish/action.yml')
     defaults:
       run:
-        working-directory: ${{ inputs.working_directory }}
+        working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      MATRIX_INPUT: ${{ inputs.custom_publish_matrix }}
     outputs:
-      has_readme: ${{ steps.has_readme.outputs.enabled }}
+      matrix_json: ${{ steps.matrix_json.outputs.build }}
+      environments_json: ${{ steps.environments_json.outputs.build }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1402,18 +1312,329 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Check for README for building a website
-        id: has_readme
+      - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
-          if test -e "README.md"
-          then
-            echo "found README.md"
-            echo "enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=false" >> $GITHUB_OUTPUT
-          fi
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
+      - id: matrix_json
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+        env:
+          INPUT: ${{ env.MATRIX_INPUT }}
+          DELIMITER: ","
+      - id: environments_json
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+        env:
+          INPUT: ${{ inputs.custom_environments }}
+          DELIMITER: ","
+  custom_finalize_setup:
+    name: Setup custom finalize
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.root_json), '.github/actions/finalize/action.yml')
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      MATRIX_INPUT: ${{ inputs.custom_finalize_matrix }}
+    outputs:
+      matrix_json: ${{ steps.matrix_json.outputs.build }}
+      environments_json: ${{ steps.environments_json.outputs.build }}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
+        run: |
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
+      - id: matrix_json
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+        env:
+          INPUT: ${{ env.MATRIX_INPUT }}
+          DELIMITER: ","
+      - id: environments_json
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+        env:
+          INPUT: ${{ inputs.custom_environments }}
+          DELIMITER: ","
+  custom_always_setup:
+    name: Setup custom always
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.root_json), '.github/actions/always/action.yml')
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      MATRIX_INPUT: ""
+    outputs:
+      matrix_json: ${{ steps.matrix_json.outputs.build }}
+      environments_json: ${{ steps.environments_json.outputs.build }}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
+        run: |
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
+      - id: matrix_json
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+        env:
+          INPUT: ${{ env.MATRIX_INPUT }}
+          DELIMITER: ","
+      - id: environments_json
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+        env:
+          INPUT: ${{ inputs.custom_environments }}
+          DELIMITER: ","
+  custom_clean_setup:
+    name: Setup custom clean
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.root_json), '.github/actions/clean/action.yml')
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      MATRIX_INPUT: ""
+    outputs:
+      matrix_json: ${{ steps.matrix_json.outputs.build }}
+      environments_json: ${{ steps.environments_json.outputs.build }}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
+        run: |
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
+      - id: matrix_json
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+        env:
+          INPUT: ${{ env.MATRIX_INPUT }}
+          DELIMITER: ","
+      - id: environments_json
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+        env:
+          INPUT: ${{ inputs.custom_environments }}
+          DELIMITER: ","
   is_cloudformation:
-    name: Is CloudFormation
+    name: Setup CloudFormation
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
@@ -1424,7 +1645,7 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
-      cloudformation: ${{ steps.validate_json.outputs.enabled }}
+      is_valid: ${{ steps.validate_json.outputs.enabled }}
       stacks: ${{ steps.cloudformation_stacks.outputs.matrix }}
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
     steps:
@@ -1486,8 +1707,7 @@ jobs:
       - is_npm
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
-      needs.is_npm.outputs.npm == 'true'
+      github.event.pull_request.state == 'open'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1541,13 +1761,13 @@ jobs:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
           cache: npm
-        if: needs.is_npm.outputs.has_npm_lockfile == 'true'
+        if: needs.is_npm.outputs.has_lockfile == 'true'
       - name: Setup Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
-        if: needs.is_npm.outputs.has_npm_lockfile != 'true'
+        if: needs.is_npm.outputs.has_lockfile != 'true'
       - name: Generate metadata
         id: meta
         run: |
@@ -1572,7 +1792,7 @@ jobs:
           index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
 
           if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
-              if [ ${{ needs.is_npm.outputs.has_npm_lockfile }} == 'true' ]; then
+              if [ ${{ needs.is_npm.outputs.has_lockfile }} == 'true' ]; then
                 npm ci
               else
                 npm i
@@ -1590,28 +1810,28 @@ jobs:
         shell: script -q -e -c "bash --noprofile --norc -eo pipefail -x {0}" /tmp/test-session
         run: npm test
       - name: Run pack
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.is_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: |
           mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.is_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
           retention-days: 90
       - name: Generate docs (if present)
-        if: needs.is_npm.outputs.npm_docs == 'true'
+        if: needs.is_npm.outputs.has_docs == 'true'
         shell: bash
         run: npm run doc
       - name: Compress docs
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.has_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.has_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1631,7 +1851,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
-      needs.is_npm.outputs.npm_private != 'true'
+      needs.is_npm.outputs.is_private != 'true'
     defaults:
       run:
         working-directory: .
@@ -1680,8 +1900,7 @@ jobs:
       - is_npm
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_npm.outputs.npm == 'true' &&
-      needs.is_npm.outputs.npm_private != 'true'
+      needs.is_npm.outputs.is_private != 'true'
     defaults:
       run:
         working-directory: .
@@ -1736,7 +1955,7 @@ jobs:
       - is_npm
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_npm.outputs.npm_docs == 'true'
+      needs.is_npm.outputs.has_docs == 'true'
     defaults:
       run:
         working-directory: .
@@ -1790,15 +2009,14 @@ jobs:
       - is_docker
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
-      needs.is_docker.outputs.docker_bake_json != ''
+      github.event.pull_request.state == 'open'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_test_matrix) }}
+      matrix: ${{ fromJSON(needs.is_docker.outputs.test_matrix) }}
     env:
       DOCKER_BUILDKIT: "1"
     steps:
@@ -1951,10 +2169,10 @@ jobs:
           fi
       - name: Write docker bake file
         run: |
-          echo '${{ needs.is_docker.outputs.docker_bake_json }}' > "${DOCKER_BAKE_FILE}"
+          echo '${{ needs.is_docker.outputs.bake_file_json }}' > "${DOCKER_BAKE_FILE}"
           jq . "${DOCKER_BAKE_FILE}"
       - name: Write docker compose file
-        if: needs.is_docker.outputs.docker_compose_tests == 'true'
+        if: needs.is_docker.outputs.has_compose_tests == 'true'
         run: |
           files="
             docker-compose.yml
@@ -1987,7 +2205,7 @@ jobs:
           images: |
             sut
             localhost:5000/sut
-            ${{ needs.is_docker.outputs.docker_images_crlf }}
+            ${{ needs.is_docker.outputs.images_crlf }}
           labels: |
             org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
@@ -2004,7 +2222,7 @@ jobs:
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81
         with:
           images: |
-            ${{ needs.is_docker.outputs.docker_images_crlf }}
+            ${{ needs.is_docker.outputs.images_crlf }}
           tags: |
             type=raw,value=${{ github.base_ref || github.ref_name }}
             type=raw,value=${{ github.event.pull_request.head.sha }}
@@ -2014,7 +2232,7 @@ jobs:
             latest=true
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
-        if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+        if: join(fromJSON(needs.is_docker.outputs.images_json)) != ''
       - name: Docker bake
         id: docker_bake
         uses: docker/bake-action@017aa056d6bfc9797de5a5dd354a209dc07b490e
@@ -2039,7 +2257,7 @@ jobs:
           load: true
           provenance: false
       - name: Save image to file
-        if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+        if: join(fromJSON(needs.is_docker.outputs.images_json)) != ''
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
           zstd -v ${DOCKER_TAR}
@@ -2051,12 +2269,12 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger -v --name-match=kvm
       - name: Run docker compose tests
-        if: needs.is_docker.outputs.docker_compose_tests == 'true'
+        if: needs.is_docker.outputs.has_compose_tests == 'true'
         run: |
           docker compose run sut || { docker compose logs ; exit 1 ; }
           docker compose logs
       - name: Upload artifacts
-        if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+        if: join(fromJSON(needs.is_docker.outputs.images_json)) != ''
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:
           name: docker-${{ matrix.target_slug }}-${{ matrix.platform_slug }}
@@ -2076,8 +2294,7 @@ jobs:
       - python_test
     if: |
       !failure() && !cancelled() &&
-      needs.docker_test.result == 'success' &&
-      join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+      needs.docker_test.result == 'success'
     defaults:
       run:
         working-directory: .
@@ -2089,7 +2306,7 @@ jobs:
           - 5000:5000
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
+      matrix: ${{ fromJSON(needs.is_docker.outputs.publish_matrix) }}
     env:
       LOCAL_TAG: localhost:5000/sut:latest
     steps:
@@ -2164,7 +2381,7 @@ jobs:
         with:
           version: v0.14.0
       - name: Warn if tests skipped
-        if: needs.is_docker.outputs.docker_compose_tests != 'true'
+        if: needs.is_docker.outputs.has_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
       - name: Download required artifacts
         uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427
@@ -2295,15 +2512,14 @@ jobs:
       - is_docker
       - versioned_source
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+      github.event.pull_request.merged == true || github.event_name == 'push'
     defaults:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
+      matrix: ${{ fromJSON(needs.is_docker.outputs.publish_matrix) }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -2511,7 +2727,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.is_balena.outputs.slugs_json) }}
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2593,7 +2809,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
+        slug: ${{ fromJSON(needs.is_balena.outputs.slugs_json) }}
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2668,7 +2884,7 @@ jobs:
       - versioned_source
     if: |
       github.event.pull_request.state == 'open' &&
-      needs.is_python.outputs.python_poetry == 'true'
+      needs.is_python.outputs.is_poetry == 'true'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2676,7 +2892,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
+        python-version: ${{ fromJSON(needs.is_python.outputs.versions_json) }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -2757,7 +2973,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.python_test.result == 'success' &&
-      needs.is_python.outputs.python_poetry == 'true' &&
+      needs.is_python.outputs.is_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
     defaults:
       run:
@@ -2831,7 +3047,7 @@ jobs:
       - versioned_source
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_python.outputs.python_poetry == 'true' &&
+      needs.is_python.outputs.is_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
     defaults:
       run:
@@ -2881,17 +3097,15 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
-      - is_website
       - npm_test
       - custom_test
       - docker_test
       - cargo_test
       - python_test
       - versioned_source
+      - process_files
     if: |
-      !failure() && !cancelled() &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
-      needs.is_website.result == 'success'
+      !failure() && !cancelled() && inputs.cloudflare_website != ''
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -2924,7 +3138,7 @@ jobs:
           node-version: 18
       - name: Docusaurus Builder
         if: |
-          needs.is_website.outputs.has_readme == 'true' &&
+          contains(fromJSON(needs.process_files.outputs.json), 'README.md') &&
           inputs.docusaurus_website != false
         uses: product-os/docusaurus-builder@ff2fcb1c5a93f4b843f6fa556a764977ef053dfc
         with:
@@ -2933,13 +3147,68 @@ jobs:
           default_branch: ${{ github.event.repository.default_branch }}
           url: https://${{ inputs.cloudflare_website }}.pages.dev/
       - name: Custom Website Builder
-        if: |
-          inputs.docusaurus_website == false
+        if: inputs.docusaurus_website == false
         run: npm run deploy-docs --if-present
-      - name: Update deploy branch for merged PRs
-        if: github.event.pull_request.state != 'open'
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@7c01cc48d88a1f83b4716e0557c168854a9dcdb8
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          wranglerVersion: 3.5.1
+          command: --version
+          postCommands: npx wrangler pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/ | tee -a $GITHUB_STEP_SUMMARY
+  website_finalize:
+    name: Finalize website
+    runs-on: ${{fromJSON(inputs.runs_on)}}
+    env:
+      CF_BRANCH: ${{ github.event.repository.default_branch }}
+    needs:
+      - versioned_source
+      - process_files
+    if: github.event.pull_request.merged == true && inputs.cloudflare_website != ''
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Create local refs
+        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
-          echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
+          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+        with:
+          node-version: 18
+      - name: Docusaurus Builder
+        if: |
+          contains(fromJSON(needs.process_files.outputs.json), 'README.md') &&
+          inputs.docusaurus_website != false
+        uses: product-os/docusaurus-builder@63236af29edeedf5442e19cfcdf730d75d6d4a16
+        with:
+          repo: ${{ github.event.repository.name }}
+          org: ${{ github.repository_owner }}
+          default_branch: ${{ github.event.repository.default_branch }}
+          url: https://${{ inputs.cloudflare_website }}.pages.dev/
+      - name: Custom Website Builder
+        if: inputs.docusaurus_website == false
+        run: npm run deploy-docs --if-present
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@7c01cc48d88a1f83b4716e0557c168854a9dcdb8
         with:
@@ -3165,8 +3434,7 @@ jobs:
       - is_cargo
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
-      needs.is_cargo.outputs.cargo == 'true'
+      github.event.pull_request.state == 'open'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -3174,7 +3442,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
+        target: ${{ fromJSON(needs.is_cargo.outputs.targets_json) }}
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -3258,7 +3526,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
+        target: ${{ fromJSON(needs.is_cargo.outputs.targets_json) }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3314,9 +3582,7 @@ jobs:
     needs:
       - is_cargo
       - versioned_source
-    if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_cargo.outputs.cargo == 'true'
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -3358,17 +3624,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_custom
+      - custom_test_setup
       - versioned_source
-    if: |
-      github.event.pull_request.state == 'open' &&
-      needs.is_custom.outputs.custom_test == 'true'
+    if: github.event.pull_request.state == 'open'
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
+        value: ${{ fromJSON(needs.custom_test_setup.outputs.matrix_json) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
-        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+        environment: ${{ fromJSON(needs.custom_test_setup.outputs.environments_json) }}
     environment: ${{ matrix.environment }}
     steps:
       - name: Reject external custom actions
@@ -3398,6 +3662,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
@@ -3421,7 +3686,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_custom
+      - custom_publish_setup
       - npm_test
       - custom_test
       - docker_test
@@ -3431,13 +3696,13 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open' &&
-      needs.is_custom.outputs.custom_publish == 'true'
+      needs.custom_publish_setup.result == 'success'
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
+        value: ${{ fromJSON(needs.custom_publish_setup.outputs.matrix_json) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
-        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+        environment: ${{ fromJSON(needs.custom_publish_setup.outputs.environments_json) }}
     environment: ${{ matrix.environment }}
     steps:
       - name: Reject external custom actions
@@ -3467,6 +3732,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
@@ -3490,17 +3756,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_custom
+      - custom_finalize_setup
       - versioned_source
-    if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_custom.outputs.custom_finalize == 'true'
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
     strategy:
       fail-fast: false
       matrix:
-        value: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
+        value: ${{ fromJSON(needs.custom_finalize_setup.outputs.matrix_json) }}
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
-        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+        environment: ${{ fromJSON(needs.custom_finalize_setup.outputs.environments_json) }}
     environment: ${{ matrix.environment }}
     steps:
       - name: Reject external custom actions
@@ -3530,6 +3794,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
@@ -3553,12 +3818,11 @@ jobs:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_custom
+      - custom_clean_setup
       - versioned_source
     if: |
       github.event.action == 'closed' &&
-      github.event.pull_request.merged == false &&
-      needs.is_custom.outputs.custom_clean == 'true'
+      github.event.pull_request.merged == false
     steps:
       - name: Reject external custom actions
         if: |
@@ -3587,6 +3851,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
@@ -3608,11 +3873,10 @@ jobs:
       - custom_publish
       - custom_finalize
       - custom_clean
-      - is_custom
+      - custom_always_setup
       - versioned_source
     if: |
-      always() &&
-      needs.is_custom.outputs.custom_always == 'true'
+      always()
     steps:
       - name: Reject external custom actions
         if: |
@@ -3641,6 +3905,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
@@ -3663,7 +3928,7 @@ jobs:
       - versioned_source
     if: |
       github.event.pull_request.state == 'open' &&
-      needs.is_cloudformation.outputs.cloudformation == 'true'
+      needs.is_cloudformation.outputs.is_valid == 'true'
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -3949,7 +4214,7 @@ jobs:
       - is_cloudformation
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_cloudformation.outputs.cloudformation == 'true'
+      needs.is_cloudformation.outputs.is_valid == 'true'
     env:
       AWS_RETRY_MODE: adaptive
       AWS_MAX_ATTEMPTS: 10
@@ -4108,13 +4373,17 @@ jobs:
     needs:
       - event_types
       - versioned_source
+      - process_files
       - is_npm
       - is_docker
       - is_python
       - is_cargo
       - is_balena
-      - is_custom
-      - is_website
+      - custom_test_setup
+      - custom_publish_setup
+      - custom_finalize_setup
+      - custom_always_setup
+      - custom_clean_setup
       - all_tests
       - npm_publish
       - docker_publish
