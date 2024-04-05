@@ -1,4 +1,33 @@
 - commits:
+    - subject: Lint all workflows with actionlint
+      hash: 5c717697edff29e334e93471c7806007443952f8
+      body: ""
+      footer:
+        See: https://github.com/rhysd/actionlint
+        see: https://github.com/rhysd/actionlint
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Manually apply recommendations from actionlint
+      hash: 6226cdd7c893a47ad96f2808d1f3b3943c4dc668
+      body: |
+        Disable shellcheck linting for now
+      footer:
+        See: https://github.com/rhysd/actionlint/blob/main/docs/usage.md
+        see: https://github.com/rhysd/actionlint/blob/main/docs/usage.md
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.1.0
+  title: ""
+  date: 2024-04-05T16:39:02.284Z
+- commits:
     - subject: Remove support for terraform projects
       hash: b57215859d7704ebdc10e0d717ce08820e783f8c
       body: |
