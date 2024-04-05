@@ -584,6 +584,46 @@ jobs:
             -f ref='refs/tags/${{ steps.versionist.outputs.tag }}' \
             -f sha='${{ steps.create_tag.outputs.sha }}' \
             --include
+  lint_workflows:
+    name: Lint workflows
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Add problem matcher
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/.github/actionlint-matcher.json > ${{ runner.temp }}/actionlint-matcher.json
+          echo ::add-matcher::${{ runner.temp }}/actionlint-matcher.json
+      - name: Check workflow files
+        uses: docker://rhysd/actionlint:1.6.27
+        with:
+          args: -color -shellcheck=
   is_npm:
     name: Is npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -4042,6 +4082,7 @@ jobs:
       - cargo_test
       - custom_test
       - cloudformation_test
+      - lint_workflows
     if: |
       always() &&
       github.event.pull_request.state == 'open'

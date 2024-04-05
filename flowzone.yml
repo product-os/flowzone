@@ -1182,6 +1182,33 @@ jobs:
             -f sha='${{ steps.create_tag.outputs.sha }}' \
             --include
 
+  lint_workflows:
+    name: Lint workflows
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+
+    <<: *customWorkingDirectory
+
+    steps:
+      - *getGitHubAppToken
+      - *checkoutVersionedSha
+
+      # https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
+      - name: Add problem matcher
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/.github/actionlint-matcher.json > ${{ runner.temp }}/actionlint-matcher.json
+          echo ::add-matcher::${{ runner.temp }}/actionlint-matcher.json
+
+      # https://github.com/rhysd/actionlint/blob/main/docs/usage.md
+      - name: Check workflow files
+        # https://github.com/rhysd/actionlint/releases
+        uses: docker://rhysd/actionlint:1.6.27
+        with:
+          # disable shellcheck for now
+          args: -color -shellcheck=
+
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
     name: Is npm
@@ -3517,6 +3544,7 @@ jobs:
       - cargo_test
       - custom_test
       - cloudformation_test
+      - lint_workflows
     if: |
       always() &&
       github.event.pull_request.state == 'open'
