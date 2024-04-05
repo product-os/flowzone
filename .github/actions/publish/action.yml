@@ -29,17 +29,14 @@ runs:
         echo "${VARIABLES}"
 
     - name: Create artifact
-      id: artifact
       shell: bash
       run: |
-        path="$(mktemp)"
-        echo "Hello, World!" > "${path}"
-        echo "path=${path}" >> "${GITHUB_OUTPUT}"
+        echo "Hello, World!" > "${{ runner.temp }}/hello.world.${{ strategy.job-index }}"
 
     # Test publishing release artifacts to github
-    - name: Upload generated flowzone.yml
+    - name: Upload artifact
       uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
       with:
-        name: gh-release-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}-${{ strategy.job-index }}
-        path: ${{ steps.artifact.outputs.path }}
+        name: gh-release-custom-${{ strategy.job-index }}
+        path: ${{ runner.temp }}/hello.world.${{ strategy.job-index }}
         retention-days: 1
