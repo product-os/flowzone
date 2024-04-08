@@ -38,33 +38,30 @@ jobs:
       docker_publish_platform_tags: true
       docker_runs_on: >
         {
-          "linux/arm64": ["self-hosted","ARM64"],
+          "linux/amd64": ["actuated-1cpu-1gb"],
+          "linux/arm64": ["actuated-arm64-1cpu-1gb"],
           "linux/arm/v7": ["self-hosted","ARM64"],
           "linux/arm/v6": ["self-hosted","X64"]
         }
       # custom_test_matrix: foo,bar
       # custom_runs_on: >
       #   [
-      #     ["ubuntu-20.04"],
-      #     ["ubuntu-22.04"],
       #     ["ubuntu-latest"],
-      #     ["macos-13"],
-      #     ["windows-2019"],
-      #     ["windows-2022"],
-      #     ["self-hosted"]
+      #     ["macos-latest"],
+      #     ["windows-latest"],
+      #     ["self-hosted"],
+      #     ["actuated-1cpu-1gb"]
       #   ]
       # custom_environments: test
       custom_test_matrix: >
         {
           "value": ["foo", "bar"],
           "os": [
-            ["ubuntu-20.04"],
-            ["ubuntu-22.04"],
             ["ubuntu-latest"],
-            ["macos-13"],
-            ["windows-2019"],
-            ["windows-2022"],
-            ["self-hosted"]
+            ["macos-latest"],
+            ["windows-latest"],
+            ["self-hosted"],
+            ["actuated-1cpu-1gb"]
           ],
           "environment": ["test"]
         }
