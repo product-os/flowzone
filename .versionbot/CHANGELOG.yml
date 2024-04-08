@@ -1,4 +1,22 @@
 - commits:
+    - subject: Remove git hash from ephemeral artifact names
+      hash: d3e91386ac48e6887dac05993ee02252efef9244
+      body: |
+        These artifacts only need to exist until the next
+        job in the current workflow run, and have no need
+        for uniqeness as they are already tied to the run
+        of the workflow.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.1.3
+  title: ""
+  date: 2024-04-08T15:13:53.118Z
+- commits:
     - subject: Update docker/setup-buildx-action action to v3.3.0
       hash: 14b5c770894248778c06a27d1bdbb40007d71aef
       body: |
