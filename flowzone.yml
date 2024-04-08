@@ -360,7 +360,7 @@
       images: |
         sut
         localhost:5000/sut
-        ${{ needs.is_docker.outputs.images_crlf }}
+        ${{ needs.docker_setup.outputs.images_crlf }}
       labels: |
         org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
         org.opencontainers.image.ref.name=${{ matrix.target }}
@@ -377,10 +377,10 @@
     <<: *dockerTestMetadata
     id: cache_meta
     # ensure images_crlf is not an empty list
-    if: join(fromJSON(needs.is_docker.outputs.images_json)) != ''
+    if: join(fromJSON(needs.docker_setup.outputs.images_json)) != ''
     with:
       images: |
-        ${{ needs.is_docker.outputs.images_crlf }}
+        ${{ needs.docker_setup.outputs.images_crlf }}
       tags: |
         type=raw,value=${{ github.base_ref || github.ref_name }}
         type=raw,value=${{ github.event.pull_request.head.sha }}
@@ -544,7 +544,7 @@
     name: Sort node versions
     id: node_versions
     env:
-      VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
+      VERSIONS: ${{ needs.npm_setup.outputs.node_versions }}
     run: |
       echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> $GITHUB_OUTPUT
       echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> $GITHUB_OUTPUT
@@ -1245,7 +1245,7 @@ jobs:
           echo "json=$(git ls-files | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
 
   # check if the repository has a package.json file and which engine versions are supported
-  is_npm:
+  npm_setup:
     name: Setup npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
@@ -1332,7 +1332,7 @@ jobs:
           fi
 
   # pre-process any docker-compose and docker-bake files
-  is_docker:
+  docker_setup:
     name: Setup docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
@@ -1524,7 +1524,7 @@ jobs:
 
           echo "build=${matrix}">> $GITHUB_OUTPUT
 
-  is_python:
+  python_setup:
     name: Setup python
     env:
       SUPPORTED_VERSIONS: |
@@ -1592,7 +1592,7 @@ jobs:
             echo "json=${PYTHON_VERSIONS}" >> $GITHUB_OUTPUT
           fi
 
-  is_cargo:
+  cargo_setup:
     name: Setup rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
@@ -1617,7 +1617,7 @@ jobs:
           INPUT: ${{ inputs.cargo_targets }}
           DELIMITER: ","
 
-  is_balena:
+  balena_setup:
     name: Setup balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
@@ -1703,7 +1703,7 @@ jobs:
     env:
       MATRIX_INPUT: ''
 
-  is_cloudformation:
+  cloudformation_setup:
     name: Setup CloudFormation
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
@@ -1762,7 +1762,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_npm
+      - npm_setup
       - versioned_source
     if: |
       github.event.pull_request.state == 'open'
@@ -1772,7 +1772,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node_version: ${{ fromJSON(needs.is_npm.outputs.node_versions) }}
+        node_version: ${{ fromJSON(needs.npm_setup.outputs.node_versions) }}
 
     outputs:
       package: ${{ steps.meta.outputs.package }}
@@ -1788,14 +1788,14 @@ jobs:
       - *sortNodeVersions
 
       - <<: *setupNode
-        if: needs.is_npm.outputs.has_lockfile == 'true'
+        if: needs.npm_setup.outputs.has_lockfile == 'true'
         with:
           node-version: "${{ matrix.node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
           cache: "npm"
 
       - <<: *setupNode
-        if: needs.is_npm.outputs.has_lockfile != 'true'
+        if: needs.npm_setup.outputs.has_lockfile != 'true'
         with:
           node-version: "${{ matrix.node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
@@ -1832,7 +1832,7 @@ jobs:
           index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
 
           if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
-              if [ ${{ needs.is_npm.outputs.has_lockfile }} == 'true' ]; then
+              if [ ${{ needs.npm_setup.outputs.has_lockfile }} == 'true' ]; then
                 npm ci
               else
                 npm i
@@ -1854,7 +1854,7 @@ jobs:
         run: npm test
 
       - name: Run pack
-        if: needs.is_npm.outputs.is_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.npm_setup.outputs.is_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: |
           mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
@@ -1862,7 +1862,7 @@ jobs:
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
 
       - name: Upload artifact
-        if: needs.is_npm.outputs.is_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.npm_setup.outputs.is_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1870,16 +1870,16 @@ jobs:
           retention-days: 90
 
       - name: Generate docs (if present)
-        if: needs.is_npm.outputs.has_docs == 'true'
+        if: needs.npm_setup.outputs.has_docs == 'true'
         shell: bash
         run: npm run doc
 
       - name: Compress docs
-        if: needs.is_npm.outputs.has_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.npm_setup.outputs.has_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
 
       - name: Upload artifact
-        if: needs.is_npm.outputs.has_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.npm_setup.outputs.has_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1891,7 +1891,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_npm
+      - npm_setup
       - npm_test
       - custom_test
       - docker_test
@@ -1901,7 +1901,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
-      needs.is_npm.outputs.is_private != 'true'
+      needs.npm_setup.outputs.is_private != 'true'
 
     <<: *rootWorkingDirectory
 
@@ -1940,7 +1940,7 @@ jobs:
           if [ ${{ github.run_attempt }} -gt  1 ]; then
             npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$((${{ github.run_attempt }} - 1)) || true
           fi
-          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}" --access="${{ needs.npm_setup.outputs.npm_access }}"
           npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} ${{ needs.npm_test.outputs.branch_tag }}
 
   npm_finalize:
@@ -1948,10 +1948,10 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_npm
+      - npm_setup
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_npm.outputs.is_private != 'true'
+      needs.npm_setup.outputs.is_private != 'true'
 
     <<: *rootWorkingDirectory
 
@@ -1984,17 +1984,17 @@ jobs:
         run: |
           npm config set ignore-scripts true
           pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
-          npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
+          npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.npm_setup.outputs.npm_access }}"
 
   npm_docs_finalize:
     name: Finalize npm docs
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_npm
+      - npm_setup
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_npm.outputs.has_docs == 'true'
+      needs.npm_setup.outputs.has_docs == 'true'
 
     <<: *rootWorkingDirectory
 
@@ -2044,7 +2044,7 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_docker
+      - docker_setup
       - versioned_source
     if: |
       github.event.pull_request.state == 'open'
@@ -2053,7 +2053,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.is_docker.outputs.test_matrix) }}
+      matrix: ${{ fromJSON(needs.docker_setup.outputs.test_matrix) }}
 
     env:
       DOCKER_BUILDKIT: "1"
@@ -2115,11 +2115,11 @@ jobs:
 
       - name: Write docker bake file
         run: |
-          echo '${{ needs.is_docker.outputs.bake_file_json }}' > "${DOCKER_BAKE_FILE}"
+          echo '${{ needs.docker_setup.outputs.bake_file_json }}' > "${DOCKER_BAKE_FILE}"
           jq . "${DOCKER_BAKE_FILE}"
 
       - name: Write docker compose file
-        if: needs.is_docker.outputs.has_compose_tests == 'true'
+        if: needs.docker_setup.outputs.has_compose_tests == 'true'
         run: |
           files="
             docker-compose.yml
@@ -2176,7 +2176,7 @@ jobs:
 
       # save image to file before running compose tests to avoid tainting the published image
       - name: Save image to file
-        if: join(fromJSON(needs.is_docker.outputs.images_json)) != ''
+        if: join(fromJSON(needs.docker_setup.outputs.images_json)) != ''
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
           zstd -v ${DOCKER_TAR}
@@ -2195,14 +2195,14 @@ jobs:
 
       # run docker compose tests and print the logs from all services
       - name: Run docker compose tests
-        if: needs.is_docker.outputs.has_compose_tests == 'true'
+        if: needs.docker_setup.outputs.has_compose_tests == 'true'
         run: |
           docker compose run sut || { docker compose logs ; exit 1 ; }
           docker compose logs
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
-        if: join(fromJSON(needs.is_docker.outputs.images_json)) != ''
+        if: join(fromJSON(needs.docker_setup.outputs.images_json)) != ''
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           # this docker-{sha}-{target}-{platform} naming scheme is used by docker_publish to find the correct artifact
@@ -2216,7 +2216,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-      - is_docker
+      - docker_setup
       - npm_test
       - custom_test
       - docker_test
@@ -2237,7 +2237,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.is_docker.outputs.publish_matrix) }}
+      matrix: ${{ fromJSON(needs.docker_setup.outputs.publish_matrix) }}
 
     env:
       LOCAL_TAG: localhost:5000/sut:latest
@@ -2249,7 +2249,7 @@ jobs:
       - *setupCrane
 
       - name: Warn if tests skipped
-        if: needs.is_docker.outputs.has_compose_tests != 'true'
+        if: needs.docker_setup.outputs.has_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
 
       # https://github.com/actions/download-artifact
@@ -2338,7 +2338,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_docker
+      - docker_setup
       - versioned_source
     if: |
       github.event.pull_request.merged == true || github.event_name == 'push'
@@ -2347,7 +2347,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.is_docker.outputs.publish_matrix) }}
+      matrix: ${{ fromJSON(needs.docker_setup.outputs.publish_matrix) }}
 
     steps:
       - *getGitHubAppToken
@@ -2395,7 +2395,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_balena
+      - balena_setup
       - npm_test
       - custom_test
       - docker_test
@@ -2405,13 +2405,13 @@ jobs:
     # allow some dependencies to be skipped
     if: |
       !failure() && !cancelled() &&
-      needs.is_balena.result == 'success' &&
+      needs.balena_setup.result == 'success' &&
       github.event.pull_request.state == 'open'
 
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.is_balena.outputs.slugs_json) }}
+        slug: ${{ fromJSON(needs.balena_setup.outputs.slugs_json) }}
 
     <<: *customWorkingDirectory
 
@@ -2427,7 +2427,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_balena
+      - balena_setup
       - versioned_source
     if: |
       github.event.pull_request.merged == true || github.event_name == 'push'
@@ -2435,7 +2435,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: ${{ fromJSON(needs.is_balena.outputs.slugs_json) }}
+        slug: ${{ fromJSON(needs.balena_setup.outputs.slugs_json) }}
 
     <<: *customWorkingDirectory
 
@@ -2456,18 +2456,18 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_python
+      - python_setup
       - versioned_source
     if: |
       github.event.pull_request.state == 'open' &&
-      needs.is_python.outputs.is_poetry == 'true'
+      needs.python_setup.outputs.is_poetry == 'true'
 
     <<: *customWorkingDirectory
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ fromJSON(needs.is_python.outputs.versions_json) }}
+        python-version: ${{ fromJSON(needs.python_setup.outputs.versions_json) }}
 
     steps:
       - *getGitHubAppToken
@@ -2520,7 +2520,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_python
+      - python_setup
       - npm_test
       - custom_test
       - docker_test
@@ -2531,8 +2531,8 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.python_test.result == 'success' &&
-      needs.is_python.outputs.is_poetry == 'true' &&
-      needs.is_python.outputs.pypi_publish == 'true'
+      needs.python_setup.outputs.is_poetry == 'true' &&
+      needs.python_setup.outputs.pypi_publish == 'true'
 
     <<: *customWorkingDirectory
 
@@ -2564,12 +2564,12 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_python
+      - python_setup
       - versioned_source
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_python.outputs.is_poetry == 'true' &&
-      needs.is_python.outputs.pypi_publish == 'true'
+      needs.python_setup.outputs.is_poetry == 'true' &&
+      needs.python_setup.outputs.pypi_publish == 'true'
 
     <<: *customWorkingDirectory
     steps:
@@ -2799,7 +2799,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_cargo
+      - cargo_setup
       - versioned_source
     if: |
       github.event.pull_request.state == 'open'
@@ -2809,7 +2809,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.is_cargo.outputs.targets_json) }}
+        target: ${{ fromJSON(needs.cargo_setup.outputs.targets_json) }}
 
     outputs:
       package: ${{ steps.meta.outputs.package }}
@@ -2862,7 +2862,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_cargo
+      - cargo_setup
       - npm_test
       - custom_test
       - docker_test
@@ -2880,7 +2880,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.is_cargo.outputs.targets_json) }}
+        target: ${{ fromJSON(needs.cargo_setup.outputs.targets_json) }}
 
     steps:
       - *getGitHubAppToken
@@ -2921,7 +2921,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_cargo
+      - cargo_setup
       - versioned_source
     if: github.event.pull_request.merged == true || github.event_name == 'push'
 
@@ -3165,15 +3165,15 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
-        include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
+        stack: ${{ fromJSON(needs.cloudformation_setup.outputs.stacks) }}
+        include: ${{ fromJSON(needs.cloudformation_setup.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_cloudformation
+      - cloudformation_setup
       - versioned_source
     if: |
       github.event.pull_request.state == 'open' &&
-      needs.is_cloudformation.outputs.is_valid == 'true'
+      needs.cloudformation_setup.outputs.is_valid == 'true'
 
     <<: *customWorkingDirectory
 
@@ -3380,14 +3380,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
-        include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
+        stack: ${{ fromJSON(needs.cloudformation_setup.outputs.stacks) }}
+        include: ${{ fromJSON(needs.cloudformation_setup.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - is_cloudformation
+      - cloudformation_setup
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_cloudformation.outputs.is_valid == 'true'
+      needs.cloudformation_setup.outputs.is_valid == 'true'
 
     env:
       # https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-retries.html#cli-usage-retries-modes-adaptive
@@ -3454,11 +3454,11 @@ jobs:
       - event_types
       - versioned_source
       - process_files
-      - is_npm
-      - is_docker
-      - is_python
-      - is_cargo
-      - is_balena
+      - npm_setup
+      - docker_setup
+      - python_setup
+      - cargo_setup
+      - balena_setup
       - custom_test_setup
       - custom_publish_setup
       - custom_finalize_setup
