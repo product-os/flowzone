@@ -1,4 +1,20 @@
 - commits:
+    - subject: Support custom values as a matrix instead of a list
+      hash: 7b51ccb4abb13bf4ca26eade6b50e84332819373
+      body: |
+        This is a far more flexible implentation allowing
+        any combination of matrix strategies for custom jobs.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.2.0
+  title: ""
+  date: 2024-04-11T15:37:23.318Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.55
       hash: 611a296c0a0af35222cbd904f8953a14b031aa86
       body: |
