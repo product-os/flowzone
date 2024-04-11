@@ -1,4 +1,20 @@
 - commits:
+    - subject: Ignore custom runner labels in actionlint
+      hash: a81aca0cb5baf3f18ca4c658f51ce74351e2ba91
+      body: |
+        Otherwise we get errors when using labels like "vm"
+        or "actuated".
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.2.1
+  title: ""
+  date: 2024-04-11T22:33:42.001Z
+- commits:
     - subject: Support custom values as a matrix instead of a list
       hash: 7b51ccb4abb13bf4ca26eade6b50e84332819373
       body: |
