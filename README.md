@@ -299,11 +299,6 @@ jobs:
           "ubuntu-22.04"
         ]
 
-      # JSON 2-dimensional matrix of runner label strings for custom jobs.
-      # Type: string
-      # Required: false
-      custom_runs_on:
-
       # JSON key-value pairs mapping platforms to arrays of runner labels. Unlisted platforms will
       # use `runs_on`.
       # Type: string
@@ -338,22 +333,32 @@ jobs:
       # Required: false
       restrict_custom_actions: true
 
-      # Comma-delimited string of values that will be passed to the custom test action.
+      # JSON matrix strategy for the custom test action. Properties 'environment' and 'os' will be
+      # applied to the job.
       # Type: string
       # Required: false
       custom_test_matrix: 
 
-      # Comma-delimited string of values that will be passed to the custom publish action.
+      # JSON matrix strategy for the custom publish action. Properties 'environment' and 'os' will
+      # be applied to the job.
       # Type: string
       # Required: false
       custom_publish_matrix: 
 
-      # Comma-delimited string of values that will be passed to the custom finalize action.
+      # JSON matrix strategy for the custom finalize action. Properties 'environment' and 'os'
+      # will be applied to the job.
       # Type: string
       # Required: false
       custom_finalize_matrix: 
 
-      # Comma-delimited string of environments that will be used for all custom actions.
+      # Deprecated. Add the 'os' property in custom_test_matrix, custom_publish_matrix, and
+      # custom_finalize_matrix instead.
+      # Type: string
+      # Required: false
+      custom_runs_on:
+
+      # Deprecated. Add the 'environments' property in custom_test_matrix, custom_publish_matrix,
+      # and custom_finalize_matrix instead.
       # Type: string
       # Required: false
       custom_environments: 

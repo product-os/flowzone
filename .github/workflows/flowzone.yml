@@ -208,10 +208,6 @@ on:
           [
             "ubuntu-22.04"
           ]
-      custom_runs_on:
-        description: JSON 2-dimensional matrix of runner label strings for custom jobs.
-        type: string
-        required: false
       docker_runs_on:
         description: JSON key-value pairs mapping platforms to arrays of runner labels. Unlisted platforms will use `runs_on`.
         type: string
@@ -242,22 +238,26 @@ on:
         required: false
         default: true
       custom_test_matrix:
-        description: Comma-delimited string of values that will be passed to the custom test action.
+        description: JSON matrix strategy for the custom test action. Properties 'environment' and 'os' will be applied to the job.
         type: string
         required: false
         default: ""
       custom_publish_matrix:
-        description: Comma-delimited string of values that will be passed to the custom publish action.
+        description: JSON matrix strategy for the custom publish action. Properties 'environment' and 'os' will be applied to the job.
         type: string
         required: false
         default: ""
       custom_finalize_matrix:
-        description: Comma-delimited string of values that will be passed to the custom finalize action.
+        description: JSON matrix strategy for the custom finalize action. Properties 'environment' and 'os' will be applied to the job.
         type: string
         required: false
         default: ""
+      custom_runs_on:
+        description: Deprecated. Add the 'os' property in custom_test_matrix, custom_publish_matrix, and custom_finalize_matrix instead.
+        type: string
+        required: false
       custom_environments:
-        description: Comma-delimited string of environments that will be used for all custom actions.
+        description: Deprecated. Add the 'environments' property in custom_test_matrix, custom_publish_matrix, and custom_finalize_matrix instead.
         type: string
         required: false
         default: ""
@@ -807,6 +807,7 @@ jobs:
           ')"
 
           echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
         env:
           INPUT: ${{ inputs.docker_images }}
           DELIMITER: ","
@@ -840,6 +841,7 @@ jobs:
           ')"
 
           echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
         env:
           INPUT: ${{ inputs.bake_targets }}
           DELIMITER: ","
@@ -1124,6 +1126,7 @@ jobs:
           ')"
 
           echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
         env:
           INPUT: ${{ inputs.cargo_targets }}
           DELIMITER: ","
@@ -1193,6 +1196,7 @@ jobs:
           ')"
 
           echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
         env:
           INPUT: ${{ inputs.balena_slugs }}
           DELIMITER: ","
@@ -1222,10 +1226,9 @@ jobs:
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_clean: ${{ steps.custom.outputs.clean }}
       custom_always: ${{ steps.custom.outputs.always }}
-      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.build }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.build }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.build }}
-      custom_environments_matrix: ${{ steps.custom_environments_matrix.outputs.build }}
+      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.json || inputs.custom_test_matrix }}
+      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.json || inputs.custom_test_matrix }}
+      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_publish_matrix }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1252,75 +1255,6 @@ jobs:
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
-      - id: custom_test_matrix
-        name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-        env:
-          INPUT: ${{ inputs.custom_test_matrix }}
-          DELIMITER: ","
-      - id: custom_publish_matrix
-        name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-        env:
-          INPUT: ${{ inputs.custom_publish_matrix }}
-          DELIMITER: ","
-      - id: custom_finalize_matrix
-        name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-        env:
-          INPUT: ${{ inputs.custom_finalize_matrix }}
-          DELIMITER: ","
       - id: custom_environments_matrix
         name: Build JSON array
         shell: bash
@@ -1341,9 +1275,124 @@ jobs:
           ')"
 
           echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
         env:
           INPUT: ${{ inputs.custom_environments }}
           DELIMITER: ","
+      - id: custom_test_values
+        if: contains(inputs.custom_test_matrix, '{') != true
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        env:
+          INPUT: ${{ inputs.custom_test_matrix }}
+          DELIMITER: ","
+      - name: Create matrix from custom values
+        id: custom_test_matrix
+        if: steps.custom_test_values.outputs.json != ''
+        env:
+          MATRIX: |
+            {
+              "value": ${{ steps.custom_test_values.outputs.json }},
+              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }},
+              "environment": ${{ steps.custom_environments_matrix.outputs.json }}
+            }
+        run: |
+          json=$(jq -e -c . <<<"${MATRIX}") || exit $?
+          echo "json=${json}" >> "${GITHUB_OUTPUT}"
+      - id: custom_publish_values
+        if: contains(inputs.custom_publish_matrix, '{') != true
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        env:
+          INPUT: ${{ inputs.custom_publish_matrix }}
+          DELIMITER: ","
+      - name: Create matrix from custom values
+        id: custom_publish_matrix
+        if: steps.custom_publish_values.outputs.json != ''
+        env:
+          MATRIX: |
+            {
+              "value": ${{ steps.custom_publish_values.outputs.json }},
+              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }},
+              "environment": ${{ steps.custom_environments_matrix.outputs.json }}
+            }
+        run: |
+          json=$(jq -e -c . <<<"${MATRIX}") || exit $?
+          echo "json=${json}" >> "${GITHUB_OUTPUT}"
+      - id: custom_finalize_values
+        if: contains(inputs.custom_finalize_matrix, '{') != true
+        name: Build JSON array
+        shell: bash
+        run: |
+          set -x
+
+          # Remove spaces and newlines from the input
+          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
+
+          # Convert to JSON array using jq to split the string by the given delimiter
+          # Add a step to check if the array is empty, default to [""] if so
+          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
+            if $input == "" then
+              [""] # Default to a single empty string element if input is empty
+            else
+              $input | split($delim) # Split the input by the delimiter
+            end
+          ')"
+
+          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        env:
+          INPUT: ${{ inputs.custom_finalize_matrix }}
+          DELIMITER: ","
+      - name: Create matrix from custom values
+        id: custom_finalize_matrix
+        if: steps.custom_finalize_values.outputs.json != ''
+        env:
+          MATRIX: |
+            {
+              "value": ${{ steps.custom_finalize_values.outputs.json }},
+              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }},
+              "environment": ${{ steps.custom_environments_matrix.outputs.json }}
+            }
+        run: |
+          json=$(jq -e -c . <<<"${MATRIX}") || exit $?
+          echo "json=${json}" >> "${GITHUB_OUTPUT}"
       - name: Check for custom actions
         id: custom
         run: |
@@ -1896,6 +1945,7 @@ jobs:
           ')"
 
           echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
         env:
           INPUT: ${{ steps.setup_buildx.outputs.platforms }}
           DELIMITER: ","
@@ -3365,10 +3415,7 @@ jobs:
       needs.is_custom.outputs.custom_test == 'true'
     strategy:
       fail-fast: false
-      matrix:
-        value: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
-        os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
-        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+      matrix: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
     environment: ${{ matrix.environment }}
     steps:
       - name: Reject external custom actions
@@ -3436,10 +3483,7 @@ jobs:
       needs.is_custom.outputs.custom_publish == 'true'
     strategy:
       fail-fast: false
-      matrix:
-        value: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
-        os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
-        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+      matrix: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
     environment: ${{ matrix.environment }}
     steps:
       - name: Reject external custom actions
@@ -3501,10 +3545,7 @@ jobs:
       needs.is_custom.outputs.custom_finalize == 'true'
     strategy:
       fail-fast: false
-      matrix:
-        value: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
-        os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
-        environment: ${{ fromJSON(needs.is_custom.outputs.custom_environments_matrix) }}
+      matrix: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
     environment: ${{ matrix.environment }}
     steps:
       - name: Reject external custom actions

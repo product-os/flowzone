@@ -42,15 +42,29 @@ jobs:
           "linux/arm/v7": ["self-hosted","ARM64"],
           "linux/arm/v6": ["self-hosted","X64"]
         }
-      # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
-      custom_runs_on: >
-        [
-          ["ubuntu-20.04"],
-          ["ubuntu-22.04"],
-          ["ubuntu-latest"],
-          ["macos-13"],
-          ["windows-2019"],
-          ["windows-2022"],
-          ["self-hosted"]
-        ]
-      custom_environments: test
+      # custom_test_matrix: foo,bar
+      # custom_runs_on: >
+      #   [
+      #     ["ubuntu-20.04"],
+      #     ["ubuntu-22.04"],
+      #     ["ubuntu-latest"],
+      #     ["macos-13"],
+      #     ["windows-2019"],
+      #     ["windows-2022"],
+      #     ["self-hosted"]
+      #   ]
+      # custom_environments: test
+      custom_test_matrix: >
+        {
+          "value": ["foo", "bar"],
+          "os": [
+            ["ubuntu-20.04"],
+            ["ubuntu-22.04"],
+            ["ubuntu-latest"],
+            ["macos-13"],
+            ["windows-2019"],
+            ["windows-2022"],
+            ["self-hosted"]
+          ],
+          "environment": ["test"]
+        }
