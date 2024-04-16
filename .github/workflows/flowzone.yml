@@ -1252,6 +1252,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
@@ -3467,6 +3468,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
@@ -3535,6 +3537,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
@@ -3597,6 +3600,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
@@ -3656,6 +3660,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
@@ -3710,6 +3715,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github

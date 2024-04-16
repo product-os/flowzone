@@ -136,10 +136,10 @@
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &resetGitHubDirectory
-    # checkout the tip of BASE if the PR is from a fork
+    # github.ref will be the tip of BASE if the PR is from a fork
     # or the merge commit if the PR is internal
     name: Reset .github directory to ${{ github.ref }}
-    # <<: *ifExternalPullRequest
+    working-directory: .
     run: |
       git fetch origin ${{ github.ref }}
       git checkout FETCH_HEAD -- .github
