@@ -1,4 +1,15 @@
 - commits:
+    - subject: only run AWS/CFN updates if templates changed
+      hash: 4aab46a21047ed1af219423bb19e4bfd465f56ca
+      body: ""
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 11.2.8
+  title: ""
+  date: 2024-04-16T07:20:20.572Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.0.5
       hash: dddfbef779e2cf424334c3eb56ab7531217cf6b2
       body: |
