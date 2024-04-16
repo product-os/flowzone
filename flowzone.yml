@@ -1530,7 +1530,7 @@ jobs:
 
           matrix="$(jq -cr --argjson in "$BAKE_JSON" --argjson slugs "$PLATFORM_SLUG_MAP" '.include |=
             map(.target as $t |
-            .platform_slugs = if ($in.target | has($t)) then ($in.target[$t].platforms | map($slugs[.]) | join(" ")) 
+            .platform_slugs = if ($in.target | has($t)) then ($in.target[$t].platforms | map($slugs[.]) | join(" "))
             else error("Unsupported target: \($t)") end)' <<< "${matrix}")"
 
           echo "build=${matrix}">> "${GITHUB_OUTPUT}"
@@ -1884,6 +1884,10 @@ jobs:
         run: |
           stacks="$(echo '${{ inputs.cloudformation_templates }}' \
             | yq e -P - | yq e -o=json - \
+            | jq -r '.stacks[]')"
+
+          stack_names="$(echo '${{ inputs.cloudformation_templates }}' \
+            | yq e -P - | yq e -o=json - \
             | jq -r '.stacks[].name' | jq -Rcn '[inputs'])"
 
           includes="$(echo '${{ inputs.cloudformation_templates }}' \
@@ -1891,7 +1895,25 @@ jobs:
             | jq -r '.stacks[] | with_entries(if .key == "name" then .key = "stack" else . end)' \
             | jq -rsc)"
 
-          echo "matrix=${stacks}" >> "${GITHUB_OUTPUT}"
+          template_files="$(echo '${{ inputs.cloudformation_templates }}' \
+            | yq e -P - | yq e -o=json - \
+            | jq -r '.stacks[].template')"
+
+          # include templates in the matrix only if modified
+          for template in ${template_files}; do
+              if ! git diff --name-only 'origin/${{ github.base_ref }}' \
+                | grep -Eq "^${template}$|^.github/workflows/"; then
+                  unmodified_stacks="$(echo "${stacks}" \
+                    | jq -r --arg tmpl "${template}" 'select(.template==$tmpl).name')"
+
+                  for stack in ${unmodified_stacks}; do
+                      stack_names="$(echo "${stack_names}" \
+                        | jq -rc --arg stack "${stack}" 'map(select(.!=$stack))')"
+                  done
+              fi
+          done
+
+          echo "matrix=${stack_names}" >> "${GITHUB_OUTPUT}"
           echo "includes=${includes}" >> "${GITHUB_OUTPUT}"
 
   ###################################################
@@ -3324,7 +3346,9 @@ jobs:
       - versioned_source
     if: |
       github.event.pull_request.state == 'open' &&
-      needs.is_cloudformation.outputs.cloudformation == 'true'
+      needs.is_cloudformation.outputs.cloudformation == 'true' &&
+      needs.is_cloudformation.outputs.stacks != '' &&
+      needs.is_cloudformation.outputs.stacks != '[]'
 
     <<: *customWorkingDirectory
 
