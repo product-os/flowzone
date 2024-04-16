@@ -1191,8 +1191,6 @@ jobs:
     needs:
       - versioned_source
 
-    <<: *customWorkingDirectory
-
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
