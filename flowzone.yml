@@ -1212,6 +1212,43 @@ jobs:
           # ignore shellcheck for now
           args: -color -ignore="custom label for self-hosted runner" -shellcheck=
 
+  process_files:
+    name: Process files
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+
+    outputs:
+      json: ${{ steps.process_files.outputs.json }}
+      root_json: ${{ steps.process_files_root.outputs.json }}
+
+    steps:
+      - *getGitHubAppToken
+
+      # Checkout the merge ref for open PRs
+      - <<: *checkoutMergeRef
+        if: github.event.pull_request.state == 'open'
+
+      # Checkout the event sha for closed PRs
+      - <<: *checkoutEventSha
+        if: github.event.pull_request.state != 'open'
+
+      # Reset workflow files in case they were modified by a fork
+      - *resetGitHubDirectory
+
+      # note that files within submodules are not included
+      - name: Generate file list json
+        id: process_files
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          echo "json=$(git ls-files | jq -R -s -c 'split("\n")[:-1]')" >> "${GITHUB_OUTPUT}"
+
+      # note that files within submodules are not included
+      - name: Generate file list json
+        id: process_files_root
+        working-directory: .
+        run: |
+          echo "json=$(git ls-files | jq -R -s -c 'split("\n")[:-1]')" >> "${GITHUB_OUTPUT}"
+
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
     name: Is npm
@@ -3444,7 +3481,7 @@ jobs:
 
       - <<: *setupPython
         with:
-          cache: 'pip' # caching pip dependencies
+          cache: "pip" # caching pip dependencies
           python-version: 3.11
 
       - name: Install cfn-lint
@@ -3627,6 +3664,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - event_types
+      - process_files
       - versioned_source
       - is_npm
       - is_docker

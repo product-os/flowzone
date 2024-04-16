@@ -624,6 +624,59 @@ jobs:
         uses: docker://rhysd/actionlint:1.6.27
         with:
           args: -color -ignore="custom label for self-hosted runner" -shellcheck=
+  process_files:
+    name: Process files
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    outputs:
+      json: ${{ steps.process_files.outputs.json }}
+      root_json: ${{ steps.process_files_root.outputs.json }}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout refs/pull/${{ github.event.number }}/merge
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: refs/pull/${{ github.event.number }}/merge
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        if: github.event.pull_request.state == 'open'
+      - name: Checkout ${{ github.sha }}
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ github.sha }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        if: github.event.pull_request.state != 'open'
+      - name: Reset .github directory to ${{ github.ref }}
+        working-directory: .
+        run: |
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD -- .github
+      - name: Generate file list json
+        id: process_files
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          echo "json=$(git ls-files | jq -R -s -c 'split("\n")[:-1]')" >> "${GITHUB_OUTPUT}"
+      - name: Generate file list json
+        id: process_files_root
+        working-directory: .
+        run: |
+          echo "json=$(git ls-files | jq -R -s -c 'split("\n")[:-1]')" >> "${GITHUB_OUTPUT}"
   is_npm:
     name: Is npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -4186,6 +4239,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - event_types
+      - process_files
       - versioned_source
       - is_npm
       - is_docker
