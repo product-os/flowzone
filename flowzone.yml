@@ -1254,6 +1254,8 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - process_files
+    if: contains(fromJSON(needs.process_files.outputs.json), 'package.json')
 
     <<: *customWorkingDirectory
 
