@@ -65,3 +65,7 @@ jobs:
           ],
           "environment": ["test"]
         }
+      runs_on: >
+        [
+          "actuated-1cpu-1gb"
+        ]
