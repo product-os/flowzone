@@ -502,6 +502,7 @@
     with:
       driver-opts: network=host
       install: true
+      cache-binary: false
 
   - &setupQemuBinfmt # https://github.com/docker/setup-qemu-action
     name: Setup QEMU
@@ -1393,6 +1394,7 @@ jobs:
           # pin to a known working version because v0.10.x will
           # create a group called "default" that does not contain multiple targets
           version: v0.9.1
+          cache-binary: false
 
       # generate a custom bake json string from the provided bake targets and any discovered bake files
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
