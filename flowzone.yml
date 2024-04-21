@@ -2439,6 +2439,12 @@ jobs:
             zstd -vd "${PATH_PREFIX}-${platform}/docker.tar.zst"
           done
 
+      # https://github.com/warjiang/setup-skopeo
+      - name: Setup skopeo
+        uses: warjiang/setup-skopeo@v0.1.3
+        with:
+          version: v1.15.0
+
       - name: Create local manifest
         env:
           PATH_PREFIX: ${{ runner.temp }}/docker-${{ matrix.target_slug }}
