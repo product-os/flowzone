@@ -1,4 +1,19 @@
 - commits:
+    - subject: Use a new setup skopeo action
+      hash: e71272304d6a23a0689c38be4502c5597dde5d08
+      body: |
+        The previous action has a number of issues and doesn't work.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.2.25
+  title: ""
+  date: 2024-04-23T17:50:18.067Z
+- commits:
     - subject: Update actions/upload-artifact action to v4.3.3
       hash: 5164def32ea50f4ade747041ade6f88dc876dc7a
       body: |
