@@ -2239,6 +2239,10 @@ jobs:
         uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
         with:
           version: v0.14.0
+      - name: Setup skopeo
+        uses: balena-io-experimental/setup-skopeo-action@v0.0.2
+        with:
+          version: v1.15.0
       - name: Warn if tests skipped
         if: needs.is_docker.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
@@ -2255,10 +2259,6 @@ jobs:
           do
             zstd -vd "${PATH_PREFIX}-${platform}/docker.tar.zst"
           done
-      - name: Setup skopeo
-        uses: warjiang/setup-skopeo@71776e03c10d767c04af8924fe5a67763f9b3d34
-        with:
-          version: v1.15.0
       - name: Create local manifest
         env:
           PATH_PREFIX: ${{ runner.temp }}/docker-${{ matrix.target_slug }}

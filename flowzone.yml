@@ -541,6 +541,13 @@
     with:
       poetry-version: "1.5.1"
 
+  - &setupSkopeo # https://github.com/balena-io-experimental/setup-skopeo-action
+    name: Setup skopeo
+    uses: balena-io-experimental/setup-skopeo-action@v0.0.2
+    with:
+      # https://github.com/lework/skopeo-binary/releases
+      version: "v1.15.0"
+
   - &sortNodeVersions
     name: Sort node versions
     id: node_versions
@@ -2418,6 +2425,7 @@ jobs:
       - *dockerDraftMetadata
       - *setupBuildx
       - *setupCrane
+      - *setupSkopeo
 
       - name: Warn if tests skipped
         if: needs.is_docker.outputs.docker_compose_tests != 'true'
@@ -2438,12 +2446,6 @@ jobs:
           do
             zstd -vd "${PATH_PREFIX}-${platform}/docker.tar.zst"
           done
-
-      # https://github.com/warjiang/setup-skopeo
-      - name: Setup skopeo
-        uses: warjiang/setup-skopeo@71776e03c10d767c04af8924fe5a67763f9b3d34 # v0.1.3
-        with:
-          version: v1.15.0
 
       - name: Create local manifest
         env:
