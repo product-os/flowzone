@@ -1227,8 +1227,8 @@ jobs:
       custom_clean: ${{ steps.custom.outputs.clean }}
       custom_always: ${{ steps.custom.outputs.always }}
       custom_test_matrix: ${{ steps.custom_test_matrix.outputs.json || inputs.custom_test_matrix }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.json || inputs.custom_test_matrix }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_publish_matrix }}
+      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.json || inputs.custom_publish_matrix }}
+      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
