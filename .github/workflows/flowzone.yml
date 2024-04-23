@@ -2240,7 +2240,7 @@ jobs:
         with:
           version: v0.14.0
       - name: Setup skopeo
-        uses: balena-io-experimental/setup-skopeo-action@v0.0.2
+        uses: balena-io-experimental/setup-skopeo-action@5a3989811388c16b01f29554996e0c7e802b410b
         with:
           version: v1.15.0
       - name: Warn if tests skipped
