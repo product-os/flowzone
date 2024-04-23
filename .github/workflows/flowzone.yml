@@ -1673,7 +1673,7 @@ jobs:
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
-        uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
@@ -1687,7 +1687,7 @@ jobs:
         run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
-        uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/docs.tar.zst
@@ -2133,7 +2133,7 @@ jobs:
           docker compose logs
       - name: Upload artifacts
         if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
-        uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
           name: docker-${{ matrix.target_slug }}-${{ matrix.platform_slug }}
           path: ${{ env.DOCKER_TAR }}.zst
@@ -3382,7 +3382,7 @@ jobs:
         run: |
           tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
       - name: Upload artifact
-        uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
           name: gh-release-${{ matrix.target }}
           path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
