@@ -1719,8 +1719,8 @@ jobs:
       custom_always: ${{ steps.custom.outputs.always }}
 
       custom_test_matrix: ${{ steps.custom_test_matrix.outputs.json || inputs.custom_test_matrix }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.json || inputs.custom_test_matrix }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_publish_matrix }}
+      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.json || inputs.custom_publish_matrix }}
+      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
 
     steps:
       - *getGitHubAppToken
