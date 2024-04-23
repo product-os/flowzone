@@ -543,7 +543,7 @@
 
   - &setupSkopeo # https://github.com/balena-io-experimental/setup-skopeo-action
     name: Setup skopeo
-    uses: balena-io-experimental/setup-skopeo-action@v0.0.2
+    uses: balena-io-experimental/setup-skopeo-action@5a3989811388c16b01f29554996e0c7e802b410b # v0.0.2
     with:
       # https://github.com/lework/skopeo-binary/releases
       version: "v1.15.0"
