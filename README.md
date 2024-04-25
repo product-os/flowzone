@@ -136,6 +136,10 @@ jobs:
       # Required: false
       PYPI_TEST_TOKEN:
 
+      # API key to post Zulip messages.
+      # Required: false
+      ZULIP_API_KEY:
+
       # Optional secret for using with custom jobs
       # Required: false
       CUSTOM_JOB_SECRET_1:
@@ -372,6 +376,11 @@ jobs:
       # Type: string
       # Required: false
       ok_to_test_label: ok-to-test
+
+      # Create git tags and a PR comment with detailed change log.
+      # Type: boolean
+      # Required: false
+      release_notes: false
 
 
 ```
