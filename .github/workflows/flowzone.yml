@@ -679,14 +679,14 @@ jobs:
                   fi
               fi
           fi
-      - uses: peter-evans/find-comment@v3
+      - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
         id: find_comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: flowzone-app[bot]
           body-includes: "#release-notes"
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - uses: peter-evans/create-or-update-comment@v4
+      - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
         if: steps.format_release_notes.outputs.text != ''
         with:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
@@ -751,7 +751,7 @@ jobs:
           echo "text<<$EOF" >> $GITHUB_OUTPUT
           echo "${comment}" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
-      - uses: zulip/github-actions-zulip/send-message@v1
+      - uses: zulip/github-actions-zulip/send-message@e4c8f27c732ba9bd98ac6be0583096dea82feea5
         if: |
           github.event.pull_request.merged == true
           && vars.ZULIP_STREAM != ''
