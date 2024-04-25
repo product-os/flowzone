@@ -1,4 +1,42 @@
 - commits:
+    - subject: Fix version bump on merging
+      hash: beb7d547a135c11df7c0af68d6c0298665984efd
+      body: |
+        When the github url was moved into the yaml env var declarations the
+        $GH_REPO env var substitution that was previously being handled by bash
+        is no longer being performed which means the incorrect url is being
+        used to attempt the update. This change switches to the gh action
+        interpolation for the repository which will restore the url to its
+        previous state.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+    - subject: Pin dependencies
+      hash: 20b0be8994574437e5ea92b460f73cd605c2cf9e
+      body: |
+        Update peter-evans/create-or-update-comment
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+    - subject: adds release notes into PR as a comment
+      hash: 06c129a10ebc8b9237c1d0574fdc37705845f0b2
+      body: >
+        * use Renovate's release notes (if available)
+
+        * update production floating tag (for balena-deploy-request
+        compatibility)
+      footer:
+        change-type: minor
+      author: Anton Belodedenko
+      nested: []
+  version: 11.3.0
+  title: ""
+  date: 2024-04-25T11:51:50.224Z
+- commits:
     - subject: Update actions/download-artifact action to v4.1.7
       hash: dc8b49ccc7e1f6c562971f0bb94e4fa285f2b961
       body: |
