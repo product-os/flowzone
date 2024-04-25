@@ -1292,7 +1292,7 @@ jobs:
               fi
           fi
 
-      - uses: peter-evans/find-comment@v3
+      - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
         id: find_comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -1300,7 +1300,7 @@ jobs:
           body-includes: '#release-notes'
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
-      - uses: peter-evans/create-or-update-comment@v4
+      - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
         if: steps.format_release_notes.outputs.text != ''
         with:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
@@ -1349,7 +1349,7 @@ jobs:
           echo "$EOF" >> $GITHUB_OUTPUT
 
       # https://github.com/zulip/github-actions-zulip/blob/main/send-message/README.md
-      - uses: zulip/github-actions-zulip/send-message@v1
+      - uses: zulip/github-actions-zulip/send-message@e4c8f27c732ba9bd98ac6be0583096dea82feea5 # v1
         if: |
           github.event.pull_request.merged == true
           && vars.ZULIP_STREAM != ''
