@@ -116,7 +116,7 @@
     if: github.event.pull_request.merged == true && steps.create_commit.outputs.sha != ''
     env:
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      REF: '/repos/$GH_REPO/git/refs/heads/${{ github.base_ref }}'
+      REF: '/repos/${{ github.repository }}/git/refs/heads/${{ github.base_ref }}'
       SHA: ${{ steps.create_commit.outputs.sha }}
     run: |
       gh api \
@@ -1330,7 +1330,7 @@ jobs:
           github.event.pull_request.merged == true
           && needs.versioned_source.outputs.commit_sha != ''
         env:
-          REF: '/repos/$GH_REPO/git/refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
+          REF: '/repos/${{ github.repository }}/git/refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
           SHA: ${{ needs.versioned_source.outputs.commit_sha }}
 
       - name: Renovate release notes
