@@ -1,4 +1,23 @@
 - commits:
+    - subject: Fix passing of tag object commit when creating reference
+      hash: 45d086038ecb5fdf0aca05a1c4274345f21c3dbd
+      body: |
+        A previous change introduced an error where we started
+        passing the commit object sha when creating the tag reference.
+
+        The result appears to pass but creates a tag of type commit
+        and is not an annotated tag.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.3.7
+  title: ""
+  date: 2024-04-29T14:53:26.594Z
+- commits:
     - subject: Update docker/bake-action action to v4.5.0
       hash: 97ee65ea4727e964ec4f098cdc15142594e0a1de
       body: |
