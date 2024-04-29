@@ -1262,7 +1262,7 @@ jobs:
           <<: *getGitHubAppTokenWith
           permissions: >-
             {
-              "contents": "read",
+              "contents": "write",
               "metadata": "read",
               "pull_requests": "write"
             }
