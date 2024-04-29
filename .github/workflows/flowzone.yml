@@ -712,7 +712,7 @@ jobs:
         id: create_tag
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          REF: refs/tags/production-${{ steps.timestamp.outputs.datetime }}
+          TAG: production-${{ steps.timestamp.outputs.datetime }}
           MESSAGE: production-${{ steps.timestamp.outputs.datetime }}
           SHA: ${{ needs.versioned_source.outputs.commit_sha }}
         run: |
