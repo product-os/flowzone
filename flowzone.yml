@@ -110,20 +110,41 @@
     run: |
       echo "datetime=$(date +"${FORMAT}")" >> $GITHUB_OUTPUT
 
+  # https://docs.github.com/en/rest/git/tags?apiVersion=2022-11-28#create-a-tag-object
+  - &createTagObject
+    name: Create tag object
+    if: inputs.disable_versioning != true
+    id: create_tag
+    env:
+      GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      TAG: ${{ steps.versionist.outputs.tag }}
+      MESSAGE: ${{ steps.versionist.outputs.tag }}
+      SHA: ${{ steps.create_commit.outputs.sha }}
+    run: |
+      response="$(gh api -X POST repos/$GH_REPO/git/tags \
+        -F "tag=${TAG}" \
+        -F "message=${MESSAGE}" \
+        -F "object=${SHA}" \
+        -F "type=commit")"
+
+      echo "$response" | jq .
+      echo "sha=$(echo $response | jq -r .sha)" >> "${GITHUB_OUTPUT}"
+      echo "json=$(echo $response | jq -c .)" >> "${GITHUB_OUTPUT}"
+
   # https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
   - &updateGitReference
     name: Update git reference
     if: github.event.pull_request.merged == true && steps.create_commit.outputs.sha != ''
     env:
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      REF: '/repos/${{ github.repository }}/git/refs/heads/${{ github.base_ref }}'
+      REF: 'refs/heads/${{ github.base_ref }}'
       SHA: ${{ steps.create_commit.outputs.sha }}
     run: |
       gh api \
         -X PATCH \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        "${REF}" \
+        "/repos/${{ github.repository }}/git/${REF}" \
         -f sha="${SHA}" \
         -F force=true \
         --include
@@ -135,7 +156,7 @@
     env:
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       REF: 'refs/tags/${{ steps.versionist.outputs.tag }}'
-      SHA: ${{ steps.create_commit.outputs.sha }}
+      SHA: ${{ steps.create_tag.outputs.sha }}
     run: |
       gh api \
         -X POST \
@@ -1198,27 +1219,27 @@ jobs:
           echo "json=$(echo "$response" | jq -c .)" >> "${GITHUB_OUTPUT}"
           echo "bot=$(echo "$response" | jq -r .author.name | sed 's/\[bot\]//g')" >> "${GITHUB_OUTPUT}"
 
-      # https://docs.github.com/en/rest/git/tags?apiVersion=2022-11-28#create-a-tag-object
-      - name: Create tag object
-        if: inputs.disable_versioning != true
-        id: create_tag
+      # create a new tag object
+      - <<: *createTagObject
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           TAG: ${{ steps.versionist.outputs.tag }}
           MESSAGE: ${{ steps.versionist.outputs.tag }}
-        run: |
-          response="$(gh api -X POST repos/$GH_REPO/git/tags \
-            -F "tag=${TAG}" \
-            -F "message=${MESSAGE}" \
-            -F "object=${{ steps.create_commit.outputs.sha }}" \
-            -F "type=commit")"
+          SHA: ${{ steps.create_commit.outputs.sha }}
 
-          echo "$response" | jq .
-          echo "sha=$(echo $response | jq -r .sha)" >> "${GITHUB_OUTPUT}"
-          echo "json=$(echo $response | jq -c .)" >> "${GITHUB_OUTPUT}"
+      # update the existing branch(head) name reference(pointer) to the new commit object sha
+      - <<: *updateGitReference
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          REF: 'refs/heads/${{ github.base_ref }}'
+          SHA: ${{ steps.create_commit.outputs.sha }}
 
-      - *updateGitReference
-      - *createGitReference
+      # create a new tag name reference(pointer) to the new tag object sha
+      - <<: *createGitReference
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          REF: 'refs/tags/${{ steps.versionist.outputs.tag }}'
+          SHA: ${{ steps.create_tag.outputs.sha }}
 
   release_notes:
     name: Generate release notes
@@ -1316,22 +1337,24 @@ jobs:
           && needs.versioned_source.outputs.commit_sha != ''
 
       # required by https://github.com/balena-io-modules/balena-deploy-request
+      - <<: *createTagObject
+        if: |
+          github.event.pull_request.merged == true
+          && needs.versioned_source.outputs.commit_sha != ''
+        env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          REF: 'refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
+          MESSAGE: production-${{ steps.timestamp.outputs.datetime }}
+          SHA: ${{ needs.versioned_source.outputs.commit_sha }}
+
+      # create a new tag name reference(pointer) to the new tag object sha
       - <<: *createGitReference
         if: |
           github.event.pull_request.merged == true
-          && needs.versioned_source.outputs.commit_sha != ''
-        continue-on-error: true
+          && steps.create_tag.outputs.sha != ''
         env:
           REF: 'refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
-          SHA: ${{ needs.versioned_source.outputs.commit_sha }}
-
-      - <<: *updateGitReference
-        if: |
-          github.event.pull_request.merged == true
-          && needs.versioned_source.outputs.commit_sha != ''
-        env:
-          REF: '/repos/${{ github.repository }}/git/refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
-          SHA: ${{ needs.versioned_source.outputs.commit_sha }}
+          SHA: ${{ steps.create_tag.outputs.sha }}
 
       - name: Renovate release notes
         id: renovate_release_notes
