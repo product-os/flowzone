@@ -1,4 +1,15 @@
 - commits:
+    - subject: add missing contents write permissions to create tags
+      hash: 5dab75952947026975ec9e2907379cefc703451d
+      body: ""
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 11.3.8
+  title: ""
+  date: 2024-04-29T15:06:58.038Z
+- commits:
     - subject: Fix passing of tag object commit when creating reference
       hash: 45d086038ecb5fdf0aca05a1c4274345f21c3dbd
       body: |
