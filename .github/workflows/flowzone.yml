@@ -632,7 +632,7 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: |-
             {
-              "contents": "read",
+              "contents": "write",
               "metadata": "read",
               "pull_requests": "write"
             }
