@@ -1,4 +1,18 @@
 - commits:
+    - subject: Increase base actuated runner size to 2cpu 8gb
+      hash: 7fbc64b2a829c58c9b535092ba67bef025a20688
+      body: |
+        The smallest hosted runners use those specs, and
+        anything smaller might be unreliable.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Kyle Harding
+      nested: []
+  version: 11.3.12
+  title: ""
+  date: 2024-05-03T19:46:11.566Z
+- commits:
     - subject: Update cloudflare/wrangler-action action to v3.5.0
       hash: 916877ce4d0f8041ae419af7687d6db62c6eb149
       body: |
