@@ -38,8 +38,8 @@ jobs:
       docker_publish_platform_tags: true
       docker_runs_on: >
         {
-          "linux/amd64": ["actuated-1cpu-1gb"],
-          "linux/arm64": ["actuated-arm64-1cpu-1gb"],
+          "linux/amd64": ["actuated-2cpu-8gb"],
+          "linux/arm64": ["actuated-arm64-2cpu-8gb"],
           "linux/arm/v7": ["self-hosted","ARM64"],
           "linux/arm/v6": ["self-hosted","X64"]
         }
@@ -61,7 +61,7 @@ jobs:
             ["macos-latest"],
             ["windows-latest"],
             ["self-hosted"],
-            ["actuated-1cpu-1gb"]
+            ["actuated-2cpu-8gb"]
           ],
           "environment": ["test"]
         }
