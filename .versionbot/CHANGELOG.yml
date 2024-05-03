@@ -1,4 +1,20 @@
 - commits:
+    - subject: Setup AWS CLI when starting jobs that require it
+      hash: 4256535a60b01a39c0be70e29024d71bde620aef
+      body: |
+        Some self-hosted runners may not have this binary,
+        or the version that we want.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.3.13
+  title: ""
+  date: 2024-05-03T20:00:19.517Z
+- commits:
     - subject: Increase base actuated runner size to 2cpu 8gb
       hash: 7fbc64b2a829c58c9b535092ba67bef025a20688
       body: |
