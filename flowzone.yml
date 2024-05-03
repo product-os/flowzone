@@ -106,7 +106,7 @@
     name: Get and format timestamp
     id: timestamp
     env:
-      FORMAT: '%Y-%m-%d-%H%M%S'
+      FORMAT: "%Y-%m-%d-%H%M%S"
     run: |
       echo "datetime=$(date +"${FORMAT}")" >> $GITHUB_OUTPUT
 
@@ -137,7 +137,7 @@
     if: github.event.pull_request.merged == true && steps.create_commit.outputs.sha != ''
     env:
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      REF: 'refs/heads/${{ github.base_ref }}'
+      REF: "refs/heads/${{ github.base_ref }}"
       SHA: ${{ steps.create_commit.outputs.sha }}
     run: |
       gh api \
@@ -155,7 +155,7 @@
     if: github.event.pull_request.merged == true && steps.create_tag.outputs.sha != ''
     env:
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      REF: 'refs/tags/${{ steps.versionist.outputs.tag }}'
+      REF: "refs/tags/${{ steps.versionist.outputs.tag }}"
       SHA: ${{ steps.create_tag.outputs.sha }}
     run: |
       gh api \
@@ -612,6 +612,12 @@
     with:
       # https://github.com/lework/skopeo-binary/releases
       version: "v1.15.0"
+
+  - &setupAwsCli
+    name: Setup AWS CLI
+    uses: product-os/setup-awscli-action@v0.0.3
+    with:
+      version: "2.15.43"
 
   - &sortNodeVersions
     name: Sort node versions
@@ -1231,14 +1237,14 @@ jobs:
       - <<: *updateGitReference
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          REF: 'refs/heads/${{ github.base_ref }}'
+          REF: "refs/heads/${{ github.base_ref }}"
           SHA: ${{ steps.create_commit.outputs.sha }}
 
       # create a new tag name reference(pointer) to the new tag object sha
       - <<: *createGitReference
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          REF: 'refs/tags/${{ steps.versionist.outputs.tag }}'
+          REF: "refs/tags/${{ steps.versionist.outputs.tag }}"
           SHA: ${{ steps.create_tag.outputs.sha }}
 
   release_notes:
@@ -1317,8 +1323,8 @@ jobs:
         id: find_comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'flowzone-app[bot]'
-          body-includes: '#release-notes'
+          comment-author: "flowzone-app[bot]"
+          body-includes: "#release-notes"
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
       - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
@@ -1353,7 +1359,7 @@ jobs:
           github.event.pull_request.merged == true
           && steps.create_tag.outputs.sha != ''
         env:
-          REF: 'refs/tags/production-${{ steps.timestamp.outputs.datetime }}'
+          REF: "refs/tags/production-${{ steps.timestamp.outputs.datetime }}"
           SHA: ${{ steps.create_tag.outputs.sha }}
 
       - name: Renovate release notes
@@ -1386,10 +1392,10 @@ jobs:
           api-key: ${{ secrets.ZULIP_API_KEY }}
           email: ${{ vars.ZULIP_BOT_EMAIL }}
           organization-url: ${{ vars.ZULIP_API_URL }}
-          to: '${{ vars.ZULIP_STREAM }}'
+          to: "${{ vars.ZULIP_STREAM }}"
           type: stream
-          topic: '${{ vars.ZULIP_TOPIC }}'
-          content: '${{ steps.renovate_release_notes.outputs.text }}'
+          topic: "${{ vars.ZULIP_TOPIC }}"
+          content: "${{ steps.renovate_release_notes.outputs.text }}"
 
   lint_workflows:
     name: Lint workflows
@@ -2626,6 +2632,7 @@ jobs:
       - *setupBuildx
       - *setupCrane
       - *setupSkopeo
+      - *setupAwsCli
 
       - name: Warn if tests skipped
         if: needs.is_docker.outputs.docker_compose_tests != 'true'
@@ -2735,6 +2742,7 @@ jobs:
       - *sanitizeDockerStrings
       - *dockerFinalMetadata
       - *setupCrane
+      - *setupAwsCli
       - *loginWithGitHubContainerRegistry
       - *loginWithDockerHub
       - *configureAWSCredentials
@@ -3577,6 +3585,7 @@ jobs:
     environment: ${{ matrix.environment }}
 
     steps:
+      - *setupAwsCli
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *randomDelay # Why do people always forget that you need to add a little jitter?
@@ -3657,7 +3666,7 @@ jobs:
 
       - <<: *setupPython
         with:
-          cache: 'pip' # caching pip dependencies
+          cache: "pip" # caching pip dependencies
           python-version: 3.11
 
       - name: Install cfn-lint
@@ -3789,6 +3798,7 @@ jobs:
     environment: ${{ matrix.environment }}
 
     steps:
+      - *setupAwsCli
       - *randomDelay
       - *configureAWSCredentials
       - *getAWSCallerIdentity

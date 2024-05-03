@@ -2432,6 +2432,10 @@ jobs:
         uses: balena-io-experimental/setup-skopeo-action@5a3989811388c16b01f29554996e0c7e802b410b
         with:
           version: v1.15.0
+      - name: Setup AWS CLI
+        uses: product-os/setup-awscli-action@v0.0.3
+        with:
+          version: 2.15.43
       - name: Warn if tests skipped
         if: needs.is_docker.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
@@ -2659,6 +2663,10 @@ jobs:
         uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
         with:
           version: v0.14.0
+      - name: Setup AWS CLI
+        uses: product-os/setup-awscli-action@v0.0.3
+        with:
+          version: 2.15.43
       - name: Login to GitHub Container Registry
         continue-on-error: true
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20
@@ -3945,6 +3953,10 @@ jobs:
       TIMEOUT: 3
     environment: ${{ matrix.environment }}
     steps:
+      - name: Setup AWS CLI
+        uses: product-os/setup-awscli-action@v0.0.3
+        with:
+          version: 2.15.43
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         continue-on-error: true
@@ -4228,6 +4240,10 @@ jobs:
       TIMEOUT: 3
     environment: ${{ matrix.environment }}
     steps:
+      - name: Setup AWS CLI
+        uses: product-os/setup-awscli-action@v0.0.3
+        with:
+          version: 2.15.43
       - name: Random delay
         run: |
           DELAY="${DELAY-5}"
