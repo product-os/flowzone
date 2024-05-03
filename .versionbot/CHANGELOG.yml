@@ -1,4 +1,17 @@
 - commits:
+    - subject: Pin product-os/setup-awscli-action action to 89c41fe
+      hash: d25a0e1afc5d26e581e18a49f9597efcf4319264
+      body: |
+        Update product-os/setup-awscli-action
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 11.3.14
+  title: ""
+  date: 2024-05-03T20:58:23.045Z
+- commits:
     - subject: Setup AWS CLI when starting jobs that require it
       hash: 4256535a60b01a39c0be70e29024d71bde620aef
       body: |
