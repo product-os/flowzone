@@ -670,6 +670,9 @@ jobs:
 
                   notable_changes="$(echo "${notable_changes}" | sed -E 's|^|* |g')"
                   notable_changes="$(printf 'Notable changes\n* [only keep the important and rephrase]\n%s' "${notable_changes}")"
+
+                  # https://zulip.com/help/format-your-message-using-markdown
+                  # shortnames: https://pygments.org/docs/lexers/
                   release_notes="$(printf '#release-notes %s\n\n%s%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
 
                   if [[ -n "$release_notes" ]]; then
@@ -751,10 +754,13 @@ jobs:
           comment="$(gh pr view ${{ github.event.pull_request.number }} --json comments \
             --jq '.[].[] | select(.author.login=="${{ needs.versioned_source.outputs.author }}").body')"
 
-          EOF="$(openssl rand -hex 16)"
-          echo "text<<$EOF" >> $GITHUB_OUTPUT
-          echo "${comment}" >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
+          # send message only if a human processed the stubbed release notes, otherwise no-op
+          if ! [[ "$comment" =~ 'only keep the important and rephrase' ]]; then
+              EOF="$(openssl rand -hex 16)"
+              echo "text<<$EOF" >> $GITHUB_OUTPUT
+              echo "${comment}" >> $GITHUB_OUTPUT
+              echo "$EOF" >> $GITHUB_OUTPUT
+          fi
       - uses: zulip/github-actions-zulip/send-message@e4c8f27c732ba9bd98ac6be0583096dea82feea5
         if: |
           github.event.pull_request.merged == true
