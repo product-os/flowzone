@@ -2839,7 +2839,7 @@ jobs:
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
-      - uses: balena-io/deploy-to-balena-action@3151704ae2fa8e32a38e0f19b1f557d2fcbad2b8
+      - uses: balena-io/deploy-to-balena-action@8f42a1d4bda3133022280511e3bfe5f2206a0cbf
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
@@ -2917,7 +2917,7 @@ jobs:
 
           echo "${release_notes}" > "${release_notes_file}"
           echo "file=${release_notes_file}" >> "${GITHUB_OUTPUT}"
-      - uses: balena-io/deploy-to-balena-action@3151704ae2fa8e32a38e0f19b1f557d2fcbad2b8
+      - uses: balena-io/deploy-to-balena-action@8f42a1d4bda3133022280511e3bfe5f2206a0cbf
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
