@@ -1,4 +1,16 @@
 - commits:
+    - subject: only send Zulip msg if a human reviewed the release notes
+      hash: dd0fd7125cbb1c1df34c2292acadc5f7da7ffa20
+      body: |
+        Co-authored-by: Kyle Harding <kyle@balena.io>
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 11.3.19
+  title: ""
+  date: 2024-05-06T16:48:29.498Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.0.10
       hash: 2b36d0fa3fa9711c6bc62522792ed4966c5b1d3d
       body: |
