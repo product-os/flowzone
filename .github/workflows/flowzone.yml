@@ -738,6 +738,7 @@ jobs:
           github.event.pull_request.merged == true
           && steps.create_tag.outputs.sha != ''
         env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: refs/tags/production-${{ steps.timestamp.outputs.datetime }}
           SHA: ${{ steps.create_tag.outputs.sha }}
         run: |
@@ -1236,13 +1237,13 @@ jobs:
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
             echo "pypi_publish=false" >> "${GITHUB_OUTPUT}"
           fi
-      - name: Setup python
+      - name: Setup Python
         id: setup-python
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
         if: steps.python_poetry.outputs.enabled == 'true'
-      - name: Setup poetry
+      - name: Setup Poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@7b6d33e44b4f08d7021a1dee3c044e9c253d6439
         with:
@@ -2998,12 +2999,12 @@ jobs:
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
-      - name: Setup python
+      - name: Setup Python
         id: setup-python
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Setup poetry
+      - name: Setup Poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@7b6d33e44b4f08d7021a1dee3c044e9c253d6439
         with:
@@ -3084,12 +3085,12 @@ jobs:
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
-      - name: Setup python
+      - name: Setup Python
         id: setup-python
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
         with:
           python-version: "3.9"
-      - name: Setup poetry
+      - name: Setup Poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@7b6d33e44b4f08d7021a1dee3c044e9c253d6439
         with:
@@ -3154,12 +3155,12 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Setup python
+      - name: Setup Python
         id: setup-python
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
         with:
           python-version: "3.9"
-      - name: Setup poetry
+      - name: Setup Poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@7b6d33e44b4f08d7021a1dee3c044e9c253d6439
         with:
@@ -4145,7 +4146,7 @@ jobs:
           fi
 
           echo "caps=${caps}" >> "${GITHUB_OUTPUT}"
-      - name: Setup python
+      - name: Setup Python
         id: setup-python
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
         with:
