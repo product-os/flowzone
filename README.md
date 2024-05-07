@@ -385,7 +385,7 @@ jobs:
       # Set a max parallel value for ALL matrix strategy jobs.
       # Type: number
       # Required: false
-      max_parallel: 8
+      max_parallel: 20
 
 
 ```

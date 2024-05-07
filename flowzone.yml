@@ -997,7 +997,7 @@ on:
         description: "Set a max parallel value for ALL matrix strategy jobs."
         type: number
         required: false
-        default: 8
+        default: 20
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:

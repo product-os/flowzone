@@ -283,7 +283,7 @@ on:
         description: Set a max parallel value for ALL matrix strategy jobs.
         type: number
         required: false
-        default: 8
+        default: 20
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: ${{ github.event.action == 'synchronize' }}
