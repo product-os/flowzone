@@ -993,6 +993,11 @@ on:
         type: boolean
         required: false
         default: false
+      max_parallel:
+        description: "Set a max parallel value for ALL matrix strategy jobs."
+        type: number
+        required: false
+        default: 8
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -2158,6 +2163,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         node_version: ${{ fromJSON(needs.is_npm.outputs.node_versions) }}
 
@@ -2442,6 +2448,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_test_matrix) }}
 
     env:
@@ -2627,6 +2634,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
 
     env:
@@ -2740,6 +2748,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
 
     steps:
@@ -2804,6 +2813,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
 
@@ -2828,6 +2838,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
 
@@ -2861,6 +2872,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
 
@@ -3203,6 +3215,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
 
@@ -3274,6 +3287,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
 
@@ -3357,6 +3371,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
 
     environment: ${{ matrix.environment }}
@@ -3408,6 +3423,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
 
     environment: ${{ matrix.environment }}
@@ -3453,6 +3469,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
 
     environment: ${{ matrix.environment }}
@@ -3489,6 +3506,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
@@ -3523,6 +3541,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
@@ -3564,6 +3583,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.cloudformation_runs_on || inputs.runs_on) }}
     strategy:
       fail-fast: true
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
@@ -3782,6 +3802,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.cloudformation_runs_on || inputs.runs_on) }}
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
