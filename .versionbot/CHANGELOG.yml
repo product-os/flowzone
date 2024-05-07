@@ -1,4 +1,29 @@
 - commits:
+    - subject: Increase default max parallel matrix jobs to 20
+      hash: b79abb66aaea371f43bed8998d604846cb3c4c3d
+      body: |
+        According to the team at Actuated, and observed in
+        our job queue, setting a max parallel matrix value
+        DOES NOT prevent a runner from being assigned to the
+        job. It takes the runner but is prevented from executing
+        the steps if the max value is reached.
+
+        So for now we will set the default max parallel jobs
+        to the same global 20 concurrent max in our Actuated plan.
+
+        This will prevent jobs from taking a runner slot only
+        to be stopped from execution by the GH max parallel setting.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.4.1
+  title: ""
+  date: 2024-05-07T18:46:28.067Z
+- commits:
     - subject: Set max parallel value for all matrix jobs
       hash: 7fc2d7e3f2832053a9914f536ea0562d7e3a102f
       body: |
