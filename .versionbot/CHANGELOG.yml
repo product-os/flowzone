@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update softprops/action-gh-release action to v2.0.5
+      hash: c47317e18336275b4959ee96581aa6a1302b550c
+      body: |
+        Update softprops/action-gh-release from 2.0.4 to 2.0.5
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 11.3.20
+  title: ""
+  date: 2024-05-07T13:58:29.217Z
+- commits:
     - subject: only send Zulip msg if a human reviewed the release notes
       hash: dd0fd7125cbb1c1df34c2292acadc5f7da7ffa20
       body: |
