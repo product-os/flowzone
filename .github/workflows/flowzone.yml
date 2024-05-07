@@ -279,6 +279,11 @@ on:
         type: boolean
         required: false
         default: false
+      max_parallel:
+        description: Set a max parallel value for ALL matrix strategy jobs.
+        type: number
+        required: false
+        default: 8
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: ${{ github.event.action == 'synchronize' }}
@@ -1764,6 +1769,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         node_version: ${{ fromJSON(needs.is_npm.outputs.node_versions) }}
     outputs:
@@ -2068,6 +2074,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_test_matrix) }}
     env:
       DOCKER_BUILDKIT: "1"
@@ -2360,6 +2367,7 @@ jobs:
           - 5000:5000
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
     env:
       LOCAL_TAG: localhost:5000/sut:latest
@@ -2582,6 +2590,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
     steps:
       - name: Generate GitHub App installation token
@@ -2793,6 +2802,7 @@ jobs:
       github.event.pull_request.state == 'open'
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
     defaults:
@@ -2875,6 +2885,7 @@ jobs:
       github.event.pull_request.merged == true || github.event_name == 'push'
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
     defaults:
@@ -2958,6 +2969,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
     steps:
@@ -3456,6 +3468,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     outputs:
@@ -3540,6 +3553,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     steps:
@@ -3648,6 +3662,7 @@ jobs:
       needs.is_custom.outputs.custom_test == 'true'
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
     environment: ${{ matrix.environment }}
     steps:
@@ -3716,6 +3731,7 @@ jobs:
       needs.is_custom.outputs.custom_publish == 'true'
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
     environment: ${{ matrix.environment }}
     steps:
@@ -3778,6 +3794,7 @@ jobs:
       needs.is_custom.outputs.custom_finalize == 'true'
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
     environment: ${{ matrix.environment }}
     steps:
@@ -3829,6 +3846,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
@@ -3880,6 +3898,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
@@ -3934,6 +3953,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.cloudformation_runs_on || inputs.runs_on) }}
     strategy:
       fail-fast: true
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
@@ -4228,6 +4248,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.cloudformation_runs_on || inputs.runs_on) }}
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}

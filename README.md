@@ -382,6 +382,11 @@ jobs:
       # Required: false
       release_notes: false
 
+      # Set a max parallel value for ALL matrix strategy jobs.
+      # Type: number
+      # Required: false
+      max_parallel: 8
+
 
 ```
 <!-- end usage -->
