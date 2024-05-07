@@ -1,4 +1,20 @@
 - commits:
+    - subject: Set max parallel value for all matrix jobs
+      hash: 7fc2d7e3f2832053a9914f536ea0562d7e3a102f
+      body: |
+        Allow controlling the number of parallel matrix
+        jobs via an input, defaulting to 8.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.4.0
+  title: ""
+  date: 2024-05-07T14:38:13.751Z
+- commits:
     - subject: Update softprops/action-gh-release action to v2.0.5
       hash: c47317e18336275b4959ee96581aa6a1302b550c
       body: |
