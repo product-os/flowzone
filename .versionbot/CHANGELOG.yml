@@ -1,4 +1,20 @@
 - commits:
+    - subject: Point to the new org for setup-skopeo-action
+      hash: 4d5faff204dca03e1001126f79246c2e320b02e5
+      body: |
+        The project was moved as we are using it in
+        production and it is no longer experimental.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 11.4.2
+  title: ""
+  date: 2024-05-08T14:31:18.361Z
+- commits:
     - subject: Increase default max parallel matrix jobs to 20
       hash: b79abb66aaea371f43bed8998d604846cb3c4c3d
       body: |
