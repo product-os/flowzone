@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update rhysd/actionlint Docker tag to v1.7.0
+      hash: da696c88c3352b5ef1f52e45b1f6e1f6c14b0657
+      body: |
+        Update rhysd/actionlint from 1.6.27 to 1.7.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 11.4.3
+  title: ""
+  date: 2024-05-08T16:58:53.571Z
+- commits:
     - subject: Point to the new org for setup-skopeo-action
       hash: 4d5faff204dca03e1001126f79246c2e320b02e5
       body: |
