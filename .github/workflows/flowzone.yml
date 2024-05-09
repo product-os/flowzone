@@ -4266,7 +4266,9 @@ jobs:
       - is_cloudformation
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      needs.is_cloudformation.outputs.cloudformation == 'true'
+      needs.is_cloudformation.outputs.cloudformation == 'true' &&
+      needs.is_cloudformation.outputs.stacks != '' &&
+      needs.is_cloudformation.outputs.stacks != '[]'
     env:
       AWS_RETRY_MODE: adaptive
       AWS_MAX_ATTEMPTS: 10
