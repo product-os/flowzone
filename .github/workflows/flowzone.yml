@@ -613,8 +613,11 @@ jobs:
     needs:
       - versioned_source
     if: |
-      (github.event.action != 'closed' || github.event.pull_request.merged == true)
-      && inputs.release_notes == true
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      ) &&
+      inputs.release_notes == true
     defaults:
       run:
         working-directory: .
@@ -690,6 +693,7 @@ jobs:
           fi
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
         id: find_comment
+        if: steps.format_release_notes.outputs.text != ''
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: flowzone-app[bot]
@@ -697,6 +701,7 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
         id: find_edited_comment
+        if: steps.format_release_notes.outputs.text != ''
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: flowzone-app[bot]
@@ -704,8 +709,17 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
         if: |
-          steps.format_release_notes.outputs.text != ''
-          && steps.find_edited_comment.outputs.comment-id != ''
+          steps.format_release_notes.outputs.text != '' &&
+          (
+            (
+              steps.find_comment.outputs.comment-id == '' &&
+              steps.find_edited_comment.outputs.comment-id == ''
+            ) ||
+            (
+              steps.find_comment.outputs.comment-id != '' &&
+              steps.find_edited_comment.outputs.comment-id != ''
+            )
+          )
         with:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -713,6 +727,7 @@ jobs:
             ${{ steps.format_release_notes.outputs.text }}
           edit-mode: replace
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          reactions: eyes
       - name: Get and format timestamp
         id: timestamp
         env:
@@ -720,12 +735,12 @@ jobs:
         run: |
           echo "datetime=$(date +"${FORMAT}")" >> $GITHUB_OUTPUT
         if: |
-          github.event.pull_request.merged == true
-          && needs.versioned_source.outputs.commit_sha != ''
+          github.event.pull_request.merged == true &&
+          needs.versioned_source.outputs.commit_sha != ''
       - name: Create tag object
         if: |
-          github.event.pull_request.merged == true
-          && needs.versioned_source.outputs.commit_sha != ''
+          github.event.pull_request.merged == true &&
+          needs.versioned_source.outputs.commit_sha != ''
         id: create_tag
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -744,8 +759,8 @@ jobs:
           echo "json=$(echo $response | jq -c .)" >> "${GITHUB_OUTPUT}"
       - name: Create git reference
         if: |
-          github.event.pull_request.merged == true
-          && steps.create_tag.outputs.sha != ''
+          github.event.pull_request.merged == true &&
+          steps.create_tag.outputs.sha != ''
         env:
           REF: refs/tags/production-${{ steps.timestamp.outputs.datetime }}
           SHA: ${{ steps.create_tag.outputs.sha }}
@@ -758,32 +773,16 @@ jobs:
             -f ref="${REF}" \
             -f sha="${SHA}" \
             --include
-      - name: Renovate release notes
-        id: renovate_release_notes
-        if: github.event.pull_request.merged == true
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          comment="$(gh pr view ${{ github.event.pull_request.number }} --json comments \
-            --jq '.[].[] | select(.author.login=="${{ needs.versioned_source.outputs.author }}").body')"
-
-          # send message only if a human processed the stubbed release notes, otherwise no-op
-          if ! [[ "$comment" =~ 'only keep the important and rephrase' ]]; then
-              EOF="$(openssl rand -hex 16)"
-              echo "text<<$EOF" >> $GITHUB_OUTPUT
-              echo "${comment}" >> $GITHUB_OUTPUT
-              echo "$EOF" >> $GITHUB_OUTPUT
-          fi
       - uses: zulip/github-actions-zulip/send-message@e4c8f27c732ba9bd98ac6be0583096dea82feea5
+        id: zulip_send
         if: |
-          github.event.pull_request.merged == true
-          && vars.ZULIP_STREAM != ''
-          && vars.ZULIP_TOPIC != ''
-          && vars.ZULIP_BOT_EMAIL != ''
-          && vars.ZULIP_API_URL != ''
-          && steps.renovate_release_notes.outcome == 'success'
-          && steps.renovate_release_notes.outputs.text != ''
+          github.event.pull_request.merged == true &&
+          vars.ZULIP_STREAM != '' &&
+          vars.ZULIP_TOPIC != '' &&
+          vars.ZULIP_BOT_EMAIL != '' &&
+          vars.ZULIP_API_URL != '' &&
+          steps.find_comment.outcome == 'success' &&
+          steps.find_comment.outputs.comment-body != ''
         continue-on-error: true
         with:
           api-key: ${{ secrets.ZULIP_API_KEY }}
@@ -792,7 +791,15 @@ jobs:
           to: ${{ vars.ZULIP_STREAM }}
           type: stream
           topic: ${{ vars.ZULIP_TOPIC }}
-          content: ${{ steps.renovate_release_notes.outputs.text }}
+          content: ${{ steps.find_comment.outputs.comment-body }}
+      - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
+        if: steps.zulip_send.outcome == 'success'
+        continue-on-error: true
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          reactions: hooray
   lint_workflows:
     name: Lint workflows
     runs-on: ${{ fromJSON(inputs.runs_on) }}
