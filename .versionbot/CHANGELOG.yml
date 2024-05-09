@@ -1,4 +1,16 @@
 - commits:
+    - subject: don't clobber edited comments
+      hash: 8429710dfcdd368980c6cfd524ef15975d1f528b
+      body: |
+        * otherwise on every PR sync, manually edited release notes will be lost
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 11.4.5
+  title: ""
+  date: 2024-05-09T14:59:04.888Z
+- commits:
     - subject: Update actions/checkout action to v4.1.5
       hash: b561e69ab69253b661d69f7086a6355f70d1bfbd
       body: |
