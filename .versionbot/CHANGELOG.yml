@@ -1,4 +1,15 @@
 - commits:
+    - subject: don't try to finalize empty stack matrix
+      hash: 4caa5ce310dcb3765b5650ec6c0f701ceda12eda
+      body: ""
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 11.4.6
+  title: ""
+  date: 2024-05-09T15:54:12.371Z
+- commits:
     - subject: don't clobber edited comments
       hash: 8429710dfcdd368980c6cfd524ef15975d1f528b
       body: |
