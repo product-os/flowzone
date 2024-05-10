@@ -1259,8 +1259,11 @@ jobs:
     needs:
       - versioned_source
     if: |
-      (github.event.action != 'closed' || github.event.pull_request.merged == true)
-      && inputs.release_notes == true
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      ) &&
+      inputs.release_notes == true
 
     <<: *rootWorkingDirectory
 
@@ -1329,6 +1332,7 @@ jobs:
 
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
         id: find_comment
+        if: steps.format_release_notes.outputs.text != ''
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "flowzone-app[bot]"
@@ -1337,16 +1341,28 @@ jobs:
 
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
         id: find_edited_comment
+        if: steps.format_release_notes.outputs.text != ''
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "flowzone-app[bot]"
           body-regex: '^\* \[only keep the important and rephrase\]$'
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
+      # to prevent clobbering edited comments, run only if no previous draft comment is
+      # .. found, or if one exists, it is unedited
       - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
         if: |
-          steps.format_release_notes.outputs.text != ''
-          && steps.find_edited_comment.outputs.comment-id != ''
+          steps.format_release_notes.outputs.text != '' &&
+          (
+            (
+              steps.find_comment.outputs.comment-id == '' &&
+              steps.find_edited_comment.outputs.comment-id == ''
+            ) ||
+            (
+              steps.find_comment.outputs.comment-id != '' &&
+              steps.find_edited_comment.outputs.comment-id != ''
+            )
+          )
         with:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -1354,17 +1370,18 @@ jobs:
             ${{ steps.format_release_notes.outputs.text }}
           edit-mode: replace
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          reactions: eyes
 
       - <<: *getTimeStamp
         if: |
-          github.event.pull_request.merged == true
-          && needs.versioned_source.outputs.commit_sha != ''
+          github.event.pull_request.merged == true &&
+          needs.versioned_source.outputs.commit_sha != ''
 
       # required by https://github.com/balena-io-modules/balena-deploy-request
       - <<: *createTagObject
         if: |
-          github.event.pull_request.merged == true
-          && needs.versioned_source.outputs.commit_sha != ''
+          github.event.pull_request.merged == true &&
+          needs.versioned_source.outputs.commit_sha != ''
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           TAG: production-${{ steps.timestamp.outputs.datetime }}
@@ -1374,40 +1391,23 @@ jobs:
       # create a new tag name reference(pointer) to the new tag object sha
       - <<: *createGitReference
         if: |
-          github.event.pull_request.merged == true
-          && steps.create_tag.outputs.sha != ''
+          github.event.pull_request.merged == true &&
+          steps.create_tag.outputs.sha != ''
         env:
           REF: "refs/tags/production-${{ steps.timestamp.outputs.datetime }}"
           SHA: ${{ steps.create_tag.outputs.sha }}
 
-      - name: Renovate release notes
-        id: renovate_release_notes
-        if: github.event.pull_request.merged == true
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          comment="$(gh pr view ${{ github.event.pull_request.number }} --json comments \
-            --jq '.[].[] | select(.author.login=="${{ needs.versioned_source.outputs.author }}").body')"
-
-          # send message only if a human processed the stubbed release notes, otherwise no-op
-          if ! [[ "$comment" =~ 'only keep the important and rephrase' ]]; then
-              EOF="$(openssl rand -hex 16)"
-              echo "text<<$EOF" >> $GITHUB_OUTPUT
-              echo "${comment}" >> $GITHUB_OUTPUT
-              echo "$EOF" >> $GITHUB_OUTPUT
-          fi
-
       # https://github.com/zulip/github-actions-zulip/blob/main/send-message/README.md
       - uses: zulip/github-actions-zulip/send-message@e4c8f27c732ba9bd98ac6be0583096dea82feea5 # v1
+        id: zulip_send
         if: |
-          github.event.pull_request.merged == true
-          && vars.ZULIP_STREAM != ''
-          && vars.ZULIP_TOPIC != ''
-          && vars.ZULIP_BOT_EMAIL != ''
-          && vars.ZULIP_API_URL != ''
-          && steps.renovate_release_notes.outcome == 'success'
-          && steps.renovate_release_notes.outputs.text != ''
+          github.event.pull_request.merged == true &&
+          vars.ZULIP_STREAM != '' &&
+          vars.ZULIP_TOPIC != '' &&
+          vars.ZULIP_BOT_EMAIL != '' &&
+          vars.ZULIP_API_URL != '' &&
+          steps.find_comment.outcome == 'success' &&
+          steps.find_comment.outputs.comment-body != ''
         continue-on-error: true
         with:
           api-key: ${{ secrets.ZULIP_API_KEY }}
@@ -1416,7 +1416,17 @@ jobs:
           to: "${{ vars.ZULIP_STREAM }}"
           type: stream
           topic: "${{ vars.ZULIP_TOPIC }}"
-          content: "${{ steps.renovate_release_notes.outputs.text }}"
+          content: "${{ steps.find_comment.outputs.comment-body }}"
+
+      # quick visual signal that we've sent a message
+      - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
+        if: steps.zulip_send.outcome == 'success'
+        continue-on-error: true
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          reactions: hooray
 
   lint_workflows:
     name: Lint workflows
