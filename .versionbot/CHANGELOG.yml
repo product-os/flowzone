@@ -1,4 +1,17 @@
 - commits:
+    - subject: fix conditional logic that finds release notes in PR comments
+      hash: 49d961d6790853d89475954f9f3380d91ad175d9
+      body: |
+        * refactor conditional logic style (bools at the end)
+        * add quick visuals to PR comment (reactions)
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 11.4.7
+  title: ""
+  date: 2024-05-10T13:48:06.944Z
+- commits:
     - subject: don't try to finalize empty stack matrix
       hash: 4caa5ce310dcb3765b5650ec6c0f701ceda12eda
       body: ""
