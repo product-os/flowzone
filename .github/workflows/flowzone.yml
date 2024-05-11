@@ -782,7 +782,9 @@ jobs:
           vars.ZULIP_BOT_EMAIL != '' &&
           vars.ZULIP_API_URL != '' &&
           steps.find_comment.outcome == 'success' &&
-          steps.find_comment.outputs.comment-body != ''
+          steps.find_comment.outputs.comment-body != '' &&
+          steps.find_edited_comment.outcome == 'success' &&
+          steps.find_edited_comment.outputs.comment-id == ''
         continue-on-error: true
         with:
           api-key: ${{ secrets.ZULIP_API_KEY }}
