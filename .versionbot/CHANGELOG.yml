@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update product-os/docusaurus-builder action to v2.0.11
+      hash: bd69f9d986d2feefe7cab493e305e3d8fd198720
+      body: |
+        Update product-os/docusaurus-builder from 2.0.10 to 2.0.11
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 11.4.8
+  title: ""
+  date: 2024-05-13T03:01:40.161Z
+- commits:
     - subject: fix conditional logic that finds release notes in PR comments
       hash: 49d961d6790853d89475954f9f3380d91ad175d9
       body: |
