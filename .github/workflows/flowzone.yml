@@ -2838,6 +2838,7 @@ jobs:
       - cargo_test
       - python_test
       - versioned_source
+      - release_notes
     if: |
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
@@ -2877,7 +2878,7 @@ jobs:
         id: release_notes
         env:
           look_back: 1
-          user_defined: ""
+          user_defined: ${{ needs.release_notes.outputs.body }}
         run: |
           set -ea
           # prevent git from existing with 141
@@ -2930,6 +2931,7 @@ jobs:
     needs:
       - is_balena
       - versioned_source
+      - release_notes
     if: |
       github.event.pull_request.merged == true || github.event_name == 'push'
     strategy:
@@ -2967,6 +2969,7 @@ jobs:
         id: release_notes
         env:
           look_back: 2
+          user_defined: ${{ needs.release_notes.outputs.body }}
         run: |
           set -ea
           # prevent git from existing with 141

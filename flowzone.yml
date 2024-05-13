@@ -2859,6 +2859,7 @@ jobs:
       - cargo_test
       - python_test
       - versioned_source
+      - release_notes
     # allow some dependencies to be skipped
     if: |
       !failure() && !cancelled() &&
@@ -2876,7 +2877,10 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
-      - *getReleaseNotes
+      - <<: *getReleaseNotes
+        env:
+          look_back: 1
+          user_defined: ${{ needs.release_notes.outputs.body }}
       - *createLocalRefs
       - *deployToBalenaAction
 
@@ -2887,6 +2891,7 @@ jobs:
     needs:
       - is_balena
       - versioned_source
+      - release_notes
     if: |
       github.event.pull_request.merged == true || github.event_name == 'push'
 
@@ -2904,6 +2909,7 @@ jobs:
       - <<: *getReleaseNotes
         env:
           look_back: 2
+          user_defined: ${{ needs.release_notes.outputs.body }}
 
       - *deployToBalenaAction
 
