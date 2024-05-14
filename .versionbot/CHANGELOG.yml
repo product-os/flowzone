@@ -1,4 +1,20 @@
 - commits:
+    - subject: Fix renovate release notes
+      hash: 032612052edb888d3efd249e1272abeffe622feb
+      body: |
+        The renovate release notes were being overwritten by the default
+        non-renovate behavior.
+
+        This updates the code to handle both cases exclusively.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 11.5.2
+  title: ""
+  date: 2024-05-14T19:38:49.150Z
+- commits:
     - subject: relax regex to match anywhere
       hash: c738d524d829652d944d3859768963932056140d
       body: ""
