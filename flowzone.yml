@@ -85,15 +85,22 @@
     id: release_notes
     env:
       look_back: 1
+      user_defined: ""
     run: |
       set -ea
       # prevent git from existing with 141
       set +o pipefail
 
+      look_back="${look_back:-1}"
       previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
       release_notes_file="$(mktemp)"
-      release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+      changelog="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+      release_notes="${changelog}"
+      if [[ -n "${user_defined}" ]]; then
+        release_notes="$(printf '%s\n\n### List of commits\n\n%s' "${user_defined}" "${changelog}")"
+      fi
+
       EOF="$(openssl rand -hex 16)"
       echo "note<<$EOF" >> "${GITHUB_OUTPUT}"
       echo "${release_notes}" >> "${GITHUB_OUTPUT}"
@@ -1454,7 +1461,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           reactions: hooray
-
 
   lint_workflows:
     name: Lint workflows
@@ -3137,6 +3143,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - release_notes
       - npm_publish
       - python_publish
       - cargo_publish
@@ -3161,7 +3168,10 @@ jobs:
 
       - *deleteDraftGitHubRelease
       - *checkoutVersionedSha
-      - *getReleaseNotes
+      - <<: *getReleaseNotes
+        env:
+          user_defined: ${{ needs.release_notes.outputs.body }}
+          look_back: 1
 
       - name: Download all artifacts
         uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
@@ -3188,6 +3198,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - release_notes
     if: |
       (
         (
@@ -3215,6 +3226,7 @@ jobs:
       - *checkoutVersionedSha
       - <<: *getReleaseNotes
         env:
+          user_defined: ${{ needs.release_notes.outputs.body }}
           look_back: 2
 
       # https://docs.github.com/en/rest/releases
