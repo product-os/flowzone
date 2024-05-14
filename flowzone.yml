@@ -85,15 +85,22 @@
     id: release_notes
     env:
       look_back: 1
+      user_defined: ""
     run: |
       set -ea
       # prevent git from existing with 141
       set +o pipefail
 
+      look_back="${look_back:-1}"
       previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
       release_notes_file="$(mktemp)"
-      release_notes="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+      changelog="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+      release_notes="${changelog}"
+      if [[ -n "${user_defined}" ]]; then
+        release_notes="$(printf '%s\n\n### List of commits\n\n%s' "${user_defined}" "${changelog}")"
+      fi
+
       EOF="$(openssl rand -hex 16)"
       echo "note<<$EOF" >> "${GITHUB_OUTPUT}"
       echo "${release_notes}" >> "${GITHUB_OUTPUT}"
@@ -1267,6 +1274,9 @@ jobs:
 
     <<: *rootWorkingDirectory
 
+    outputs:
+      body: ${{ steps.format_release_notes.outputs.body }}
+
     env:
       <<: *gitHubCliEnvironment
 
@@ -1290,17 +1300,17 @@ jobs:
         run: |
           set -x
 
-          # if Renovate did this, extract its release notes from pull request body and
-          # massage until they resemble balena-io-modules/balena-deploy-request output
-          renovate_bot="$(gh pr view ${{ github.event.pull_request.number }} --json author --jq \
-            'select((.author.is_bot==true) and (.author.login | contains("renovate"))).author.login')"
+          pr_title="$(gh pr view ${{ github.event.pull_request.number }} --json title --jq .title)"
+          raw_body="$(gh pr view ${{ github.event.pull_request.number }} --json body --jq .body)"
 
-          if [[ -n "$renovate_bot" ]]; then
-              pr_title="$(gh pr view ${{ github.event.pull_request.number }} --json title --jq .title)"
+          if [[ -n "$pr_title" ]]; then
 
-              raw_body="$(gh pr view ${{ github.event.pull_request.number }} --json body --jq .body)"
+              # if Renovate did this, extract its release notes from pull request body and
+              # massage until they resemble balena-io-modules/balena-deploy-request output
+              renovate_bot="$(gh pr view ${{ github.event.pull_request.number }} --json author --jq \
+                  'select((.author.is_bot==true) and (.author.login | contains("renovate"))).author.login')"
 
-              if [[ -n "$pr_title" ]] && [[ "$raw_body" =~ '### Release Notes' ]]; then
+              if [[ -n "$renovate_bot" ]] && [[ "$raw_body" =~ '### Release Notes' ]]; then
                   pr_body="$(echo "${raw_body}" \
                     | sed -n '/^### Release Notes$/,/^---$/p' \
                     | sed "s|^### Release Notes$||g" \
@@ -1314,25 +1324,47 @@ jobs:
                     | sed 's|^</summary>$||g' \
                     | sed 1d)"
 
+                  # Prepare the release notes
+                  release_notes="$(printf '## %s\n\n### Notable changes\n\n%s\n\n%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
+
+                  # Prepare the comment body
                   notable_changes="$(echo "${notable_changes}" | sed -E 's|^|* |g')"
                   notable_changes="$(printf 'Notable changes\n* [only keep the important and rephrase]\n%s' "${notable_changes}")"
 
                   # https://zulip.com/help/format-your-message-using-markdown
                   # shortnames: https://pygments.org/docs/lexers/
-                  release_notes="$(printf '#release-notes %s\n\n%s%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
+                  release_notes_comment="$(printf '#release-notes %s\n\n%s%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
+              fi
 
-                  if [[ -n "$release_notes" ]]; then
-                      EOF="$(openssl rand -hex 16)"
-                      echo "text<<$EOF" >> $GITHUB_OUTPUT
-                      echo "${release_notes}" >> $GITHUB_OUTPUT
-                      echo "$EOF" >> $GITHUB_OUTPUT
-                  fi
+              title_pattern="## (R|r)elease (N|n)otes"
+              if [[ "$raw_body" =~ $title_pattern ]]; then
+                # Find a section `## Release notes` and use that as the release notes body
+                release_notes_body="$(echo "${raw_body}" \
+                    | sed -n '/^## Release Notes/I,/^## /p' \
+                    | sed '/^## /d' \
+                    | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')" # Remove starting/trailing empty lines
+
+                release_notes="$(printf '## %s\n%s' "${pr_title}" "${release_notes_body}")"
+              fi
+
+              if [[ -n "$release_notes" ]]; then
+                  EOF="$(openssl rand -hex 16)"
+                  echo "body<<$EOF" >> $GITHUB_OUTPUT
+                  echo "${release_notes}" >> $GITHUB_OUTPUT
+                  echo "$EOF" >> $GITHUB_OUTPUT
+              fi
+
+              if [[ -n "$release_notes_comment" ]]; then
+                  EOF="$(openssl rand -hex 16)"
+                  echo "comment<<$EOF" >> $GITHUB_OUTPUT
+                  echo "${release_notes_comment}" >> $GITHUB_OUTPUT
+                  echo "$EOF" >> $GITHUB_OUTPUT
               fi
           fi
 
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
         id: find_comment
-        if: steps.format_release_notes.outputs.text != ''
+        if: steps.format_release_notes.outputs.comment != ''
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "flowzone-app[bot]"
@@ -1341,7 +1373,7 @@ jobs:
 
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
         id: find_edited_comment
-        if: steps.format_release_notes.outputs.text != ''
+        if: steps.format_release_notes.outputs.comment != ''
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "flowzone-app[bot]"
@@ -1352,7 +1384,7 @@ jobs:
       # .. found, or if one exists, it is unedited
       - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
         if: |
-          steps.format_release_notes.outputs.text != '' &&
+          steps.format_release_notes.outputs.comment != '' &&
           (
             (
               steps.find_comment.outputs.comment-id == '' &&
@@ -1367,7 +1399,7 @@ jobs:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ${{ steps.format_release_notes.outputs.text }}
+            ${{ steps.format_release_notes.outputs.comment }}
           edit-mode: replace
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           reactions: eyes
@@ -2827,6 +2859,7 @@ jobs:
       - cargo_test
       - python_test
       - versioned_source
+      - release_notes
     # allow some dependencies to be skipped
     if: |
       !failure() && !cancelled() &&
@@ -2844,7 +2877,10 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
-      - *getReleaseNotes
+      - <<: *getReleaseNotes
+        env:
+          look_back: 1
+          user_defined: ${{ needs.release_notes.outputs.body }}
       - *createLocalRefs
       - *deployToBalenaAction
 
@@ -2855,6 +2891,7 @@ jobs:
     needs:
       - is_balena
       - versioned_source
+      - release_notes
     if: |
       github.event.pull_request.merged == true || github.event_name == 'push'
 
@@ -2872,6 +2909,7 @@ jobs:
       - <<: *getReleaseNotes
         env:
           look_back: 2
+          user_defined: ${{ needs.release_notes.outputs.body }}
 
       - *deployToBalenaAction
 
@@ -3111,6 +3149,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - release_notes
       - npm_publish
       - python_publish
       - cargo_publish
@@ -3135,7 +3174,10 @@ jobs:
 
       - *deleteDraftGitHubRelease
       - *checkoutVersionedSha
-      - *getReleaseNotes
+      - <<: *getReleaseNotes
+        env:
+          user_defined: ${{ needs.release_notes.outputs.body }}
+          look_back: 1
 
       - name: Download all artifacts
         uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
@@ -3162,6 +3204,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - release_notes
     if: |
       (
         (
@@ -3189,6 +3232,7 @@ jobs:
       - *checkoutVersionedSha
       - <<: *getReleaseNotes
         env:
+          user_defined: ${{ needs.release_notes.outputs.body }}
           look_back: 2
 
       # https://docs.github.com/en/rest/releases
