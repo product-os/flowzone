@@ -1,4 +1,18 @@
 - commits:
+    - subject: Reuse notable changes format on release notes
+      hash: db5dd536bf609711cb5187e42b7f0015d5f2919a
+      body: |
+        The 'Notable changes' section was being formatted differently on the
+        GitHub release notes and the Zulip message.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 11.5.3
+  title: ""
+  date: 2024-05-14T19:55:49.205Z
+- commits:
     - subject: Fix renovate release notes
       hash: 032612052edb888d3efd249e1272abeffe622feb
       body: |
