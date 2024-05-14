@@ -1,4 +1,46 @@
 - commits:
+    - subject: Use PR release notes to build Balena release notes
+      hash: 58aa2ec739350f21ffaa1683c01254189ffde9bb
+      body: |
+        If a `## Release notes` section is defined on the PR body, Flowzone will
+        use the contents of that section and the PR body to populate the release
+        notes on the automatically created Balena release.
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Felipe Lalanne
+      nested: []
+    - subject: Use PR release notes to build GH release notes
+      hash: e8ed5fae66e6fd782c51b5c38f6c22a425a50363
+      body: |
+        If a `## Release notes` section is defined on the PR body, Flowzone will
+        use the contents of that section and the PR body to populate the release
+        notes on the automatically created GitHub release.
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Felipe Lalanne
+      nested: []
+    - subject: Build release notes from PR body
+      hash: 507db6fb92e33317930d6ea208a06351b1af976b
+      body: |
+        Look for a `## Release notes` section on the PR body and generate a new
+        output as part of the `release_notes` job. This commit updates the job
+        to parse renovate PRs in a different way as regular PRs. With renovate
+        PRs, the job will look for a `### Release Notes` in the Renovate PR body
+        and create a comment that the user can edit to provide the release body.
+
+        With regular PRs, the job will look for a `## Release notes` section to
+        use as the release notes body.
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Felipe Lalanne
+      nested: []
+  version: 11.5.0
+  title: ""
+  date: 2024-05-14T16:03:49.011Z
+- commits:
     - subject: check if the comment has been edited before sending msg
       hash: 9cd469d33f3157dbce8dad4d2d541107879eb037
       body: ""
