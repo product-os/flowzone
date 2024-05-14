@@ -678,12 +678,12 @@ jobs:
                     | sed 's|^<summary>$||g' \
                     | sed 's|^</summary>$||g' \
                     | sed 1d)"
+                  notable_changes="$(echo "${notable_changes}" | sed -E 's|^|* |g')"
 
                   # Prepare the release notes
                   release_notes="$(printf '## %s\n\n### Notable changes\n\n%s\n\n%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
 
                   # Prepare the comment body
-                  notable_changes="$(echo "${notable_changes}" | sed -E 's|^|* |g')"
                   notable_changes="$(printf 'Notable changes\n* [only keep the important and rephrase]\n%s' "${notable_changes}")"
 
                   # https://zulip.com/help/format-your-message-using-markdown
