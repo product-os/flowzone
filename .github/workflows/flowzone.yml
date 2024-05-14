@@ -664,6 +664,7 @@ jobs:
               renovate_bot="$(gh pr view ${{ github.event.pull_request.number }} --json author --jq \
                   'select((.author.is_bot==true) and (.author.login | contains("renovate"))).author.login')"
 
+              title_pattern="## (R|r)elease (N|n)otes"
               if [[ -n "$renovate_bot" ]] && [[ "$raw_body" =~ '### Release Notes' ]]; then
                   pr_body="$(echo "${raw_body}" \
                     | sed -n '/^### Release Notes$/,/^---$/p' \
@@ -688,10 +689,9 @@ jobs:
                   # https://zulip.com/help/format-your-message-using-markdown
                   # shortnames: https://pygments.org/docs/lexers/
                   release_notes_comment="$(printf '#release-notes %s\n\n%s%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
-              fi
 
-              title_pattern="## (R|r)elease (N|n)otes"
-              if [[ "$raw_body" =~ $title_pattern ]]; then
+              # Handle non-renovate cases
+              elif [[ "$raw_body" =~ $title_pattern ]]; then
                 # Find a section `## Release notes` and use that as the release notes body
                 release_notes_body="$(echo "${raw_body}" \
                     | sed -n '/^## Release Notes/I,/^## /p' \
