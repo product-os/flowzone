@@ -671,14 +671,18 @@ jobs:
                     | sed "s|^### Release Notes$||g" \
                     | sed 's/^---$//g')"
 
-                  # TODO: (remove duplicate lines)
-                  # https://github.com/renovatebot/renovate/issues/13037
-                  notable_changes="$(echo "${pr_body}" \
-                    | grep -E '^> -|^-|^<summary>$' \
-                    | sed 's|^<summary>$||g' \
-                    | sed 's|^</summary>$||g' \
-                    | sed 1d)"
-                  notable_changes="$(echo "${notable_changes}" | sed -E 's|^|* |g')"
+                  notable_changes="$(echo "${pr_body}" |
+                    # Only get lines starting with `-`, `> -` or `<summary>`
+                    grep -E '^> -|^-|^<summary>' |
+                    # Replace the contents of the summary tag with a list item
+                    sed -E 's|^<summary>(.*)</summary>|-\1|g' |
+                    # Quoted list items go on a second level
+                    sed -E 's|^> -(.*)|  -\1|g' |
+                    # Remove duplicate lines
+                    # https://github.com/renovatebot/renovate/issues/13037
+                    awk '!(NF && seen[$0]++)' |
+                    # Remove first line
+                    sed 1d)"
 
                   # Prepare the release notes
                   release_notes="$(printf '## %s\n\n### Notable changes\n\n%s\n\n%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
