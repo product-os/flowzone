@@ -1,4 +1,19 @@
 - commits:
+    - subject: Restore re-itemization of notable changes
+      hash: 4793bb4f5cd0805eadfe18d9794e5715328b9c1f
+      body: |
+        For the release notes comment, this restores the re-itemization of the
+        notable changes list with `*`, to make it clear that the lines should be
+        edited.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 11.5.5
+  title: ""
+  date: 2024-05-16T14:44:33.781Z
+- commits:
     - subject: Improve notable changes generation
       hash: 2338421b3e836cdf831dbe5068fde197f31ab4cb
       body: |
