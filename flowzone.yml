@@ -179,7 +179,7 @@
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
     # https://github.com/actions/checkout
     name: Checkout pull request merge ref
-    uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+    uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
     with:
       fetch-depth: 0
       submodules: "recursive"
@@ -191,7 +191,7 @@
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
     # https://github.com/actions/checkout
     name: Checkout pull request head sha
-    uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+    uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
     with:
       fetch-depth: 0
       submodules: "recursive"
@@ -203,7 +203,7 @@
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
     # https://github.com/actions/checkout
     name: Checkout ${{ github.sha }}
-    uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+    uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
     with:
       fetch-depth: 0
       submodules: "recursive"
@@ -212,7 +212,7 @@
 
   - &checkoutVersionedSha # https://github.com/actions/checkout
     name: Checkout versioned commit
-    uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+    uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
     with:
       fetch-depth: 0
       submodules: "recursive"
