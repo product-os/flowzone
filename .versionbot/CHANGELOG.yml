@@ -1,4 +1,19 @@
 - commits:
+    - subject: Improve notable changes generation
+      hash: 2338421b3e836cdf831dbe5068fde197f31ab4cb
+      body: |
+        A bug in the previous version was ignoring the contents inside the
+        summary tag. This also adds indentation to second level changes
+        (starting with a `> -`) and removes duplicate lines.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 11.5.4
+  title: ""
+  date: 2024-05-16T14:16:04.490Z
+- commits:
     - subject: Reuse notable changes format on release notes
       hash: db5dd536bf609711cb5187e42b7f0015d5f2919a
       body: |
