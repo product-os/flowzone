@@ -411,12 +411,12 @@ jobs:
               "metadata": "read",
               "pull_requests": "read"
             }
-      - name: Checkout refs/pull/${{ github.event.number }}/merge
+      - name: Checkout pull request head sha
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: refs/pull/${{ github.event.number }}/merge
+          ref: ${{ github.event.pull_request.head.sha }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         if: github.event.pull_request.state == 'open'
       - name: Checkout ${{ github.sha }}
@@ -854,7 +854,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -901,7 +901,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -1025,7 +1025,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -1246,7 +1246,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -1344,7 +1344,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -1414,7 +1414,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -1489,7 +1489,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -1689,7 +1689,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -1736,7 +1736,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -1838,7 +1838,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -2138,7 +2138,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -2652,7 +2652,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -2870,7 +2870,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -2961,7 +2961,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3048,7 +3048,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3134,7 +3134,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3208,7 +3208,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3263,7 +3263,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3381,7 +3381,7 @@ jobs:
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3467,7 +3467,7 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3569,7 +3569,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3648,7 +3648,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3710,7 +3710,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3762,7 +3762,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3831,7 +3831,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3894,7 +3894,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -3954,7 +3954,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -4009,7 +4009,7 @@ jobs:
           installation_retrieval_payload: ${{ inputs.installation_id }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0
@@ -4074,7 +4074,7 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout ${{ needs.versioned_source.outputs.sha }}
+      - name: Checkout versioned commit
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b
         with:
           fetch-depth: 0

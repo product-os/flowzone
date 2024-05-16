@@ -174,16 +174,28 @@
         -f sha="${SHA}" \
         --include
 
-  - &checkoutMergeRef
+  - &checkoutPullRequestMergeRef
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
     # https://github.com/actions/checkout
-    name: Checkout refs/pull/${{ github.event.number }}/merge
+    name: Checkout pull request merge ref
     uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
     with:
       fetch-depth: 0
       submodules: "recursive"
       ref: "refs/pull/${{ github.event.number }}/merge"
+      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+
+  - &checkoutPullRequestHeadSha
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+    # https://github.com/actions/checkout
+    name: Checkout pull request head sha
+    uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+    with:
+      fetch-depth: 0
+      submodules: "recursive"
+      ref: ${{ github.event.pull_request.head.sha }}
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &checkoutEventSha
@@ -199,7 +211,7 @@
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &checkoutVersionedSha # https://github.com/actions/checkout
-    name: Checkout ${{ needs.versioned_source.outputs.sha }}
+    name: Checkout versioned commit
     uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
     with:
       fetch-depth: 0
@@ -1089,11 +1101,16 @@ jobs:
               "pull_requests": "read"
             }
 
-      # Checkout the merge ref for open PRs
-      - <<: *checkoutMergeRef
+      # Checkout the tip of the pull request branch for open PRs.
+      # The default behaviour for GitHub Actions is to checkout the merge commit but we
+      # want to be able test the changes in isolation, and we already require that branches
+      # be rebased before testing merging via branch rules.
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+      - <<: *checkoutPullRequestHeadSha
         if: github.event.pull_request.state == 'open'
 
-      # Checkout the event sha for closed PRs
+      # Checkout the event sha for closed/merged PRs.
+      # This is the merge commit sha for PRs and the tagged commit sha for tags.
       - <<: *checkoutEventSha
         if: github.event.pull_request.state != 'open'
 
