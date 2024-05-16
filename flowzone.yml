@@ -195,7 +195,8 @@
     with:
       fetch-depth: 0
       submodules: "recursive"
-      ref: ${{ github.event.pull_request.head.sha }}
+      # fallback to an invalid ref if the checkout ref is undefined
+      ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &checkoutEventSha
@@ -207,7 +208,8 @@
     with:
       fetch-depth: 0
       submodules: "recursive"
-      ref: ${{ github.sha }}
+      # fallback to an invalid ref if the checkout ref is undefined
+      ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &checkoutVersionedSha # https://github.com/actions/checkout
@@ -216,7 +218,8 @@
     with:
       fetch-depth: 0
       submodules: "recursive"
-      ref: "${{ needs.versioned_source.outputs.sha }}"
+      # fallback to an invalid ref if the checkout ref is undefined
+      ref: "${{ needs.versioned_source.outputs.sha || '¯\_(ツ)_/¯' }}"
       token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &resetGitHubDirectory

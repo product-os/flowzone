@@ -416,7 +416,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         if: github.event.pull_request.state == 'open'
       - name: Checkout ${{ github.sha }}
@@ -424,7 +424,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ github.sha }}
+          ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         if: github.event.pull_request.state != 'open'
       - name: Reject merge commits
@@ -859,7 +859,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Add problem matcher
         run: |
@@ -906,7 +906,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for package.json
         id: npm
@@ -1030,7 +1030,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: docker_images_json
         name: Build JSON array
@@ -1251,7 +1251,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Identify Poetry project
         id: python_poetry
@@ -1349,7 +1349,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: cargo_targets
         name: Build JSON array
@@ -1419,7 +1419,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - id: balena_slugs
         name: Build JSON array
@@ -1494,7 +1494,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
@@ -1694,7 +1694,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Check for README for building a website
         id: has_readme
@@ -1741,7 +1741,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Validate CloudFormation input
         id: validate_json
@@ -1843,7 +1843,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -2143,7 +2143,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -2657,7 +2657,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Sanitize docker strings
         id: strings
@@ -2875,7 +2875,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Generate short release note
         id: release_notes
@@ -2966,7 +2966,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Generate short release note
         id: release_notes
@@ -3053,7 +3053,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -3139,7 +3139,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -3213,7 +3213,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Setup python
         id: setup-python
@@ -3268,7 +3268,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -3386,7 +3386,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Generate short release note
         id: release_notes
@@ -3472,7 +3472,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Generate short release note
         id: release_notes
@@ -3574,7 +3574,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -3653,7 +3653,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Create local refs
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -3715,7 +3715,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -3767,7 +3767,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
@@ -3836,7 +3836,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
@@ -3899,7 +3899,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
@@ -3959,7 +3959,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
@@ -4014,7 +4014,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Reset .github directory to ${{ github.ref }}
         run: |
@@ -4079,7 +4079,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha }}
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Random delay
         run: |
