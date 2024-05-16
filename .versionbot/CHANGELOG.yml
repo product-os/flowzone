@@ -1,4 +1,29 @@
 - commits:
+    - subject: Base versioned commit on the tip of the PR head branch
+      hash: 2d9d2a3f5f61eb5e408173d41667f3055221381b
+      body: |
+        Historically we have used the PR merge commit, which is the GitHub
+        default, to ensure that we are testing the same merges that will
+        be committed to the target branch.
+
+        However, we already require that branches be rebased on the
+        target before merging via branch protections so there is no benefit
+        gained from using the merge commit.
+
+        We also would like to enable use cases where we are testing against
+        old versions of the target branch and not include changes from the tip
+        of the target.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 12.0.0
+  title: ""
+  date: 2024-05-16T18:46:19.189Z
+- commits:
     - subject: Restore re-itemization of notable changes
       hash: 4793bb4f5cd0805eadfe18d9794e5715328b9c1f
       body: |
