@@ -1,4 +1,38 @@
 - commits:
+    - subject: Allow custom actions to run for forks of this project
+      hash: e6387cff21d588bda65e3e094f5486c0be9f3f18
+      body: |
+        The custom actions in this project are just examples for testing
+        and do not call any user code that could be used to leak secrets.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Fallback to an invalid ref if the checkout ref is undefined
+      hash: 84c74edb5c580c99a700dc3e1c9c52983024c36b
+      body: |
+        We've seen cases where the checkout ref was undefined because
+        a step with the output wasn't run, or because of unexpected results
+        in the github context json.
+
+        Without this change, the checkout would continue but quietly
+        fallback to the ref or sha for the event with unexpected results.
+
+        With this change, the checkout will fail so we can fix the workflow.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 12.0.2
+  title: ""
+  date: 2024-05-16T20:50:03.423Z
+- commits:
     - subject: Update actions/checkout action to v4.1.6
       hash: fa89d86f3f919eada16690284ff23dd81d01ae08
       body: |
