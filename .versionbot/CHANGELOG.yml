@@ -1,4 +1,21 @@
 - commits:
+    - subject: Restore MD quote for second level changes
+      hash: d6efb85cfa3862c2367d2693296e6a69884f9765
+      body: |
+        The extra indentation for the second level changes is lost in the
+        release notes comment, so this restores the previous formatting only for
+        the comment.
+
+        The general release notes will look the same.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 12.0.3
+  title: ""
+  date: 2024-05-17T14:29:45.637Z
+- commits:
     - subject: Allow custom actions to run for forks of this project
       hash: e6387cff21d588bda65e3e094f5486c0be9f3f18
       body: |
