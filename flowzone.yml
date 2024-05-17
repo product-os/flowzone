@@ -1332,6 +1332,8 @@ jobs:
 
               title_pattern="## (R|r)elease (N|n)otes"
               if [[ -n "$renovate_bot" ]] && [[ "$raw_body" =~ '### Release Notes' ]]; then
+                  # TODO: remove duplicate <details> sections on the pr_body
+                  # https://github.com/renovatebot/renovate/issues/13037
                   pr_body="$(echo "${raw_body}" \
                     | sed -n '/^### Release Notes$/,/^---$/p' \
                     | sed "s|^### Release Notes$||g" \
@@ -1342,16 +1344,14 @@ jobs:
                     grep -E '^> -|^-|^<summary>' |
                     # Replace the contents of the summary tag with a list item
                     sed -E 's|^<summary>(.*)</summary>|-\1|g' |
-                    # Quoted list items go on a second level
-                    sed -E 's|^> -(.*)|  -\1|g' |
                     # Remove duplicate lines
-                    # https://github.com/renovatebot/renovate/issues/13037
                     awk '!(NF && seen[$0]++)' |
                     # Remove first line
                     sed 1d)"
 
                   # Prepare the release notes
-                  release_notes="$(printf '## %s\n\n### Notable changes\n\n%s\n\n%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
+                  release_notes_changes="$(echo "${notable_changes}" | sed -E 's|^> -(.*)|  -\1|g')"
+                  release_notes="$(printf '## %s\n\n### Notable changes\n\n%s\n\n%s' "${pr_title}" "${release_notes_changes}" "${pr_body}")"
 
                   # Prepare the comment body
                   notable_changes="$(echo "${notable_changes}" | sed -E 's|^|* |g')"
