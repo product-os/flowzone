@@ -263,6 +263,11 @@ jobs:
         x86_64-unknown-linux-gnu,
         i686-unknown-linux-gnu
 
+      # Space-delimited string of packages to install using cargo install
+      # Type: string
+      # Required: false
+      cargo_install: 
+
       # Version specifier (e.g. 1.65, stable, nigthly) for the toolchain to use when building Rust
       # sources
       # Type: string

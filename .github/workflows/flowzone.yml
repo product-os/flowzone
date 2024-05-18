@@ -173,6 +173,11 @@ on:
           arm-unknown-linux-gnueabihf,
           x86_64-unknown-linux-gnu,
           i686-unknown-linux-gnu
+      cargo_install:
+        description: Space-delimited string of packages to install using cargo install
+        type: string
+        required: false
+        default: ""
       rust_toolchain:
         description: Version specifier (e.g. 1.65, stable, nigthly) for the toolchain to use when building Rust sources
         type: string
@@ -3590,6 +3595,9 @@ jobs:
         run: cargo fmt --check
       - name: Install cross
         run: cargo install cross --locked
+      - name: Cargo install
+        if: inputs.cargo_install != ''
+        run: cross install --force --locked ${{ inputs.cargo_install }}
       - name: Lint with clippy
         run: cross -v clippy --all-targets --all-features --target ${{ matrix.target }} -- -D warnings
       - name: Run tests for toolchain ${{ matrix.target }}
@@ -3666,6 +3674,9 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Install cross
         run: cargo install cross --locked
+      - name: Cargo install
+        if: inputs.cargo_install != ''
+        run: cross install --force --locked ${{ inputs.cargo_install }}
       - name: Build release for toolchain ${{ matrix.target }}
         run: cross -v build --release --target ${{ matrix.target }}
       - name: Install LLVM
