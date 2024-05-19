@@ -616,14 +616,14 @@ jobs:
       (
         github.event.action != 'closed' ||
         github.event.pull_request.merged == true
-      ) &&
-      inputs.release_notes == true
+      )
     defaults:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     outputs:
       body: ${{ steps.format_release_notes.outputs.body }}
+      comment: ${{ steps.format_release_notes.outputs.comment }}
     env:
       GH_DEBUG: "true"
       GH_PAGER: cat
@@ -646,7 +646,7 @@ jobs:
               "metadata": "read",
               "pull_requests": "write"
             }
-      - name: Draft PR comment
+      - name: Format release notes
         id: format_release_notes
         continue-on-error: true
         env:
@@ -720,9 +720,48 @@ jobs:
                   echo "$EOF" >> $GITHUB_OUTPUT
               fi
           fi
+  release_notes_comment:
+    name: Prepare deploy message
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    needs:
+      - versioned_source
+      - release_notes
+    if: |
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      ) &&
+      inputs.release_notes == true
+    defaults:
+      run:
+        working-directory: .
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      GH_DEBUG: "true"
+      GH_PAGER: cat
+      GH_PROMPT_DISABLED: "true"
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "write",
+              "metadata": "read",
+              "pull_requests": "write"
+            }
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
         id: find_comment
-        if: steps.format_release_notes.outputs.comment != ''
+        if: needs.release_notes.outputs.comment != ''
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: flowzone-app[bot]
@@ -730,7 +769,7 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
         id: find_edited_comment
-        if: steps.format_release_notes.outputs.comment != ''
+        if: needs.release_notes.outputs.comment != ''
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: flowzone-app[bot]
@@ -738,7 +777,7 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
         if: |
-          steps.format_release_notes.outputs.comment != '' &&
+          needs.release_notes.outputs.comment != '' &&
           (
             (
               steps.find_comment.outputs.comment-id == '' &&
@@ -753,7 +792,7 @@ jobs:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ${{ steps.format_release_notes.outputs.comment }}
+            ${{ needs.release_notes.outputs.comment }}
           edit-mode: replace
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           reactions: eyes
