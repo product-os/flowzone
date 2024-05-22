@@ -1,4 +1,25 @@
 - commits:
+    - subject: Prepare PR release message in separate job
+      hash: ccd9d870e28eadd5e34c3289f460aa35cc4848cd
+      body: |
+        The work on PR #1046 made the finalize github release job dependent
+        on the `release_notes` input. That's a regression on the correct
+        behavior. This PR moves the PR comment and deploy message to a separate
+        job that is dependent on the input, and makes the release_notes job run
+        on every PR, which allows the github finalize job to always run on
+        merge.
+
+        This is a major change because it changes the way the release_notes
+        input work, even though it restores the right behavior.
+      footer:
+        Change-type: major
+        change-type: major
+      author: Felipe Lalanne
+      nested: []
+  version: 13.0.0
+  title: ""
+  date: 2024-05-22T14:29:46.660Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.68
       hash: 68cd74f7ed3b34bcba6287565317d60fbd6eba77
       body: |
