@@ -1640,14 +1640,14 @@ jobs:
       - <<: *setupNode
         if: steps.npm.outputs.enabled == 'true'
         with:
-          node-version: 21.x
+          node-version: 22.x
 
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["21.x"]')" >> "${GITHUB_ENV}"
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.x"]')" >> "${GITHUB_ENV}"
           fi
 
       # default to the current LTS version if none were matched
