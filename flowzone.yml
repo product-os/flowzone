@@ -596,7 +596,8 @@
     uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
     env:
       LOG_LEVEL: debug
-      BINFMT_VERSION: qemu-v8.0.4-33 # renovate: datasource=docker depName=binfmt packageName=tonistiigi/binfmt
+      # renovate: datasource=docker depName=binfmt packageName=tonistiigi/binfmt
+      BINFMT_VERSION: qemu-v8.0.4-33
     with:
       platforms: ${{ matrix.platform }}
       # https://hub.docker.com/r/tonistiigi/binfmt
