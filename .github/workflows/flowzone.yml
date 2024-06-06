@@ -1822,7 +1822,7 @@ jobs:
 
           # include templates in the matrix only if modified
           for template in ${template_files}; do
-              modified_files="$(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}")"
+              modified_files="$(git diff --submodule=diff "${BASE_SHA}" "${HEAD_SHA}" | sed -n 's#^--- a/\(.*\)$#\1#p')"
 
               if ! echo "${modified_files}" | grep -Eq "^${template}$|^.github/workflows/"; then
                   unmodified_stacks="$(echo "${stacks}" \
