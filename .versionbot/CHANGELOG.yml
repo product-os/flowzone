@@ -1,4 +1,16 @@
 - commits:
+    - subject: look for changed files in submodules
+      hash: 9549b806b85cf4df65298e4efbddf2752a134dc7
+      body: |
+        * otherwise Cloudformation updates won't run on base digest merges
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 13.1.6
+  title: ""
+  date: 2024-06-06T18:12:52.415Z
+- commits:
     - subject: correct Renovate binfmt
       hash: b1491db20fd7c8e461ee5ce29baf75e7b704876c
       body: ""
