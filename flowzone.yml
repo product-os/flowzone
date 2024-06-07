@@ -3368,7 +3368,7 @@ jobs:
         run: cross -v clippy --all-targets --all-features --target ${{ matrix.target }} -- -D warnings
 
       - name: Run tests for toolchain ${{ matrix.target }}
-        run: cross -v test --target ${{ matrix.target }}
+        run: cross -v test --locked --target ${{ matrix.target }}
 
       - name: Generate metadata
         id: meta
@@ -3426,7 +3426,7 @@ jobs:
         run: cargo install cross --locked
 
       - name: Build release for toolchain ${{ matrix.target }}
-        run: cross -v build --release --target ${{ matrix.target }}
+        run: cross -v build --locked --release --target ${{ matrix.target }}
 
       - name: Install LLVM
         run: sudo apt-get install -y llvm
