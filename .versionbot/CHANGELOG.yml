@@ -1,4 +1,22 @@
 - commits:
+    - subject: Use --locked option to test and build rust
+      hash: f8cdfb1538d01c8c4077c02cbccc5a429f9f429b
+      body: |
+        This ensures that the build will use the exact dependencies in
+        Cargo.lock and fail if Cargo.lock has not been updated.
+
+        This is a stricter option which will could potentially cause previously
+        working builds to fail, but it is necessary to allow for better
+        reproducibility of builds.
+      footer:
+        Change-type: major
+        change-type: major
+      author: Felipe Lalanne
+      nested: []
+  version: 14.0.0
+  title: ""
+  date: 2024-06-07T16:11:12.080Z
+- commits:
     - subject: look for changed files in submodules
       hash: 9549b806b85cf4df65298e4efbddf2752a134dc7
       body: |
