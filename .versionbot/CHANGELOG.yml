@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update product-os/docusaurus-builder action to v2.0.17
+      hash: b629da738e061f31e713fb8b991dcf0e489802a1
+      body: |
+        Update product-os/docusaurus-builder from 2.0.15 to 2.0.17
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 14.0.1
+  title: ""
+  date: 2024-06-10T03:01:21.704Z
+- commits:
     - subject: Use --locked option to test and build rust
       hash: f8cdfb1538d01c8c4077c02cbccc5a429f9f429b
       body: |
