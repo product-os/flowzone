@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/bake-action action to v4.6.0
+      hash: ef529e8f41b8321e01c651d414ca05ed5f9f4a59
+      body: |
+        Update docker/bake-action from 4.5.0 to 4.6.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 14.1.1
+  title: ""
+  date: 2024-06-13T19:58:19.651Z
+- commits:
     - subject: Improve caching of docker builds
       hash: 3a6fdbe24873e911a0ca25d31e84cf81916000d5
       body: |
