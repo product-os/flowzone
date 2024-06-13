@@ -1,4 +1,27 @@
 - commits:
+    - subject: Improve caching of docker builds
+      hash: 3a6fdbe24873e911a0ca25d31e84cf81916000d5
+      body: |
+        Increase cache from min to max, and remove the branch
+        name from the cache scope.
+
+        Max mode will cache all layers, including intermediate stages.
+
+        This is a minor change as some repositories may run out
+        of cache space when building for many platforms.
+      footer:
+        See: https://docs.docker.com/build/cache/backends/gha/
+        see: https://docs.docker.com/build/cache/backends/gha/
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 14.1.0
+  title: ""
+  date: 2024-06-13T19:05:25.324Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.0.17
       hash: b629da738e061f31e713fb8b991dcf0e489802a1
       body: |
