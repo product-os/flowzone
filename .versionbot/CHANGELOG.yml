@@ -1,4 +1,19 @@
 - commits:
+    - subject: Pin `balena-versionist` to v0.15.0
+      hash: 9155f979cf428098358f8d23732df378a9281306
+      body: |
+        To support the `dbt-project` repository type
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Pranas Ziaukas <pranas@balena.io>
+        signed-off-by: Pranas Ziaukas <pranas@balena.io>
+      author: Pranas Ziaukas
+      nested: []
+  version: 14.1.5
+  title: ""
+  date: 2024-06-14T11:14:56.754Z
+- commits:
     - subject: Lock file maintenance
       hash: 7b6e1515377c85f67a938191960a662e286f8d43
       body: |
