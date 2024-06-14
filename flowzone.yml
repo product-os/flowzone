@@ -1140,7 +1140,7 @@ jobs:
         if: inputs.disable_versioning != true
         run: |
           npm install -g \
-            balena-versionist@~0.14.13 \
+            balena-versionist@~0.15.0 \
             versionist@^7.0.3
 
           npm ls -g
