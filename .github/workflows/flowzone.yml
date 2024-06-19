@@ -254,11 +254,6 @@ on:
         description: Deprecated. Add the 'os' property in custom_test_matrix, custom_publish_matrix, and custom_finalize_matrix instead.
         type: string
         required: false
-      custom_environments:
-        description: Deprecated. Add the 'environments' property in custom_test_matrix, custom_publish_matrix, and custom_finalize_matrix instead.
-        type: string
-        required: false
-        default: ""
       toggle_auto_merge:
         description: Set to false to disable toggling auto-merge on PRs.
         type: boolean
@@ -1534,30 +1529,6 @@ jobs:
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
-      - id: custom_environments_matrix
-        name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-        env:
-          INPUT: ${{ inputs.custom_environments }}
-          DELIMITER: ","
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
         name: Build JSON array
@@ -1590,8 +1561,7 @@ jobs:
           MATRIX: |
             {
               "value": ${{ steps.custom_test_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }},
-              "environment": ${{ steps.custom_environments_matrix.outputs.json }}
+              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
             }
         run: |
           json=$(jq -e -c . <<<"${MATRIX}") || exit $?
@@ -1628,8 +1598,7 @@ jobs:
           MATRIX: |
             {
               "value": ${{ steps.custom_publish_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }},
-              "environment": ${{ steps.custom_environments_matrix.outputs.json }}
+              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
             }
         run: |
           json=$(jq -e -c . <<<"${MATRIX}") || exit $?
@@ -1666,8 +1635,7 @@ jobs:
           MATRIX: |
             {
               "value": ${{ steps.custom_finalize_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }},
-              "environment": ${{ steps.custom_environments_matrix.outputs.json }}
+              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
             }
         run: |
           json=$(jq -e -c . <<<"${MATRIX}") || exit $?

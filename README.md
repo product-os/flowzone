@@ -355,12 +355,6 @@ jobs:
       # Required: false
       custom_runs_on:
 
-      # Deprecated. Add the 'environments' property in custom_test_matrix, custom_publish_matrix,
-      # and custom_finalize_matrix instead.
-      # Type: string
-      # Required: false
-      custom_environments: 
-
       # Set to false to disable toggling auto-merge on PRs.
       # Type: boolean
       # Required: false
