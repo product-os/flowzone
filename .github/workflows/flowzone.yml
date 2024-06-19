@@ -193,11 +193,6 @@ on:
         type: boolean
         required: false
         default: false
-      job_name:
-        description: The name of the job, necessary for branch protection if not using the default of 'Flowzone'
-        type: string
-        required: false
-        default: Flowzone
       checkout_fetch_depth:
         description: Configures the depth of the actions/checkout git fetch.
         type: number

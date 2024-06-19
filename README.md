@@ -284,12 +284,6 @@ jobs:
       # Required: false
       disable_versioning: false
 
-      # The name of the job, necessary for branch protection if not using the default of
-      # 'Flowzone'
-      # Type: string
-      # Required: false
-      job_name: Flowzone
-
       # Configures the depth of the actions/checkout git fetch.
       # Type: number
       # Required: false
