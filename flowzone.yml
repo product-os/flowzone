@@ -930,11 +930,6 @@ on:
         type: boolean
         required: false
         default: false
-      job_name:
-        description: "The name of the job, necessary for branch protection if not using the default of 'Flowzone'"
-        type: string
-        required: false
-        default: "Flowzone"
       checkout_fetch_depth:
         description: "Configures the depth of the actions/checkout git fetch."
         type: number
@@ -996,11 +991,6 @@ on:
         description: "Deprecated. Add the 'os' property in custom_test_matrix, custom_publish_matrix, and custom_finalize_matrix instead."
         type: string
         required: false
-      custom_environments:
-        description: "Deprecated. Add the 'environments' property in custom_test_matrix, custom_publish_matrix, and custom_finalize_matrix instead."
-        type: string
-        required: false
-        default: ""
       toggle_auto_merge:
         description: "Set to false to disable toggling auto-merge on PRs."
         type: boolean
@@ -2053,13 +2043,6 @@ jobs:
       - *resetGitHubDirectory
 
       # FIXME: remove this handling of deprecated comma-separated values
-      - id: custom_environments_matrix
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.custom_environments }}
-          DELIMITER: ","
-
-      # FIXME: remove this handling of deprecated comma-separated values
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
         <<: *jsonArrayBuilder
@@ -2076,8 +2059,7 @@ jobs:
           MATRIX: >
             {
               "value": ${{ steps.custom_test_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }},
-              "environment": ${{ steps.custom_environments_matrix.outputs.json }}
+              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
             }
         run: |
           json=$(jq -e -c . <<<"${MATRIX}") || exit $?
@@ -2099,8 +2081,7 @@ jobs:
           MATRIX: >
             {
               "value": ${{ steps.custom_publish_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }},
-              "environment": ${{ steps.custom_environments_matrix.outputs.json }}
+              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
             }
 
       # FIXME: remove this handling of deprecated comma-separated values
@@ -2119,8 +2100,7 @@ jobs:
           MATRIX: >
             {
               "value": ${{ steps.custom_finalize_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }},
-              "environment": ${{ steps.custom_environments_matrix.outputs.json }}
+              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
             }
 
       - name: Check for custom actions

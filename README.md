@@ -284,12 +284,6 @@ jobs:
       # Required: false
       disable_versioning: false
 
-      # The name of the job, necessary for branch protection if not using the default of
-      # 'Flowzone'
-      # Type: string
-      # Required: false
-      job_name: Flowzone
-
       # Configures the depth of the actions/checkout git fetch.
       # Type: number
       # Required: false
@@ -360,12 +354,6 @@ jobs:
       # Type: string
       # Required: false
       custom_runs_on:
-
-      # Deprecated. Add the 'environments' property in custom_test_matrix, custom_publish_matrix,
-      # and custom_finalize_matrix instead.
-      # Type: string
-      # Required: false
-      custom_environments: 
 
       # Set to false to disable toggling auto-merge on PRs.
       # Type: boolean
