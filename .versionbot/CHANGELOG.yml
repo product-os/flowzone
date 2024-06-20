@@ -1,4 +1,32 @@
 - commits:
+    - subject: Remove deprecated custom_environments input
+      hash: d73e8d578407b6d1a1d56efad0756b07491b110f
+      body: |
+        This property was only used in one repository for testing
+        and has been replaced by custom_*_matrix syntax.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Remove deprecated input job_name
+      hash: 2c30a6bcb3218edc52c43b357e0572781c743ea3
+      body: |
+        The functionality behind this input was removed
+        when we stopped patching branch protections.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 15.0.0
+  title: ""
+  date: 2024-06-20T02:12:49.808Z
+- commits:
     - subject: Update softprops/action-gh-release action to v2.0.6
       hash: fe5b91573bacc9b9eeeda31388135ed2fb367577
       body: |
