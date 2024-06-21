@@ -1,4 +1,20 @@
 - commits:
+    - subject: Fix string process for dockerhub images
+      hash: 814d2315c9a258c45906843cf014cc63e4ca7693
+      body: |
+        This should re-enable publishing of READMEs
+        as DockerHub descriptions on finalize.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 15.0.1
+  title: ""
+  date: 2024-06-21T18:27:34.751Z
+- commits:
     - subject: Remove deprecated custom_environments input
       hash: d73e8d578407b6d1a1d56efad0756b07491b110f
       body: |
