@@ -419,26 +419,28 @@
         fi
       fi
 
-      if [ -n "${IMAGE}" ]
-      then
-        if [[ "${IMAGE}" =~ ^(.*\/)?([^\/]+)\/([^\/\:]+)(\:.+)?$ ]]
-        then
-          image_slug="${IMAGE}"
-        else
-          image_slug="docker.io/${IMAGE}"
-        fi
-      fi
+      case ${IMAGE} in
+      '')
+        image_slug=
+        ;;
+      *.*/*)
+        # convert tl.d/org/repo(:tag)? to tl.d/org/repo
+        image_slug="${IMAGE%%:*}"
+        ;;
+      *)
+        # convert org/repo(:tag)? to docker.io/org/repo
+        image_slug="docker.io/${IMAGE%%:*}"
+        ;;
+      esac
 
-      if [[ "${image_slug}" =~ ^docker\.io\/(.*)$ ]]
-      then
-        dockerhub_slug="${BASH_REMATCH[1]}"
-      fi
+      # convert tl.d/org/repo to org/repo
+      repo_slug="${image_slug#*/}"
 
       echo "image=${image_slug}" >> "${GITHUB_OUTPUT}"
       echo "target=${target_slug}" >> "${GITHUB_OUTPUT}"
       echo "prefix=${prefix_slug}" >> "${GITHUB_OUTPUT}"
       echo "suffix=${suffix_slug}" >> "${GITHUB_OUTPUT}"
-      echo "dockerhub=${dockerhub_slug}" >> "${GITHUB_OUTPUT}"
+      echo "repo=${repo_slug}" >> "${GITHUB_OUTPUT}"
 
   - &dockerTestMetadata # https://github.com/docker/metadata-action
     name: Generate docker metadata
@@ -2868,13 +2870,13 @@ jobs:
 
       # attempt to update the dockerhub description, but do not abort on failure
       - name: Update DockerHub Description
-        if: steps.strings.outputs.dockerhub != '' && github.base_ref == github.event.repository.default_branch
+        if: contains(steps.strings.outputs.image,'docker.io') && github.base_ref == github.event.repository.default_branch
         continue-on-error: true
         uses: peter-evans/dockerhub-description@e98e4d1628a5f3be2be7c231e50981aee98723ae # v4.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-          repository: ${{ steps.strings.outputs.dockerhub }}
+          repository: ${{ steps.strings.outputs.repo }}
           readme-filepath: ./README.md
 
   ###################################################
