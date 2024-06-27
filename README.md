@@ -152,6 +152,10 @@ jobs:
       # Required: false
       CUSTOM_JOB_SECRET_3:
 
+      # API key for Dependency-Track integration
+      # Required: false
+      DTRACK_TOKEN:
+
     with:
       # AWS region with GitHub OIDC provider IAM configuration
       # Type: string

@@ -60,6 +60,9 @@ on:
       CUSTOM_JOB_SECRET_3:
         description: Optional secret for using with custom jobs
         required: false
+      DTRACK_TOKEN:
+        description: API key for Dependency-Track integration
+        required: false
     inputs:
       aws_region:
         description: AWS region with GitHub OIDC provider IAM configuration
@@ -913,6 +916,7 @@ jobs:
       has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
       npm_private: ${{ steps.npm.outputs.private }}
       npm_docs: ${{ steps.npm.outputs.docs }}
+      npm_sbom: ${{ steps.npm.outputs.sbom }}
       node_versions: ${{ steps.node_versions.outputs.json }}
       npm_access: ${{ steps.access.outputs.access }}
     steps:
@@ -946,6 +950,7 @@ jobs:
             echo "enabled=true" >> "${GITHUB_OUTPUT}"
             echo "private=$(jq -r '.private' package.json)" >> "${GITHUB_OUTPUT}"
             echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> "${GITHUB_OUTPUT}"
+            echo "sbom=true" >> "${GITHUB_OUTPUT}" # TODO: evaluate the need to offer an option to disable SBOM generation
             echo "NODE_VERSIONS=[]" >> "${GITHUB_ENV}"
           else
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
@@ -1260,6 +1265,7 @@ jobs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
+      python_sbom: true
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1358,6 +1364,7 @@ jobs:
     outputs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
+      cargo_sbom: true
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1940,6 +1947,76 @@ jobs:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/docs.tar.zst
           retention-days: 90
+  npm_sbom:
+    name: Generate SBOM for NPM
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    needs:
+      - is_npm
+      - npm_test
+      - versioned_source
+    if: ${{ needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout versioned commit
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Create local refs
+        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
+        run: |
+          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+        with:
+          node-version: 18.x
+      - run: npm install
+      - name: Generate SBOM
+        run: |
+          npx @cyclonedx/cyclonedx-npm --output-file=${{ runner.temp }}/npm-sbom.xml
+      - name: Publish SBOM artifacts
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          name: gh-release-sbom-npm
+          path: ${{ runner.temp }}/npm-sbom.xml
+          retention-days: 90
+      - name: Publish SBOM To Dependency Track
+        if: ${{ env.SERVER_HOSTNAME != '' }}
+        run: |
+          curl -X "PUT" "https://${{ env.SERVER_HOSTNAME }}/api/v1/bom" \
+            -H 'Content-Type: application/json' \
+            -H 'X-API-Key: ${{env.API_KEY}}' \
+             -d '{
+              "projectName": "'"${{env.PROJECT_NAME}}"'",
+              "projectVersion": "'"${{env.PROJECT_VERSION}}"'",
+              "autoCreate": "true",
+              "bom": "'"$(base64 -w 0 "${{ env.BOM_FILE }}")"'"
+            }'
+        env:
+          SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
+          API_KEY: ${{ secrets.DTRACK_TOKEN }}
+          PROJECT_NAME: ${{ github.event.repository.name }}
+          BOM_FILE: ${{ runner.temp }}/npm-sbom.xml
+          PROJECT_VERSION: ${{ needs.npm_test.outputs.version_tag }}
   npm_publish:
     name: Publish npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3041,6 +3118,12 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
+    outputs:
+      package: ${{ steps.meta.outputs.package }}
+      version: ${{ steps.meta.outputs.version }}
+      branch_tag: ${{ steps.meta.outputs.branch_tag }}
+      sha_tag: ${{ steps.meta.outputs.sha_tag }}
+      version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3091,6 +3174,20 @@ jobs:
           else
             poetry add --group dev flake8@latest pydocstyle@latest pytest@latest
           fi
+      - name: Generate metadata
+        id: meta
+        run: |
+          package=$(grep '^name =' pyproject.toml | sed 's/name = "\(.*\)"/\1/')
+          version=$(grep '^version =' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+
+          echo "package=${package}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "branch_tag=${branch_tag}" >> "${GITHUB_OUTPUT}"
+          echo "sha_tag=${sha_tag}" >> "${GITHUB_OUTPUT}"
+          echo "version_tag=${version_tag}" >> "${GITHUB_OUTPUT}"
       - name: Lint with flake8
         run: |
           poetry run flake8 --max-line-length=120 --benchmark
@@ -3106,6 +3203,85 @@ jobs:
         shell: script -q -e -c "bash --noprofile --norc -eo pipefail -x {0}" /tmp/test-session
         run: |
           poetry run pytest tests/
+  python_sbom:
+    name: Generate SBOM for python
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    needs:
+      - is_python
+      - python_test
+      - versioned_source
+    if: needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true'
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout versioned commit
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Create local refs
+        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
+        run: |
+          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+      - name: Setup python
+        id: setup-python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.9"
+      - name: Setup poetry
+        if: steps.setup-python.outputs.python-version != ''
+        uses: abatilo/actions-poetry@7b6d33e44b4f08d7021a1dee3c044e9c253d6439
+        with:
+          poetry-version: 1.5.1
+      - name: Run poetry install
+        run: poetry install
+      - name: Install CycloneDX for Python
+        run: |
+          pip3 install 'cyclonedx-bom>=1.4.0,<4'
+      - name: Generate SBOM
+        run: cyclonedx-py -r -i ./poetry.lock --format xml -o ${{ runner.temp }}/python-sbom.xml
+      - name: Publish SBOM artifacts
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          name: gh-release-sbom-python
+          path: ${{ runner.temp }}/python-sbom.xml
+          retention-days: 90
+      - name: Publish SBOM To Dependency Track
+        if: ${{ env.SERVER_HOSTNAME != '' }}
+        run: |
+          curl -X "PUT" "https://${{ env.SERVER_HOSTNAME }}/api/v1/bom" \
+            -H 'Content-Type: application/json' \
+            -H 'X-API-Key: ${{env.API_KEY}}' \
+             -d '{
+              "projectName": "'"${{env.PROJECT_NAME}}"'",
+              "projectVersion": "'"${{env.PROJECT_VERSION}}"'",
+              "autoCreate": "true",
+              "bom": "'"$(base64 -w 0 "${{ env.BOM_FILE }}")"'"
+            }'
+        env:
+          SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
+          API_KEY: ${{ secrets.DTRACK_TOKEN }}
+          PROJECT_NAME: ${{ github.event.repository.name }}
+          BOM_FILE: ${{ runner.temp }}/python-sbom.xml
+          PROJECT_VERSION: ${{ needs.python_test.outputs.version_tag }}
   python_publish:
     name: Publish to test PyPI
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3359,6 +3535,9 @@ jobs:
       - python_publish
       - cargo_publish
       - custom_publish
+      - npm_sbom
+      - python_sbom
+      - cargo_sbom
     if: |
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open'
@@ -3616,6 +3795,78 @@ jobs:
           echo "branch_tag=${branch_tag}" >> "${GITHUB_OUTPUT}"
           echo "sha_tag=${sha_tag}" >> "${GITHUB_OUTPUT}"
           echo "version_tag=${version_tag}" >> "${GITHUB_OUTPUT}"
+  cargo_sbom:
+    name: Generate SBOM for cargo
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    needs:
+      - is_cargo
+      - cargo_test
+      - versioned_source
+    if: needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true'
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout versioned commit
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Create local refs
+        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
+        run: |
+          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+      - name: Set up toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - name: Install CycloneDX for Cargo
+        run: cargo install cargo-cyclonedx
+      - name: Generate SBOM
+        run: |
+          cargo cyclonedx --override-filename bom
+          mv bom.xml ${{ runner.temp }}/cargo-sbom.xml
+      - name: Publish SBOM artifacts
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          name: gh-release-sbom-cargo
+          path: ${{ runner.temp }}/cargo-sbom.xml
+          retention-days: 90
+      - name: Publish SBOM To Dependency Track
+        if: ${{ env.SERVER_HOSTNAME != '' }}
+        run: |
+          curl -X "PUT" "https://${{ env.SERVER_HOSTNAME }}/api/v1/bom" \
+            -H 'Content-Type: application/json' \
+            -H 'X-API-Key: ${{env.API_KEY}}' \
+             -d '{
+              "projectName": "'"${{env.PROJECT_NAME}}"'",
+              "projectVersion": "'"${{env.PROJECT_VERSION}}"'",
+              "autoCreate": "true",
+              "bom": "'"$(base64 -w 0 "${{ env.BOM_FILE }}")"'"
+            }'
+        env:
+          SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
+          API_KEY: ${{ secrets.DTRACK_TOKEN }}
+          PROJECT_NAME: ${{ github.event.repository.name }}
+          BOM_FILE: ${{ runner.temp }}/cargo-sbom.xml
+          PROJECT_VERSION: ${{ needs.cargo_test.outputs.version_tag }}
   cargo_publish:
     name: Publish rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -4516,6 +4767,9 @@ jobs:
       - is_custom
       - is_website
       - all_tests
+      - npm_sbom
+      - python_sbom
+      - cargo_sbom
       - npm_publish
       - docker_publish
       - balena_publish

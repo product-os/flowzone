@@ -688,6 +688,24 @@
     run: |
       aws eks update-kubeconfig --name "$(echo "${KUBE_CTX}" | awk -F'/' '{print $2}')"
 
+  - &publishSBOMArtifacts
+    name: Publish SBOM artifacts
+    uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+
+  - &publishSBOMToDependencyTrack
+    name: Publish SBOM To Dependency Track
+    if: ${{ env.SERVER_HOSTNAME != '' }}
+    run: |
+      curl -X "PUT" "https://${{ env.SERVER_HOSTNAME }}/api/v1/bom" \
+        -H 'Content-Type: application/json' \
+        -H 'X-API-Key: ${{env.API_KEY}}' \
+         -d '{
+          "projectName": "'"${{env.PROJECT_NAME}}"'",
+          "projectVersion": "'"${{env.PROJECT_VERSION}}"'",
+          "autoCreate": "true",
+          "bom": "'"$(base64 -w 0 "${{ env.BOM_FILE }}")"'"
+        }'
+
   - &convenienceFunctions
     name: Convenience functions
     id: functions
@@ -790,6 +808,9 @@ on:
         required: false
       CUSTOM_JOB_SECRET_3:
         description: "Optional secret for using with custom jobs"
+        required: false
+      DTRACK_TOKEN:
+        description: "API key for Dependency-Track integration"
         required: false
 
     inputs:
@@ -1551,6 +1572,7 @@ jobs:
       has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
+      npm_sbom: ${{ steps.npm.outputs.sbom }} # can be null or unset
       node_versions: ${{ steps.node_versions.outputs.json }}
       npm_access: ${{ steps.access.outputs.access }}
 
@@ -1567,6 +1589,7 @@ jobs:
             echo "enabled=true" >> "${GITHUB_OUTPUT}"
             echo "private=$(jq -r '.private' package.json)" >> "${GITHUB_OUTPUT}"
             echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> "${GITHUB_OUTPUT}"
+            echo "sbom=true" >> "${GITHUB_OUTPUT}" # TODO: evaluate the need to offer an option to disable SBOM generation
             echo "NODE_VERSIONS=[]" >> "${GITHUB_ENV}"
           else
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
@@ -1878,6 +1901,7 @@ jobs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
+      python_sbom: true # TODO: offer a way to deactivate SBOM generation
 
     steps:
       - *getGitHubAppToken
@@ -1960,6 +1984,7 @@ jobs:
     outputs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
+      cargo_sbom: true # TODO: offer a way to deactivate SBOM generation
 
     steps:
       - *getGitHubAppToken
@@ -2368,6 +2393,41 @@ jobs:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/docs.tar.zst
           retention-days: 90
+
+  npm_sbom:
+    name: Generate SBOM for NPM
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    needs:
+      - is_npm
+      - npm_test
+      - versioned_source
+    if: ${{ needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' }}
+    <<: *customWorkingDirectory
+    steps:
+      - *getGitHubAppToken
+      - *checkoutVersionedSha
+      - *createLocalRefs
+      - *setupNode
+
+      - run: npm install
+
+      - name: Generate SBOM
+        run: |
+          npx @cyclonedx/cyclonedx-npm --output-file=${{ runner.temp }}/npm-sbom.xml
+
+      - <<: *publishSBOMArtifacts
+        with:
+          name: gh-release-sbom-npm
+          path: ${{ runner.temp }}/npm-sbom.xml
+          retention-days: 90
+
+      - <<: *publishSBOMToDependencyTrack
+        env:
+          SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
+          API_KEY: ${{ secrets.DTRACK_TOKEN }}
+          PROJECT_NAME: ${{ github.event.repository.name }}
+          BOM_FILE: ${{ runner.temp }}/npm-sbom.xml
+          PROJECT_VERSION: ${{ needs.npm_test.outputs.version_tag }}
 
   npm_publish:
     name: Publish npm
@@ -2972,6 +3032,13 @@ jobs:
       matrix:
         python-version: ${{ fromJSON(needs.is_python.outputs.python_versions) }}
 
+    outputs:
+      package: ${{ steps.meta.outputs.package }}
+      version: ${{ steps.meta.outputs.version }}
+      branch_tag: ${{ steps.meta.outputs.branch_tag }}
+      sha_tag: ${{ steps.meta.outputs.sha_tag }}
+      version_tag: ${{ steps.meta.outputs.version_tag }}
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -2999,6 +3066,21 @@ jobs:
             poetry add --group dev flake8@latest pydocstyle@latest pytest@latest
           fi
 
+      - name: Generate metadata
+        id: meta
+        run: |
+          package=$(grep '^name =' pyproject.toml | sed 's/name = "\(.*\)"/\1/')
+          version=$(grep '^version =' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+
+          echo "package=${package}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "branch_tag=${branch_tag}" >> "${GITHUB_OUTPUT}"
+          echo "sha_tag=${sha_tag}" >> "${GITHUB_OUTPUT}"
+          echo "version_tag=${version_tag}" >> "${GITHUB_OUTPUT}"
+
       - name: Lint with flake8
         run: |
           poetry run flake8 --max-line-length=120 --benchmark
@@ -3017,6 +3099,50 @@ jobs:
         shell: script -q -e -c "bash --noprofile --norc -eo pipefail -x {0}" /tmp/test-session
         run: |
           poetry run pytest tests/
+
+  python_sbom:
+    name: Generate SBOM for python
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    needs:
+      - is_python
+      - python_test
+      - versioned_source
+    if: needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true'
+
+    <<: *customWorkingDirectory
+
+    steps:
+      - *getGitHubAppToken
+      - *checkoutVersionedSha
+      - *createLocalRefs
+
+      - *setupPython
+
+      - *setupPoetry
+
+      - name: Run poetry install
+        run: poetry install
+
+      - name: Install CycloneDX for Python
+        run: |
+          pip3 install 'cyclonedx-bom>=1.4.0,<4'
+
+      - name: Generate SBOM
+        run: cyclonedx-py -r -i ./poetry.lock --format xml -o ${{ runner.temp }}/python-sbom.xml
+
+      - <<: *publishSBOMArtifacts
+        with:
+          name: gh-release-sbom-python
+          path: ${{ runner.temp }}/python-sbom.xml
+          retention-days: 90
+
+      - <<: *publishSBOMToDependencyTrack
+        env:
+          SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
+          API_KEY: ${{ secrets.DTRACK_TOKEN }}
+          PROJECT_NAME: ${{ github.event.repository.name }}
+          BOM_FILE: ${{ runner.temp }}/python-sbom.xml
+          PROJECT_VERSION: ${{ needs.python_test.outputs.version_tag }}
 
   python_publish:
     name: Publish to test PyPI
@@ -3190,6 +3316,9 @@ jobs:
       - python_publish
       - cargo_publish
       - custom_publish
+      - npm_sbom
+      - python_sbom
+      - cargo_sbom
     # allow some dependencies to be skipped
     if: |
       !failure() && !cancelled() &&
@@ -3366,6 +3495,49 @@ jobs:
           echo "branch_tag=${branch_tag}" >> "${GITHUB_OUTPUT}"
           echo "sha_tag=${sha_tag}" >> "${GITHUB_OUTPUT}"
           echo "version_tag=${version_tag}" >> "${GITHUB_OUTPUT}"
+
+  cargo_sbom:
+    name: Generate SBOM for cargo
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    needs:
+      - is_cargo
+      - cargo_test
+      - versioned_source
+    if: needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true'
+
+    <<: *customWorkingDirectory
+
+    steps:
+      - *getGitHubAppToken
+      - *checkoutVersionedSha
+      - *createLocalRefs
+
+      - name: Set up toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
+      - name: Install CycloneDX for Cargo
+        run: cargo install cargo-cyclonedx
+
+      - name: Generate SBOM
+        run: |
+          cargo cyclonedx --override-filename bom
+          mv bom.xml ${{ runner.temp }}/cargo-sbom.xml
+
+      - <<: *publishSBOMArtifacts
+        with:
+          name: gh-release-sbom-cargo
+          path: ${{ runner.temp }}/cargo-sbom.xml
+          retention-days: 90
+
+      - <<: *publishSBOMToDependencyTrack
+        env:
+          SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
+          API_KEY: ${{ secrets.DTRACK_TOKEN }}
+          PROJECT_NAME: ${{ github.event.repository.name }}
+          BOM_FILE: ${{ runner.temp }}/cargo-sbom.xml
+          PROJECT_VERSION: ${{ needs.cargo_test.outputs.version_tag }}
 
   cargo_publish:
     name: Publish rust
@@ -3990,6 +4162,9 @@ jobs:
       - is_custom
       - is_website
       - all_tests
+      - npm_sbom
+      - python_sbom
+      - cargo_sbom
       - npm_publish
       - docker_publish
       - balena_publish
