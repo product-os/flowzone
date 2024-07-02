@@ -1553,9 +1553,8 @@ jobs:
         # https://github.com/rhysd/actionlint/releases
         uses: docker://rhysd/actionlint:1.7.1
         with:
-          # ignore errors on unkown runner custom runner labels
-          # ignore shellcheck for now
-          args: -color -ignore="custom label for self-hosted runner" -shellcheck=
+          # ignore errors on unknown runner custom runner labels
+          args: -color -ignore="custom label for self-hosted runner"
 
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:

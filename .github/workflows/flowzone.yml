@@ -900,7 +900,7 @@ jobs:
       - name: Check workflow files
         uses: docker://rhysd/actionlint:1.7.1
         with:
-          args: -color -ignore="custom label for self-hosted runner" -shellcheck=
+          args: -color -ignore="custom label for self-hosted runner"
   is_npm:
     name: Is npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
