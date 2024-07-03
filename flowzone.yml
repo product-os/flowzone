@@ -2401,6 +2401,7 @@ jobs:
   npm_sbom:
     name: Generate SBOM for NPM
     runs-on: ${{ fromJSON(inputs.runs_on) }}
+    continue-on-error: true
     needs:
       - is_npm
       - npm_test
@@ -3107,6 +3108,7 @@ jobs:
   python_sbom:
     name: Generate SBOM for python
     runs-on: ${{ fromJSON(inputs.runs_on) }}
+    continue-on-error: true
     needs:
       - is_python
       - python_test
@@ -3503,6 +3505,7 @@ jobs:
   cargo_sbom:
     name: Generate SBOM for cargo
     runs-on: ${{ fromJSON(inputs.runs_on) }}
+    continue-on-error: true
     needs:
       - is_cargo
       - cargo_test
