@@ -1034,6 +1034,11 @@ on:
         type: number
         required: false
         default: 20
+      generate_sbom:
+        description: "Generate a Software Bill of Materials (SBOM) for the release."
+        type: boolean
+        required: false
+        default: true
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -1572,7 +1577,7 @@ jobs:
       has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
-      npm_sbom: ${{ steps.npm.outputs.sbom }} # can be null or unset
+      npm_sbom: ${{ inputs.generate_sbom }} # default true
       node_versions: ${{ steps.node_versions.outputs.json }}
       npm_access: ${{ steps.access.outputs.access }}
 
@@ -1589,7 +1594,6 @@ jobs:
             echo "enabled=true" >> "${GITHUB_OUTPUT}"
             echo "private=$(jq -r '.private' package.json)" >> "${GITHUB_OUTPUT}"
             echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> "${GITHUB_OUTPUT}"
-            echo "sbom=true" >> "${GITHUB_OUTPUT}" # TODO: evaluate the need to offer an option to disable SBOM generation
             echo "NODE_VERSIONS=[]" >> "${GITHUB_ENV}"
           else
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
@@ -1901,7 +1905,7 @@ jobs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
-      python_sbom: true # TODO: offer a way to deactivate SBOM generation
+      python_sbom: ${{ inputs.generate_sbom }}
 
     steps:
       - *getGitHubAppToken
@@ -1984,7 +1988,7 @@ jobs:
     outputs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
-      cargo_sbom: true # TODO: offer a way to deactivate SBOM generation
+      cargo_sbom: ${{ inputs.generate_sbom }}
 
     steps:
       - *getGitHubAppToken
