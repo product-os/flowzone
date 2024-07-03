@@ -1,4 +1,20 @@
 - commits:
+    - subject: "patch: continue-on-error for sbom generation"
+      hash: 6bd59460f1858f45efe5165316e8be286bffcd31
+      body: ""
+      footer: {}
+      author: Edwin Joassart
+      nested: []
+    - subject: "patch: add an option to not generate sbom"
+      hash: 10f20ba534781fa989413badb5fd9a4cfd792c56
+      body: ""
+      footer: {}
+      author: Edwin Joassart
+      nested: []
+  version: 15.1.4
+  title: ""
+  date: 2024-07-03T14:20:53.539Z
+- commits:
     - subject: Update docker/setup-qemu-action action to v3.1.0
       hash: 349ee08963d8a3050ff26b9961a23e9de6cb58f3
       body: |
