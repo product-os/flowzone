@@ -236,10 +236,12 @@
     id: git_describe
     run: |
       tag="$(git tag --points-at HEAD | tail -n1)"
-      echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
-      echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> "${GITHUB_OUTPUT}"
-      echo "describe=$(git describe --tags --always --dirty | cat)" >> "${GITHUB_OUTPUT}"
-      echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+      {
+        echo "tag=${tag}" ;
+        echo "semver=$(npx -q -y -- semver -c -l "${tag}")" ;
+        echo "describe=$(git describe --tags --always --dirty | cat)" ;
+        echo "sha=$(git rev-parse HEAD)" ;
+      } >> "${GITHUB_OUTPUT}"
 
   - &createLocalRefs
     # Create a local reference for the versioned tag so that it
@@ -1140,7 +1142,7 @@ jobs:
       - name: Reject merge commits
         if: github.event.pull_request.state == 'open'
         run: |
-          if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep '^parent ' | wc -l)" -gt 1 ]
+          if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep -c '^parent ')" -gt 1 ]
           then
             echo "::error::Latest commit appears to be a merge, which is currently unsupported. Try a rebase instead."
             exit 1
@@ -1200,7 +1202,7 @@ jobs:
           git status --porcelain
 
           versions=()
-          [ -f .versionbot/CHANGELOG.yml ] && versions+=($(yq e '.[0].version' .versionbot/CHANGELOG.yml))
+          [ -f .versionbot/CHANGELOG.yml ] && read -r -a versions < <(yq e '.[0].version' .versionbot/CHANGELOG.yml)
           semver="${versions[0]}"
 
           echo "semver=${semver}" >> "${GITHUB_OUTPUT}"
@@ -1266,15 +1268,17 @@ jobs:
           MESSAGE: ${{ steps.versionist.outputs.tag }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         run: |
-          response="$(gh api -X POST /repos/$GH_REPO/git/commits \
+          response="$(gh api -X POST "/repos/$GH_REPO/git/commits" \
             -F "message=$MESSAGE" \
             -F "tree=${{ steps.create_tree.outputs.sha }}" \
             -F "parents[]=$PARENT_COMMIT_SHA")"
 
           echo "$response" | jq .
-          echo "sha=$(echo "$response" | jq -r .sha)" >> "${GITHUB_OUTPUT}"
-          echo "json=$(echo "$response" | jq -c .)" >> "${GITHUB_OUTPUT}"
-          echo "bot=$(echo "$response" | jq -r .author.name | sed 's/\[bot\]//g')" >> "${GITHUB_OUTPUT}"
+          {
+            echo "sha=$(echo "$response" | jq -r .sha)" >> "${GITHUB_OUTPUT}" ;
+            echo "json=$(echo "$response" | jq -c .)" >> "${GITHUB_OUTPUT}" ;
+            echo "bot=$(echo "$response" | jq -r .author.name | sed 's/\[bot\]//g')" ;
+          } >> "${GITHUB_OUTPUT}"
 
       # create a new tag object
       - <<: *createTagObject
@@ -1558,9 +1562,9 @@ jobs:
         # https://github.com/rhysd/actionlint/releases
         uses: docker://rhysd/actionlint:1.7.1
         with:
-          # ignore errors on unkown runner custom runner labels
-          # ignore shellcheck for now
-          args: -color -ignore="custom label for self-hosted runner" -shellcheck=
+          # Ignore errors on unknown runner custom runner labels
+          # Ignore shellcheck info and style messages for now
+          args: -color -ignore="custom label for self-hosted runner" -ignore=":info:" -ignore=":style:"
 
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
@@ -2485,7 +2489,8 @@ jobs:
           )
           tar czvf "${pack}" package
 
-          if [ ${{ github.run_attempt }} -gt  1 ]; then
+          # shellcheck disable=SC2170
+          if [ ${{ github.run_attempt }} -gt 1 ]; then
             npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$((${{ github.run_attempt }} - 1)) || true
           fi
           npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
@@ -2818,6 +2823,7 @@ jobs:
         env:
           PATH_PREFIX: ${{ runner.temp }}/docker-${{ matrix.target_slug }}
         run: |
+          # shellcheck disable=SC2043
           for platform in ${{ matrix.platform_slugs }}
           do
             zstd -vd "${PATH_PREFIX}-${platform}/docker.tar.zst"
@@ -2827,6 +2833,7 @@ jobs:
         env:
           PATH_PREFIX: ${{ runner.temp }}/docker-${{ matrix.target_slug }}
         run: |
+          # shellcheck disable=SC2043
           for platform in ${{ matrix.platform_slugs }}
           do
             tar="${PATH_PREFIX}-${platform}/docker.tar"
@@ -3496,11 +3503,13 @@ jobs:
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
-          echo "package=${package}" >> "${GITHUB_OUTPUT}"
-          echo "version=${version}" >> "${GITHUB_OUTPUT}"
-          echo "branch_tag=${branch_tag}" >> "${GITHUB_OUTPUT}"
-          echo "sha_tag=${sha_tag}" >> "${GITHUB_OUTPUT}"
-          echo "version_tag=${version_tag}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "package=${package}" ;
+            echo "version=${version}" ;
+            echo "branch_tag=${branch_tag}" ;
+            echo "sha_tag=${sha_tag}" ;
+            echo "version_tag=${version_tag}" ;
+          } >> "${GITHUB_OUTPUT}"
 
   cargo_sbom:
     name: Generate SBOM for cargo
@@ -3928,6 +3937,7 @@ jobs:
 
           trap 'rm -f .env' EXIT
 
+          # shellcheck disable=SC2140
           to_envs() { jq -r "to_entries[] | \"\(.key)="\'"\(.value)"\'"\""; }
 
           printf "matrix: params='%s' tags='%s' caps='%s'" \
@@ -3948,25 +3958,33 @@ jobs:
           echo "${VARS_CONTEXT}" | to_envs >> .env
           source .env && rm -f .env
 
-          echo "stack_name=${{ matrix.stack }}" >> "${GITHUB_OUTPUT}"
-          echo "template_file=${template_file}" >> "${GITHUB_OUTPUT}"
-          echo "tags=${tags}" >> "${GITHUB_OUTPUT}"
-          echo "ignore_lint=${ignore_lint}" >> "${GITHUB_OUTPUT}"
-
-          EOF="$(openssl rand -hex 16)"
+          {
+            echo "stack_name=${{ matrix.stack }}" ;
+            echo "template_file=${template_file}" ;
+            echo "tags=${tags}" ;
+            echo "ignore_lint=${ignore_lint}" ;
+          } >> "${GITHUB_OUTPUT}"
 
           if [[ -n "$params" ]]; then
-              params="$(echo "${params}" | envsubst)"
-              echo "params<<$EOF" >> "${GITHUB_OUTPUT}"
-              echo --parameter-overrides ${params} >> "${GITHUB_OUTPUT}"
-              echo $EOF >> "${GITHUB_OUTPUT}"
+            EOF="$(openssl rand -hex 16)"
+            params="$(echo "${params}" | envsubst)"
+            {
+              echo "params<<$EOF" ;
+              # shellcheck disable=SC2086
+              echo --parameter-overrides ${params} ;
+              echo "$EOF" ;
+            } >> "${GITHUB_OUTPUT}"
           fi
 
           if [[ -n "$kvparams" ]]; then
-              kvparams="$(echo "${kvparams}" | envsubst)"
-              echo "kvparams<<$EOF" >> "${GITHUB_OUTPUT}"
-              echo --parameters ${kvparams} >> "${GITHUB_OUTPUT}"
-              echo $EOF >> "${GITHUB_OUTPUT}"
+            EOF="$(openssl rand -hex 16)"
+            kvparams="$(echo "${kvparams}" | envsubst)"
+            {
+              echo "kvparams<<$EOF" ;
+              # shellcheck disable=SC2086
+              echo --parameters ${kvparams} ;
+              echo "$EOF" ;
+            } >> "${GITHUB_OUTPUT}"
           fi
 
           echo "caps=${caps}" >> "${GITHUB_OUTPUT}"
@@ -3983,7 +4001,7 @@ jobs:
 
       - name: Lint template
         run: |
-          cfn-lint -i ${DEFAULT_IGNORE} ${{ steps.shared.outputs.ignore_lint }} \
+          cfn-lint -i "${DEFAULT_IGNORE}" ${{ steps.shared.outputs.ignore_lint }} \
             -t '${{ steps.shared.outputs.template_file }}'
         env:
           DEFAULT_IGNORE: W2001 W3002 W4002 W6001 W8003 E3026 E2520 W3045
