@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-qemu-action action to v3.1.0
+      hash: 349ee08963d8a3050ff26b9961a23e9de6cb58f3
+      body: |
+        Update docker/setup-qemu-action from 3.0.0 to 3.1.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 15.1.3
+  title: ""
+  date: 2024-07-03T11:57:40.656Z
+- commits:
     - subject: Update cloudflare/wrangler-action action to v3.7.0
       hash: e3f6a67995b308b053f536c41d5612e98be3ba86
       body: |
