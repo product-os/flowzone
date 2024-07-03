@@ -1,4 +1,18 @@
 - commits:
+    - subject: "BREAKING: Enforce workflow shellcheck via actionlint"
+      hash: d16a7572ba96b84ebc6c8fd49864ae9fea7c6ace
+      body: ""
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 16.0.0
+  title: ""
+  date: 2024-07-03T14:38:07.504Z
+- commits:
     - subject: "patch: continue-on-error for sbom generation"
       hash: 6bd59460f1858f45efe5165316e8be286bffcd31
       body: ""
