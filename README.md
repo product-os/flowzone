@@ -379,6 +379,11 @@ jobs:
       # Required: false
       max_parallel: 20
 
+      # Generate a Software Bill of Materials (SBOM) for the release.
+      # Type: boolean
+      # Required: false
+      generate_sbom: true
+
 
 ```
 <!-- end usage -->

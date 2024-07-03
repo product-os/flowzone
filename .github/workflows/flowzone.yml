@@ -277,6 +277,11 @@ on:
         type: number
         required: false
         default: 20
+      generate_sbom:
+        description: Generate a Software Bill of Materials (SBOM) for the release.
+        type: boolean
+        required: false
+        default: true
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: ${{ github.event.action == 'synchronize' }}
@@ -916,7 +921,7 @@ jobs:
       has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
       npm_private: ${{ steps.npm.outputs.private }}
       npm_docs: ${{ steps.npm.outputs.docs }}
-      npm_sbom: ${{ steps.npm.outputs.sbom }}
+      npm_sbom: ${{ inputs.generate_sbom }}
       node_versions: ${{ steps.node_versions.outputs.json }}
       npm_access: ${{ steps.access.outputs.access }}
     steps:
@@ -950,7 +955,6 @@ jobs:
             echo "enabled=true" >> "${GITHUB_OUTPUT}"
             echo "private=$(jq -r '.private' package.json)" >> "${GITHUB_OUTPUT}"
             echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> "${GITHUB_OUTPUT}"
-            echo "sbom=true" >> "${GITHUB_OUTPUT}" # TODO: evaluate the need to offer an option to disable SBOM generation
             echo "NODE_VERSIONS=[]" >> "${GITHUB_ENV}"
           else
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
@@ -1265,7 +1269,7 @@ jobs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
-      python_sbom: true
+      python_sbom: ${{ inputs.generate_sbom }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1364,7 +1368,7 @@ jobs:
     outputs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
-      cargo_sbom: true
+      cargo_sbom: ${{ inputs.generate_sbom }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1950,6 +1954,7 @@ jobs:
   npm_sbom:
     name: Generate SBOM for NPM
     runs-on: ${{ fromJSON(inputs.runs_on) }}
+    continue-on-error: true
     needs:
       - is_npm
       - npm_test
@@ -3206,6 +3211,7 @@ jobs:
   python_sbom:
     name: Generate SBOM for python
     runs-on: ${{ fromJSON(inputs.runs_on) }}
+    continue-on-error: true
     needs:
       - is_python
       - python_test
@@ -3798,6 +3804,7 @@ jobs:
   cargo_sbom:
     name: Generate SBOM for cargo
     runs-on: ${{ fromJSON(inputs.runs_on) }}
+    continue-on-error: true
     needs:
       - is_cargo
       - cargo_test
