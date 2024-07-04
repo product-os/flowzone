@@ -1,4 +1,16 @@
 - commits:
+    - subject: Quoting string with spaces breaks cfn-lint
+      hash: d9f152143e2811811cc0086c9021e7869446d5a8
+      body: |
+        * also don't include 'null' values in the list if custom ignore unset
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 16.0.2
+  title: ""
+  date: 2024-07-04T19:42:53.993Z
+- commits:
     - subject: Update docker/setup-buildx-action action to v3.4.0
       hash: 92de92d6a0ccfd688420854f5db5507364cc8dd5
       body: |
