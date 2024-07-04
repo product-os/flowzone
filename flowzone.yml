@@ -4001,10 +4001,14 @@ jobs:
 
       - name: Lint template
         run: |
-          cfn-lint -i "${DEFAULT_IGNORE}" ${{ steps.shared.outputs.ignore_lint }} \
-            -t '${{ steps.shared.outputs.template_file }}'
+          ignore="${DEFAULT_IGNORE} ${IGNORE}"
+          if [[ -z "$IGNORE" ]] || [[ "$IGNORE" =~ null ]]; then
+              ignore="${DEFAULT_IGNORE}"
+          fi
+          cfn-lint -i ${ignore} -t '${{ steps.shared.outputs.template_file }}'
         env:
           DEFAULT_IGNORE: W2001 W3002 W4002 W6001 W8003 E3026 E2520 W3045
+          IGNORE: ${{ steps.shared.outputs.ignore_lint }}
 
       - name: Validate template
         run: |
