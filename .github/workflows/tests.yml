@@ -55,5 +55,11 @@ jobs:
           ],
           "environment": ["restricted"]
         }
+      custom_publish_matrix: >
+        {
+          "environment": ["restricted"]
+        }
+      auto_approve_deployments: >
+       ["test","restricted"]
       release_notes: true
       restrict_custom_actions: false

@@ -384,6 +384,12 @@ jobs:
       # Required: false
       generate_sbom: true
 
+      # A JSON list of GitHub environments to auto-approve deployments when the PR author has
+      # permission to do so.
+      # Type: string
+      # Required: false
+      auto_approve_deployments:
+
 
 ```
 <!-- end usage -->

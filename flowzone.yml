@@ -743,10 +743,48 @@
   - &randomDelay
     name: Random delay
     run: |
-      DELAY="${DELAY-5}"
+      DELAY="${DELAY:-5}"
       random="$(((RANDOM % DELAY) + 1))"
       echo "sleeping for ${random}s"
       sleep "${random}s"
+
+  # Perform a while loop until we get a pending deployment for this environment.
+  # Whether or not the user can approve doesn't matter at this point, it's just to check
+  # that a valid deployment was returned from the API.
+  # GitHub CLI api
+  - &waitForPendingDeployments
+    name: Wait for pending deployments
+    if: matrix.environment != ''
+    env:
+      <<: *gitHubCliEnvironment
+    # https://cli.github.com/manual/gh_api
+    # https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#get-pending-deployments-for-a-workflow-run
+    run: |
+      while ! gh api \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "/repos/${GH_REPO}/actions/runs/${GITHUB_RUN_ID}/pending_deployments" \
+        --jq '.[] | select(.environment.name == "${{ matrix.environment }}")' \
+        | grep current_user_can_approve ; do
+        echo "No pending deployments found for '${{ matrix.environment }}'"
+        sleep 10
+      done
+
+  # Only one approval is required per environment, even when multiple job matrices are used.
+  # https://github.com/marketplace/actions/deployment-auto-approve
+  # https://github.com/ambilykk/deployment-auto-approve
+  - &approveDeployment
+    name: Auto-approve deployment
+    uses: ambilykk/deployment-auto-approve@v1.0.1
+    if: matrix.environment != ''
+    # Expect this step to fail in cases where the author is not a deployment reviewer.
+    continue-on-error: true
+    with:
+      # The token used here should inherit the permissions of the PR author,
+      # so only authors that are also reviewers will be able to auto-approve deployments.
+      # Providing an App Installation ID or admin PAT here will break the security of deployments.
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   
+      environment: ${{ matrix.environment }}
 
 name: Flowzone
 
@@ -1041,6 +1079,10 @@ on:
         type: boolean
         required: false
         default: true
+      auto_approve_deployments:
+        description: "A JSON list of GitHub environments to auto-approve deployments when the PR author has permission to do so."
+        type: string
+        required: false
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -3647,6 +3689,33 @@ jobs:
   ###################################################
   ## custom
   ###################################################
+  
+  approve_deployments:
+    name: Approve deployments
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: 30
+    needs:
+      - versioned_source
+    if: github.event.pull_request.state == 'open'
+
+    # Only one approval is required per environment used.
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
+      matrix:
+        environment: ${{ fromJSON(inputs.auto_approve_deployments || '[]') }}
+
+    steps:
+      
+      # Perform a while loop until we get a pending deployment for this environment.
+      # Whether or not the user can approve doesn't matter at this point, it's just to check
+      # that a valid deployment was returned from the API.
+      # GitHub CLI api
+      - *waitForPendingDeployments
+
+      # https://github.com/marketplace/actions/deployment-auto-approve
+      # https://github.com/ambilykk/deployment-auto-approve
+      - *approveDeployment
 
   custom_test:
     name: Test custom
