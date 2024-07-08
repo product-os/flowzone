@@ -4006,44 +4006,6 @@ jobs:
           if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
             cargo publish
           fi
-  approve_deployments:
-    name: Approve deployments
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: 30
-    needs:
-      - versioned_source
-    if: github.event.pull_request.state == 'open'
-    strategy:
-      fail-fast: false
-      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
-      matrix:
-        environment: ${{ fromJSON(inputs.auto_approve_deployments || '[]') }}
-    steps:
-      - name: Wait for pending deployments
-        if: matrix.environment != ''
-        env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          while ! gh api \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "/repos/${GH_REPO}/actions/runs/${GITHUB_RUN_ID}/pending_deployments" \
-            --jq '.[] | select(.environment.name == "${{ matrix.environment }}")' \
-            | grep current_user_can_approve ; do
-            echo "No pending deployments found for '${{ matrix.environment }}'"
-            sleep 10
-          done
-      - name: Auto-approve deployment
-        uses: ambilykk/deployment-auto-approve@v1.0.1
-        if: matrix.environment != ''
-        continue-on-error: true
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          environment: ${{ matrix.environment }}
   custom_test:
     name: Test custom
     runs-on: ${{ matrix.os }}
@@ -4921,3 +4883,58 @@ jobs:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto || true
+  approve_deployments:
+    name: Approve deployments
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: 30
+    needs:
+      - versioned_source
+    if: github.event.pull_request.state == 'open'
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
+      matrix:
+        environment: ${{ fromJSON(inputs.auto_approve_deployments || '[]') }}
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "metadata": "read",
+              "actions": "read",
+              "checks": "read",
+              "deployments": "read",
+              "members": "read"
+            }
+      - name: Wait for pending deployments
+        if: matrix.environment != ''
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+          while ! gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/${GH_REPO}/actions/runs/${GITHUB_RUN_ID}/pending_deployments" \
+            --jq '.[] | select(.environment.name == "${{ matrix.environment }}")' \
+            | grep current_user_can_approve ; do
+            echo "No pending deployments found for '${{ matrix.environment }}'"
+            sleep 10
+          done
+      - name: Auto-approve deployment
+        uses: ambilykk/deployment-auto-approve@v1.0.1
+        if: matrix.environment != ''
+        continue-on-error: true
+        with:
+          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          environment: ${{ matrix.environment }}
