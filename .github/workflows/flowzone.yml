@@ -4931,10 +4931,12 @@ jobs:
             echo "No pending deployments found for '${{ matrix.environment }}'"
             sleep 10
           done
-      - name: Auto-approve deployment
-        uses: ambilykk/deployment-auto-approve@v1.0.1
-        if: matrix.environment != ''
-        continue-on-error: true
+      - name: Auto Approve Deploys
+        uses: activescott/automate-environment-deployment-approval@v1.0.6
         with:
-          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          environment: ${{ matrix.environment }}
+          github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          environment_allow_list: |
+            ${{ matrix.environment }}
+          actor_allow_list: |
+            balena-renovate[bot]
+            klutchell

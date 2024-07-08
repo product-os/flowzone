@@ -4313,7 +4313,7 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           # https://docs.github.com/en/enterprise-cloud@latest/rest/actions/workflow-runs?apiVersion=2022-11-28#review-pending-deployments-for-a-workflow-run
-          # 
+          # https://docs.github.com/en/enterprise-cloud@latest/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app
           permissions: >-
             {
               "metadata": "read",
@@ -4326,10 +4326,22 @@ jobs:
       # Perform a while loop until we get a pending deployment for this environment.
       # Whether or not the user can approve doesn't matter at this point, it's just to check
       # that a valid deployment was returned from the API.
-      # GitHub CLI api
       - *waitForPendingDeployments
 
+      # https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments
       # https://github.com/marketplace/actions/deployment-auto-approve
       # https://github.com/ambilykk/deployment-auto-approve
-      - *approveDeployment
-      # FIXME: switch to https://github.com/marketplace/actions/automate-environment-deployment-approval
+      # - *approveDeployment
+
+      # https://github.com/marketplace/actions/automate-environment-deployment-approval
+      # https://github.com/activescott/automate-environment-deployment-approval
+      - name: Auto Approve Deploys
+        uses: activescott/automate-environment-deployment-approval@v1.0.6
+        with:
+          github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }} 
+          environment_allow_list: |
+            ${{ matrix.environment }}
+          # the below automatically approves dependabot and anything submitted by the Github user with login "activescott"
+          actor_allow_list: |
+            balena-renovate[bot]
+            klutchell
