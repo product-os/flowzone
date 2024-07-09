@@ -4333,15 +4333,23 @@ jobs:
       # https://github.com/marketplace/actions/deployment-auto-approve
       # https://github.com/ambilykk/deployment-auto-approve
       # - *approveDeployment
-
-      # https://github.com/marketplace/actions/automate-environment-deployment-approval
-      # https://github.com/activescott/automate-environment-deployment-approval
-      - name: Auto Approve Deploys
-        uses: activescott/automate-environment-deployment-approval@v1.0.6
+      - name: Auto-approve deployment
+        uses: ambilykk/deployment-auto-approve@v1.0.1
         with:
-          github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }} 
-          environment_allow_list: |
-            ${{ matrix.environment }}
-          # the below automatically approves dependabot and anything submitted by the Github user with login "activescott"
-          actor_allow_list: |
-            ${{ github.triggering_actor }}
+          # The token used here should inherit the permissions of the PR author,
+          # so only authors that are also reviewers will be able to auto-approve deployments.
+          # Providing an App Installation ID or admin PAT here will break the security of deployments.
+          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }} 
+          environment: ${{ matrix.environment }}
+
+      # # https://github.com/marketplace/actions/automate-environment-deployment-approval
+      # # https://github.com/activescott/automate-environment-deployment-approval
+      # - name: Auto Approve Deploys
+      #   uses: activescott/automate-environment-deployment-approval@v1.0.6
+      #   with:
+      #     github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }} 
+      #     environment_allow_list: |
+      #       ${{ matrix.environment }}
+      #     # the below automatically approves dependabot and anything submitted by the Github user with login "activescott"
+      #     actor_allow_list: |
+      #       ${{ github.triggering_actor }}
