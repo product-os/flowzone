@@ -4320,8 +4320,7 @@ jobs:
               "actions": "read",
               "checks": "read",
               "deployments": "read",
-              "members": "read",
-              "administration": "write"
+              "members": "read"
             }
       
       # Perform a while loop until we get a pending deployment for this environment.
@@ -4334,7 +4333,8 @@ jobs:
       # https://github.com/ambilykk/deployment-auto-approve
       # - *approveDeployment
       - name: Auto-approve deployment
-        uses: ambilykk/deployment-auto-approve@v1.0.1
+        # uses: ambilykk/deployment-auto-approve@v1.0.1
+        uses: balena-io-experimental/deployment-auto-approve@kyle/fix-async
         with:
           # The token used here should inherit the permissions of the PR author,
           # so only authors that are also reviewers will be able to auto-approve deployments.
