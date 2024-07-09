@@ -4911,7 +4911,8 @@ jobs:
               "actions": "read",
               "checks": "read",
               "deployments": "read",
-              "members": "read"
+              "members": "read",
+              "administration": "write"
             }
       - name: Wait for pending deployments
         if: matrix.environment != ''
@@ -4938,5 +4939,4 @@ jobs:
           environment_allow_list: |
             ${{ matrix.environment }}
           actor_allow_list: |
-            balena-renovate[bot]
-            klutchell
+            ${{ github.triggering_actor }}

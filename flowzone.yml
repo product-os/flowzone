@@ -4320,7 +4320,8 @@ jobs:
               "actions": "read",
               "checks": "read",
               "deployments": "read",
-              "members": "read"
+              "members": "read",
+              "administration": "write"
             }
       
       # Perform a while loop until we get a pending deployment for this environment.
@@ -4343,5 +4344,4 @@ jobs:
             ${{ matrix.environment }}
           # the below automatically approves dependabot and anything submitted by the Github user with login "activescott"
           actor_allow_list: |
-            balena-renovate[bot]
-            klutchell
+            ${{ github.triggering_actor }}
