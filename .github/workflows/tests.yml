@@ -24,15 +24,6 @@ jobs:
     secrets: inherit
     with:
       working_directory: ./tests
-      docker_images: |
-        ghcr.io/product-os/flowzone
-      balena_slugs: |
-        product_os/flowzone
-      cargo_targets: |
-        x86_64-unknown-linux-gnu,
-        armv7-unknown-linux-gnueabi,
-        aarch64-unknown-linux-gnu
-      cloudflare_website: "flowzone"
       bake_targets: default,multiarch
       jobs_timeout_minutes: 30
       docker_publish_platform_tags: true
@@ -46,14 +37,7 @@ jobs:
       custom_test_matrix: >
         {
           "value": ["foo", "bar"],
-          "os": [
-            ["ubuntu-latest"],
-            ["macos-latest"],
-            ["windows-latest"],
-            ["self-hosted"],
-            ["actuated-2cpu-8gb"]
-          ],
-          "environment": ["test"]
+          "environment": ["restricted"]
         }
       release_notes: true
       restrict_custom_actions: false
