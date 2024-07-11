@@ -1997,7 +1997,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
         with:
-          node-version: 18.x
+          node-version: 20.x
       - run: npm install
       - name: Generate SBOM
         run: |
