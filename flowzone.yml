@@ -2416,7 +2416,10 @@ jobs:
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
-      - *setupNode
+
+      - <<: *setupNode
+        with:
+          node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
 
       - run: npm install
 
