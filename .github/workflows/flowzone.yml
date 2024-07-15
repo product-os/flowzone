@@ -196,11 +196,6 @@ on:
         type: boolean
         required: false
         default: false
-      checkout_fetch_depth:
-        description: Configures the depth of the actions/checkout git fetch.
-        type: number
-        required: false
-        default: 1
       runs_on:
         description: JSON array of runner label strings for default jobs.
         type: string
@@ -902,7 +897,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -951,7 +946,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1076,7 +1071,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1299,7 +1294,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1399,7 +1394,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1470,7 +1465,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1546,7 +1541,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1720,7 +1715,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1768,7 +1763,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1871,7 +1866,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -2000,7 +1995,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -2245,7 +2240,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -2766,7 +2761,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -3171,7 +3166,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -3264,7 +3259,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -3353,7 +3348,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -3428,7 +3423,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -3486,7 +3481,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -3820,7 +3815,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -3890,7 +3885,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -3976,7 +3971,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4039,7 +4034,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4092,7 +4087,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4162,7 +4157,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4226,7 +4221,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4287,7 +4282,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4343,7 +4338,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4409,7 +4404,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-depth: 100
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
