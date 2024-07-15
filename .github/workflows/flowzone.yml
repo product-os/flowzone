@@ -196,11 +196,6 @@ on:
         type: boolean
         required: false
         default: false
-      checkout_fetch_depth:
-        description: Configures the depth of the actions/checkout git fetch.
-        type: number
-        required: false
-        default: 1
       runs_on:
         description: JSON array of runner label strings for default jobs.
         type: string
