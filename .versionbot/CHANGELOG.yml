@@ -1,4 +1,17 @@
 - commits:
+    - subject: Pin dependencies
+      hash: a7dd28b1bc91d6868d739e86f1abfaadf5489e3f
+      body: |
+        Update peter-evans/create-or-update-comment
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 17.0.1
+  title: ""
+  date: 2024-07-16T10:58:16.922Z
+- commits:
     - subject: Use calculated fetch depth for versioned source checkout
       hash: 22e97d86abbef093e9525bb743e8a64853ca0b20
       body: |
