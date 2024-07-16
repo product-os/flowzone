@@ -1,4 +1,35 @@
 - commits:
+    - subject: Use calculated fetch depth for versioned source checkout
+      hash: 22e97d86abbef093e9525bb743e8a64853ca0b20
+      body: |
+        This should reduce our fetch depth in almost all cases
+        while still including commits required for versioning
+        and changelogs and release notes.
+
+        Reducing fetch depth saves a lot of time on the checkout
+        step present in most jobs, so every little bit helps.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Remove unused checkout_fetch_depth input
+      hash: 123b5c302d8866af3e0785eb900f6a65e18af908
+      body: |
+        This input hasn't been used anywhere for a long time.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 17.0.0
+  title: ""
+  date: 2024-07-16T10:33:49.164Z
+- commits:
     - subject: "patch: Add Cloudflare Pages link as PR comment"
       hash: cb93021a86e13816f8fe860d56a8c24f405ec391
       body: ""
