@@ -2069,17 +2069,29 @@ jobs:
       custom_clean: ${{ steps.custom.outputs.clean }}
       custom_always: ${{ steps.custom.outputs.always }}
 
-      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.json || inputs.custom_test_matrix }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.json || inputs.custom_publish_matrix }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
+      # FIXME: remove this handling of deprecated comma-separated values
+      custom_test_matrix: ${{ steps.test_matrix.outputs.json || inputs.custom_test_matrix || steps.os_matrix.outputs.json }}
+      custom_publish_matrix: ${{ steps.publish_matrix.outputs.json || inputs.custom_publish_matrix || steps.os_matrix.outputs.json  }}
+      custom_finalize_matrix: ${{ steps.finalize_matrix.outputs.json || inputs.custom_finalize_matrix || steps.os_matrix.outputs.json  }}
 
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
 
+      - &customMatrixBuilder
+        name: Create an os matrix for custom actions
+        id: os_matrix
+        env:
+          input: "{}"
+          key: os
+          value: ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
+        run: |
+          json=$(jq --compact-output --arg key "${key}" --argjson value "${value}" '{ ($key): $value }' <<< "${input}")
+          echo "json=${json}" >> "${GITHUB_OUTPUT}"
+
       # FIXME: remove this handling of deprecated comma-separated values
-      - id: custom_test_values
+      - id: test_values_array
         if: contains(inputs.custom_test_matrix, '{') != true
         <<: *jsonArrayBuilder
         env:
@@ -2087,22 +2099,7 @@ jobs:
           DELIMITER: ","
 
       # FIXME: remove this handling of deprecated comma-separated values
-      - &customValuesInput
-        name: Create matrix from custom values
-        id: custom_test_matrix
-        if: steps.custom_test_values.outputs.json != ''
-        env:
-          MATRIX: >
-            {
-              "value": ${{ steps.custom_test_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
-            }
-        run: |
-          json=$(jq -e -c . <<<"${MATRIX}") || exit $?
-          echo "json=${json}" >> "${GITHUB_OUTPUT}"
-
-      # FIXME: remove this handling of deprecated comma-separated values
-      - id: custom_publish_values
+      - id: publish_values_array
         if: contains(inputs.custom_publish_matrix, '{') != true
         <<: *jsonArrayBuilder
         env:
@@ -2110,18 +2107,7 @@ jobs:
           DELIMITER: ","
 
       # FIXME: remove this handling of deprecated comma-separated values
-      - <<: *customValuesInput
-        id: custom_publish_matrix
-        if: steps.custom_publish_values.outputs.json != ''
-        env:
-          MATRIX: >
-            {
-              "value": ${{ steps.custom_publish_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
-            }
-
-      # FIXME: remove this handling of deprecated comma-separated values
-      - id: custom_finalize_values
+      - id: finalize_values_array
         if: contains(inputs.custom_finalize_matrix, '{') != true
         <<: *jsonArrayBuilder
         env:
@@ -2129,15 +2115,34 @@ jobs:
           DELIMITER: ","
 
       # FIXME: remove this handling of deprecated comma-separated values
-      - <<: *customValuesInput
-        id: custom_finalize_matrix
-        if: steps.custom_finalize_values.outputs.json != ''
+      - <<: *customMatrixBuilder
+        name: Add custom values to test matrix
+        id: test_matrix
+        if: join(fromJSON(steps.test_values_array.outputs.json || '[]')) != ''
         env:
-          MATRIX: >
-            {
-              "value": ${{ steps.custom_finalize_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
-            }
+          input: ${{ steps.os_matrix.outputs.json }}
+          key: value
+          value: ${{ steps.test_values_array.outputs.json }}
+
+      # FIXME: remove this handling of deprecated comma-separated values
+      - <<: *customMatrixBuilder
+        name: Add custom values to publish matrix
+        id: publish_matrix
+        if: join(fromJSON(steps.publish_values_array.outputs.json || '[]')) != ''
+        env:
+          input: ${{ steps.os_matrix.outputs.json }}
+          key: value
+          value: ${{ steps.publish_values_array.outputs.json }}
+
+      # FIXME: remove this handling of deprecated comma-separated values
+      - <<: *customMatrixBuilder
+        name: Add custom values to finalize matrix
+        id: finalize_matrix
+        if: join(fromJSON(steps.finalize_values_array.outputs.json || '[]')) != ''
+        env:
+          input: ${{ steps.os_matrix.outputs.json }}
+          key: value
+          value: ${{ steps.finalize_values_array.outputs.json }}
 
       - name: Check for custom actions
         id: custom
@@ -3674,7 +3679,7 @@ jobs:
 
   custom_test:
     name: Test custom
-    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -3702,16 +3707,11 @@ jobs:
       - *resetGitHubDirectory
       - *createLocalRefs
 
-      - name: Set the matrix value env var
-        shell: bash
-        run: |
-          {
-            echo "matrix_value=${{ matrix.value }}" ;
-            echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" ;
-            echo "environment=${{ matrix.environment }}" ;
-          } >> "${GITHUB_ENV}"
-
       - uses: ./.github/actions/test
+        env:
+          matrix_value: ${{ matrix.value }}
+          os_value: ${{ toJSON(matrix.os) }}
+          environment: ${{ matrix.environment }}
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
@@ -3719,7 +3719,7 @@ jobs:
 
   custom_publish:
     name: Publish custom
-    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -3755,16 +3755,11 @@ jobs:
       - *resetGitHubDirectory
       - *createLocalRefs
 
-      - name: Set the matrix value env var
-        shell: bash
-        run: |
-          {
-            echo "matrix_value=${{ matrix.value }}" ;
-            echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" ;
-            echo "environment=${{ matrix.environment }}" ;
-          } >> "${GITHUB_ENV}"
-
       - uses: ./.github/actions/publish
+        env:
+          matrix_value: ${{ matrix.value }}
+          os_value: ${{ toJSON(matrix.os) }}
+          environment: ${{ matrix.environment }}
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
@@ -3772,7 +3767,7 @@ jobs:
 
   custom_finalize:
     name: Finalize custom
-    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -3800,16 +3795,11 @@ jobs:
       - *checkoutVersionedSha
       - *resetGitHubDirectory
 
-      - name: Set the matrix value env var
-        shell: bash
-        run: |
-          {
-            echo "matrix_value=${{ matrix.value }}" ;
-            echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" ;
-            echo "environment=${{ matrix.environment }}" ;
-          } >> "${GITHUB_ENV}"
-
       - uses: ./.github/actions/finalize
+        env:
+          matrix_value: ${{ matrix.value }}
+          os_value: ${{ toJSON(matrix.os) }}
+          environment: ${{ matrix.environment }}
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
@@ -3817,7 +3807,7 @@ jobs:
 
   custom_clean:
     name: Clean custom
-    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -3852,7 +3842,7 @@ jobs:
 
   custom_always:
     name: Always custom
-    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}

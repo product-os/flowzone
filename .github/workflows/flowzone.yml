@@ -1512,9 +1512,9 @@ jobs:
       custom_finalize: ${{ steps.custom.outputs.finalize }}
       custom_clean: ${{ steps.custom.outputs.clean }}
       custom_always: ${{ steps.custom.outputs.always }}
-      custom_test_matrix: ${{ steps.custom_test_matrix.outputs.json || inputs.custom_test_matrix }}
-      custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.json || inputs.custom_publish_matrix }}
-      custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
+      custom_test_matrix: ${{ steps.test_matrix.outputs.json || inputs.custom_test_matrix || steps.os_matrix.outputs.json }}
+      custom_publish_matrix: ${{ steps.publish_matrix.outputs.json || inputs.custom_publish_matrix || steps.os_matrix.outputs.json  }}
+      custom_finalize_matrix: ${{ steps.finalize_matrix.outputs.json || inputs.custom_finalize_matrix || steps.os_matrix.outputs.json  }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1541,7 +1541,16 @@ jobs:
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
-      - id: custom_test_values
+      - name: Create an os matrix for custom actions
+        id: os_matrix
+        env:
+          input: "{}"
+          key: os
+          value: ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
+        run: |
+          json=$(jq --compact-output --arg key "${key}" --argjson value "${value}" '{ ($key): $value }' <<< "${input}")
+          echo "json=${json}" >> "${GITHUB_OUTPUT}"
+      - id: test_values_array
         if: contains(inputs.custom_test_matrix, '{') != true
         name: Build JSON array
         shell: bash
@@ -1566,19 +1575,7 @@ jobs:
         env:
           INPUT: ${{ inputs.custom_test_matrix }}
           DELIMITER: ","
-      - name: Create matrix from custom values
-        id: custom_test_matrix
-        if: steps.custom_test_values.outputs.json != ''
-        env:
-          MATRIX: |
-            {
-              "value": ${{ steps.custom_test_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
-            }
-        run: |
-          json=$(jq -e -c . <<<"${MATRIX}") || exit $?
-          echo "json=${json}" >> "${GITHUB_OUTPUT}"
-      - id: custom_publish_values
+      - id: publish_values_array
         if: contains(inputs.custom_publish_matrix, '{') != true
         name: Build JSON array
         shell: bash
@@ -1603,19 +1600,7 @@ jobs:
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
           DELIMITER: ","
-      - name: Create matrix from custom values
-        id: custom_publish_matrix
-        if: steps.custom_publish_values.outputs.json != ''
-        env:
-          MATRIX: |
-            {
-              "value": ${{ steps.custom_publish_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
-            }
-        run: |
-          json=$(jq -e -c . <<<"${MATRIX}") || exit $?
-          echo "json=${json}" >> "${GITHUB_OUTPUT}"
-      - id: custom_finalize_values
+      - id: finalize_values_array
         if: contains(inputs.custom_finalize_matrix, '{') != true
         name: Build JSON array
         shell: bash
@@ -1640,18 +1625,36 @@ jobs:
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
           DELIMITER: ","
-      - name: Create matrix from custom values
-        id: custom_finalize_matrix
-        if: steps.custom_finalize_values.outputs.json != ''
+      - name: Add custom values to test matrix
+        id: test_matrix
         env:
-          MATRIX: |
-            {
-              "value": ${{ steps.custom_finalize_values.outputs.json }},
-              "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
-            }
+          input: ${{ steps.os_matrix.outputs.json }}
+          key: value
+          value: ${{ steps.test_values_array.outputs.json }}
         run: |
-          json=$(jq -e -c . <<<"${MATRIX}") || exit $?
+          json=$(jq --compact-output --arg key "${key}" --argjson value "${value}" '{ ($key): $value }' <<< "${input}")
           echo "json=${json}" >> "${GITHUB_OUTPUT}"
+        if: join(fromJSON(steps.test_values_array.outputs.json || '[]')) != ''
+      - name: Add custom values to publish matrix
+        id: publish_matrix
+        env:
+          input: ${{ steps.os_matrix.outputs.json }}
+          key: value
+          value: ${{ steps.publish_values_array.outputs.json }}
+        run: |
+          json=$(jq --compact-output --arg key "${key}" --argjson value "${value}" '{ ($key): $value }' <<< "${input}")
+          echo "json=${json}" >> "${GITHUB_OUTPUT}"
+        if: join(fromJSON(steps.publish_values_array.outputs.json || '[]')) != ''
+      - name: Add custom values to finalize matrix
+        id: finalize_matrix
+        env:
+          input: ${{ steps.os_matrix.outputs.json }}
+          key: value
+          value: ${{ steps.finalize_values_array.outputs.json }}
+        run: |
+          json=$(jq --compact-output --arg key "${key}" --argjson value "${value}" '{ ($key): $value }' <<< "${input}")
+          echo "json=${json}" >> "${GITHUB_OUTPUT}"
+        if: join(fromJSON(steps.finalize_values_array.outputs.json || '[]')) != ''
       - name: Check for custom actions
         id: custom
         run: |
@@ -4018,7 +4021,7 @@ jobs:
           fi
   custom_test:
     name: Test custom
-    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -4066,22 +4069,18 @@ jobs:
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
-      - name: Set the matrix value env var
-        shell: bash
-        run: |
-          {
-            echo "matrix_value=${{ matrix.value }}" ;
-            echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" ;
-            echo "environment=${{ matrix.environment }}" ;
-          } >> "${GITHUB_ENV}"
       - uses: ./.github/actions/test
+        env:
+          matrix_value: ${{ matrix.value }}
+          os_value: ${{ toJSON(matrix.os) }}
+          environment: ${{ matrix.environment }}
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
           variables: ${{ toJSON(vars) }}
   custom_publish:
     name: Publish custom
-    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -4135,22 +4134,18 @@ jobs:
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
-      - name: Set the matrix value env var
-        shell: bash
-        run: |
-          {
-            echo "matrix_value=${{ matrix.value }}" ;
-            echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" ;
-            echo "environment=${{ matrix.environment }}" ;
-          } >> "${GITHUB_ENV}"
       - uses: ./.github/actions/publish
+        env:
+          matrix_value: ${{ matrix.value }}
+          os_value: ${{ toJSON(matrix.os) }}
+          environment: ${{ matrix.environment }}
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
           variables: ${{ toJSON(vars) }}
   custom_finalize:
     name: Finalize custom
-    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -4194,22 +4189,18 @@ jobs:
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
-      - name: Set the matrix value env var
-        shell: bash
-        run: |
-          {
-            echo "matrix_value=${{ matrix.value }}" ;
-            echo "os_value=$(echo '${{ toJSON(matrix.os) }}' | jq -c .)" ;
-            echo "environment=${{ matrix.environment }}" ;
-          } >> "${GITHUB_ENV}"
       - uses: ./.github/actions/finalize
+        env:
+          matrix_value: ${{ matrix.value }}
+          os_value: ${{ toJSON(matrix.os) }}
+          environment: ${{ matrix.environment }}
         with:
           json: ${{ toJSON(inputs) }}
           secrets: ${{ toJSON(secrets) }}
           variables: ${{ toJSON(vars) }}
   custom_clean:
     name: Clean custom
-    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -4261,7 +4252,7 @@ jobs:
           variables: ${{ toJSON(vars) }}
   custom_always:
     name: Always custom
-    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
