@@ -3380,10 +3380,13 @@ jobs:
           user_defined: ${{ needs.release_notes.outputs.body }}
           look_back: 1
 
+      # https://github.com/actions/download-artifact
       - name: Download all artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           path: ${{ runner.temp }}/artifacts
+          pattern: gh-release-*
+          merge-multiple: true
 
       # https://github.com/softprops/action-gh-release
       - name: Publish draft release
@@ -3394,7 +3397,7 @@ jobs:
           tag_name: ${{ github.event.pull_request.head.ref }}
           draft: true
           prerelease: true
-          files: ${{ runner.temp }}/artifacts/gh-release*/*
+          files: ${{ runner.temp }}/artifacts/*
           fail_on_unmatched_files: false
           body: ${{ steps.release_notes.outputs.note }}
           body_path: ${{ steps.release_notes.outputs.file }}
