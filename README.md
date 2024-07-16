@@ -288,11 +288,6 @@ jobs:
       # Required: false
       disable_versioning: false
 
-      # Configures the depth of the actions/checkout git fetch.
-      # Type: number
-      # Required: false
-      checkout_fetch_depth: 1
-
       # JSON array of runner label strings for default jobs.
       # Type: string
       # Required: false

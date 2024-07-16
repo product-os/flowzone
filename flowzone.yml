@@ -216,7 +216,7 @@
     name: Checkout versioned commit
     uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
     with:
-      fetch-depth: 0
+      fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
       submodules: "recursive"
       # fallback to an invalid ref if the checkout ref is undefined
       ref: "${{ needs.versioned_source.outputs.sha || '¯\_(ツ)_/¯' }}"
@@ -231,7 +231,13 @@
       git fetch origin ${{ github.ref }}
       git checkout FETCH_HEAD -- .github
 
-  - &describeGitState # Resolve tag, semver, sha, and description of current git working copy.
+  # Resolve tag, semver, sha, and description of current git working copy.
+  # tag is the latest tag that points to the current commit.
+  # semver is the semantic version of the tag.
+  # describe is the output of `git describe --tags --always --dirty`.
+  # sha is the full commit hash.
+  # depth is the number of commits since the second most recent tag.
+  - &describeGitState
     name: Describe git state
     id: git_describe
     run: |
@@ -241,6 +247,7 @@
         echo "semver=$(npx -q -y -- semver -c -l "${tag}")" ;
         echo "describe=$(git describe --tags --always --dirty | cat)" ;
         echo "sha=$(git rev-parse HEAD)" ;
+        echo "depth=$(git rev-list "$(git describe --tags --abbrev=0 "$(git rev-list --tags --skip=1 --max-count=1 2>/dev/null)" 2>/dev/null)..HEAD" --count)" ;
       } >> "${GITHUB_OUTPUT}"
 
   - &createLocalRefs
@@ -955,11 +962,6 @@ on:
         type: boolean
         required: false
         default: false
-      checkout_fetch_depth:
-        description: "Configures the depth of the actions/checkout git fetch."
-        type: number
-        required: false
-        default: 1
       runs_on:
         description: "JSON array of runner label strings for default jobs."
         type: string
@@ -1108,6 +1110,7 @@ jobs:
       commit_sha: ${{ steps.create_commit.outputs.sha }}
       author: ${{ steps.create_commit.outputs.bot }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
+      depth: ${{ steps.git_describe.outputs.depth }}
 
     env:
       <<: *gitHubCliEnvironment
