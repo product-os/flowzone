@@ -1,4 +1,20 @@
 - commits:
+    - subject: Update default node version to 20.x
+      hash: 52006192a6eac1ccedd0f129c16d0de959d346d2
+      body: |
+        When node version is not specified by a job,
+        use 20.x instead of 18.x
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 17.1.0
+  title: ""
+  date: 2024-07-16T20:02:55.239Z
+- commits:
     - subject: Update imjasonh/setup-crane action to v0.4
       hash: 822201c5ca4ad4b6e68d8f8a9cfe605f39efc95f
       body: |
