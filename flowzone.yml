@@ -618,7 +618,7 @@
     name: Setup Node.js
     uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
     with:
-      node-version: 18.x
+      node-version: 20.x
 
   - &setupCrane # https://github.com/imjasonh/setup-crane
     name: Setup crane
@@ -1155,9 +1155,7 @@ jobs:
       # and/or as default tag & semver if versioning is disabled.
       - *describeGitState
 
-      - <<: *setupNode
-        with:
-          node-version: 18.x
+      - *setupNode
 
       - name: Install versioning tools
         if: inputs.disable_versioning != true
