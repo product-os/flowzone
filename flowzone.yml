@@ -3298,14 +3298,14 @@ jobs:
           command: pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/
 
       - name: Find Cloudflare Pages link comment
-        uses: peter-evans/find-comment@v3.1.0
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
         id: find_cf_comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body-includes: Website deployed to CF Pages, 👀 preview link
 
       - name: Create or update Cloudflare Pages link comment if deployment link present
-        uses: peter-evans/create-or-update-comment@v4.0.0
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         if: steps.deploy_cf_pages.outputs.deployment-url != ''
         with:
           comment-id: ${{ steps.find_cf_comment.outputs.comment-id }}
