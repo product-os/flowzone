@@ -3673,7 +3673,7 @@ jobs:
 
   custom_test:
     name: Test custom
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -3718,7 +3718,7 @@ jobs:
 
   custom_publish:
     name: Publish custom
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -3771,7 +3771,7 @@ jobs:
 
   custom_finalize:
     name: Finalize custom
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - is_custom
@@ -3816,7 +3816,7 @@ jobs:
 
   custom_clean:
     name: Clean custom
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     strategy:
       fail-fast: true
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -3851,7 +3851,7 @@ jobs:
 
   custom_always:
     name: Always custom
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     strategy:
       fail-fast: true
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
