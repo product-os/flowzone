@@ -3634,7 +3634,7 @@ jobs:
           pattern: gh-release-*
           merge-multiple: true
       - name: Publish draft release
-        uses: softprops/action-gh-release@a74c6b72af54cfa997e81df42d94703d6313a2d0
+        uses: softprops/action-gh-release@fb2d03176f42a1f0dd433ca263f314051d3edd44
         with:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
