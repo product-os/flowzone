@@ -1902,6 +1902,7 @@ jobs:
           npm run flowzone-preinstall --if-present
       - name: Install dependencies
         run: |
+          set -e
           runner_os="$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')"
           os_count="$(jq '.os | length' package.json)"
           index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"

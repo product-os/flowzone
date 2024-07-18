@@ -2344,6 +2344,7 @@ jobs:
         #   # make sure to 'npm config set ignore-scripts true' to avoid leaking secrets
         #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          set -e
           runner_os="$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')"
           os_count="$(jq '.os | length' package.json)"
           index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
