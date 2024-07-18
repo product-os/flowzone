@@ -1665,14 +1665,18 @@ jobs:
       - <<: *setupNode
         if: steps.npm.outputs.enabled == 'true'
         with:
-          node-version: 22.x
+          # TODO: replace with 22.x once this issue is closed
+          # https://github.com/npm/cli/issues/7657
+          node-version: 22.4
 
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.x"]')" >> "${GITHUB_ENV}"
+            # TODO: replace with 22.x once this issue is closed
+            # https://github.com/npm/cli/issues/7657
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.4"]')" >> "${GITHUB_ENV}"
           fi
 
       # default to the current LTS version if none were matched
