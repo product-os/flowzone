@@ -1017,16 +1017,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
         with:
-          node-version: 22.4
+          node-version: 22.x
         if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
           if npx -q -y -- check-engine
           then
-            # TODO: replace with 22.x once this issue is closed
-            # https://github.com/npm/cli/issues/7657
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.4"]')" >> "${GITHUB_ENV}"
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.x"]')" >> "${GITHUB_ENV}"
           fi
       - name: Set Node.js versions
         if: steps.npm.outputs.enabled == 'true'
