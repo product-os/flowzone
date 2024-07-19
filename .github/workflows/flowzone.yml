@@ -2985,6 +2985,8 @@ jobs:
           # prevent git from existing with 141
           set +o pipefail
 
+          # We are limiting search depth but we need tags to calculate the changelog
+          git fetch -q --tags
           look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -3076,6 +3078,8 @@ jobs:
           # prevent git from existing with 141
           set +o pipefail
 
+          # We are limiting search depth but we need tags to calculate the changelog
+          git fetch -q --tags
           look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -3623,6 +3627,8 @@ jobs:
           # prevent git from existing with 141
           set +o pipefail
 
+          # We are limiting search depth but we need tags to calculate the changelog
+          git fetch -q --tags
           look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -3711,6 +3717,8 @@ jobs:
           # prevent git from existing with 141
           set +o pipefail
 
+          # We are limiting search depth but we need tags to calculate the changelog
+          git fetch -q --tags
           look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
