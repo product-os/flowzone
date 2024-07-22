@@ -1043,6 +1043,10 @@ on:
         type: boolean
         required: false
         default: true
+    outputs:
+      cloudflare_deployment_url:
+        description: 'Cloudflare Deployment URL'
+        value: ${{ jobs.website_publish.outputs.cloudflare_deployment_url }}
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
@@ -3243,6 +3247,8 @@ jobs:
   website_publish:
     name: Publish website
     runs-on: ${{fromJSON(inputs.runs_on)}}
+    outputs:
+      cloudflare_deployment_url: ${{ steps.output_cf_url.outputs.cloudflare_deployment_url }}
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
@@ -3298,6 +3304,14 @@ jobs:
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           wranglerVersion: "3.5.1" # latest - https://www.npmjs.com/package/wrangler
           command: pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/
+      
+      - name: Set Cloudflare Pages deployment-url to output
+        id: output_cf_url
+        if: steps.deploy_cf_pages.outputs.deployment-url != ''
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy_cf_pages.outputs.deployment-url }}
+        run: |
+          echo "cloudflare_deployment_url=${DEPLOYMENT_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Find Cloudflare Pages link comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
