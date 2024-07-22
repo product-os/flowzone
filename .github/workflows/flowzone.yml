@@ -1142,7 +1142,7 @@ jobs:
           fi
       - name: Setup buildx
         id: setup_buildx
-        uses: docker/setup-buildx-action@4fd812986e6c8c2a69e18311145f9371337f27d4
+        uses: docker/setup-buildx-action@aa33708b10e362ff993539393ff100fa93ed6a27
         with:
           version: v0.9.1
       - name: Pre-process Docker bake files
@@ -2284,7 +2284,7 @@ jobs:
           echo "repo=${repo_slug}" >> "${GITHUB_OUTPUT}"
       - name: Setup buildx
         id: setup_buildx
-        uses: docker/setup-buildx-action@4fd812986e6c8c2a69e18311145f9371337f27d4
+        uses: docker/setup-buildx-action@aa33708b10e362ff993539393ff100fa93ed6a27
         with:
           driver-opts: network=host
           install: true
@@ -2571,7 +2571,7 @@ jobs:
             suffix=${{ steps.strings.outputs.suffix }}
       - name: Setup buildx
         id: setup_buildx
-        uses: docker/setup-buildx-action@4fd812986e6c8c2a69e18311145f9371337f27d4
+        uses: docker/setup-buildx-action@aa33708b10e362ff993539393ff100fa93ed6a27
         with:
           driver-opts: network=host
           install: true
