@@ -390,7 +390,6 @@ jobs:
       commit_sha: ${{ steps.create_commit.outputs.sha }}
       author: ${{ steps.create_commit.outputs.bot }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
-      depth: ${{ steps.git_describe.outputs.depth }}
     env:
       GH_DEBUG: "true"
       GH_PAGER: cat
@@ -447,7 +446,6 @@ jobs:
             echo "semver=$(npx -q -y -- semver -c -l "${tag}")" ;
             echo "describe=$(git describe --tags --always --dirty | cat)" ;
             echo "sha=$(git rev-parse HEAD)" ;
-            echo "depth=$(git rev-list "$(git describe --tags --abbrev=0 "$(git rev-list --tags --skip=1 --max-count=1 2>/dev/null)" 2>/dev/null)..HEAD" --count)" ;
           } >> "${GITHUB_OUTPUT}"
       - name: Setup Node.js
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
@@ -904,7 +902,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -952,7 +951,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1076,7 +1076,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1298,7 +1299,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1397,7 +1399,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1467,7 +1470,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1542,7 +1546,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1715,7 +1720,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1762,7 +1768,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1864,7 +1871,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1992,7 +2000,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -2236,7 +2245,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -2756,7 +2766,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -2973,10 +2984,10 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned commit
+      - name: Checkout versioned commit with total depth
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: 0
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -2990,8 +3001,6 @@ jobs:
           # prevent git from existing with 141
           set +o pipefail
 
-          # We are limiting search depth but we need tags to calculate the changelog
-          git fetch -q --tags
           look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -3066,10 +3075,10 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned commit
+      - name: Checkout versioned commit with total depth
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: 0
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3083,8 +3092,6 @@ jobs:
           # prevent git from existing with 141
           set +o pipefail
 
-          # We are limiting search depth but we need tags to calculate the changelog
-          git fetch -q --tags
           look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -3164,7 +3171,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3256,7 +3264,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3344,7 +3353,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3418,7 +3428,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3475,7 +3486,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3615,10 +3627,10 @@ jobs:
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Checkout versioned commit
+      - name: Checkout versioned commit with total depth
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: 0
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3632,8 +3644,6 @@ jobs:
           # prevent git from existing with 141
           set +o pipefail
 
-          # We are limiting search depth but we need tags to calculate the changelog
-          git fetch -q --tags
           look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -3705,10 +3715,10 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-      - name: Checkout versioned commit
+      - name: Checkout versioned commit with total depth
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: 0
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3722,8 +3732,6 @@ jobs:
           # prevent git from existing with 141
           set +o pipefail
 
-          # We are limiting search depth but we need tags to calculate the changelog
-          git fetch -q --tags
           look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -3812,7 +3820,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3881,7 +3890,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3966,7 +3976,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4028,7 +4039,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4080,7 +4092,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4149,7 +4162,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4212,7 +4226,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4272,7 +4287,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4327,7 +4343,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4392,7 +4409,8 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-depth: ${{ inputs.checkout_fetch_depth }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}

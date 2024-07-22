@@ -91,8 +91,6 @@
       # prevent git from existing with 141
       set +o pipefail
 
-      # We are limiting search depth but we need tags to calculate the changelog
-      git fetch -q --tags
       look_back="${look_back:-1}"
       previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -218,7 +216,20 @@
     name: Checkout versioned commit
     uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
     with:
-      fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+      fetch-depth: ${{ inputs.checkout_fetch_depth }}
+      # Note that fetch-tags is not currently working as described:
+      # https://github.com/actions/checkout/issues/1781
+      fetch-tags: true
+      submodules: "recursive"
+      # fallback to an invalid ref if the checkout ref is undefined
+      ref: "${{ needs.versioned_source.outputs.sha || '¯\_(ツ)_/¯' }}"
+      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+
+  - &checkoutVersionedShaDeep # https://github.com/actions/checkout
+    name: Checkout versioned commit with total depth
+    uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+    with:
+      fetch-depth: 0
       submodules: "recursive"
       # fallback to an invalid ref if the checkout ref is undefined
       ref: "${{ needs.versioned_source.outputs.sha || '¯\_(ツ)_/¯' }}"
@@ -249,7 +260,6 @@
         echo "semver=$(npx -q -y -- semver -c -l "${tag}")" ;
         echo "describe=$(git describe --tags --always --dirty | cat)" ;
         echo "sha=$(git rev-parse HEAD)" ;
-        echo "depth=$(git rev-list "$(git describe --tags --abbrev=0 "$(git rev-list --tags --skip=1 --max-count=1 2>/dev/null)" 2>/dev/null)..HEAD" --count)" ;
       } >> "${GITHUB_OUTPUT}"
 
   - &createLocalRefs
@@ -1121,7 +1131,6 @@ jobs:
       commit_sha: ${{ steps.create_commit.outputs.sha }}
       author: ${{ steps.create_commit.outputs.bot }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
-      depth: ${{ steps.git_describe.outputs.depth }}
 
     env:
       <<: *gitHubCliEnvironment
@@ -2999,7 +3008,7 @@ jobs:
 
     steps:
       - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *checkoutVersionedShaDeep
       - <<: *getReleaseNotes
         env:
           look_back: 1
@@ -3028,7 +3037,7 @@ jobs:
 
     steps:
       - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *checkoutVersionedShaDeep
       - <<: *getReleaseNotes
         env:
           look_back: 2
@@ -3393,7 +3402,7 @@ jobs:
             }
 
       - *deleteDraftGitHubRelease
-      - *checkoutVersionedSha
+      - *checkoutVersionedShaDeep
       - <<: *getReleaseNotes
         env:
           user_defined: ${{ needs.release_notes.outputs.body }}
@@ -3452,7 +3461,7 @@ jobs:
               "metadata": "read"
             }
 
-      - *checkoutVersionedSha
+      - *checkoutVersionedShaDeep
       - <<: *getReleaseNotes
         env:
           user_defined: ${{ needs.release_notes.outputs.body }}
