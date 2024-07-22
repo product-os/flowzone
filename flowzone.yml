@@ -91,6 +91,8 @@
       # prevent git from existing with 141
       set +o pipefail
 
+      # We are limiting search depth but we need tags to calculate the changelog
+      git fetch -q --tags
       look_back="${look_back:-1}"
       previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
@@ -1669,18 +1671,14 @@ jobs:
       - <<: *setupNode
         if: steps.npm.outputs.enabled == 'true'
         with:
-          # TODO: replace with 22.x once this issue is closed
-          # https://github.com/npm/cli/issues/7657
-          node-version: 22.4
+          node-version: 22.x
 
       - name: Check engine
         if: steps.npm.outputs.enabled == 'true'
         run: |
           if npx -q -y -- check-engine
           then
-            # TODO: replace with 22.x once this issue is closed
-            # https://github.com/npm/cli/issues/7657
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.4"]')" >> "${GITHUB_ENV}"
+            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.x"]')" >> "${GITHUB_ENV}"
           fi
 
       # default to the current LTS version if none were matched
