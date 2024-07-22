@@ -45,10 +45,12 @@ runs:
       run: |
         set -x
         tag="$(git tag --points-at HEAD | tail -n1)"
-        echo "tag=${tag}" >> $GITHUB_OUTPUT
-        echo "semver=$(npx -q -y -- semver -c -l "${tag}")" >> $GITHUB_OUTPUT
-        echo "describe=$(git describe --tags --always --dirty | cat)" >> $GITHUB_OUTPUT
-        echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+        npx -q -y -- semver -c -l "${tag}"
+        git describe --tags --always --dirty | cat
+        git rev-parse HEAD
+        git submodule
+        git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged
 
     # https://github.com/marketplace/actions/github-app-token
     - name: Generate GitHub App installation token

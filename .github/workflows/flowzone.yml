@@ -385,6 +385,7 @@ jobs:
       commit_sha: ${{ steps.create_commit.outputs.sha }}
       author: ${{ steps.create_commit.outputs.bot }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
+      depth: ${{ steps.git_describe.outputs.depth || 0 }}
     env:
       GH_DEBUG: "true"
       GH_PAGER: cat
@@ -442,6 +443,12 @@ jobs:
             echo "describe=$(git describe --tags --always --dirty | cat)" ;
             echo "sha=$(git rev-parse HEAD)" ;
           } >> "${GITHUB_OUTPUT}"
+
+          if [[ "$(git submodule)" = "" ]]; then
+            echo "depth=100" >> "${GITHUB_OUTPUT}"
+          else
+            echo "depth=0" >> "${GITHUB_OUTPUT}"
+          fi
       - name: Setup Node.js
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
         with:
@@ -897,7 +904,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -946,7 +953,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1071,7 +1078,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1294,7 +1301,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1394,7 +1401,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1465,7 +1472,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1541,7 +1548,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1715,7 +1722,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1763,7 +1770,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -1866,12 +1873,12 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -1995,12 +2002,12 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -2240,12 +2247,12 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -2761,7 +2768,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -2979,24 +2986,31 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned commit with total depth
+      - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Fetch tags
+        if: needs.versioned_source.outputs.depth != 0 && needs.versioned_source.outputs.depth != ''
+        run: git fetch -q --tags
+      - name: Create local tag for draft version
+        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
+        run: |
+          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Generate short release note
         id: release_notes
         env:
-          look_back: 1
+          look_back: 2
           user_defined: ${{ needs.release_notes.outputs.body }}
         run: |
           set -ea
           # prevent git from existing with 141
           set +o pipefail
 
-          look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
           release_notes_file="$(mktemp)"
@@ -3013,10 +3027,6 @@ jobs:
 
           echo "${release_notes}" > "${release_notes_file}"
           echo "file=${release_notes_file}" >> "${GITHUB_OUTPUT}"
-      - name: Create local refs
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - uses: balena-io/deploy-to-balena-action@31d0b891b057ae02329ab9874ccd0f1239e3c792
         id: balena_deploy
         with:
@@ -3070,13 +3080,21 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Checkout versioned commit with total depth
+      - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Fetch tags
+        if: needs.versioned_source.outputs.depth != 0 && needs.versioned_source.outputs.depth != ''
+        run: git fetch -q --tags
+      - name: Create local tag for draft version
+        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
+        run: |
+          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Generate short release note
         id: release_notes
         env:
@@ -3087,7 +3105,6 @@ jobs:
           # prevent git from existing with 141
           set +o pipefail
 
-          look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
           release_notes_file="$(mktemp)"
@@ -3166,12 +3183,12 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -3259,12 +3276,12 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -3348,12 +3365,12 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -3423,7 +3440,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -3481,12 +3498,12 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -3622,24 +3639,31 @@ jobs:
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Checkout versioned commit with total depth
+      - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Fetch tags
+        if: needs.versioned_source.outputs.depth != 0 && needs.versioned_source.outputs.depth != ''
+        run: git fetch -q --tags
+      - name: Create local tag for draft version
+        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
+        run: |
+          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Generate short release note
         id: release_notes
         env:
+          look_back: 2
           user_defined: ${{ needs.release_notes.outputs.body }}
-          look_back: 1
         run: |
           set -ea
           # prevent git from existing with 141
           set +o pipefail
 
-          look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
           release_notes_file="$(mktemp)"
@@ -3710,24 +3734,31 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-      - name: Checkout versioned commit with total depth
+      - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: Fetch tags
+        if: needs.versioned_source.outputs.depth != 0 && needs.versioned_source.outputs.depth != ''
+        run: git fetch -q --tags
+      - name: Create local tag for draft version
+        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
+        run: |
+          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Generate short release note
         id: release_notes
         env:
-          user_defined: ${{ needs.release_notes.outputs.body }}
           look_back: 2
+          user_defined: ${{ needs.release_notes.outputs.body }}
         run: |
           set -ea
           # prevent git from existing with 141
           set +o pipefail
 
-          look_back="${look_back:-1}"
           previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
 
           release_notes_file="$(mktemp)"
@@ -3815,12 +3846,12 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -3885,12 +3916,12 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -3971,12 +4002,12 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -4034,7 +4065,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4087,7 +4118,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4096,7 +4127,7 @@ jobs:
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -4157,7 +4188,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4166,7 +4197,7 @@ jobs:
         run: |
           git fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
-      - name: Create local refs
+      - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
@@ -4221,7 +4252,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4282,7 +4313,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4338,7 +4369,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
@@ -4404,7 +4435,7 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
