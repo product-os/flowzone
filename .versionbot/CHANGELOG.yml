@@ -1,4 +1,31 @@
 - commits:
+    - subject: Fix changelog generation
+      hash: 23adff786ca2b6d47aa2a07f42ff052db29ea430
+      body: |
+        Limiting fetch depth on checkout broke ChangeLog generation. This now
+        ensures version tags are included in the checkout to correctly calculate
+        the list of changes.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Relates-to: "#1113"
+        relates-to: "#1113"
+      author: Felipe Lalanne
+      nested: []
+    - subject: Unpin Node version
+      hash: 70faeb310567f5e4c011bb6bb41b14c616b6e30e
+      body: |
+        Removes the workaround added to deal with issue npm/cli#7657
+        as that issue has now been closed.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 17.1.12
+  title: ""
+  date: 2024-07-22T16:02:54.351Z
+- commits:
     - subject: "patch: Output Cloudflare Deployment URL from flowzone"
       hash: 6ef4fa1a5ac81e3d973082c21f02a76f3b28cc88
       body: ""
