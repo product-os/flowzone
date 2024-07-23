@@ -67,7 +67,7 @@
       environment: ${{ inputs.balena_environment }}
       fleet: ${{ matrix.slug }}
       source: ${{ inputs.working_directory }}
-      note: ${{ steps.release_notes.outputs.note }}
+      note: ${{ needs.release_notes.outputs.note }}
       registry_secrets: |
         {
           "ghcr.io": {
@@ -79,37 +79,6 @@
             "password": "${{ secrets.DOCKERHUB_TOKEN }}"
           }
         }
-
-  - &getReleaseNotes
-    name: Generate short release note
-    id: release_notes
-    # Look back should always be 2
-    # First is the current versioned tag
-    # Second is the previous versioned tag
-    env:
-      look_back: 2
-      user_defined: ${{ needs.release_notes.outputs.body }}
-    run: |
-      set -ea
-      # prevent git from existing with 141
-      set +o pipefail
-
-      previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
-
-      release_notes_file="$(mktemp)"
-      changelog="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
-      release_notes="${changelog}"
-      if [[ -n "${user_defined}" ]]; then
-        release_notes="$(printf '%s\n\n### List of commits\n\n%s' "${user_defined}" "${changelog}")"
-      fi
-
-      EOF="$(openssl rand -hex 16)"
-      echo "note<<$EOF" >> "${GITHUB_OUTPUT}"
-      echo "${release_notes}" >> "${GITHUB_OUTPUT}"
-      echo "$EOF" >> "${GITHUB_OUTPUT}"
-
-      echo "${release_notes}" > "${release_notes_file}"
-      echo "file=${release_notes_file}" >> "${GITHUB_OUTPUT}"
 
   - &getTimeStamp
     name: Get and format timestamp
@@ -1342,6 +1311,7 @@ jobs:
     outputs:
       body: ${{ steps.format_release_notes.outputs.body }}
       comment: ${{ steps.format_release_notes.outputs.comment }}
+      note: ${{ steps.short_release_notes.outputs.note }}
 
     env:
       <<: *gitHubCliEnvironment
@@ -1432,6 +1402,46 @@ jobs:
                   echo "$EOF" >> $GITHUB_OUTPUT
               fi
           fi
+
+      - *checkoutVersionedSha
+      - *fetchTags
+      - *createLocalRefs
+
+      - name: Generate short release note
+        id: short_release_notes
+        # Look back should always be 2
+        # First is the current versioned tag
+        # Second is the previous versioned tag
+        env:
+          look_back: 2
+          user_defined: ${{ steps.format_release_notes.outputs.body }}
+        run: |
+          set -ea
+          # prevent git from existing with 141
+          set +o pipefail
+
+          previous_tag="$(git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged | head -n${look_back} | tail -n1)"
+
+          changelog="$(git log ${previous_tag}..${{ github.event.pull_request.head.sha || github.event.head_commit.id }} --pretty=reference)"
+          release_notes="${changelog}"
+          if [[ -n "${user_defined}" ]]; then
+            release_notes="$(printf '%s\n\n### List of commits\n\n%s' "${user_defined}" "${changelog}")"
+          fi
+
+          EOF="$(openssl rand -hex 16)"
+          echo "note<<$EOF" >> "${GITHUB_OUTPUT}"
+          echo "${release_notes}" >> "${GITHUB_OUTPUT}"
+          echo "$EOF" >> "${GITHUB_OUTPUT}"
+
+          echo "${release_notes}" > "${{ runner.temp }}/release-notes.txt"
+
+      # https://github.com/actions/upload-artifact
+      - name: Upload release notes file
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
+        with:
+          name: release-notes
+          path: ${{ runner.temp }}/release-notes.txt
+          retention-days: 1
 
   release_notes_comment:
     name: Prepare deploy message
@@ -3011,9 +3021,6 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
-      - *fetchTags
-      - *createLocalRefs
-      - *getReleaseNotes
       - *deployToBalenaAction
 
   balena_finalize:
@@ -3038,9 +3045,6 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
-      - *fetchTags
-      - *createLocalRefs
-      - *getReleaseNotes
       - *deployToBalenaAction
 
   ###################################################
@@ -3401,17 +3405,21 @@ jobs:
 
       - *deleteDraftGitHubRelease
       - *checkoutVersionedSha
-      - *fetchTags
-      - *createLocalRefs
-      - *getReleaseNotes
 
       # https://github.com/actions/download-artifact
-      - name: Download all artifacts
+      - name: Download release artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           path: ${{ runner.temp }}/artifacts
           pattern: gh-release-*
           merge-multiple: true
+
+      # https://github.com/actions/download-artifact
+      - name: Download release notes
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          path: ${{ runner.temp }}
+          name: release-notes
 
       # https://github.com/softprops/action-gh-release
       - name: Publish draft release
@@ -3424,8 +3432,8 @@ jobs:
           prerelease: true
           files: ${{ runner.temp }}/artifacts/*
           fail_on_unmatched_files: false
-          body: ${{ steps.release_notes.outputs.note }}
-          body_path: ${{ steps.release_notes.outputs.file }}
+          body: ${{ needs.release_notes.outputs.note }}
+          body_path: ${{ runner.temp }}/release-notes.txt
 
   github_finalize:
     name: Finalize GitHub release
@@ -3459,9 +3467,13 @@ jobs:
             }
 
       - *checkoutVersionedSha
-      - *fetchTags
-      - *createLocalRefs
-      - *getReleaseNotes
+
+      # https://github.com/actions/download-artifact
+      - name: Download release notes
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          path: ${{ runner.temp }}
+          name: release-notes
 
       # https://docs.github.com/en/rest/releases
       - name: Finalize GitHub release (if any)
@@ -3473,7 +3485,7 @@ jobs:
 
           if gh release view "${GITHUB_HEAD_REF}"; then
             gh release edit "${GITHUB_HEAD_REF}" \
-              --notes-file '${{ steps.release_notes.outputs.file }}' \
+              --notes-file '${{ runner.temp }}/release-notes.txt' \
               --title '${{ needs.versioned_source.outputs.tag }}' \
               --tag '${{ needs.versioned_source.outputs.tag }}' \
               --prerelease='${{ inputs.github_prerelease }}' \
