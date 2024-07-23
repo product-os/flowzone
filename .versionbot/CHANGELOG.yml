@@ -1,4 +1,44 @@
 - commits:
+    - subject: Refactor short release notes step into release notes job
+      hash: 185317306b3f671e7512c8b555ca0f8c814e3e8d
+      body: |
+        Rather than run the short release notes step on multiple
+        jobs that require it, just run it once and create the required
+        outputs and a release notes artifact.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Use a checkout depth of 100 when no submodules exist
+      hash: eeacf88d844e45f5f2531b50bafbd7ee81e0c21a
+      body: |
+        This also requires manually fetching all tags for
+        jobs that generate release notes.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Remove checkout_fetch_depth input
+      hash: 6989a4fc013cff7ea51ae182dcd6b456e12ab9c6
+      body: |
+        Prefer automatic detection of required fetch depth.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 17.3.0
+  title: ""
+  date: 2024-07-23T19:04:23.153Z
+- commits:
     - subject: Update product-os/setup-awscli-action action to v0.0.4
       hash: 7cd4ca52d98fce9458e7ffb096fc429f4083531d
       body: |
