@@ -640,15 +640,6 @@
     with:
       version: "2.15.43"
 
-  - &sortNodeVersions
-    name: Sort node versions
-    id: node_versions
-    env:
-      VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-    run: |
-      echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-      echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
-
   - &waitForCloudFormation
     name: Wait for resources
     run: |
@@ -1615,8 +1606,23 @@ jobs:
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
       npm_sbom: ${{ inputs.generate_sbom }} # default true
-      node_versions: ${{ steps.node_versions.outputs.json }}
       npm_access: ${{ steps.access.outputs.access }}
+
+      # We could expose this as an input for advanced version/runner customization
+      # but for now let's be opinionated and projects should use package.json
+      # 'engine' and 'os' properties to skip some of the matrix as needed.
+      # The first values of each array are prioritized for publishing.
+      # e.g. if both 22.x and 20.x are supported by package.json the first one will be chosen for publishing
+      # e.g. if both ubuntu and macos are supported by package.json the first one will be chosen for publishing
+      npm_test_matrix: >
+        {
+          "node_version": ["22.x", "20.x", "18.x", "16.x"],
+          "runs_on": [["ubuntu-latest"], ["macos-latest"], ["windows-latest"]],
+          "include": [
+            {"runs_on": ["macos-latest"], "continue_on_error": true},
+            {"runs_on": ["windows-latest"], "continue_on_error": true}
+          ]
+        }
 
     steps:
       - *getGitHubAppToken
@@ -1631,7 +1637,6 @@ jobs:
             echo "enabled=true" >> "${GITHUB_OUTPUT}"
             echo "private=$(jq -r '.private' package.json)" >> "${GITHUB_OUTPUT}"
             echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> "${GITHUB_OUTPUT}"
-            echo "NODE_VERSIONS=[]" >> "${GITHUB_ENV}"
           else
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
@@ -1651,73 +1656,6 @@ jobs:
             access="restricted"
           fi
           echo "access=${access}" >> "${GITHUB_OUTPUT}"
-
-      # check which past and current and future Node.js LTS releases meet the engine requirements
-      # if there are no engine requirements then the current LTS will be used
-
-      - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
-        with:
-          node-version: 16.x
-
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["16.x"]')" >> "${GITHUB_ENV}"
-          fi
-
-      - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
-        with:
-          node-version: 18.x
-
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> "${GITHUB_ENV}"
-          fi
-
-      - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
-        with:
-          node-version: 20.x
-
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> "${GITHUB_ENV}"
-          fi
-
-      - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
-        with:
-          node-version: 22.x
-
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.x"]')" >> "${GITHUB_ENV}"
-          fi
-
-      # default to the current LTS version if none were matched
-      # by the engine checks above
-      - name: Set Node.js versions
-        if: steps.npm.outputs.enabled == 'true'
-        id: node_versions
-        run: |
-          echo "json=[\"20.x\"]" >> "${GITHUB_OUTPUT}"
-          if [ "${NODE_VERSIONS}" != "[]" ]
-          then
-            echo "json=${NODE_VERSIONS}" >> "${GITHUB_OUTPUT}"
-          fi
 
   # pre-process any docker-compose and docker-bake files
   is_docker:
@@ -2306,8 +2244,11 @@ jobs:
 
   npm_test:
     name: Test npm
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ matrix.runs_on }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    # Allow soft failure for Windows and macOS tests that did not exist previously
+    # TODO: remove this soft failure after some real world use
+    continue-on-error: ${{ fromJSON(matrix.continue_on_error || 'false') }}
     needs:
       - is_npm
       - versioned_source
@@ -2320,8 +2261,7 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
-      matrix:
-        node_version: ${{ fromJSON(needs.is_npm.outputs.node_versions) }}
+      matrix: ${{ fromJSON(needs.is_npm.outputs.npm_test_matrix) }}
 
     outputs:
       package: ${{ steps.meta.outputs.package }}
@@ -2334,9 +2274,9 @@ jobs:
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
-      - *sortNodeVersions
 
       - <<: *setupNode
+        name: Setup Node ${{ matrix.node_version }} with cache
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
         with:
           node-version: "${{ matrix.node_version }}"
@@ -2344,12 +2284,24 @@ jobs:
           cache: "npm"
 
       - <<: *setupNode
+        name: Setup Node ${{ matrix.node_version }}
         if: needs.is_npm.outputs.has_npm_lockfile != 'true'
         with:
           node-version: "${{ matrix.node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
 
+      # TODO: replace the error message in the workflow summary with a warning or note
+      - name: Check platform and engine
+        id: check_engine
+        continue-on-error: true
+        run: |
+          if { npm i --dry-run 2>&1 || true ; } | grep -q -E '(EBADENGINE|EBADPLATFORM)'; then
+            npm i --dry-run 1>/dev/null
+            exit 1
+          fi
+
       - name: Generate metadata
+        if: steps.check_engine.outcome == 'success' 
         id: meta
         run: |
           package="$(jq -r '.name' package.json)"
@@ -2365,10 +2317,12 @@ jobs:
           echo "version_tag=${version_tag}" >> "${GITHUB_OUTPUT}"
 
       - name: Install native dependencies (if necessary)
+        if: steps.check_engine.outcome == 'success' 
         run: |
           npm run flowzone-preinstall --if-present
 
       - name: Install dependencies
+        if: steps.check_engine.outcome == 'success' 
         # private npm dependencies will fail to install unless NODE_AUTH_TOKEN is set in the environment
         # but to avoid leaking secrets we would also have to disable all scripts, like preinstall and postinstall
         # so only public npm dependencies supported for now
@@ -2376,34 +2330,27 @@ jobs:
         #   # make sure to 'npm config set ignore-scripts true' to avoid leaking secrets
         #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          runner_os="$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')"
-          os_count="$(jq '.os | length' package.json)"
-          index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
-
-          if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
-              if [ ${{ needs.is_npm.outputs.has_npm_lockfile }} == 'true' ]; then
-                npm ci
-              else
-                npm i
-              fi
+          if [ ${{ needs.is_npm.outputs.has_npm_lockfile }} == 'true' ]; then
+            npm ci
           else
-              echo "${runner_os} is not supported in package.json"
+            npm i
           fi
 
       - name: Run build
+        if: steps.check_engine.outcome == 'success'
         run: npm run build --if-present
 
       - name: Run tests
-        if: inputs.pseudo_terminal != true
+        if: inputs.pseudo_terminal != true && steps.check_engine.outcome == 'success'
         run: npm test
 
       - name: Run tests (pseudo-tty)
-        if: inputs.pseudo_terminal == true
+        if: inputs.pseudo_terminal == true && steps.check_engine.outcome == 'success'
         shell: script -q -e -c "bash --noprofile --norc -eo pipefail -x {0}" /tmp/test-session
         run: npm test
 
       - name: Run pack
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_private != 'true' && steps.check_engine.outcome == 'success'
         run: |
           mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
@@ -2411,68 +2358,52 @@ jobs:
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
 
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_private != 'true' && steps.check_engine.outcome == 'success'
         uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ strategy.job-index }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
           retention-days: 90
 
       - name: Generate docs (if present)
-        if: needs.is_npm.outputs.npm_docs == 'true'
+        if: needs.is_npm.outputs.npm_docs == 'true' && steps.check_engine.outcome == 'success'
         shell: bash
         run: npm run doc
 
       - name: Compress docs
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_docs == 'true' && steps.check_engine.outcome == 'success'
         run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
 
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_docs == 'true' && steps.check_engine.outcome == 'success'
         uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ strategy.job-index }}
           path: ${{ runner.temp }}/docs.tar.zst
           retention-days: 90
 
-  npm_sbom:
-    name: Generate SBOM for NPM
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    continue-on-error: true
-    needs:
-      - is_npm
-      - npm_test
-      - versioned_source
-    if: ${{ needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' }}
-    <<: *customWorkingDirectory
-    steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
-
-      - <<: *setupNode
-        with:
-          node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
-
-      - run: npm install
-
       - name: Generate SBOM
+        if: needs.is_npm.outputs.npm_sbom == 'true' && steps.check_engine.outcome == 'success'
+        continue-on-error: true
         run: |
           npx @cyclonedx/cyclonedx-npm --output-file=${{ runner.temp }}/npm-sbom.xml
 
-      - <<: *publishSBOMArtifacts
+      - name: Publish SBOM artifacts
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
+        if: needs.is_npm.outputs.npm_sbom == 'true' && steps.check_engine.outcome == 'success'
         with:
-          name: gh-release-sbom-npm
+          name: gh-release-sbom-npm-${{ strategy.job-index }}
           path: ${{ runner.temp }}/npm-sbom.xml
           retention-days: 90
 
       - <<: *publishSBOMToDependencyTrack
+        if: env.SERVER_HOSTNAME != '' && needs.is_npm.outputs.npm_sbom == 'true' && steps.check_engine.outcome == 'success'
         env:
           SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
           API_KEY: ${{ secrets.DTRACK_TOKEN }}
           PROJECT_NAME: ${{ github.event.repository.name }}
           BOM_FILE: ${{ runner.temp }}/npm-sbom.xml
-          PROJECT_VERSION: ${{ needs.npm_test.outputs.version_tag }}
+          PROJECT_VERSION: ${{ steps.meta.outputs.version_tag }}
 
   npm_publish:
     name: Publish npm
@@ -2494,36 +2425,46 @@ jobs:
     <<: *rootWorkingDirectory
 
     steps:
-      - *sortNodeVersions
 
+      # https://github.com/yakubique/list-artifacts
+      - name: List artifacts
+        id: list_artifacts
+        uses: yakubique/list-artifacts@v1.1
+        with:
+          name: npm-${{ github.event.pull_request.head.sha }}-*
+
+      # Download the artifact with the lowest job-index from the npm_tests,
+      # which will correlate to the first successful entry in our npm_test_matrix
       - name: Download npm artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: ${{ fromJSON(steps.list_artifacts.outputs.result)[0].name }}
 
       - <<: *setupNode
         with:
           # use npm v9 or later as the access flag behaviour has changed
           # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
-          node-version: "18"
+          node-version: "22.x"
           registry-url: "${{ env.NPM_REGISTRY }}"
 
       # unpack the tarball provided by the tests so we can apply the draft version to package.json
       # before publishing
+      - name: Repack and inject version
+        run: |
+          pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | head -n1)"
+          tar xvf "${pack}"
+          (cd package
+            npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
+          )
+          tar czvf "${pack}" package
+
       - name: Publish draft release
         env:
           # make sure to 'npm config set ignore-scripts true' to avoid leaking secrets
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm config set ignore-scripts true
-
-          pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
-          tar xvf "${pack}"
-          (cd package
-            npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
-          )
-          tar czvf "${pack}" package
 
           # shellcheck disable=SC2170
           if [ ${{ github.run_attempt }} -gt 1 ]; then
@@ -2547,7 +2488,6 @@ jobs:
 
     steps:
       - *getGitHubAppToken
-      - *sortNodeVersions
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
@@ -2558,13 +2498,14 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: npm-${{ github.event.pull_request.head.sha }}-[0-9]+
+          name_is_regexp: true
 
       - <<: *setupNode
         with:
           # use npm v9 or later as the access flag behaviour has changed
           # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
-          node-version: "18"
+          node-version: "22.x"
           registry-url: "${{ env.NPM_REGISTRY }}"
 
       - name: Publish final release
@@ -2573,7 +2514,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm config set ignore-scripts true
-          pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
+          pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | head -n1)"
           npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
 
   npm_docs_finalize:
@@ -2600,8 +2541,6 @@ jobs:
               "metadata": "read"
             }
 
-      - *sortNodeVersions
-
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm docs artifact from last run
@@ -2611,11 +2550,12 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: docs-${{ github.event.pull_request.head.sha }}-[0-9]+
+          name_is_regexp: true
 
       - name: Extract docs artifact
         run: |
-          docs="$(ls ${{ runner.temp }}/*.tar.zst | sort -t- -n -k3 | tail -n1)"
+          docs="$(ls ${{ runner.temp }}/*.tar.zst | sort -t- -n -k3 | head -n1)"
           tar -xvf "${docs}"
 
       - name: Publish generated docs to GitHub Pages
@@ -3382,7 +3322,6 @@ jobs:
       - python_publish
       - cargo_publish
       - custom_publish
-      - npm_sbom
       - python_sbom
       - cargo_sbom
     # allow some dependencies to be skipped
@@ -4253,7 +4192,6 @@ jobs:
       - is_custom
       - is_website
       - all_tests
-      - npm_sbom
       - python_sbom
       - cargo_sbom
       - npm_publish
