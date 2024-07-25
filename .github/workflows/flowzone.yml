@@ -3040,7 +3040,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - uses: balena-io/deploy-to-balena-action@473a682f6e8345eb717641ffe75eb14a2e0a9ac2
+      - uses: balena-io/deploy-to-balena-action@72b7652cd8b4b0b49376f60fe790eef9ba76e3f0
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
@@ -3101,7 +3101,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - uses: balena-io/deploy-to-balena-action@473a682f6e8345eb717641ffe75eb14a2e0a9ac2
+      - uses: balena-io/deploy-to-balena-action@72b7652cd8b4b0b49376f60fe790eef9ba76e3f0
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
