@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v3.6.1
+      hash: 084621408c2fcde039a86f710178bf712f39b9a0
+      body: |
+        Update docker/setup-buildx-action from 3.6.0 to 3.6.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 17.3.7
+  title: ""
+  date: 2024-07-29T17:00:34.241Z
+- commits:
     - subject: Update docker/setup-buildx-action action to v3.6.0
       hash: 8eb39917db2409c0cc34de33e39342c1e442fad8
       body: |
