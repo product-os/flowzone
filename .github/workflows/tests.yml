@@ -54,5 +54,8 @@ jobs:
           ],
           "environment": ["test"]
         }
+      custom_publish_matrix: foo,bar
+      custom_runs_on: >
+        [["ubuntu-latest"]]
       release_notes: true
       restrict_custom_actions: false
