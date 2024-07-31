@@ -4818,8 +4818,18 @@ jobs:
       - custom_always
     if: |
       always() &&
-      github.event.pull_request.state == 'open'
+      (
+        github.event.pull_request.state == 'open' ||
+        (
+          github.event.pull_request.state == 'closed' && github.event.pull_request.merged != true
+        )
+      )
     steps:
+      - name: Reject on closed pull requests
+        if: github.event.pull_request.state == 'closed' && github.event.pull_request.merged != true
+        run: |
+          echo "::warning::Marking this job as failed so if the PR is reopened it does not satisfy merge requirements"
+          exit 1
       - name: Reject failed jobs
         run: |
           if [ "${{ contains(needs.*.result, 'failure') }}" = "true" ]
