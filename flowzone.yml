@@ -4265,11 +4265,26 @@ jobs:
       - cargo_publish
       - custom_publish
       - custom_always
+    # Run on event triggers for open PRs
+    # OR when the PR is closed but not merged
+    # See https://github.com/product-os/flowzone/issues/1143
     if: |
       always() &&
-      github.event.pull_request.state == 'open'
+      (
+        github.event.pull_request.state == 'open' ||
+        (
+          github.event.pull_request.state == 'closed' && github.event.pull_request.merged != true
+        )
+      )
 
     steps:
+      # Avoid showing this job as skipped if a PR is reopened
+      # See https://github.com/product-os/flowzone/issues/1143
+      - name: Reject on closed pull requests
+        if: github.event.pull_request.state == 'closed' && github.event.pull_request.merged != true
+        run: |
+          echo "::warning::Marking this job as failed so if the PR is reopened it does not satisfy merge requirements"
+          exit 1
       - *rejectFailedJobs
       - *rejectCancelledJobs
 
