@@ -1,4 +1,23 @@
 - commits:
+    - subject: Mark All jobs as failed on PR closed events
+      hash: cbf6b29452ef94622aa8a01b58bd2f010bcfa057
+      body: |
+        This job is used for branch requirements, and
+        we don't want it to show as skipped in case the PR
+        is ever reopened.
+
+        See: https://github.com/product-os/flowzone/issues/1143
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 17.4.0
+  title: ""
+  date: 2024-08-01T16:44:56.013Z
+- commits:
     - subject: Update docker/setup-buildx-action action to v3.6.1
       hash: 084621408c2fcde039a86f710178bf712f39b9a0
       body: |
