@@ -2744,7 +2744,7 @@ jobs:
       # https://github.com/docker/bake-action
       - name: Docker bake
         id: docker_bake
-        uses: docker/bake-action@955c005d878f7d6d90b0e1030b35eff3da452304 # v5.6.0
+        uses: docker/bake-action@8cea75c238fa977d2ac1fa69d09604b3b740f809 # v5.6.1
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
