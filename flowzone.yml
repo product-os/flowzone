@@ -3318,7 +3318,7 @@ jobs:
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           wranglerVersion: "3.5.1" # latest - https://www.npmjs.com/package/wrangler
           command: pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/
-      
+
       - name: Set Cloudflare Pages deployment-url to output
         id: output_cf_url
         if: steps.deploy_cf_pages.outputs.deployment-url != ''
@@ -4085,6 +4085,24 @@ jobs:
 
           with_backoff aws cloudformation validate-template \
             --template-url "https://s3.amazonaws.com/${{ steps.make_bucket.outputs.s3_bucket }}/${tmpvalid}"
+
+      - name: Prepare (Python) Lambda dependencies
+        run: |
+          template_base_directory="$(dirname '${{ steps.shared.outputs.template_file }}')"
+
+          python_lambdas="$(cat '${{ steps.shared.outputs.template_file }}' \
+            | yq e -oj \
+            | jq -r '.Resources[]
+            | select((.Type=="AWS::Lambda::Function")
+            and (.Properties.Runtime | startswith("python"))).Properties.Code')"
+
+          for python_lambda in ${python_lambdas}; do
+              pushd "${template_base_directory}/${python_lambda}"
+              if [[ -s requirements.txt ]]; then
+                  pip install -r requirements.txt -t .
+              fi
+              popd
+          done
 
       - name: Package template
         run: |
