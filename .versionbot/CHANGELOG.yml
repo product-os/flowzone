@@ -1,4 +1,30 @@
 - commits:
+    - subject: CloudFormation package does not install Lambda deps.
+      hash: de553b7c4f9fa7beaadfc8b203b60a7fd73f5320
+      body: >
+        There needs to be an additional step when packaging CFN tempates
+
+        containing Lambda/Code: reference directory. By default, without
+
+        using a completely different CFN "SAML" workflow (we don't want to
+
+        go there maybe yet), dependencies need to be installed into the
+
+        same directory as the Lamda code.
+
+
+        This comit implements this workflow for Python code when
+        requirements.txt
+
+        is present.
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 17.4.16
+  title: ""
+  date: 2024-08-16T00:24:58.208Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.1.2
       hash: 279f43841d0761a72ea87386b73f3273f30cf1d6
       body: |
