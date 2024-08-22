@@ -1,4 +1,47 @@
 - commits:
+    - subject: Check if Code does in fact point to a valid directory
+      hash: 4fec387f7953c821d9c3c8f9637707f123fec188
+      body: >
+        AWS::Lambda::Function can have different code syntax
+
+
+        (1) point to a directory to be packaged manually
+
+          LambdaFunction:
+            Type: AWS::Lambda::Function
+            Properties:
+              Code: lambda/
+              Handler: handler.lambda_handler
+
+        (2) inline
+
+          BackupCopyManagerLambda:
+            Type: AWS::Lambda::Function
+            Properties:
+              FunctionName: BackupCopyManager
+              Description: Lambda function to automate copy of resources to destinationBackupVaultArn
+              Environment:
+                Variables:
+                  COPY_TO_ACCOUNT_TAG : 'CopyToAccount'
+                  COPY_TO_REGION_TAG : 'CopyToRegion'
+                  COPY_TO_VAULT_TAG : 'CopyToVault'
+              Handler: index.lambda_handler
+              Code:
+                ZipFile: |
+                  import time, json, boto3, os, sys, logging, urllib3
+
+                  COPY_TO_ACCOUNT_TAG = os.environ.get('COPY_TO_ACCOUNT_TAG')
+                  ...
+
+        This pach should handle both cases (currently it only handles 1).
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 17.4.23
+  title: ""
+  date: 2024-08-22T16:44:42.783Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.1.9
       hash: a2355463e84f0f1b1ab05eb007eaf83941fa69ff
       body: |
