@@ -4551,18 +4551,20 @@ jobs:
         run: |
           template_base_directory="$(dirname '${{ steps.shared.outputs.template_file }}')"
 
-          python_lambdas="$(cat '${{ steps.shared.outputs.template_file }}' \
+          python_lambdas="$(cat <'${{ steps.shared.outputs.template_file }}' \
             | yq e -oj \
             | jq -r '.Resources[]
             | select((.Type=="AWS::Lambda::Function")
             and (.Properties.Runtime | startswith("python"))).Properties.Code')"
 
           for python_lambda in ${python_lambdas}; do
-              pushd "${template_base_directory}/${python_lambda}"
-              if [[ -s requirements.txt ]]; then
-                  pip install -r requirements.txt -t .
+              if [[ -d "$template_base_directory/$python_lambda" ]]; then
+                  pushd "${template_base_directory}/${python_lambda}"
+                  if [[ -s requirements.txt ]]; then
+                      pip install -r requirements.txt -t .
+                  fi
+                  popd
               fi
-              popd
           done
       - name: Package template
         run: |
