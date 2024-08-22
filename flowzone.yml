@@ -3293,7 +3293,7 @@ jobs:
         if: |
           needs.is_website.outputs.has_readme == 'true' &&
           inputs.docusaurus_website != false
-        uses: product-os/docusaurus-builder@5a326336c97cd9aec7deefe88bcfec991cbdb686 # v2.1.9
+        uses: product-os/docusaurus-builder@0e4f51e58cbf33cc65231a6e6146168875965950 # v2.1.10
         with:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
