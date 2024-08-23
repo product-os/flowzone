@@ -4555,9 +4555,9 @@ jobs:
             | yq e -oj \
             | jq -r '.Resources[]
             | select((.Type=="AWS::Lambda::Function")
-            and (.Properties.Runtime | startswith("python"))).Properties.Code')"
+            and (.Properties.Runtime | select (.!=null) | startswith("python"))).Properties.Code')"
 
-          for python_lambda in ${python_lambdas}; do
+          for python_lambda in ${python_lambdas:-}; do
               if [[ -d "$template_base_directory/$python_lambda" ]]; then
                   pushd "${template_base_directory}/${python_lambda}"
                   if [[ -s requirements.txt ]]; then
