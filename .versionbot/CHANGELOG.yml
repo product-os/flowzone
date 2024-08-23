@@ -1,4 +1,28 @@
 - commits:
+    - subject: Handle another Lambda function definition
+      hash: 0dfa5cafd64606cc59028c87598c76cd50c5d4a4
+      body: |
+        Apparently there is also this variant:
+
+        ```
+          Function:
+            Type: AWS::Lambda::Function
+            Properties:
+              Code:
+                ImageUri: !Ref EcrRepositoryUri
+                ...
+        ```
+
+        To handle it, let jq return a null without erroring back to the shell
+        and let the for loop handle empties.
+      footer:
+        change-type: patch
+      author: Anton Belodedenko
+      nested: []
+  version: 17.4.25
+  title: ""
+  date: 2024-08-23T00:29:51.118Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.1.10
       hash: 86185a6752a9569a2f1189e83599a6c624343039
       body: |
