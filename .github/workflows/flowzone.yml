@@ -450,7 +450,7 @@ jobs:
             echo "depth=0" >> "${GITHUB_OUTPUT}"
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
           node-version: 20.x
       - name: Install versioning tools
@@ -1032,7 +1032,7 @@ jobs:
           fi
           echo "access=${access}" >> "${GITHUB_OUTPUT}"
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
           node-version: 18.x
         if: steps.npm.outputs.enabled == 'true'
@@ -1044,7 +1044,7 @@ jobs:
             echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> "${GITHUB_ENV}"
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
           node-version: 20.x
         if: steps.npm.outputs.enabled == 'true'
@@ -1056,7 +1056,7 @@ jobs:
             echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> "${GITHUB_ENV}"
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
           node-version: 22.x
         if: steps.npm.outputs.enabled == 'true'
@@ -1924,14 +1924,14 @@ jobs:
           echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
           echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
           cache: npm
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2046,7 +2046,7 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
           node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
       - run: npm install
@@ -2110,7 +2110,7 @@ jobs:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
           node-version: "18"
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2178,7 +2178,7 @@ jobs:
           workflow_conclusion: success
           name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
           node-version: "18"
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -3476,7 +3476,7 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
           node-version: 18
       - name: Docusaurus Builder
