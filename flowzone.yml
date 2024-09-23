@@ -684,24 +684,6 @@
     run: |
       aws eks update-kubeconfig --name "$(echo "${KUBE_CTX}" | awk -F'/' '{print $2}')"
 
-  - &publishSBOMArtifacts
-    name: Publish SBOM artifacts
-    uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
-
-  - &publishSBOMToDependencyTrack
-    name: Publish SBOM To Dependency Track
-    if: ${{ env.SERVER_HOSTNAME != '' }}
-    run: |
-      curl -X "PUT" "https://${{ env.SERVER_HOSTNAME }}/api/v1/bom" \
-        -H 'Content-Type: application/json' \
-        -H 'X-API-Key: ${{env.API_KEY}}' \
-         -d '{
-          "projectName": "'"${{env.PROJECT_NAME}}"'",
-          "projectVersion": "'"${{env.PROJECT_VERSION}}"'",
-          "autoCreate": "true",
-          "bom": "'"$(base64 -w 0 "${{ env.BOM_FILE }}")"'"
-        }'
-
   - &convenienceFunctions
     name: Convenience functions
     id: functions
@@ -1032,7 +1014,7 @@ on:
         default: true
     outputs:
       cloudflare_deployment_url:
-        description: 'Cloudflare Deployment URL'
+        description: "Cloudflare Deployment URL"
         value: ${{ jobs.website_publish.outputs.cloudflare_deployment_url }}
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
@@ -1599,6 +1581,64 @@ jobs:
           # Ignore shellcheck info and style messages for now
           args: -color -ignore="custom label for self-hosted runner" -ignore=":info:" -ignore=":style:"
 
+  # Generate SBOM & run OSV
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    needs:
+      - versioned_source
+    if: ${{ inputs.generate_sbom == true }}
+    <<: *customWorkingDirectory
+    steps:
+      - *getGitHubAppToken
+      - *checkoutVersionedSha
+      - *createLocalRefs
+      - <<: *setupNode
+        with:
+          node-version: 22.x
+      - name: Install CDXGen
+        run: npm install -g @cyclonedx/cdxgen
+      - name: Generate SBOM
+        run: cdxgen -o ${{ runner.temp }}/sbom.json
+      - name: Publish SBOM artifacts
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
+        with:
+          name: gh-release-sbom
+          path: ${{ runner.temp }}/sbom.json
+          retention-days: 90
+  osv:
+    name: Vulnerability Scanner
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    needs:
+      - versioned_source
+    if: ${{ inputs.generate_sbom == true }}
+    <<: *customWorkingDirectory
+    steps:
+      - *getGitHubAppToken
+      - *checkoutVersionedSha
+      - *createLocalRefs
+      - <<: *setupNode
+        with:
+          node-version: 22.x
+      - name: Install OSV
+        run: |
+          OSV_VERSION=v1.8.5
+          OSV_URL="https://github.com/google/osv-scanner/releases/download/${OSV_VERSION}/osv-scanner_linux_amd64"
+          curl -L $OSV_URL -o osv-scanner
+          chmod +x osv-scanner
+      - name: Run Vulnerability Scanner
+        run: |
+          ./osv-scanner scan --sbom ${{ runner.temp }}/sbom.json --format table # for the console output
+          ./osv-scanner scan --sbom ${{ runner.temp }}/sbom.json --format json > ${{ runner.temp }}/osv-scanner-results.json # for the json output, unfortunately we can't have both
+      - name: Publish OSV scans
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
+        with:
+          name: gh-release-osv
+          path: ${{ runner.temp }}/osv-scanner-results.json
+          retention-days: 90
+
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
     name: Is npm
@@ -1614,7 +1654,6 @@ jobs:
       has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
       npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
       npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
-      npm_sbom: ${{ inputs.generate_sbom }} # default true
       node_versions: ${{ steps.node_versions.outputs.json }}
       npm_access: ${{ steps.access.outputs.access }}
 
@@ -1929,7 +1968,6 @@ jobs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
-      python_sbom: ${{ inputs.generate_sbom }}
 
     steps:
       - *getGitHubAppToken
@@ -2012,7 +2050,6 @@ jobs:
     outputs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
-      cargo_sbom: ${{ inputs.generate_sbom }}
 
     steps:
       - *getGitHubAppToken
@@ -2421,45 +2458,6 @@ jobs:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
           path: ${{ runner.temp }}/docs.tar.zst
           retention-days: 90
-
-  npm_sbom:
-    name: Generate SBOM for NPM
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    continue-on-error: true
-    needs:
-      - is_npm
-      - npm_test
-      - versioned_source
-    if: ${{ needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' }}
-    <<: *customWorkingDirectory
-    steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
-
-      - <<: *setupNode
-        with:
-          node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
-
-      - run: npm install
-
-      - name: Generate SBOM
-        run: |
-          npx @cyclonedx/cyclonedx-npm --output-file=${{ runner.temp }}/npm-sbom.xml
-
-      - <<: *publishSBOMArtifacts
-        with:
-          name: gh-release-sbom-npm
-          path: ${{ runner.temp }}/npm-sbom.xml
-          retention-days: 90
-
-      - <<: *publishSBOMToDependencyTrack
-        env:
-          SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
-          API_KEY: ${{ secrets.DTRACK_TOKEN }}
-          PROJECT_NAME: ${{ github.event.repository.name }}
-          BOM_FILE: ${{ runner.temp }}/npm-sbom.xml
-          PROJECT_VERSION: ${{ needs.npm_test.outputs.version_tag }}
 
   npm_publish:
     name: Publish npm
@@ -3125,51 +3123,6 @@ jobs:
         run: |
           poetry run pytest tests/
 
-  python_sbom:
-    name: Generate SBOM for python
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    continue-on-error: true
-    needs:
-      - is_python
-      - python_test
-      - versioned_source
-    if: needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true'
-
-    <<: *customWorkingDirectory
-
-    steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
-
-      - *setupPython
-
-      - *setupPoetry
-
-      - name: Run poetry install
-        run: poetry install
-
-      - name: Install CycloneDX for Python
-        run: |
-          pip3 install 'cyclonedx-bom>=1.4.0,<4'
-
-      - name: Generate SBOM
-        run: cyclonedx-py -r -i ./poetry.lock --format xml -o ${{ runner.temp }}/python-sbom.xml
-
-      - <<: *publishSBOMArtifacts
-        with:
-          name: gh-release-sbom-python
-          path: ${{ runner.temp }}/python-sbom.xml
-          retention-days: 90
-
-      - <<: *publishSBOMToDependencyTrack
-        env:
-          SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
-          API_KEY: ${{ secrets.DTRACK_TOKEN }}
-          PROJECT_NAME: ${{ github.event.repository.name }}
-          BOM_FILE: ${{ runner.temp }}/python-sbom.xml
-          PROJECT_VERSION: ${{ needs.python_test.outputs.version_tag }}
-
   python_publish:
     name: Publish to test PyPI
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3369,9 +3322,7 @@ jobs:
       - python_publish
       - cargo_publish
       - custom_publish
-      - npm_sbom
-      - python_sbom
-      - cargo_sbom
+      - sbom
     # allow some dependencies to be skipped
     if: |
       !failure() && !cancelled() &&
@@ -3559,50 +3510,6 @@ jobs:
             echo "sha_tag=${sha_tag}" ;
             echo "version_tag=${version_tag}" ;
           } >> "${GITHUB_OUTPUT}"
-
-  cargo_sbom:
-    name: Generate SBOM for cargo
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    continue-on-error: true
-    needs:
-      - is_cargo
-      - cargo_test
-      - versioned_source
-    if: needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true'
-
-    <<: *customWorkingDirectory
-
-    steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
-
-      - name: Set up toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-
-      - name: Install CycloneDX for Cargo
-        run: cargo install cargo-cyclonedx
-
-      - name: Generate SBOM
-        run: |
-          cargo cyclonedx --override-filename bom
-          mv bom.xml ${{ runner.temp }}/cargo-sbom.xml
-
-      - <<: *publishSBOMArtifacts
-        with:
-          name: gh-release-sbom-cargo
-          path: ${{ runner.temp }}/cargo-sbom.xml
-          retention-days: 90
-
-      - <<: *publishSBOMToDependencyTrack
-        env:
-          SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
-          API_KEY: ${{ secrets.DTRACK_TOKEN }}
-          PROJECT_NAME: ${{ github.event.repository.name }}
-          BOM_FILE: ${{ runner.temp }}/cargo-sbom.xml
-          PROJECT_VERSION: ${{ needs.cargo_test.outputs.version_tag }}
 
   cargo_publish:
     name: Publish rust
@@ -4260,9 +4167,7 @@ jobs:
       - is_custom
       - is_website
       - all_tests
-      - npm_sbom
-      - python_sbom
-      - cargo_sbom
+      - sbom
       - npm_publish
       - docker_publish
       - balena_publish
