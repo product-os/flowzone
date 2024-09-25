@@ -1,4 +1,21 @@
 - commits:
+    - subject: Force full fetch depth in order to retrieve all tags
+      hash: df7b0e7124a6258cefc2d290d887d62f5efc88da
+      body: |
+        We have a step to manually fetch tags when depth is not 0,
+        but this step has been broken since we disabled persisting of
+        credentials from the checkout step.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 17.4.41
+  title: ""
+  date: 2024-09-25T16:41:10.409Z
+- commits:
     - subject: Share auth config across all `actions/checkout` usage
       hash: 472ed250faca8976ab51d57ee6ccb8cd0d1fbfe0
       body: ""
