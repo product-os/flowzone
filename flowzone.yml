@@ -145,6 +145,10 @@
         -f sha="${SHA}" \
         --include
 
+  - &checkoutAuth
+    token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+    persist-credentials: false
+
   - &checkoutPullRequestMergeRef
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
@@ -155,7 +159,7 @@
       fetch-depth: 0
       submodules: "recursive"
       ref: "refs/pull/${{ github.event.number }}/merge"
-      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      <<: *checkoutAuth
 
   - &checkoutPullRequestHeadSha
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
@@ -168,7 +172,7 @@
       submodules: "recursive"
       # fallback to an invalid ref if the checkout ref is undefined
       ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
-      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      <<: *checkoutAuth
 
   - &checkoutEventSha
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
@@ -181,7 +185,7 @@
       submodules: "recursive"
       # fallback to an invalid ref if the checkout ref is undefined
       ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
-      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      <<: *checkoutAuth
 
   - &checkoutVersionedSha # https://github.com/actions/checkout
     name: Checkout versioned commit
@@ -194,7 +198,7 @@
       submodules: "recursive"
       # fallback to an invalid ref if the checkout ref is undefined
       ref: "${{ needs.versioned_source.outputs.sha || '¯\_(ツ)_/¯' }}"
-      token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      <<: *checkoutAuth
 
   - &resetGitHubDirectory
     # checkout the tip of BASE if the PR is from a fork
