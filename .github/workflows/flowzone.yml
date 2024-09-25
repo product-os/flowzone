@@ -742,7 +742,12 @@ jobs:
           persist-credentials: false
       - name: Fetch tags
         if: needs.versioned_source.outputs.depth != 0 && needs.versioned_source.outputs.depth != ''
-        run: git fetch -q --tags
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch -q --tags
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -1598,8 +1603,12 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
         run: |
-          git fetch origin ${{ github.ref }}
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
@@ -4066,8 +4075,12 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
         run: |
-          git fetch origin ${{ github.ref }}
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -4137,8 +4150,12 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
         run: |
-          git fetch origin ${{ github.ref }}
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -4202,8 +4219,12 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
         run: |
-          git fetch origin ${{ github.ref }}
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
       - name: Set the matrix value env var
         shell: bash
@@ -4264,8 +4285,12 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
         run: |
-          git fetch origin ${{ github.ref }}
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
       - uses: ./.github/actions/clean
         with:
@@ -4321,8 +4346,12 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
         run: |
-          git fetch origin ${{ github.ref }}
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
           git checkout FETCH_HEAD -- .github
       - uses: ./.github/actions/always
         with:
