@@ -416,6 +416,7 @@ jobs:
           submodules: recursive
           ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
         if: github.event.pull_request.state == 'open'
       - name: Checkout ${{ github.sha }}
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
@@ -424,6 +425,7 @@ jobs:
           submodules: recursive
           ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
         if: github.event.pull_request.state != 'open'
       - name: Reject merge commits
         if: github.event.pull_request.state == 'open'
@@ -737,6 +739,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Fetch tags
         if: needs.versioned_source.outputs.depth != 0 && needs.versioned_source.outputs.depth != ''
         run: git fetch -q --tags
@@ -955,6 +958,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Add problem matcher
         run: |
           curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/.github/actionlint-matcher.json > ${{ runner.temp }}/actionlint-matcher.json
@@ -1004,6 +1008,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Check for package.json
         id: npm
         run: |
@@ -1117,6 +1122,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - id: docker_images_json
         name: Build JSON array
         shell: bash
@@ -1340,6 +1346,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Identify Poetry project
         id: python_poetry
         run: |
@@ -1440,6 +1447,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - id: cargo_targets
         name: Build JSON array
         shell: bash
@@ -1511,6 +1519,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - id: balena_slugs
         name: Build JSON array
         shell: bash
@@ -1587,6 +1596,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         run: |
           git fetch origin ${{ github.ref }}
@@ -1761,6 +1771,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Check for README for building a website
         id: has_readme
         run: |
@@ -1809,6 +1820,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Validate CloudFormation input
         id: validate_json
         run: |
@@ -1912,6 +1924,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -2041,6 +2054,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -2286,6 +2300,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -2807,6 +2822,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Sanitize docker strings
         id: strings
         env:
@@ -3028,6 +3044,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - uses: balena-io/deploy-to-balena-action@72b7652cd8b4b0b49376f60fe790eef9ba76e3f0
         id: balena_deploy
         with:
@@ -3089,6 +3106,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - uses: balena-io/deploy-to-balena-action@72b7652cd8b4b0b49376f60fe790eef9ba76e3f0
         id: balena_deploy
         with:
@@ -3156,6 +3174,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3249,6 +3268,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3338,6 +3358,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3413,6 +3434,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
@@ -3471,6 +3493,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3615,6 +3638,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Download release artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
@@ -3682,6 +3706,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Download release notes
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
@@ -3763,6 +3788,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3833,6 +3859,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3919,6 +3946,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3982,6 +4010,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
@@ -4035,6 +4064,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         run: |
           git fetch origin ${{ github.ref }}
@@ -4105,6 +4135,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         run: |
           git fetch origin ${{ github.ref }}
@@ -4169,6 +4200,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         run: |
           git fetch origin ${{ github.ref }}
@@ -4230,6 +4262,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         run: |
           git fetch origin ${{ github.ref }}
@@ -4286,6 +4319,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         run: |
           git fetch origin ${{ github.ref }}
@@ -4352,6 +4386,7 @@ jobs:
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
       - name: Random delay
         run: |
           DELAY="${DELAY-5}"
