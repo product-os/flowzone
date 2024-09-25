@@ -385,7 +385,7 @@ jobs:
       commit_sha: ${{ steps.create_commit.outputs.sha }}
       author: ${{ steps.create_commit.outputs.bot }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
-      depth: ${{ steps.git_describe.outputs.depth || 0 }}
+      depth: 0
     env:
       GH_DEBUG: "true"
       GH_PAGER: cat
