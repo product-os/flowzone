@@ -1,4 +1,30 @@
 - commits:
+    - subject: Use git -c for non-persistent credential configuration
+      hash: 44005f1c397861bf10de8dfcfa96b86e196e29f7
+      body: >
+        The git -c option sets a configuration value for a single Git command
+        invocation.
+
+        It does not modify any configuration files or persist the setting beyond
+        this specific command.
+
+
+        This approach ensures that the authentication credentials are used
+        securely for this
+
+        specific operation without risk of unintended persistence or exposure in
+        configuration files.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 17.4.42
+  title: ""
+  date: 2024-09-25T20:11:53.749Z
+- commits:
     - subject: Force full fetch depth in order to retrieve all tags
       hash: df7b0e7124a6258cefc2d290d887d62f5efc88da
       body: |
