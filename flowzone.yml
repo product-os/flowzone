@@ -245,6 +245,7 @@
 
   # Enabling fetch-tags via actions/checkout does not work when fetch-depth > 0
   # https://github.com/actions/checkout/issues/1781
+  # FIXME: this step is broken now that we do not persist credentials from the checkout step
   - &fetchTags
     name: Fetch tags
     if: needs.versioned_source.outputs.depth != 0 && needs.versioned_source.outputs.depth != ''
@@ -1070,6 +1071,7 @@ jobs:
       )
 
     strategy:
+  
       fail-fast: true
       matrix:
         include:
@@ -1105,7 +1107,10 @@ jobs:
       commit_sha: ${{ steps.create_commit.outputs.sha }}
       author: ${{ steps.create_commit.outputs.bot }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
-      depth: ${{ steps.git_describe.outputs.depth || 0 }}
+      # depth: ${{ steps.git_describe.outputs.depth || 0 }}
+      # Force full fetch depth for now in order to retrieve tags (this takes longer).
+      # https://github.com/actions/checkout/issues/1781
+      depth: 0
 
     env:
       <<: *gitHubCliEnvironment
