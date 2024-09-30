@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update rhysd/actionlint Docker tag to v1.7.3
+      hash: adaade4d8e99908cf9e66215f124fa7b7acb8cb9
+      body: |
+        Update rhysd/actionlint from 1.7.1 to 1.7.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 17.4.43
+  title: ""
+  date: 2024-09-30T23:08:38.891Z
+- commits:
     - subject: Use git -c for non-persistent credential configuration
       hash: 44005f1c397861bf10de8dfcfa96b86e196e29f7
       body: >
