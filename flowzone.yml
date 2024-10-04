@@ -1068,10 +1068,23 @@ on:
         value: ${{ jobs.website_publish.outputs.cloudflare_deployment_url }}
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
+# https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/control-the-concurrency-of-workflows-and-jobs
+# The following concurrency group cancels in-progress jobs or runs on pull_request events only;
+# if github.head_ref is undefined, the concurrency group will fallback to the run ID,
+# which is guaranteed to be both unique and defined for the run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
-  # cancel jobs in progress for updated PRs, but not merge or tag events
-  cancel-in-progress: ${{ github.event.action == 'synchronize' }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  # Expressions in the concurrency context do not have access
+  # to the entire github.event context so we cannot make advanced
+  # expressions beyond a few top level github event properties.
+    
+  # See: https://github.com/orgs/community/discussions/69704#discussioncomment-7803351
+
+  # Cancel jobs in-progress for open PRs, but not merged or closed PRs, by checking for the merge ref.
+  # Note that for pull_request_target events (PRs from forks), the github.ref value is
+  # usually 'refs/heads/master' so we can't rely on that to determine if it is a merge event or not.
+  # As a result pull_request_target events will never cancel in-progress jobs and will be queued instead.
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 env:
   NPM_REGISTRY: "https://registry.npmjs.org"
