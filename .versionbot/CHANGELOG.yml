@@ -1,4 +1,23 @@
 - commits:
+    - subject: Fix concurrency cancel-in-progress conditions
+      hash: 980ec61e6fbafdb93e78d999e687af4cab32cd1b
+      body: |
+        Expressions in the concurrency context do not have access
+        to the github.event context so we cannot make advanced
+        expressions beyond a few top level github event fields.
+      footer:
+        See: https://github.com/orgs/community/discussions/69704#discussioncomment-7803351
+        see: https://github.com/orgs/community/discussions/69704#discussioncomment-7803351
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 17.5.0
+  title: ""
+  date: 2024-10-07T15:13:01.909Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.1.18
       hash: 72f1de0c2249c133cd82579f8533964d12ffb6c7
       body: |
