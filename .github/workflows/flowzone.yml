@@ -282,8 +282,8 @@ on:
         description: Cloudflare Deployment URL
         value: ${{ jobs.website_publish.outputs.cloudflare_deployment_url }}
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
-  cancel-in-progress: ${{ github.event.action == 'synchronize' }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 env:
   NPM_REGISTRY: https://registry.npmjs.org
   CARGO_REGISTRY: crates.io
