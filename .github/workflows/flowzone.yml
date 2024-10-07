@@ -4927,6 +4927,8 @@ jobs:
       github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
+    permissions:
+      pull-requests: read
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -4952,14 +4954,23 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
-          then
-            echo "result=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "result=false" >> "${GITHUB_OUTPUT}"
-          fi
-      - name: Toggle auto-merge
+          result="$(gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq '.isDraft == true')"
+          echo "result=${result}" >> "${GITHUB_OUTPUT}"
+      - name: Check if branch has rules
         if: steps.is_draft_pr.outputs.result == 'false'
+        id: branch_has_rules
+        env:
+          GH_DEBUG: "true"
+          GH_PAGER: cat
+          GH_PROMPT_DISABLED: "true"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          result="$(gh api -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/rules/branches/${{ github.base_ref }}" | jq 'length != 0')"
+          echo "result=${result}" >> "${GITHUB_OUTPUT}"
+      - name: Toggle auto-merge
+        if: steps.is_draft_pr.outputs.result == 'false' && steps.branch_has_rules.outputs.result == 'true'
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
