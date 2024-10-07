@@ -361,19 +361,6 @@
       <<: *gitHubCliEnvironment
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
-  - &isDraftPullRequest # check both the github context (static) and via the gh cli (dynamic)
-    name: Check if PR is draft
-    id: is_draft_pr
-    env:
-      <<: *gitHubCliEnvironment
-    run: |
-      if gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq -e '.isDraft == true'
-      then
-        echo "result=true" >> "${GITHUB_OUTPUT}"
-      else
-        echo "result=false" >> "${GITHUB_OUTPUT}"
-      fi
-
   - &jsonArrayBuilder
     name: Build JSON array
     id: to_json_array
@@ -4357,6 +4344,9 @@ jobs:
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
 
+    permissions:
+      pull-requests: read
+
     steps:
       - <<: *getGitHubAppToken
         with:
@@ -4368,11 +4358,38 @@ jobs:
               "pull_requests": "write"
             }
 
-      - *isDraftPullRequest
+      # Check if the PR is currently in draft state.
+      # We aren't using the existing github context values here as those
+      # are not updated on re-runs, or mid-execution.
+      - name: Check if PR is draft
+        id: is_draft_pr
+        env:
+          <<: *gitHubCliEnvironment
+        run: |
+          result="$(gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq '.isDraft == true')"
+          echo "result=${result}" >> "${GITHUB_OUTPUT}"
 
-      # Only toggle auto-merge if there is one or more required status checks on the branch
-      - name: Toggle auto-merge
+      # This prevents merging PRs that do not have any required
+      # checks, in theory. In practice the rules may not contain
+      # required status checks but the presence of any branch rule is good enough.
+      # https://docs.github.com/en/rest/repos/rules?apiVersion=2022-11-28#get-rules-for-a-branch
+      # The fine-grained token must have the following permission set:
+      # - "Metadata" repository permissions (read)
+      - name: Check if branch has rules
         if: steps.is_draft_pr.outputs.result == 'false'
+        id: branch_has_rules
+        env:
+          <<: *gitHubCliEnvironment
+        run: |
+          result="$(gh api -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/rules/branches/${{ github.base_ref }}" | jq 'length != 0')"
+          echo "result=${result}" >> "${GITHUB_OUTPUT}"
+
+      # Only toggle auto-merge if:
+      # - there are one or more required status checks on the branch via rulesets
+      # - and the PR is not in draft state
+      - name: Toggle auto-merge
+        if: steps.is_draft_pr.outputs.result == 'false' && steps.branch_has_rules.outputs.result == 'true'
         env:
           <<: *gitHubCliEnvironment
           # DO NOT use the automatic github token (GITHUB_TOKEN) as it will not trigger merge events!
