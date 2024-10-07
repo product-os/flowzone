@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/upload-artifact action to v4.4.1
+      hash: 76c474d30490621970399ee288b62d279371ed14
+      body: |
+        Update actions/upload-artifact from 4.4.0 to 4.4.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 17.5.1
+  title: ""
+  date: 2024-10-07T16:07:11.119Z
+- commits:
     - subject: Fix concurrency cancel-in-progress conditions
       hash: 980ec61e6fbafdb93e78d999e687af4cab32cd1b
       body: |
