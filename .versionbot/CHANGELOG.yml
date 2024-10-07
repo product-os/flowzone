@@ -1,4 +1,24 @@
 - commits:
+    - subject: Only toggle auto-merge if base branch has protection rules
+      hash: 6a7d8924103c92a2222f46435ea7c32095c87147
+      body: >
+        This prevents merging PRs that do not have any required
+
+        checks, in theory. In practice the rules may not contain
+
+        required status checks but the presence of any branch rule is good
+        enough.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 18.0.0
+  title: ""
+  date: 2024-10-07T19:46:25.269Z
+- commits:
     - subject: Update product-os/setup-awscli-action action to v0.0.5
       hash: f75788ac8e1222fa6ee8fbf50ede54c4cf912878
       body: |
