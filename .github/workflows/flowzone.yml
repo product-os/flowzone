@@ -2661,7 +2661,7 @@ jobs:
         with:
           version: v1.15.0
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@09e3dab58498a1fa45ff29a24e650a54cdfb0d78
+        uses: product-os/setup-awscli-action@20850aac46abae44690847f77dc148be28e74910
         with:
           version: 2.15.43
       - name: Warn if tests skipped
@@ -2899,7 +2899,7 @@ jobs:
         with:
           version: v0.14.0
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@09e3dab58498a1fa45ff29a24e650a54cdfb0d78
+        uses: product-os/setup-awscli-action@20850aac46abae44690847f77dc148be28e74910
         with:
           version: 2.15.43
       - name: Login to GitHub Container Registry
@@ -4390,7 +4390,7 @@ jobs:
     environment: ${{ matrix.environment }}
     steps:
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@09e3dab58498a1fa45ff29a24e650a54cdfb0d78
+        uses: product-os/setup-awscli-action@20850aac46abae44690847f77dc148be28e74910
         with:
           version: 2.15.43
       - name: Generate GitHub App installation token
@@ -4714,7 +4714,7 @@ jobs:
     environment: ${{ matrix.environment }}
     steps:
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@09e3dab58498a1fa45ff29a24e650a54cdfb0d78
+        uses: product-os/setup-awscli-action@20850aac46abae44690847f77dc148be28e74910
         with:
           version: 2.15.43
       - name: Random delay
