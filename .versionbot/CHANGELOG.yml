@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update cloudflare/wrangler-action action to v3.9.0
+      hash: 59b197b377c752283493fec6cc0b132c7e7da233
+      body: |
+        Update cloudflare/wrangler-action from 3.8.0 to 3.9.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 18.0.1
+  title: ""
+  date: 2024-10-08T17:05:02.702Z
+- commits:
     - subject: Only toggle auto-merge if base branch has protection rules
       hash: 6a7d8924103c92a2222f46435ea7c32095c87147
       body: >
