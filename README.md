@@ -379,6 +379,11 @@ jobs:
       # Required: false
       generate_sbom: true
 
+      # Scan for secrets in the PR and artifacts using TruffleHog OSS
+      # Type: boolean
+      # Required: false
+      scan_secrets: true
+
 
 ```
 <!-- end usage -->
