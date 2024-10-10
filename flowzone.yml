@@ -211,10 +211,10 @@
     # Create base64 encoded auth header
     #
     # Use git-c for non-persistent credential configuration
-    # 
+    #
     # The git -c option sets a configuration value for a single Git command invocation.
     # It does not modify any configuration files or persist the setting beyond this specific command.
-    # 
+    #
     # This approach ensures that the authentication credentials are used securely for this
     # specific operation without risk of unintended persistence or exposure in configuration files.
     run: |
@@ -268,10 +268,10 @@
     # Create base64 encoded auth header
     #
     # Use git -c for non-persistent credential configuration
-    # 
+    #
     # The git -c option sets a configuration value for a single Git command invocation.
     # It does not modify any configuration files or persist the setting beyond this specific command.
-    # 
+    #
     # This approach ensures that the authentication credentials are used securely for this
     # specific operation without risk of unintended persistence or exposure in configuration files.
     run: |
@@ -1064,7 +1064,7 @@ concurrency:
   # Expressions in the concurrency context do not have access
   # to the entire github.event context so we cannot make advanced
   # expressions beyond a few top level github event properties.
-    
+
   # See: https://github.com/orgs/community/discussions/69704#discussioncomment-7803351
 
   # Cancel jobs in-progress for open PRs, but not merged or closed PRs, by checking for the merge ref.
@@ -1098,7 +1098,7 @@ jobs:
       )
 
     strategy:
-  
+
       fail-fast: true
       matrix:
         include:
@@ -2552,8 +2552,7 @@ jobs:
           if [ ${{ github.run_attempt }} -gt 1 ]; then
             npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$((${{ github.run_attempt }} - 1)) || true
           fi
-          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
-          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} ${{ needs.npm_test.outputs.branch_tag }}
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.branch_tag }} "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
 
   npm_finalize:
     name: Finalize npm
