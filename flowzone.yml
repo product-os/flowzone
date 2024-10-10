@@ -693,6 +693,20 @@
           "bom": "'"$(base64 -w 0 "${{ env.BOM_FILE }}")"'"
         }'
 
+  - &setupTruffleHog
+    name: Install trufflehog
+    if: inputs.scan_secrets == 'true'
+    run: |
+      # install trufflesecurity/trufflehog
+      curl https://github.com/trufflesecurity/trufflehog/releases/download/v3.82.7/trufflehog_3.82.7_linux_amd64.tar.gz -o trufflehog.tar.gz && \
+      tar -xzf trufflehog.tar.gz && \
+      chmod +x trufflehog
+
+  - &scanArtifacts
+    name: Scan artifacts
+    if: inputs.scan_secrets == 'true'
+    run: ./trufflehog filesystem ${{env.scanPath}} --no-update --only-verified --fail
+
   - &convenienceFunctions
     name: Convenience functions
     id: functions
@@ -1011,6 +1025,11 @@ on:
         type: boolean
         required: false
         default: true
+      scan_secrets:
+        description: "Scan for secrets in the PR and artifacts using TruffleHog OSS"
+        type: boolean
+        required: false
+        default: true
     outputs:
       cloudflare_deployment_url:
         description: "Cloudflare Deployment URL"
@@ -1318,6 +1337,25 @@ jobs:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: "refs/tags/${{ steps.versionist.outputs.tag }}"
           SHA: ${{ steps.create_tag.outputs.sha }}
+
+  # Scan the PR for unintentional secrets leakage
+  # Note that this scans the commits themselfs but not the artifacts it produces (see later steps for that)
+  scan_secrets:
+    name: Scan Commits for Secrets
+    runs-on: ubuntu-latest
+    needs:
+      - versioned_source
+    if: inputs.scan_secrets == 'true'
+    steps:
+      - *getGitHubAppToken
+      - *checkoutVersionedSha
+
+      - name: Scan
+        uses: trufflesecurity/trufflehog@v3.82.7
+        with:
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.ref }}
+          extra_args: "--only-verified"
 
   release_notes:
     name: Generate release notes
@@ -1639,6 +1677,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
 
     <<: *customWorkingDirectory
 
@@ -1748,6 +1787,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
 
     <<: *customWorkingDirectory
 
@@ -1959,6 +1999,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
 
     <<: *customWorkingDirectory
 
@@ -2044,6 +2085,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     if: inputs.cargo_targets != ''
 
     <<: *customWorkingDirectory
@@ -2093,6 +2135,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     if: inputs.balena_slugs != ''
 
     <<: *customWorkingDirectory
@@ -2131,6 +2174,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
 
     <<: *rootWorkingDirectory
 
@@ -2243,6 +2287,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     if: inputs.cloudflare_website != ''
 
     <<: *customWorkingDirectory
@@ -2274,6 +2319,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     if: inputs.cloudformation_templates != ''
 
     <<: *customWorkingDirectory
@@ -2458,6 +2504,12 @@ jobs:
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
 
+      # Scan artifacts for secrets
+      - *setupTruffleHog
+      - <<: *scanArtifacts
+        env:
+          scanPath: ${{ runner.temp }}/npm-pack
+
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
@@ -2470,6 +2522,10 @@ jobs:
         if: needs.is_npm.outputs.npm_docs == 'true'
         shell: bash
         run: npm run doc
+
+      - <<: *scanArtifacts
+        env:
+          scanPath: ./docs
 
       - name: Compress docs
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
@@ -2832,6 +2888,13 @@ jobs:
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
           zstd -v ${DOCKER_TAR}
+
+      # scan image for secrets
+      - *setupTruffleHog
+      - name: Scan for secrets
+        if: inputs.scan_secrets == 'true'
+        run: |
+          trufflehog docker --image file://${DOCKER_TAR} --only-verified --no-update --fail
 
       # https://github.com/actions/runner-images/discussions/7191#discussioncomment-8351370
       # https://github.com/reactivecircus/android-emulator-runner?tab=readme-ov-file#running-hardware-accelerated-emulators-on-linux-runners
@@ -3301,6 +3364,12 @@ jobs:
         run: |
           poetry install
 
+      # Scan artifacts for secrets
+      - *setupTruffleHog
+      - <<: *scanArtifacts
+        env:
+          scanPath: ./
+
       - name: Publish draft release
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TEST_TOKEN }}
@@ -3402,6 +3471,12 @@ jobs:
         if: |
           inputs.docusaurus_website == false
         run: npm run deploy-docs --if-present
+
+      # Scan artifacts for secrets
+      - *setupTruffleHog
+      - <<: *scanArtifacts
+        env:
+          scanPath: build/
 
       - name: Update deploy branch for merged PRs
         if: github.event.pull_request.state != 'open'
@@ -3526,6 +3601,12 @@ jobs:
         with:
           path: ${{ runner.temp }}
           name: release-notes
+
+      # Scan artifacts for secrets
+      - *setupTruffleHog
+      - <<: *scanArtifacts
+        env:
+          scanPath: ${{ runner.temp }}
 
       # https://github.com/softprops/action-gh-release
       - name: Publish draft release
@@ -3783,6 +3864,12 @@ jobs:
       - name: Compress
         run: |
           tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
+
+      # Scan artifacts for secrets
+      - *setupTruffleHog
+      - <<: *scanArtifacts
+        env:
+          scanPath: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
 
       - name: Upload artifact
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
