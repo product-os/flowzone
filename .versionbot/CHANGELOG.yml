@@ -1,4 +1,21 @@
 - commits:
+    - subject: Only add a branch based npm dist-tag, not sha based
+      hash: c5cc1548a889e32367eea8c2f3cf5dd7d70af397
+      body: |
+        The sha based dist-tag is minimally useful as you can install the
+        version directly since the sha based dist-tag will be unique to a
+        specific version anyway whereas the branch based dist-tag can be used
+        as a floating tag to automatically follow the latest build of the
+        branch if desired
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 18.0.6
+  title: ""
+  date: 2024-10-10T12:46:37.950Z
+- commits:
     - subject: Update actions/upload-artifact action to v4.4.3
       hash: f92aaef4f29dca205531c520a5216ac6f4d726cb
       body: |
