@@ -2154,8 +2154,7 @@ jobs:
           if [ ${{ github.run_attempt }} -gt 1 ]; then
             npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$((${{ github.run_attempt }} - 1)) || true
           fi
-          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.sha_tag }} "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
-          npm --loglevel=verbose --logs-max=0 dist-tag add ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} ${{ needs.npm_test.outputs.branch_tag }}
+          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.branch_tag }} "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
   npm_finalize:
     name: Finalize npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3515,7 +3514,7 @@ jobs:
         if: |
           needs.is_website.outputs.has_readme == 'true' &&
           inputs.docusaurus_website != false
-        uses: product-os/docusaurus-builder@cd12f5c387e494e54d6783e5ecf8fc79cfc790e4
+        uses: product-os/docusaurus-builder@d09f40dc962605ba074f04f0eff0fd0cd9070ba1
         with:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
