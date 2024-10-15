@@ -359,11 +359,6 @@ jobs:
       # Required: false
       toggle_auto_merge: true
 
-      # Require a label before running checks for external contributions (forks).
-      # Type: string
-      # Required: false
-      ok_to_test_label: ok-to-test
-
       # Create git tags and a PR comment with detailed change log.
       # Type: boolean
       # Required: false

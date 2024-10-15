@@ -257,11 +257,6 @@ on:
         type: boolean
         required: false
         default: true
-      ok_to_test_label:
-        description: Require a label before running checks for external contributions (forks).
-        type: string
-        required: false
-        default: ok-to-test
       release_notes:
         description: Create git tags and a PR comment with detailed change log.
         type: boolean
@@ -291,7 +286,6 @@ jobs:
   event_types:
     name: Event Types
     runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
         (
@@ -329,32 +323,13 @@ jobs:
           echo "::error::Internal workflows should not be used with 'pull_request_target' events. \
             Please consult the documentation for more information."
           exit 1
-      - name: Reject unapproved pull_request_target events
-        if: |
-          inputs.ok_to_test_label != '' &&
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          pr_labels="$(gh pr view ${{ github.event.pull_request.number }} --json labels -q .labels[].name)"
-
-          for label in ${pr_labels}
-          do
-            if [[ "$label" =~ '${{ inputs.ok_to_test_label }}' ]]
-            then
-              gh pr edit ${{ github.event.pull_request.number }} --remove-label '${{ inputs.ok_to_test_label }}'
-              exit 0
-            fi
-          done
-
-          echo "::error::External contributions must be approved with the label '${{ inputs.ok_to_test_label }}'. \
-            Please contact a member of the organization for assistance."
-          exit 1
+      - name: Wait for approval on pull_request_target events
+        if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
+        timeout-minutes: 90
+        uses: product-os/review-commit-action@v0.1.4
+        with:
+          poll-interval: "10"
+          allow-authors: false
       - name: Reject missing secrets
         run: |
           if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
