@@ -553,32 +553,6 @@
         exit 1
       fi
 
-  # require the label 'ok-to-test' to be present on the PR before running checks
-  # and remove the label after every run so it must be re-added on push, retest, etc.
-  - &rejectUnapprovedPullRequestTarget
-    name: Reject unapproved pull_request_target events
-    if: |
-      inputs.ok_to_test_label != '' &&
-      github.event.pull_request.state == 'open' &&
-      github.event.pull_request.head.repo.full_name != github.repository
-    env:
-      <<: *gitHubCliEnvironment
-    run: |
-      pr_labels="$(gh pr view ${{ github.event.pull_request.number }} --json labels -q .labels[].name)"
-
-      for label in ${pr_labels}
-      do
-        if [[ "$label" =~ '${{ inputs.ok_to_test_label }}' ]]
-        then
-          gh pr edit ${{ github.event.pull_request.number }} --remove-label '${{ inputs.ok_to_test_label }}'
-          exit 0
-        fi
-      done
-
-      echo "::error::External contributions must be approved with the label '${{ inputs.ok_to_test_label }}'. \
-        Please contact a member of the organization for assistance."
-      exit 1
-
   - &rejectExternalPullRequest
     name: Reject external pull_request events on pull_request
     if: |
@@ -1029,11 +1003,6 @@ on:
         type: boolean
         required: false
         default: true
-      ok_to_test_label:
-        description: "Require a label before running checks for external contributions (forks)."
-        type: string
-        required: false
-        default: "ok-to-test"
       release_notes:
         description: "Create git tags and a PR comment with detailed change log."
         type: boolean
@@ -1081,7 +1050,6 @@ jobs:
   event_types:
     name: Event Types
     runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
         (
@@ -1108,7 +1076,20 @@ jobs:
     steps:
       - *rejectExternalPullRequest
       - *rejectInternalPullRequestTarget
-      - *rejectUnapprovedPullRequestTarget
+      
+      # Combining pull_request_target workflow trigger with an explicit checkout of an
+      # untrusted PR is a dangerous practice that may lead to repository compromise.
+      # https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/
+      # This action requires approvals via reactions for each workflow run.
+      # https://github.com/product-os/review-commit-action
+      - name: Wait for approval on pull_request_target events
+        if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
+        timeout-minutes: 90
+        uses: product-os/review-commit-action@v0.1.4
+        with:
+          poll-interval: '10'
+          allow-authors: false
+
       - *rejectMissingSecrets
       - *logGitHubContext
 
