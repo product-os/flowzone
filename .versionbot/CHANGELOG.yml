@@ -1,4 +1,17 @@
 - commits:
+    - subject: Pin product-os/review-commit-action action to 81db18c
+      hash: ece123b77439043c73f11f4f320449c81900cac4
+      body: |
+        Update product-os/review-commit-action
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 18.1.1
+  title: ""
+  date: 2024-10-17T16:05:50.061Z
+- commits:
     - subject: Wait for approvals on pull_request_target events
       hash: 911d38f14b9c5db402cc59b2e86b0131e3f3030a
       body: |
