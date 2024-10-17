@@ -963,7 +963,7 @@ jobs:
       npm_private: ${{ steps.npm.outputs.private }}
       npm_docs: ${{ steps.npm.outputs.docs }}
       npm_sbom: ${{ inputs.generate_sbom }}
-      node_versions: ${{ steps.node_versions.outputs.json }}
+      node_version: ${{ steps.node_version.outputs.string }}
       npm_access: ${{ steps.access.outputs.access }}
     steps:
       - name: Generate GitHub App installation token
@@ -1019,48 +1019,63 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
-          node-version: 18.x
+          node-version-file: .node-version
         if: steps.npm.outputs.enabled == 'true'
+        id: node-version-file
+        continue-on-error: true
+      - name: Use ${{ steps.node-version-file.outputs.node-version }}
+        if: steps.node-version-file.outputs.node-version != ''
+        run: echo echo "NODE_VERSION=${{ steps.node-version-file.outputs.node-version }}" >> "${GITHUB_ENV}"
+      - name: Setup Node.js
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
+        with:
+          node-version: "22"
+          check-latest: true
+        if: steps.npm.outputs.enabled == 'true' && env.NODE_VERSION == ''
       - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+        if: steps.npm.outputs.enabled == 'true' && env.NODE_VERSION == ''
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> "${GITHUB_ENV}"
+            echo "NODE_VERSION=$(node --version)" >> "${GITHUB_ENV}"
           fi
       - name: Setup Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
-          node-version: 20.x
-        if: steps.npm.outputs.enabled == 'true'
+          node-version: "20"
+          check-latest: true
+        if: steps.npm.outputs.enabled == 'true' && env.NODE_VERSION == ''
       - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+        if: steps.npm.outputs.enabled == 'true' && env.NODE_VERSION == ''
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> "${GITHUB_ENV}"
+            echo "NODE_VERSION=$(node --version)" >> "${GITHUB_ENV}"
           fi
       - name: Setup Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
-          node-version: 22.x
-        if: steps.npm.outputs.enabled == 'true'
+          node-version: "18"
+          check-latest: true
+        if: steps.npm.outputs.enabled == 'true' && env.NODE_VERSION == ''
       - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+        if: steps.npm.outputs.enabled == 'true' && env.NODE_VERSION == ''
         run: |
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.x"]')" >> "${GITHUB_ENV}"
+            echo "NODE_VERSION=$(node --version)" >> "${GITHUB_ENV}"
           fi
-      - name: Set Node.js versions
-        if: steps.npm.outputs.enabled == 'true'
-        id: node_versions
+      - name: Fail Node.js version detect
+        if: steps.npm.outputs.enabled == 'true' && env.NODE_VERSION == ''
         run: |
-          echo "json=[\"20.x\"]" >> "${GITHUB_OUTPUT}"
-          if [ "${NODE_VERSIONS}" != "[]" ]
-          then
-            echo "json=${NODE_VERSIONS}" >> "${GITHUB_OUTPUT}"
-          fi
+          echo "::error::Failed to detect a supported Node.js version. \
+            Please add a `.node-version` file to the root of the project."
+          exit 1
+      - name: Set Node.js version detect
+        if: steps.npm.outputs.enabled == 'true'
+        id: node_version
+        run: |
+          echo "string=${NODE_VERSION}" >> "${GITHUB_OUTPUT}"
   is_docker:
     name: Is docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1878,7 +1893,8 @@ jobs:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
-        node_version: ${{ fromJSON(needs.is_npm.outputs.node_versions) }}
+        include:
+          - node_version: ${{ needs.is_npm.outputs.node_version }}
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -1913,13 +1929,6 @@ jobs:
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
-      - name: Sort node versions
-        id: node_versions
-        env:
-          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        run: |
-          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
       - name: Setup Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
@@ -1975,14 +1984,14 @@ jobs:
         shell: script -q -e -c "bash --noprofile --norc -eo pipefail -x {0}" /tmp/test-session
         run: npm test
       - name: Run pack
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_private != 'true'
         run: |
           mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_private != 'true'
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -1993,10 +2002,10 @@ jobs:
         shell: bash
         run: npm run doc
       - name: Compress docs
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_docs == 'true'
         run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_docs == 'true'
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -2015,6 +2024,12 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
+      matrix:
+        include:
+          - node_version: ${{ needs.is_npm.outputs.node_version }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -2046,7 +2061,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
-          node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
+          node-version: ${{ matrix.node_version }}
       - run: npm install
       - name: Generate SBOM
         run: |
@@ -2094,23 +2109,22 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
+      matrix:
+        include:
+          - node_version: ${{ needs.is_npm.outputs.node_version }}
     steps:
-      - name: Sort node versions
-        id: node_versions
-        env:
-          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        run: |
-          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
       - name: Download npm artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
       - name: Setup Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
-          node-version: "18"
+          node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
       - name: Publish draft release
         env:
@@ -2144,6 +2158,12 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
+      matrix:
+        include:
+          - node_version: ${{ needs.is_npm.outputs.node_version }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -2159,13 +2179,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Sort node versions
-        id: node_versions
-        env:
-          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        run: |
-          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
       - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
@@ -2173,11 +2186,11 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
       - name: Setup Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
         with:
-          node-version: "18"
+          node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
       - name: Publish final release
         env:
@@ -2199,6 +2212,12 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
+      matrix:
+        include:
+          - node_version: ${{ needs.is_npm.outputs.node_version }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -2215,13 +2234,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-      - name: Sort node versions
-        id: node_versions
-        env:
-          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        run: |
-          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
       - name: Download npm docs artifact from last run
         uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
@@ -2229,7 +2241,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
       - name: Extract docs artifact
         run: |
           docs="$(ls ${{ runner.temp }}/*.tar.zst | sort -t- -n -k3 | tail -n1)"
