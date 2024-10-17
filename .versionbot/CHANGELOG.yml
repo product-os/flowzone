@@ -1,4 +1,24 @@
 - commits:
+    - subject: Wait for approvals on pull_request_target events
+      hash: 911d38f14b9c5db402cc59b2e86b0131e3f3030a
+      body: |
+        The existing method of using labels allows for
+        Actions Time Of Check to Time Of Use (TOCTOU) attacks
+        because we do not associate the label with any commit.
+
+        This action requires approvals via reactions on a unique
+        comment generated for each workflow run.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 18.1.0
+  title: ""
+  date: 2024-10-17T15:17:18.605Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.1.20
       hash: 53bfbc90aee7a245ee15c4305052231799064e1c
       body: |
