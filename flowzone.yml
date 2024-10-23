@@ -1085,7 +1085,7 @@ jobs:
       - name: Wait for approval on pull_request_target events
         if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
         timeout-minutes: 90
-        uses: product-os/review-commit-action@579759e1c641b0e345d910ef3ab03a6a3048bbb0 # v0.1.5
+        uses: product-os/review-commit-action@607aad62f6e8fc84162873913034550857da4690 # v0.1.6
         with:
           poll-interval: '10'
           allow-authors: false
