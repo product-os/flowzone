@@ -1357,7 +1357,7 @@ jobs:
           fi
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
         if: steps.python_poetry.outputs.enabled == 'true'
@@ -3164,7 +3164,7 @@ jobs:
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           python-version: ${{ matrix.python-version }}
       - name: Setup poetry
@@ -3258,7 +3258,7 @@ jobs:
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           python-version: "3.9"
       - name: Setup poetry
@@ -3348,7 +3348,7 @@ jobs:
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           python-version: "3.9"
       - name: Setup poetry
@@ -3420,7 +3420,7 @@ jobs:
           persist-credentials: false
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           python-version: "3.9"
       - name: Setup poetry
@@ -4542,7 +4542,7 @@ jobs:
           echo "caps=${caps}" >> "${GITHUB_OUTPUT}"
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           cache: pip
           python-version: 3.11
