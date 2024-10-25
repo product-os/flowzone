@@ -2030,6 +2030,7 @@ jobs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
       cargo_sbom: ${{ inputs.generate_sbom }}
+      cargo_publish: ${{ steps.cargo_publish.outputs.value }}
 
     steps:
       - *getGitHubAppToken
@@ -2051,6 +2052,15 @@ jobs:
           else
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
+
+      - name: Check private
+        if: steps.cargo_yml.outputs.enabled == 'true'
+        uses: dangdennis/toml-action@v1.3.0
+        id: cargo_publish
+        with:
+          file: "Cargo.toml"
+          field: "package.publish"
+          working-directory: ${{ inputs.working_directory }}
 
   # check for balena.yml in source
   is_balena:
@@ -3701,6 +3711,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
+        if: needs.is_cargo.outputs.cargo_publish != 'false'
         env:
           CARGO_REGISTRY_DEFAULT: ${{ env.CARGO_REGISTRY }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
