@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update cloudflare/wrangler-action action to v3.11.0
+      hash: 0c358e14ceec3af0ed8e9a56d8c47a2d46671b7b
+      body: |
+        Update cloudflare/wrangler-action from 3.10.0 to 3.11.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Self-hosted Renovate Bot
+      nested: []
+  version: 18.1.12
+  title: ""
+  date: 2024-10-25T23:04:58.957Z
+- commits:
     - subject: Do not run cargo publish if disabled in Cargo.toml
       hash: a614c7b293e6410d970b2f503c2f4071664d000e
       body: |
