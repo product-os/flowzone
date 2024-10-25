@@ -1465,7 +1465,7 @@ jobs:
           fi
       - name: Check private
         if: steps.cargo_yml.outputs.enabled == 'true'
-        uses: dangdennis/toml-action@v1.3.0
+        uses: dangdennis/toml-action@ef528766b9af3dc473cb3f768a1646160ffb2645
         id: cargo_publish
         with:
           file: Cargo.toml
