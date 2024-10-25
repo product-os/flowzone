@@ -1,4 +1,20 @@
 - commits:
+    - subject: Do not run cargo publish if disabled in Cargo.toml
+      hash: a614c7b293e6410d970b2f503c2f4071664d000e
+      body: |
+        The cargo_finalize step publishes to the configured registry if
+        CARGO_REGISTRY_TOKEN is set, but this step will fail if `publish` is set
+        to false in Cargo.toml. This disables the step in that case to prevent
+        an error.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 18.1.11
+  title: ""
+  date: 2024-10-25T22:27:28.647Z
+- commits:
     - subject: Update product-os/review-commit-action action to v0.1.7
       hash: ea649f427618cc5e3be61a3d3398374c6281817e
       body: |
