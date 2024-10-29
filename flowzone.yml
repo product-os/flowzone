@@ -1049,7 +1049,7 @@ env:
 jobs:
   event_types:
     name: Event Types
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ubuntu-latest
     if: |
       (
         (
@@ -1072,6 +1072,10 @@ jobs:
         include:
           - event_name: ${{ github.event_name }}
             event_action: ${{ github.event.action }}
+
+    permissions:
+      # Required to create comments on pull requests.
+      pull-requests: write
 
     steps:
       - *rejectExternalPullRequest
