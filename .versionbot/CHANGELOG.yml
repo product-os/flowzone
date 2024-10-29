@@ -1,4 +1,20 @@
 - commits:
+    - subject: Add missing permissions to create PR comments
+      hash: b963e2f1e97b5c1d7f96682f9ae1cc83155290ed
+      body: |
+        On PRs from forks the approval action was lacking
+        permission to create comments.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 18.1.17
+  title: ""
+  date: 2024-10-29T13:59:53.405Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.1.22
       hash: 4c30a58f372fd589d666cf0361224e03e1f94b14
       body: |
