@@ -3039,7 +3039,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
-      - uses: balena-io/deploy-to-balena-action@bda4f468fc3c533ffbd3107f3d00bf798bc75e5f
+      - uses: balena-io/deploy-to-balena-action@c79091e4624249a82b1afc2ce6776d33416beefa
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
@@ -3101,7 +3101,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
-      - uses: balena-io/deploy-to-balena-action@bda4f468fc3c533ffbd3107f3d00bf798bc75e5f
+      - uses: balena-io/deploy-to-balena-action@c79091e4624249a82b1afc2ce6776d33416beefa
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
