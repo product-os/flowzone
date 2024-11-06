@@ -355,6 +355,7 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     outputs:
       tag: ${{ steps.versionist.outputs.tag || steps.git_describe.outputs.tag }}
       semver: ${{ steps.versionist.outputs.semver || steps.git_describe.outputs.semver }}
@@ -368,7 +369,6 @@ jobs:
       GH_PAGER: cat
       GH_PROMPT_DISABLED: "true"
       GH_REPO: ${{ github.repository }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -608,6 +608,7 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     outputs:
       body: ${{ steps.format_release_notes.outputs.body }}
       comment: ${{ steps.format_release_notes.outputs.comment }}
@@ -617,7 +618,6 @@ jobs:
       GH_PAGER: cat
       GH_PROMPT_DISABLED: "true"
       GH_REPO: ${{ github.repository }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -776,12 +776,12 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     env:
       GH_DEBUG: "true"
       GH_PAGER: cat
       GH_PROMPT_DISABLED: "true"
       GH_REPO: ${{ github.repository }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -917,6 +917,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -959,6 +960,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
       has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
@@ -1073,6 +1075,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     outputs:
       docker_images: ${{ steps.docker_images_json.outputs.build }}
       docker_images_crlf: ${{ steps.docker_images_crlf.outputs.build }}
@@ -1300,6 +1303,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     outputs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
@@ -1402,6 +1406,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     outputs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
@@ -1484,6 +1489,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       balena_yml: ${{ steps.balena_yml.outputs.enabled }}
@@ -1555,6 +1561,7 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
       custom_publish: ${{ steps.custom.outputs.publish }}
@@ -1741,6 +1748,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     outputs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
     steps:
@@ -1788,6 +1796,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     outputs:
       cloudformation: ${{ steps.validate_json.outputs.enabled }}
       stacks: ${{ steps.cloudformation_stacks.outputs.matrix }}
@@ -1885,6 +1894,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -2026,6 +2036,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -2105,6 +2116,7 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Sort node versions
         id: node_versions
@@ -2155,6 +2167,7 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -2210,6 +2223,7 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -2271,6 +2285,8 @@ jobs:
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_test_matrix) }}
     env:
       DOCKER_BUILDKIT: "1"
+    permissions:
+      packages: read
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -2568,6 +2584,9 @@ jobs:
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
     env:
       LOCAL_TAG: localhost:5000/sut:latest
+    permissions:
+      id-token: write
+      packages: write
     steps:
       - name: Sanitize docker strings
         id: strings
@@ -2793,6 +2812,9 @@ jobs:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
+    permissions:
+      id-token: write
+      packages: write
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3011,6 +3033,8 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
+    permissions:
+      packages: read
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -3073,6 +3097,8 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
+    permissions:
+      packages: read
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -3134,6 +3160,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -3239,6 +3266,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3329,6 +3357,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3405,6 +3434,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3464,6 +3494,7 @@ jobs:
       !failure() && !cancelled() &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
       needs.is_website.result == 'success'
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3558,6 +3589,7 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3602,6 +3634,7 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3678,6 +3711,7 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3749,6 +3783,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -3831,6 +3866,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3913,6 +3949,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -3982,6 +4019,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -4375,6 +4413,8 @@ jobs:
       ATTEMPTS: 5
       TIMEOUT: 3
     environment: ${{ matrix.environment }}
+    permissions:
+      id-token: write
     steps:
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@506c5b26faaa69e050009260f5f0c6755e7dd963
@@ -4699,6 +4739,8 @@ jobs:
       ATTEMPTS: 5
       TIMEOUT: 3
     environment: ${{ matrix.environment }}
+    permissions:
+      id-token: write
     steps:
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@506c5b26faaa69e050009260f5f0c6755e7dd963
@@ -4821,6 +4863,7 @@ jobs:
     name: All tests
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    permissions: {}
     needs:
       - npm_test
       - docker_test
@@ -4851,6 +4894,7 @@ jobs:
     name: All jobs
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    permissions: {}
     needs:
       - event_types
       - versioned_source
