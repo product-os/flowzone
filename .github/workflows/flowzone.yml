@@ -3476,8 +3476,8 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: |-
             {
-              "contents": "read",
-              "metadata": "read"
+              "metadata": "read",
+              "pull_requests": "write"
             }
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -3542,6 +3542,7 @@ jobs:
           comment-id: ${{ steps.find_cf_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           body: |
             Website deployed to CF Pages, 👀 preview link ${{ steps.deploy_cf_pages.outputs.deployment-url }}
   github_clean:

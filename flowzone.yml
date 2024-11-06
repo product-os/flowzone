@@ -3299,7 +3299,14 @@ jobs:
       needs.is_website.result == 'success'
 
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          permissions: >-
+            {
+              "metadata": "read",
+              "pull_requests": "write"
+            }
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -3359,6 +3366,7 @@ jobs:
           comment-id: ${{ steps.find_cf_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           body: |
             Website deployed to CF Pages, 👀 preview link ${{ steps.deploy_cf_pages.outputs.deployment-url }}
 
