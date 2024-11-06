@@ -334,8 +334,6 @@
     GH_PAGER: "cat"
     GH_PROMPT_DISABLED: "true"
     GH_REPO: "${{ github.repository }}"
-    # default to automatic actions token
-    GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
   - &rejectExternalCustomActions
     name: Reject external custom actions
@@ -1126,6 +1124,7 @@ jobs:
 
     env:
       <<: *gitHubCliEnvironment
+      GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
     steps:
       - <<: *getGitHubAppToken
@@ -1336,6 +1335,7 @@ jobs:
 
     env:
       <<: *gitHubCliEnvironment
+      GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
     steps:
       - <<: *getGitHubAppToken
@@ -1482,6 +1482,7 @@ jobs:
 
     env:
       <<: *gitHubCliEnvironment
+      GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
     steps:
       - <<: *getGitHubAppToken
@@ -4360,6 +4361,7 @@ jobs:
         id: is_draft_pr
         env:
           <<: *gitHubCliEnvironment
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
           result="$(gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq '.isDraft == true')"
           echo "result=${result}" >> "${GITHUB_OUTPUT}"
@@ -4375,6 +4377,7 @@ jobs:
         id: branch_has_rules
         env:
           <<: *gitHubCliEnvironment
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
           result="$(gh api -H "Accept: application/vnd.github+json" \
             "/repos/${{ github.repository }}/rules/branches/${{ github.base_ref }}" | jq 'length != 0')"
