@@ -3508,6 +3508,7 @@ jobs:
           permissions: |-
             {
               "metadata": "read",
+              "contents": "read",
               "pull_requests": "write"
             }
       - name: Checkout versioned commit

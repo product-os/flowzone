@@ -3366,6 +3366,7 @@ jobs:
           permissions: >-
             {
               "metadata": "read",
+              "contents": "read",
               "pull_requests": "write"
             }
       - *checkoutVersionedSha
