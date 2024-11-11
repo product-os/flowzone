@@ -3367,6 +3367,7 @@ jobs:
             {
               "metadata": "read",
               "contents": "read",
+              "issues": "read",
               "pull_requests": "write"
             }
       - *checkoutVersionedSha

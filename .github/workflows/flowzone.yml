@@ -3509,6 +3509,7 @@ jobs:
             {
               "metadata": "read",
               "contents": "read",
+              "issues": "read",
               "pull_requests": "write"
             }
       - name: Checkout versioned commit
