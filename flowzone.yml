@@ -3357,7 +3357,9 @@ jobs:
       (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
       needs.is_website.result == 'success'
 
-    permissions: {}
+    permissions:
+      issues: read # List issue comments
+      pull-requests: write # Comment on PRs
 
     steps:
       - <<: *getGitHubAppToken
@@ -3366,8 +3368,7 @@ jobs:
           permissions: >-
             {
               "metadata": "read",
-              "contents": "read",
-              "pull_requests": "write"
+              "contents": "read"
             }
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -3420,6 +3421,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body-includes: Website deployed to CF Pages, 👀 preview link
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create or update Cloudflare Pages link comment if deployment link present
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
@@ -3428,7 +3430,7 @@ jobs:
           comment-id: ${{ steps.find_cf_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           body: |
             Website deployed to CF Pages, 👀 preview link ${{ steps.deploy_cf_pages.outputs.deployment-url }}
 
