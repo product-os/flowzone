@@ -1,4 +1,22 @@
 - commits:
+    - subject: Revert to automatic github token for website comments
+      hash: 86c6d2c64c4403cf0024819f1a7088b6953e7dc1
+      body: |
+        Posting a comment to a PR does not require the elevated
+        access of the flowzone-app[bot] so we can just go back
+        to using the automatic github token with hardcoded permissions
+        as we were before.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 18.1.29
+  title: ""
+  date: 2024-11-11T20:36:26.877Z
+- commits:
     - subject: Website publish needs contents:read
       hash: 1ae2640109714ec8790749d0be2608cea3e4bc4e
       body: ""
