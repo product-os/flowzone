@@ -334,8 +334,6 @@
     GH_PAGER: "cat"
     GH_PROMPT_DISABLED: "true"
     GH_REPO: "${{ github.repository }}"
-    # default to automatic actions token
-    GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
   - &rejectExternalCustomActions
     name: Reject external custom actions
@@ -1020,7 +1018,7 @@ on:
         default: true
     outputs:
       cloudflare_deployment_url:
-        description: 'Cloudflare Deployment URL'
+        description: "Cloudflare Deployment URL"
         value: ${{ jobs.website_publish.outputs.cloudflare_deployment_url }}
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
@@ -1066,7 +1064,6 @@ jobs:
       )
 
     strategy:
-
       fail-fast: true
       matrix:
         include:
@@ -1080,7 +1077,7 @@ jobs:
     steps:
       - *rejectExternalPullRequest
       - *rejectInternalPullRequestTarget
-      
+
       # Combining pull_request_target workflow trigger with an explicit checkout of an
       # untrusted PR is a dangerous practice that may lead to repository compromise.
       # https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/
@@ -1091,7 +1088,7 @@ jobs:
         timeout-minutes: 90
         uses: product-os/review-commit-action@cddebf4cec8e40ea8f698b6dcce8cd70e38b7320 # v0.1.7
         with:
-          poll-interval: '10'
+          poll-interval: "10"
           allow-authors: false
 
       - *rejectMissingSecrets
@@ -1108,6 +1105,8 @@ jobs:
       github.event.action != 'closed' || github.event.pull_request.merged == true
 
     <<: *rootWorkingDirectory
+
+    permissions: {}
 
     outputs:
       tag: ${{ steps.versionist.outputs.tag || steps.git_describe.outputs.tag }}
@@ -1329,6 +1328,8 @@ jobs:
 
     <<: *rootWorkingDirectory
 
+    permissions: {}
+
     outputs:
       body: ${{ steps.format_release_notes.outputs.body }}
       comment: ${{ steps.format_release_notes.outputs.comment }}
@@ -1480,6 +1481,8 @@ jobs:
 
     <<: *rootWorkingDirectory
 
+    permissions: {}
+
     env:
       <<: *gitHubCliEnvironment
 
@@ -1601,6 +1604,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    permissions: {}
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -1629,6 +1634,8 @@ jobs:
       - versioned_source
 
     <<: *customWorkingDirectory
+
+    permissions: {}
 
     outputs:
       npm: ${{ steps.npm.outputs.enabled }}
@@ -1736,6 +1743,8 @@ jobs:
       - versioned_source
 
     <<: *customWorkingDirectory
+
+    permissions: {}
 
     outputs:
       docker_images: ${{ steps.docker_images_json.outputs.build }}
@@ -1946,6 +1955,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    permissions: {}
+
     outputs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
@@ -2030,6 +2041,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    permissions: {}
+
     outputs:
       cargo_targets: ${{ steps.cargo_targets.outputs.build }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
@@ -2077,6 +2090,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    permissions: {}
+
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.build }}
       balena_yml: ${{ steps.balena_yml.outputs.enabled }}
@@ -2111,6 +2126,8 @@ jobs:
       - versioned_source
 
     <<: *rootWorkingDirectory
+
+    permissions: {}
 
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
@@ -2223,6 +2240,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    permissions: {}
+
     outputs:
       has_readme: ${{ steps.has_readme.outputs.enabled }}
 
@@ -2251,6 +2270,8 @@ jobs:
     if: inputs.cloudformation_templates != ''
 
     <<: *customWorkingDirectory
+
+    permissions: {}
 
     outputs:
       cloudformation: ${{ steps.validate_json.outputs.enabled }}
@@ -2334,6 +2355,8 @@ jobs:
       needs.is_npm.outputs.npm == 'true'
 
     <<: *customWorkingDirectory
+
+    permissions: {}
 
     strategy:
       fail-fast: false
@@ -2462,7 +2485,11 @@ jobs:
       - npm_test
       - versioned_source
     if: ${{ needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' }}
+
     <<: *customWorkingDirectory
+
+    permissions: {}
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -2510,6 +2537,8 @@ jobs:
       needs.is_npm.outputs.npm_private != 'true'
 
     <<: *rootWorkingDirectory
+
+    permissions: {}
 
     steps:
       - *sortNodeVersions
@@ -2562,6 +2591,8 @@ jobs:
 
     <<: *rootWorkingDirectory
 
+    permissions: {}
+
     steps:
       - *getGitHubAppToken
       - *sortNodeVersions
@@ -2604,6 +2635,8 @@ jobs:
       needs.is_npm.outputs.npm_docs == 'true'
 
     <<: *rootWorkingDirectory
+
+    permissions: {}
 
     steps:
       - <<: *getGitHubAppToken
@@ -2666,6 +2699,9 @@ jobs:
 
     env:
       DOCKER_BUILDKIT: "1"
+
+    permissions:
+      packages: read # pull private base images from ghcr.io
 
     steps:
       - *getGitHubAppToken
@@ -2853,6 +2889,10 @@ jobs:
     env:
       LOCAL_TAG: localhost:5000/sut:latest
 
+    permissions:
+      id-token: write # AWS GitHub OIDC provider
+      packages: write # push manifests to ghcr.io
+
     steps:
       - *sanitizeDockerStrings
       - *dockerDraftMetadata
@@ -2966,6 +3006,10 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
 
+    permissions:
+      id-token: write # AWS GitHub OIDC provider
+      packages: write # push manifests to ghcr.io
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -3033,6 +3077,9 @@ jobs:
       matrix:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
 
+    permissions:
+      packages: read # pull private base images images from ghcr.io
+
     <<: *customWorkingDirectory
 
     steps:
@@ -3057,6 +3104,10 @@ jobs:
       matrix:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
 
+    # Permissions required for push events, as merge events should only be toggling the is_final flag
+    permissions:
+      packages: read # pull private base images images from ghcr.io
+
     <<: *customWorkingDirectory
 
     steps:
@@ -3080,6 +3131,8 @@ jobs:
       needs.is_python.outputs.python_poetry == 'true'
 
     <<: *customWorkingDirectory
+
+    permissions: {}
 
     strategy:
       fail-fast: false
@@ -3167,6 +3220,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    permissions: {}
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -3221,6 +3276,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    permissions: {}
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -3257,6 +3314,9 @@ jobs:
       needs.is_python.outputs.pypi_publish == 'true'
 
     <<: *customWorkingDirectory
+
+    permissions: {}
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -3297,8 +3357,17 @@ jobs:
       (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
       needs.is_website.result == 'success'
 
+    permissions: {}
+
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          permissions: >-
+            {
+              "metadata": "read",
+              "pull_requests": "write"
+            }
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -3358,6 +3427,7 @@ jobs:
           comment-id: ${{ steps.find_cf_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           body: |
             Website deployed to CF Pages, 👀 preview link ${{ steps.deploy_cf_pages.outputs.deployment-url }}
 
@@ -3374,7 +3444,11 @@ jobs:
     if: |
       github.event.action == 'closed' &&
       github.event.pull_request.merged == false
+
     <<: *rootWorkingDirectory
+
+    permissions: {}
+
     steps:
       - <<: *getGitHubAppToken
         with:
@@ -3408,6 +3482,8 @@ jobs:
       github.event.pull_request.state == 'open'
 
     <<: *rootWorkingDirectory
+
+    permissions: {}
 
     steps:
       - <<: *getGitHubAppToken
@@ -3472,6 +3548,8 @@ jobs:
 
     <<: *rootWorkingDirectory
 
+    permissions: {}
+
     steps:
       - <<: *getGitHubAppToken
         with:
@@ -3535,6 +3613,8 @@ jobs:
       needs.is_cargo.outputs.cargo == 'true'
 
     <<: *customWorkingDirectory
+
+    permissions: {}
 
     strategy:
       fail-fast: false
@@ -3602,6 +3682,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    permissions: {}
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -3653,6 +3735,8 @@ jobs:
       inputs.rust_binaries == true
 
     <<: *customWorkingDirectory
+
+    permissions: {}
 
     strategy:
       fail-fast: false
@@ -3707,6 +3791,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    permissions: {}
+
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
@@ -3738,6 +3824,9 @@ jobs:
     if: |
       github.event.pull_request.state == 'open' &&
       needs.is_custom.outputs.custom_test == 'true'
+
+    # The permissions for custom actions are set by the calling workflow
+    # and should not be overridden by Flowzone.
 
     strategy:
       fail-fast: false
@@ -3791,6 +3880,9 @@ jobs:
       github.event.pull_request.state == 'open' &&
       needs.is_custom.outputs.custom_publish == 'true'
 
+    # The permissions for custom actions are set by the calling workflow
+    # and should not be overridden by Flowzone.
+
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -3836,6 +3928,9 @@ jobs:
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_custom.outputs.custom_finalize == 'true'
+
+    # The permissions for custom actions are set by the calling workflow
+    # and should not be overridden by Flowzone.
 
     strategy:
       fail-fast: false
@@ -3888,6 +3983,9 @@ jobs:
       github.event.pull_request.merged == false &&
       needs.is_custom.outputs.custom_clean == 'true'
 
+    # The permissions for custom actions are set by the calling workflow
+    # and should not be overridden by Flowzone.
+
     steps:
       - *rejectExternalCustomActions
 
@@ -3925,6 +4023,9 @@ jobs:
     if: |
       always() &&
       needs.is_custom.outputs.custom_always == 'true'
+
+    # The permissions for custom actions are set by the calling workflow
+    # and should not be overridden by Flowzone.
 
     steps:
       - *rejectExternalCustomActions
@@ -3979,6 +4080,9 @@ jobs:
 
     # sets the GH environment context for secrets and variables
     environment: ${{ matrix.environment }}
+
+    permissions:
+      id-token: write # AWS GitHub OIDC provider
 
     steps:
       - *setupAwsCli
@@ -4229,6 +4333,9 @@ jobs:
 
     environment: ${{ matrix.environment }}
 
+    permissions:
+      id-token: write # AWS GitHub OIDC provider
+
     steps:
       - *setupAwsCli
       - *randomDelay
@@ -4261,6 +4368,7 @@ jobs:
     name: All tests
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    permissions: {}
     needs:
       - npm_test
       - docker_test
@@ -4280,6 +4388,7 @@ jobs:
     name: All jobs
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    permissions: {}
     needs:
       - event_types
       - versioned_source
@@ -4340,7 +4449,7 @@ jobs:
       github.event.pull_request.user.type != 'Bot'
 
     permissions:
-      pull-requests: read
+      pull-requests: read # Check if PR is draft and if base branch has rulesets
 
     steps:
       - <<: *getGitHubAppToken
@@ -4360,6 +4469,7 @@ jobs:
         id: is_draft_pr
         env:
           <<: *gitHubCliEnvironment
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
           result="$(gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq '.isDraft == true')"
           echo "result=${result}" >> "${GITHUB_OUTPUT}"
@@ -4375,6 +4485,7 @@ jobs:
         id: branch_has_rules
         env:
           <<: *gitHubCliEnvironment
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
           result="$(gh api -H "Accept: application/vnd.github+json" \
             "/repos/${{ github.repository }}/rules/branches/${{ github.base_ref }}" | jq 'length != 0')"
