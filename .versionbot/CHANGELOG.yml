@@ -1,4 +1,18 @@
 - commits:
+    - subject: Require jobs to describe GITHUB_TOKEN permissions explicitly
+      hash: 39961e42b6ca5bcc51992a1930eec1b024e78f26
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 18.1.27
+  title: ""
+  date: 2024-11-11T15:05:07.476Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.81
       hash: 14437e83e79c32a90580d0efc1c7d244961adc79
       body: |
