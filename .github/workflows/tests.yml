@@ -14,6 +14,7 @@ on:
 # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#permissions
 permissions:
   id-token: write # AWS GitHub OIDC provider
+  issues: read # List issue comments
   packages: write # push manifests to ghcr.io
   pull-requests: write # comment on PRs
 
