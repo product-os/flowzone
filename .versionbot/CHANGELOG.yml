@@ -1,4 +1,21 @@
 - commits:
+    - subject: Only generate installation tokens when App ID is provided
+      hash: 0286a1cc1a832fee7f1597a37174ee01d091677f
+      body: |
+        This allows us to fail the step as expected if an App ID is provided
+        but we are unable to generate a token. Otherwise it is very hard to
+        find the issue in the logs.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 18.2.0
+  title: ""
+  date: 2024-11-12T19:53:32.550Z
+- commits:
     - subject: Revert to automatic github token for website comments
       hash: 86c6d2c64c4403cf0024819f1a7088b6953e7dc1
       body: |
