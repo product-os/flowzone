@@ -193,15 +193,15 @@ jobs:
       # Required: false
       cloudformation_templates: 
 
-      # GitHub App id to impersonate
+      # GitHub App ID to impersonate
       # Type: string
       # Required: false
-      app_id: ${{ vars.APP_ID || '291899' }}
+      app_id: ${{ vars.APP_ID }}
 
-      # GitHub App installation id
+      # Deprecated, no longer used
       # Type: string
       # Required: false
-      installation_id: ${{ vars.INSTALLATION_ID || '34040165' }}
+      installation_id:
 
       # Ephemeral token scope(s)
       # Type: string
