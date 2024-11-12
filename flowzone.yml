@@ -843,7 +843,7 @@ on:
         description: "GitHub App ID to impersonate"
         type: string
         required: false
-        default: "${{ vars.APP_ID }}"
+        default: "${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}"
       # not needed if installed on this current org/repo
       installation_id:
         description: "Deprecated, no longer used"
