@@ -306,9 +306,27 @@ jobs:
         include:
           - event_name: ${{ github.event_name }}
             event_action: ${{ github.event.action }}
-    permissions:
-      pull-requests: write
+    permissions: {}
     steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "pull_requests": "write"
+            }
+      # Add the token to the context in a step, to avoid specifying it in the env for every other step in the job
+      - name: add GITHUB_TOKEN to job context
+        env:
+          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+            echo "GITHUB_TOKEN=${GITHUB_TOKEN}" >> "${GITHUB_ENV}"
       - name: Reject external pull_request events on pull_request
         if: |
           github.event_name == 'pull_request' &&
@@ -2584,10 +2602,28 @@ jobs:
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
     env:
       LOCAL_TAG: localhost:5000/sut:latest
-    permissions:
-      id-token: write
-      packages: write
+    permissions: {}
     steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "packages": "write",
+              "id_token": "write"
+            }
+      # Add the token to the context in a step, to avoid specifying it in the env for every other step in the job
+      - name: add GITHUB_TOKEN to job context
+        env:
+          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        run: |
+            echo "GITHUB_TOKEN=${GITHUB_TOKEN}" >> "${GITHUB_ENV}"
       - name: Sanitize docker strings
         id: strings
         env:
