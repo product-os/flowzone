@@ -305,8 +305,7 @@ jobs:
         include:
           - event_name: ${{ github.event_name }}
             event_action: ${{ github.event.action }}
-    permissions:
-      pull-requests: write
+    permissions: {}
     steps:
       - name: Reject external pull_request events on pull_request
         if: |
@@ -324,13 +323,6 @@ jobs:
           echo "::error::Internal workflows should not be used with 'pull_request_target' events. \
             Please consult the documentation for more information."
           exit 1
-      - name: Wait for approval on pull_request_target events
-        if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
-        timeout-minutes: 90
-        uses: product-os/review-commit-action@cddebf4cec8e40ea8f698b6dcce8cd70e38b7320
-        with:
-          poll-interval: "10"
-          allow-authors: false
       - name: Reject missing secrets
         run: |
           if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
@@ -338,6 +330,29 @@ jobs:
             echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
             false
           fi
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: organization
+          installation_retrieval_payload: ${{ github.repository_owner }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "metadata": "read",
+              "issues": "read",
+              "pull_requests": "write"
+            }
+      - name: Wait for approval on pull_request_target events
+        if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
+        timeout-minutes: 90
+        uses: product-os/review-commit-action@cddebf4cec8e40ea8f698b6dcce8cd70e38b7320
+        with:
+          poll-interval: "10"
+          allow-authors: false
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
@@ -2583,9 +2598,6 @@ jobs:
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
     env:
       LOCAL_TAG: localhost:5000/sut:latest
-    permissions:
-      id-token: write
-      packages: write
     steps:
       - name: Sanitize docker strings
         id: strings
@@ -2811,9 +2823,6 @@ jobs:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
-    permissions:
-      id-token: write
-      packages: write
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3493,9 +3502,7 @@ jobs:
       !failure() && !cancelled() &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
       needs.is_website.result == 'success'
-    permissions:
-      issues: read
-      pull-requests: write
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -3509,7 +3516,9 @@ jobs:
           permissions: |-
             {
               "metadata": "read",
-              "contents": "read"
+              "contents": "read",
+              "issues": "read",
+              "pull_requests": "write"
             }
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -3567,7 +3576,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body-includes: Website deployed to CF Pages, 👀 preview link
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Create or update Cloudflare Pages link comment if deployment link present
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
         if: steps.deploy_cf_pages.outputs.deployment-url != ''
@@ -3575,7 +3584,7 @@ jobs:
           comment-id: ${{ steps.find_cf_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           body: |
             Website deployed to CF Pages, 👀 preview link ${{ steps.deploy_cf_pages.outputs.deployment-url }}
   github_clean:
@@ -4415,8 +4424,6 @@ jobs:
       ATTEMPTS: 5
       TIMEOUT: 3
     environment: ${{ matrix.environment }}
-    permissions:
-      id-token: write
     steps:
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@506c5b26faaa69e050009260f5f0c6755e7dd963
@@ -4741,8 +4748,6 @@ jobs:
       ATTEMPTS: 5
       TIMEOUT: 3
     environment: ${{ matrix.environment }}
-    permissions:
-      id-token: write
     steps:
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@506c5b26faaa69e050009260f5f0c6755e7dd963
@@ -4960,8 +4965,7 @@ jobs:
       github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
-    permissions:
-      pull-requests: read
+    permissions: {}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -4985,7 +4989,7 @@ jobs:
           GH_PAGER: cat
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           result="$(gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq '.isDraft == true')"
           echo "result=${result}" >> "${GITHUB_OUTPUT}"
@@ -4997,7 +5001,7 @@ jobs:
           GH_PAGER: cat
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
           result="$(gh api -H "Accept: application/vnd.github+json" \
             "/repos/${{ github.repository }}/rules/branches/${{ github.base_ref }}" | jq 'length != 0')"

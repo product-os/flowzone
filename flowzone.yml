@@ -67,6 +67,8 @@
       fleet: ${{ matrix.slug }}
       source: ${{ inputs.working_directory }}
       note: ${{ needs.release_notes.outputs.note }}
+      # Feb 2023: as per GitHub support: "You cannot authenticate with a GitHub App token on the GitHub Package Registry"
+      # Nov 2024: Still cannot use GitHub App Tokens to authenticate with the GitHub Package Registry (login works, push/pull fails)
       registry_secrets: |
         {
           "ghcr.io": {
@@ -291,11 +293,10 @@
     continue-on-error: true
     uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
     with:
+      # Feb 2023: as per GitHub support: "You cannot authenticate with a GitHub App token on the GitHub Package Registry"
+      # Nov 2024: Still cannot use GitHub App Tokens to authenticate with the GitHub Package Registry (login works, push/pull fails)
       registry: ghcr.io
       username: ${{ github.actor }}
-      # FIXME: as per GitHub support:
-      # "You cannot authenticate with a GitHub App token on the GitHub Package Registry"
-      # so this will fail for external PRs as the automatic actions token will be read-only
       password: ${{ secrets.GITHUB_TOKEN }}
 
   - &loginWithECRPublic
@@ -1064,13 +1065,21 @@ jobs:
           - event_name: ${{ github.event_name }}
             event_action: ${{ github.event.action }}
 
-    permissions:
-      # Required to create comments on pull requests.
-      pull-requests: write
+    permissions: {}
 
     steps:
       - *rejectExternalPullRequest
       - *rejectInternalPullRequestTarget
+      - *rejectMissingSecrets
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          permissions: >-
+            {
+              "metadata": "read",
+              "issues": "read",
+              "pull_requests": "write"
+            }
 
       # Combining pull_request_target workflow trigger with an explicit checkout of an
       # untrusted PR is a dangerous practice that may lead to repository compromise.
@@ -1084,8 +1093,8 @@ jobs:
         with:
           poll-interval: "10"
           allow-authors: false
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
-      - *rejectMissingSecrets
       - *logGitHubContext
 
   versioned_source:
@@ -2883,9 +2892,10 @@ jobs:
     env:
       LOCAL_TAG: localhost:5000/sut:latest
 
-    permissions:
-      id-token: write # AWS GitHub OIDC provider
-      packages: write # push manifests to ghcr.io
+    # The calling workflow must set these permissions to use these optional features.
+    # permissions:
+    #   id-token: write # AWS GitHub OIDC provider
+    #   packages: write # push manifests to ghcr.io
 
     steps:
       - *sanitizeDockerStrings
@@ -3000,9 +3010,10 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
 
-    permissions:
-      id-token: write # AWS GitHub OIDC provider
-      packages: write # push manifests to ghcr.io
+    # The calling workflow must set these permissions to use these optional features.
+    # permissions:
+    #   id-token: write # AWS GitHub OIDC provider
+    #   packages: write # push manifests to ghcr.io
 
     steps:
       - *getGitHubAppToken
@@ -3072,7 +3083,7 @@ jobs:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
 
     permissions:
-      packages: read # pull private base images images from ghcr.io
+      packages: read # pull private base images from ghcr.io
 
     <<: *customWorkingDirectory
 
@@ -3100,7 +3111,7 @@ jobs:
 
     # Permissions required for push events, as merge events should only be toggling the is_final flag
     permissions:
-      packages: read # pull private base images images from ghcr.io
+      packages: read # pull private base images from ghcr.io
 
     <<: *customWorkingDirectory
 
@@ -3351,9 +3362,7 @@ jobs:
       (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
       needs.is_website.result == 'success'
 
-    permissions:
-      issues: read # List issue comments
-      pull-requests: write # Comment on PRs
+    permissions: {}
 
     steps:
       - <<: *getGitHubAppToken
@@ -3362,7 +3371,9 @@ jobs:
           permissions: >-
             {
               "metadata": "read",
-              "contents": "read"
+              "contents": "read",
+              "issues": "read",
+              "pull_requests": "write"
             }
       - *checkoutVersionedSha
       - *createLocalRefs
@@ -3415,7 +3426,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body-includes: Website deployed to CF Pages, 👀 preview link
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
       - name: Create or update Cloudflare Pages link comment if deployment link present
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
@@ -3424,7 +3435,7 @@ jobs:
           comment-id: ${{ steps.find_cf_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           body: |
             Website deployed to CF Pages, 👀 preview link ${{ steps.deploy_cf_pages.outputs.deployment-url }}
 
@@ -4078,8 +4089,9 @@ jobs:
     # sets the GH environment context for secrets and variables
     environment: ${{ matrix.environment }}
 
-    permissions:
-      id-token: write # AWS GitHub OIDC provider
+    # The calling workflow must set these permissions to use these optional features.
+    # permissions:
+    #   id-token: write # AWS GitHub OIDC provider
 
     steps:
       - *setupAwsCli
@@ -4330,8 +4342,9 @@ jobs:
 
     environment: ${{ matrix.environment }}
 
-    permissions:
-      id-token: write # AWS GitHub OIDC provider
+    # The calling workflow must set these permissions to use these optional features.
+    # permissions:
+    #   id-token: write # AWS GitHub OIDC provider
 
     steps:
       - *setupAwsCli
@@ -4445,8 +4458,7 @@ jobs:
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
 
-    permissions:
-      pull-requests: read # Check if PR is draft and if base branch has rulesets
+    permissions: {}
 
     steps:
       - <<: *getGitHubAppToken
@@ -4466,7 +4478,7 @@ jobs:
         id: is_draft_pr
         env:
           <<: *gitHubCliEnvironment
-          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GH_TOKEN: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
         run: |
           result="$(gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq '.isDraft == true')"
           echo "result=${result}" >> "${GITHUB_OUTPUT}"
@@ -4482,7 +4494,7 @@ jobs:
         id: branch_has_rules
         env:
           <<: *gitHubCliEnvironment
-          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GH_TOKEN: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
         run: |
           result="$(gh api -H "Accept: application/vnd.github+json" \
             "/repos/${{ github.repository }}/rules/branches/${{ github.base_ref }}" | jq 'length != 0')"
