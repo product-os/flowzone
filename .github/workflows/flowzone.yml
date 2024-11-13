@@ -644,9 +644,8 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: |-
             {
-              "contents": "write",
-              "metadata": "read",
-              "pull_requests": "write"
+              "contents": "read",
+              "metadata": "read"
             }
       - name: Format release notes
         id: format_release_notes
@@ -809,6 +808,7 @@ jobs:
           permissions: |-
             {
               "contents": "write",
+              "issues": "read",
               "metadata": "read",
               "pull_requests": "write"
             }
@@ -4980,7 +4980,7 @@ jobs:
             {
               "contents": "write",
               "metadata": "read",
-              "pull_requests": "write"
+              "pull_requests": "read"
             }
       - name: Check if PR is draft
         id: is_draft_pr

@@ -1074,6 +1074,7 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
+          # pull_requests: write is required to create or update pull request comments
           permissions: >-
             {
               "metadata": "read",
@@ -1133,7 +1134,8 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
-          # admin permission is currently required to bypass branch protection rules
+          # administration: write is required to bypass branch protection rules
+          # contents: write is required to push git commit and tag references
           permissions: >-
             {
               "administration": "write",
@@ -1347,9 +1349,8 @@ jobs:
           <<: *getGitHubAppTokenWith
           permissions: >-
             {
-              "contents": "write",
-              "metadata": "read",
-              "pull_requests": "write"
+              "contents": "read",
+              "metadata": "read"
             }
 
       # Get Renovate release notes from PR body, massage a little and draft a comment.
@@ -1493,9 +1494,12 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
+          # contents: write is required to create or update pull request comments
+          # pull_requests: write is required to create or update pull request comments
           permissions: >-
             {
               "contents": "write",
+              "issues": "read",
               "metadata": "read",
               "pull_requests": "write"
             }
@@ -3368,6 +3372,7 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
+          # pull_requests: write is required to create or update pull request comments
           permissions: >-
             {
               "metadata": "read",
@@ -4464,11 +4469,12 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
+          # contents: write is required to enable automerge on a pull request
           permissions: >-
             {
               "contents": "write",
               "metadata": "read",
-              "pull_requests": "write"
+              "pull_requests": "read"
             }
 
       # Check if the PR is currently in draft state.
