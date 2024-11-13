@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update balena-io/deploy-to-balena-action action to v2.0.84
+      hash: aa3e1e3210fdfb1a7faf3ae299da52f7d672e954
+      body: |
+        Update balena-io/deploy-to-balena-action from 2.0.81 to 2.0.84
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 18.2.1
+  title: ""
+  date: 2024-11-13T16:09:29.406Z
+- commits:
     - subject: Only generate installation tokens when App ID is provided
       hash: 0286a1cc1a832fee7f1597a37174ee01d091677f
       body: |
