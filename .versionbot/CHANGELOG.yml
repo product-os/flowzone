@@ -1,4 +1,24 @@
 - commits:
+    - subject: Use App Installation tokens where read-only is not sufficient
+      hash: acf32e820c9751dd4465d10db2637497473ec1de
+      body: |
+        In order to use the default read-only policy for the automatic
+        GITHUB_TOKEN, we need have Flowzone prefer App Installation tokens
+        in many cases where write access is required.
+
+        The exceptions being OIDC and packages as these are currently
+        only accessible via the automatic token and nothing else.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.0.0
+  title: ""
+  date: 2024-11-14T14:35:48.168Z
+- commits:
     - subject: Update tibdex/github-app-token action to v2.1.0
       hash: 62cc0e6fb3d1426738223d9de2e19e2518955396
       body: |
