@@ -196,7 +196,7 @@ jobs:
       # GitHub App ID to impersonate
       # Type: string
       # Required: false
-      app_id: ${{ vars.APP_ID }}
+      app_id: ${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}
 
       # Deprecated, no longer used
       # Type: string
