@@ -1568,6 +1568,7 @@ jobs:
           github.event.pull_request.merged == true &&
           steps.create_tag.outputs.sha != ''
         env:
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: "refs/tags/production-${{ steps.timestamp.outputs.datetime }}"
           SHA: ${{ steps.create_tag.outputs.sha }}
 
