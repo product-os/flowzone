@@ -923,41 +923,22 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           reactions: hooray
-  lint_workflows:
-    name: Lint workflows
+  actionlint:
+    name: actionlint
     runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    timeout-minutes: 5
     needs:
-      - versioned_source
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+      - event_types
+    permissions:
+      contents: read
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: organization
-          installation_retrieval_payload: ${{ github.repository_owner }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
+      - name: Checkout event ref
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          fetch-depth: 1
+          submodules: false
           persist-credentials: false
+          token: ${{ github.token }}
       - name: Add problem matcher
         run: |
           curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/.github/actionlint-matcher.json > ${{ runner.temp }}/actionlint-matcher.json
@@ -966,6 +947,33 @@ jobs:
         uses: docker://rhysd/actionlint:1.7.4
         with:
           args: -color -ignore="custom label for self-hosted runner" -ignore=":info:" -ignore=":style:"
+  octoscan:
+    name: octoscan
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: 5
+    needs:
+      - event_types
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout event ref
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+          token: ${{ github.token }}
+      - id: octoscan
+        name: Run octoscan
+        uses: synacktiv/action-octoscan@v1.0.0
+        with:
+          filter_triggers: allnopr
+          disable_rules: shellcheck,local-action,runner-label
+      - name: Upload SARIF file to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{steps.octoscan.outputs.sarif_output}}
+          category: octoscan
   is_npm:
     name: Is npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -4880,7 +4888,8 @@ jobs:
       - cargo_test
       - custom_test
       - cloudformation_test
-      - lint_workflows
+      - actionlint
+      - octoscan
     if: |
       always() &&
       github.event.pull_request.state == 'open'
