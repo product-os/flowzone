@@ -1350,7 +1350,8 @@ jobs:
           permissions: >-
             {
               "contents": "read",
-              "metadata": "read"
+              "metadata": "read",
+              "pull_requests": "read"
             }
 
       # Get Renovate release notes from PR body, massage a little and draft a comment.

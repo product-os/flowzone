@@ -645,7 +645,8 @@ jobs:
           permissions: |-
             {
               "contents": "read",
-              "metadata": "read"
+              "metadata": "read",
+              "pull_requests": "read"
             }
       - name: Format release notes
         id: format_release_notes
