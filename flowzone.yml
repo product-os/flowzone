@@ -1018,11 +1018,15 @@ on:
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/control-the-concurrency-of-workflows-and-jobs
-# The following concurrency group cancels in-progress jobs or runs on pull_request events only;
-# if github.head_ref is undefined, the concurrency group will fallback to the run ID,
-# which is guaranteed to be both unique and defined for the run.
+# - For open pull_request events, the group will be Flowzone-refs/heads/mybranch and cancel-in-progress will be true
+# - For merged pull_request events, the group will be Flowzone-refs/heads/master and cancel-in-progress will be false
+# - For closed pull_request events, the group will be Flowzone-refs/heads/mybranch and cancel-in-progress will be true
+# - For open pull_request_target events, the group will be Flowzone-refs/heads/master and cancel-in-progress will be false
+# - For merged pull_request_target events, the group will be Flowzone-refs/heads/master and cancel-in-progress will be false
+# - For closed pull_request_target events, the group will be Flowzone-refs/heads/master and cancel-in-progress will be false
+# - For tag push events, the group will be Flowzone-v1.2.3 and cancel-in-progress will be false
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   # Expressions in the concurrency context do not have access
   # to the entire github.event context so we cannot make advanced
   # expressions beyond a few top level github event properties.
