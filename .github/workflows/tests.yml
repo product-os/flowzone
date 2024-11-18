@@ -24,7 +24,7 @@ permissions:
   deployments: none
   id-token: none # AWS GitHub OIDC provider
   issues: none
-  discussions: read
+  discussions: none
   # packages: read
   packages: write # Allow Flowzone to publish to ghcr.io
   pages: none
