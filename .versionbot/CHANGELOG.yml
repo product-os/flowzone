@@ -1,4 +1,20 @@
 - commits:
+    - subject: Fix merged PRs to share a single concurrency group
+      hash: 62c59107dd7e428cc3cb0e9814e518e2f296bf4f
+      body: |
+        The previous behaviour was allowing merged PRs to
+        run at the same time because the head_refs would differ.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.0.5
+  title: ""
+  date: 2024-11-18T17:22:58.290Z
+- commits:
     - subject: Set a 60 min timeout for event_types jobs
       hash: d28ec43dc40218b5e68c8ee9c5758c8fdc8663ed
       body: |
