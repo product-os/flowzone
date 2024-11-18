@@ -1,4 +1,23 @@
 - commits:
+    - subject: Set a 60 min timeout for event_types jobs
+      hash: d28ec43dc40218b5e68c8ee9c5758c8fdc8663ed
+      body: |
+        We are now using an app installation token for the
+        workflow approval action, and this token expires after 1h.
+
+        Note that the job can still be re-run and the approval
+        will be requested again.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.0.4
+  title: ""
+  date: 2024-11-18T16:01:50.268Z
+- commits:
     - subject: 'Release notes require "pull_requests": "read"'
       hash: eac20ad3d4af2f1105560384ed9066d73f6a5813
       body: ""
