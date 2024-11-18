@@ -285,6 +285,7 @@ jobs:
   event_types:
     name: Event Types
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     if: |
       (
         (
@@ -347,7 +348,6 @@ jobs:
             }
       - name: Wait for approval on pull_request_target events
         if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
-        timeout-minutes: 90
         uses: product-os/review-commit-action@cddebf4cec8e40ea8f698b6dcce8cd70e38b7320
         with:
           poll-interval: "10"
