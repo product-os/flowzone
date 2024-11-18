@@ -369,7 +369,8 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       tag: ${{ steps.versionist.outputs.tag || steps.git_describe.outputs.tag }}
       semver: ${{ steps.versionist.outputs.semver || steps.git_describe.outputs.semver }}
@@ -384,6 +385,41 @@ jobs:
       GH_PROMPT_DISABLED: "true"
       GH_REPO: ${{ github.repository }}
     steps:
+      - name: Reject HEAD branches containing merge commits
+        if: github.event.pull_request.state == 'open'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          github-token: ${{ github.token }}
+          result-encoding: json
+          script: |
+            const { data: commits } = await github.rest.pulls.listCommits({
+              ...context.repo,
+              pull_number: context.payload.pull_request.number
+            });
+
+            if (commits.some(({ parents }) => parents.length > 1)) {
+              throw new Error('Non-linear history detected - merge commit(s) identified in HEAD branch');
+            }
+      - name: Reject merge commits that do not include the HEAD commit as a parent
+        if: github.event.pull_request.merged
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          github-token: ${{ github.token }}
+          result-encoding: json
+          script: |
+            console.debug(`Merge commit SHA: ${context.sha}`)
+            console.debug(`HEAD commit SHA: ${context.payload.pull_request.head.sha}`)
+
+            const { data: commit } = await github.rest.repos.getCommit({
+              ...context.repo,
+              ref: context.sha
+            });
+
+            console.debug('Commit parents: %s', JSON.stringify(commit.parents, null, 2))
+
+            if (!commit.parents.some(({ sha }) => sha === context.payload.pull_request.head.sha)) {
+              throw new Error('Non-linear history detected - HEAD branch commit is not a parent of the merge commit');
+            }
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -418,14 +454,6 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
         if: github.event.pull_request.state != 'open'
-      - name: Reject merge commits
-        if: github.event.pull_request.state == 'open'
-        run: |
-          if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep -c '^parent ')" -gt 1 ]
-          then
-            echo "::error::Latest commit appears to be a merge, which is currently unsupported. Try a rebase instead."
-            exit 1
-          fi
       - name: Describe git state
         id: git_describe
         run: |
