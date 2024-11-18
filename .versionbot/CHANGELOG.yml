@@ -1,4 +1,22 @@
 - commits:
+    - subject: "Fix a typo in the test workflow providing discussion: read access"
+      hash: 83e2414d765145ff6a0c340dda32c06b0dba4be2
+      body: >
+        The default read-only policy does not provide any discussion
+        permissions,
+
+        so we should update this test workflow to remain aligned for clarity.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.0.6
+  title: ""
+  date: 2024-11-18T20:52:17.277Z
+- commits:
     - subject: Fix merged PRs to share a single concurrency group
       hash: 62c59107dd7e428cc3cb0e9814e518e2f296bf4f
       body: |
