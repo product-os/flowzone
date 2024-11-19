@@ -971,6 +971,7 @@ jobs:
           disable_rules: shellcheck,local-action,runner-label
       - name: Upload SARIF file to GitHub
         uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: ${{ github.event.repository.private == true }}
         with:
           sarif_file: ${{steps.octoscan.outputs.sarif_output}}
           category: octoscan
