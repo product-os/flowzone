@@ -1,4 +1,18 @@
 - commits:
+    - subject: Run octoscan as part of Flowzone workflows
+      hash: 98c391fdb43982f94b4b5ef27dba8e3b2750b150
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.1.0
+  title: ""
+  date: 2024-11-19T14:59:49.184Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.85
       hash: 1aab8b0e4af2c6c1dd68b4bf298ce3d410e567f7
       body: |
@@ -4092,11 +4106,9 @@
 - commits:
     - subject: run steps on X64 only
       hash: f9aef1a1c844b6037b49ba0aedc1607369ccda2d
-      body: >
+      body: |
         * https://github.com/actions/setup-python/issues/705
-
-        *
-        https://github.com/balena-io/environment-production/actions/runs/8423822603/job/23066477310?pr=2178#step:8:24
+        * https://github.com/balena-io/environment-production/actions/runs/8423822603/job/23066477310?pr=2178#step:8:24
       footer:
         change-type: patch
       author: Anton Belodedenko
@@ -4335,9 +4347,8 @@
 - commits:
     - subject: Do not fail releases on unmatched files
       hash: d2ba8c803d3d64a66415193ba55fb5c5d2fa1435
-      body: >
+      body: |
         The default behaviour was fixed upstream via
-
         https://github.com/softprops/action-gh-release/pull/425/commits/f4bd9669044d0fa04ba1b4b0785e05e2b6055d66
       footer:
         Change-type: patch
@@ -4560,46 +4571,28 @@
 - commits:
     - subject: Pass the build target when invoking clippy
       hash: 55ed9e7e1f690cf8bf4473741f485755f53f296f
-      body: >
+      body: |
         The motivation for this change was to allow us to properly request the C
-
         Runtime (CRT) to be statically linked.
 
-
         In summary, each target defaults to either static or dynamic CRT
-
         linking, but we can request static linking regardless of defaults by
-
         using the `crt-static` target feature. The usual way to achieve that is
-
         setting the `RUSTFLAGS="-C target-feature=+crt-static"` environment
-
         variable. (See
-
         https://doc.rust-lang.org/reference/linkage.html#static-and-dynamic-c-runtimes)
 
-
         Rust projects using Flowzone can already do that by using `cross` for
-
         building and setting the environment variable in a `Cross.toml` file
-
         (see
-
         https://github.com/cross-rs/cross/blob/main/docs/environment_variables.md#environment-variable-passthrough).
 
-
         So far so good. The problem is, the `--target` option is required when
-
         using `crt-static`, and Flowzone was not passing it to `cargo clippy`.
-
         (See
-
         https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux/ for
-
         an overview of the issue, and
-
         https://github.com/rust-lang/rust/issues/78210#issuecomment-714776007
-
         for some more specific details.)
       footer:
         Signed-off-by: Leandro Motta Barros <leandro@balena.io>
@@ -7401,13 +7394,10 @@
 - commits:
     - subject: Use `--locked` flag when installing cross
       hash: 42484338e6ce8c1e9948c27b49e4bb3fe4c4a889
-      body: >
+      body: |
         This is to prevent bugs from dependencies from breaking the build.
 
-
-        See:
-        https://github.com/balena-io-modules/node-systemd/actions/runs/5740095381/job/15557192112
-
+        See: https://github.com/balena-io-modules/node-systemd/actions/runs/5740095381/job/15557192112
         Caused by: https://github.com/bytecodealliance/rustix/issues/767
       footer:
         Change-type: patch
@@ -12493,14 +12483,11 @@
 - commits:
     - subject: Don't publish to npmjs if already published
       hash: a03fd744fa4e9d90bb4e31e98f7380e91e19fe27
-      body: >-
+      body: |-
         If published package has been downloaded,
-
         npm doesn't allow to unpublish it.
 
-
-        Prompted by:
-        https://balena.zulipchat.com/#narrow/stream/345890-loop.2Fbalena-io/topic/Test.20docker.20on.20open-balena-api
+        Prompted by: https://balena.zulipchat.com/#narrow/stream/345890-loop.2Fbalena-io/topic/Test.20docker.20on.20open-balena-api
       footer:
         Change-type: patch
         change-type: patch
@@ -12983,7 +12970,7 @@
 - commits:
     - subject: Update set-output commands to use the new out environment file
       hash: 5f72741f669376862daf5d614224640451593125
-      body: >
+      body: |
         https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
       footer:
         Change-type: patch
