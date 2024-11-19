@@ -1,4 +1,20 @@
 - commits:
+    - subject: Ignore failures to upload SARIF file for private repos
+      hash: 0d80b9d3f3c7bb703e343db1fc8aa6aa650de307
+      body: |
+        Private repositories seem to not have the required permissions
+        for upload.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.1.1
+  title: ""
+  date: 2024-11-19T15:52:35.053Z
+- commits:
     - subject: Run octoscan as part of Flowzone workflows
       hash: 98c391fdb43982f94b4b5ef27dba8e3b2750b150
       body: ""
