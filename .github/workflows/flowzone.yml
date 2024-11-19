@@ -965,12 +965,12 @@ jobs:
           token: ${{ github.token }}
       - id: octoscan
         name: Run octoscan
-        uses: synacktiv/action-octoscan@v1.0.0
+        uses: synacktiv/action-octoscan@6b1cf2343893dfb9e5f75652388bd2dc83f456b0
         with:
           filter_triggers: allnopr
           disable_rules: shellcheck,local-action,runner-label
       - name: Upload SARIF file to GitHub
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@ea9e4e37992a54ee68a9622e985e60c8e8f12d9f
         continue-on-error: ${{ github.event.repository.private == true }}
         with:
           sarif_file: ${{steps.octoscan.outputs.sarif_output}}
