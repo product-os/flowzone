@@ -1661,9 +1661,10 @@ jobs:
     needs:
       - event_types
 
-    permissions:
-      # security-events: write # used to push the output of octoscan to GitHub code scanning.
-      contents: read # Used for checkout
+    # The calling workflow must set these permissions to use these optional features.
+    # permissions:
+    #   security-events: write # required by github/codeql-action/upload-sarif
+    #   contents: read # required by github/codeql-action/upload-sarif
 
     steps:
       # No need for the Flowzone Installation App token here as we are not cloning
