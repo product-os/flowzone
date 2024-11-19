@@ -1610,20 +1610,31 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           reactions: hooray
 
-  lint_workflows:
-    name: Lint workflows
+  actionlint:
+    name: actionlint
     runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    timeout-minutes: 5
+    # Run this early in the workflow, as soon as we've validated event types
     needs:
-      - versioned_source
+      - event_types
 
-    <<: *customWorkingDirectory
-
-    permissions: {}
+    permissions:
+      contents: read # Used for checkout
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
+      # No need for the Flowzone Installation App token here as we are not cloning
+      # submodules so the automatic actions token scoped to the repo is fine.
+
+      # https://github.com/actions/checkout
+      - name: Checkout event ref
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # We only need to scan workflow files, so disable submodules and deep cloning
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+          # Use the automatic actions token with contents:read permissions
+          token: ${{ github.token }}
 
       # https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
       - name: Add problem matcher
@@ -1639,6 +1650,53 @@ jobs:
           # Ignore errors on unknown runner custom runner labels
           # Ignore shellcheck info and style messages for now
           args: -color -ignore="custom label for self-hosted runner" -ignore=":info:" -ignore=":style:"
+
+  # https://github.com/synacktiv/octoscan
+  # https://github.com/synacktiv/action-octoscan
+  octoscan:
+    name: octoscan
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: 5
+    # Run this early in the workflow, as soon as we've validated event types
+    needs:
+      - event_types
+
+    permissions:
+      # security-events: write # used to push the output of octoscan to GitHub code scanning.
+      contents: read # Used for checkout
+
+    steps:
+      # No need for the Flowzone Installation App token here as we are not cloning
+      # submodules so the automatic actions token scoped to the repo is fine.
+
+      # https://github.com/actions/checkout
+      - name: Checkout event ref
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # We only need to scan workflow files, so disable submodules and deep cloning
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+          # Use the automatic actions token with contents:read permissions
+          token: ${{ github.token }}
+
+      # https://github.com/synacktiv/octoscan
+      # https://github.com/synacktiv/action-octoscan
+      - id: octoscan
+        name: Run octoscan
+        uses: synacktiv/action-octoscan@v1.0.0
+        with:
+          # Filter on all workflow triggers as the default of "external" does not include workflow_call
+          # external: https://github.com/synacktiv/octoscan/blob/3f7fd6e563be43432cef874c82a7714f67a8ef92/common/helpers.go#L69
+          # allnopr: https://github.com/synacktiv/octoscan/blob/3f7fd6e563be43432cef874c82a7714f67a8ef92/common/helpers.go#L76
+          filter_triggers: allnopr
+          disable_rules: shellcheck,local-action,runner-label
+
+      - name: Upload SARIF file to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "${{steps.octoscan.outputs.sarif_output}}"
+          category: octoscan
 
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
@@ -4399,7 +4457,8 @@ jobs:
       - cargo_test
       - custom_test
       - cloudformation_test
-      - lint_workflows
+      - actionlint
+      - octoscan
     if: |
       always() &&
       github.event.pull_request.state == 'open'
