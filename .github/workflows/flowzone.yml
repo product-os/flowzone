@@ -2498,7 +2498,7 @@ jobs:
           yq . "${COMPOSE_FILE}"
       - name: Generate docker metadata
         id: test_meta
-        uses: docker/metadata-action@359e915ab3220d88514ed693793a5cc795192aa6
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96
         with:
           images: |
             sut
@@ -2517,7 +2517,7 @@ jobs:
             suffix=${{ steps.strings.outputs.suffix }}
       - name: Generate docker metadata
         id: cache_meta
-        uses: docker/metadata-action@359e915ab3220d88514ed693793a5cc795192aa6
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96
         with:
           images: |
             ${{ needs.is_docker.outputs.docker_images_crlf }}
@@ -2657,7 +2657,7 @@ jobs:
           echo "repo=${repo_slug}" >> "${GITHUB_OUTPUT}"
       - name: Generate docker metadata
         id: draft_meta
-        uses: docker/metadata-action@359e915ab3220d88514ed693793a5cc795192aa6
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96
         with:
           images: |
             ${{ matrix.image }}
@@ -2905,7 +2905,7 @@ jobs:
           echo "repo=${repo_slug}" >> "${GITHUB_OUTPUT}"
       - name: Generate docker metadata
         id: final_meta
-        uses: docker/metadata-action@359e915ab3220d88514ed693793a5cc795192aa6
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96
         with:
           images: |
             ${{ matrix.image }}
