@@ -1,4 +1,17 @@
 - commits:
+    - subject: Pin dependencies
+      hash: 23e544138b115f0663e7ade6e573dfa2a2f0954a
+      body: |
+        Update github/codeql-action
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.1.2
+  title: ""
+  date: 2024-11-19T16:03:40.934Z
+- commits:
     - subject: Ignore failures to upload SARIF file for private repos
       hash: 0d80b9d3f3c7bb703e343db1fc8aa6aa650de307
       body: |
