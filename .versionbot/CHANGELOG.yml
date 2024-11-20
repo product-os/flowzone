@@ -1,4 +1,23 @@
 - commits:
+    - subject: Unset the token permissions for octoscan
+      hash: 4fb89a73796dac14cf4fb2aea86db905d1edae4f
+      body: |
+        In order for these permissions to be inherited, they
+        must be set by the calling workflow.
+
+        Setting them in the job will cause workflows to not start when
+        the permission is unavailable.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.1.6
+  title: ""
+  date: 2024-11-20T15:20:54.053Z
+- commits:
     - subject: Update github/codeql-action digest to f09c1c0
       hash: c5f3526f7111032ba2618fd77fe23c445e464ae7
       body: |
