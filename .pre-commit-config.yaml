@@ -1,0 +1,36 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+# Ignore auto-generated files
+exclude: ^(.versionbot/|CHANGELOG.md|VERSION|README.md)
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-json
+    -   id: check-added-large-files
+
+# -   repo: https://github.com/rhysd/actionlint
+#     rev: v1.7.3
+#     hooks:
+#     -   id: actionlint-docker
+#         args: ["-color", "-ignore", ":info:", "-ignore", ":style:"]
+
+# -   repo: https://github.com/igorshubovych/markdownlint-cli
+#     rev: v0.42.0
+#     hooks:
+#     -   id: markdownlint-docker
+
+# -   repo: https://github.com/crate-ci/typos
+#     rev: v1.27.0
+#     hooks:
+#     -   id: typos-docker
+#         args: ["--force-exclude"]
+
+# -   repo: https://github.com/openstack/bashate
+#     rev: 2.1.1
+#     hooks:
+#     -   id: bashate
