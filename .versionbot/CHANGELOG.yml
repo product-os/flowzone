@@ -1,4 +1,22 @@
 - commits:
+    - subject: Run pre-commit hooks if a config file exists in the project
+      hash: 0ced79f33554a1749a55b84d5c6d8b65b4159a32
+      body: |
+        This step will fail if the hooks find any differences after running.
+        Pre-commit hooks are useful projects for that don't use npm & husky.
+
+        See https://pre-commit.com for more information.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.1.10
+  title: ""
+  date: 2024-12-03T15:07:29.076Z
+- commits:
     - subject: Ignore SARIF file upload failures from octoscan
       hash: 36a10e64ed4dd1a4e9384abbe8d74f6ceb8b4e0f
       body: |
