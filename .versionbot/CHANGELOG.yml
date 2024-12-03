@@ -1,4 +1,21 @@
 - commits:
+    - subject: Ignore SARIF file upload failures from octoscan
+      hash: 36a10e64ed4dd1a4e9384abbe8d74f6ceb8b4e0f
+      body: |
+        It is unclear why most of our public repos do
+        not fail this step, as expected. Add this condition
+        for those that do, and private repos.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.1.9
+  title: ""
+  date: 2024-12-03T14:33:44.518Z
+- commits:
     - subject: Update cloudflare/wrangler-action action to v3.13.0
       hash: 12e072768272722efdbd2ae8c6c99cc0d11ed4a5
       body: |
