@@ -2607,7 +2607,7 @@ jobs:
         if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
       - name: Docker bake
         id: docker_bake
-        uses: docker/bake-action@2e3d19baedb14545e5d41222653874f25d5b4dfb
+        uses: docker/bake-action@3fc70e1131fee40a422dd8dd0ff22014ae20a1f3
         with:
           workdir: ${{ inputs.working_directory }}
           files: |
