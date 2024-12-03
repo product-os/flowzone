@@ -1694,7 +1694,7 @@ jobs:
           disable_rules: shellcheck,local-action,runner-label
 
       - name: Upload SARIF file to GitHub
-        uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3
+        uses: github/codeql-action/upload-sarif@aa578102511db1f4524ed59b8cc2bae4f6e88195 # v3
         # Do not fail if the calling workflow failed to provide the security-events:write permission
         # https://github.com/github/codeql-action?tab=readme-ov-file#workflow-permissions
         # https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps?apiVersion=2022-11-28#repository-permissions-for-code-scanning-alerts
