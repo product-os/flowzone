@@ -1,4 +1,19 @@
 - commits:
+    - subject: Use app installation token to validate linear history
+      hash: 4df2dce341f15ca6e69142dd59d5491be7b3ca6d
+      body: |
+        The default permissions do not always include pull_request:read
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.2.1
+  title: ""
+  date: 2024-12-09T17:12:15.073Z
+- commits:
     - subject: Improve enforcement of linear commit history
       hash: fdb8e1ab152289a3f2e833bf1898428336cbb271
       body: |
