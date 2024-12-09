@@ -1,4 +1,26 @@
 - commits:
+    - subject: Improve enforcement of linear commit history
+      hash: fdb8e1ab152289a3f2e833bf1898428336cbb271
+      body: |
+        Use the GitHub API to check commit parents in BASE and HEAD
+        branches and ensure we are following a linear history.
+
+        HEAD should not have any merge commits, so reject any HEAD branches
+        where one or more commits have multiple parents.
+
+        The PR merge commit must include the HEAD commit as a parent,
+        otherwise reject the versioning job.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.2.0
+  title: ""
+  date: 2024-12-09T16:28:12.846Z
+- commits:
     - subject: Make clear that unedited release notes will not be posted
       hash: 2adb64da5d51720920c11758c161b6ac9aab8905
       body: ""
