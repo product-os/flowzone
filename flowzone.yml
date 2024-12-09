@@ -571,6 +571,56 @@
         Please consult the documentation for more information."
       exit 1
 
+  - &rejectNonLinearHead
+    # This can happen when a PR is updated with a merge commit from main, rather than rebased on main.
+    # In the GitHub UI this is represented by the "Update with merge commit" option vs "Update with rebase".
+    # https://github.com/actions/github-script
+    # https://octokit.github.io/rest.js/v21/#pulls-list-commits
+    name: Reject HEAD branches containing merge commits
+    if: github.event.pull_request.state == 'open'
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    with:
+      github-token: ${{ github.token }}
+      result-encoding: json
+      script: |
+        const { data: commits } = await github.rest.pulls.listCommits({
+          ...context.repo,
+          pull_number: context.payload.pull_request.number
+        });
+
+        if (commits.some(({ parents }) => parents.length > 1)) {
+          throw new Error('Non-linear history detected - merge commit(s) identified in HEAD branch');
+        }
+
+  - &rejectNonLinearMerge
+    # This can happen if multiple PRs are merged at the same time, typically because
+    # one PR is rebased on another PR before merging, where the merge commit in the BASE
+    # branch does not include the tip of the HEAD branch as a parent.
+    # https://github.com/actions/github-script
+    # https://octokit.github.io/rest.js/v21/#repos-get-commit
+    name: Reject merge commits that do not include the HEAD commit as a parent
+    # This check passes when the PR is open too, but only on pull_request events and not pull_request_target.
+    # So only check on merged PRs where the HEAD sha should always be a parent of the merge commit.
+    if: github.event.pull_request.merged
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    with:
+      github-token: ${{ github.token }}
+      result-encoding: json
+      script: |
+        console.debug(`Merge commit SHA: ${context.sha}`)
+        console.debug(`HEAD commit SHA: ${context.payload.pull_request.head.sha}`)
+
+        const { data: commit } = await github.rest.repos.getCommit({
+          ...context.repo,
+          ref: context.sha
+        });
+
+        console.debug('Commit parents: %s', JSON.stringify(commit.parents, null, 2))
+
+        if (!commit.parents.some(({ sha }) => sha === context.payload.pull_request.head.sha)) {
+          throw new Error('Non-linear history detected - HEAD branch commit is not a parent of the merge commit');
+        }
+
   - &setupBuildx # https://github.com/docker/setup-buildx-action
     name: Setup buildx
     id: setup_buildx
@@ -1078,6 +1128,7 @@ jobs:
       - *rejectExternalPullRequest
       - *rejectInternalPullRequestTarget
       - *rejectMissingSecrets
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1116,7 +1167,9 @@ jobs:
 
     <<: *rootWorkingDirectory
 
-    permissions: {}
+    permissions:
+      # Required to inspect commits in branches for linear history
+      contents: read
 
     outputs:
       tag: ${{ steps.versionist.outputs.tag || steps.git_describe.outputs.tag }}
@@ -1137,6 +1190,10 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
+
+      - *rejectNonLinearHead
+      - *rejectNonLinearMerge
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1162,16 +1219,6 @@ jobs:
       # This is the merge commit sha for PRs and the tagged commit sha for tags.
       - <<: *checkoutEventSha
         if: github.event.pull_request.state != 'open'
-
-      # fail on merge commits (ones with more than one parent)
-      - name: Reject merge commits
-        if: github.event.pull_request.state == 'open'
-        run: |
-          if [ "$(git cat-file -p ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | grep -c '^parent ')" -gt 1 ]
-          then
-            echo "::error::Latest commit appears to be a merge, which is currently unsupported. Try a rebase instead."
-            exit 1
-          fi
 
       # The current commit sha is needed as the parent sha for the versioned commit
       # and/or as default tag & semver if versioning is disabled.
