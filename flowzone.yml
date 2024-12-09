@@ -580,7 +580,7 @@
     if: github.event.pull_request.state == 'open'
     uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
     with:
-      github-token: ${{ github.token }}
+      github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       result-encoding: json
       script: |
         const { data: commits } = await github.rest.pulls.listCommits({
@@ -604,7 +604,7 @@
     if: github.event.pull_request.merged
     uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
     with:
-      github-token: ${{ github.token }}
+      github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       result-encoding: json
       script: |
         console.debug(`Merge commit SHA: ${context.sha}`)
@@ -1191,9 +1191,6 @@ jobs:
 
     steps:
 
-      - *rejectNonLinearHead
-      - *rejectNonLinearMerge
-
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1206,6 +1203,9 @@ jobs:
               "metadata": "read",
               "pull_requests": "read"
             }
+
+      - *rejectNonLinearHead
+      - *rejectNonLinearMerge
 
       # Checkout the tip of the pull request branch for open PRs.
       # The default behaviour for GitHub Actions is to checkout the merge commit but we
