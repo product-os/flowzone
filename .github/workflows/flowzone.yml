@@ -691,7 +691,7 @@ jobs:
 
                   # Prepare the comment body
                   notable_changes="$(echo "${notable_changes}" | sed -E 's|^|* |g')"
-                  notable_changes="$(printf 'Notable changes\n* [only keep the important and rephrase]\n%s' "${notable_changes}")"
+                  notable_changes="$(printf 'Notable changes\n* [only keep the important and rephrase, leaving this in place will avoid posting release notes]\n%s' "${notable_changes}")"
 
                   # https://zulip.com/help/format-your-message-using-markdown
                   # shortnames: https://pygments.org/docs/lexers/
@@ -827,7 +827,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: flowzone-app[bot]
-          body-regex: \* \[only keep the important and rephrase\]
+          body-regex: \* \[only keep the important and rephrase(, leaving this in place will avoid posting release notes)?\]
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
         if: |
