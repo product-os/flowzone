@@ -1,4 +1,18 @@
 - commits:
+    - subject: Allow renovate to bump buildx versions
+      hash: c0fa482f461216b227463d525f97c84c85e396f6
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.2.5
+  title: ""
+  date: 2024-12-13T18:19:03.494Z
+- commits:
     - subject: Pin buildx to v0.19.1 to fix broken bake definiton parsing
       hash: 4d1c9e9614a975ac5117064edf73138fbdae9b6c
       body: ""
