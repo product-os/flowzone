@@ -1305,6 +1305,8 @@ jobs:
       - name: Setup buildx
         id: setup_buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349
+        env:
+          BUILDX_VERSION: v0.19.1
         with:
           version: v0.9.1
       - name: Pre-process Docker bake files
@@ -2490,10 +2492,12 @@ jobs:
       - name: Setup buildx
         id: setup_buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349
+        env:
+          BUILDX_VERSION: v0.19.1
         with:
           driver-opts: network=host
           install: true
-          version: v0.19.1
+          version: ${{ env.BUILDX_VERSION }}
       - id: native_platforms
         name: Build JSON array
         shell: bash
@@ -2778,10 +2782,12 @@ jobs:
       - name: Setup buildx
         id: setup_buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349
+        env:
+          BUILDX_VERSION: v0.19.1
         with:
           driver-opts: network=host
           install: true
-          version: v0.19.1
+          version: ${{ env.BUILDX_VERSION }}
       - name: Setup crane
         uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e
         with:
