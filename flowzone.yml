@@ -628,6 +628,8 @@
     with:
       driver-opts: network=host
       install: true
+      # FIXME: "Error: cannot parse bake definitions: ERROR: EOF" with v0.19.2
+      version: v0.19.1
 
   - &setupQemuBinfmt # https://github.com/docker/setup-qemu-action
     name: Setup QEMU
