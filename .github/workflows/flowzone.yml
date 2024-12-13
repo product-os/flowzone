@@ -2493,6 +2493,7 @@ jobs:
         with:
           driver-opts: network=host
           install: true
+          version: v0.19.1
       - id: native_platforms
         name: Build JSON array
         shell: bash
@@ -2780,6 +2781,7 @@ jobs:
         with:
           driver-opts: network=host
           install: true
+          version: v0.19.1
       - name: Setup crane
         uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e
         with:
