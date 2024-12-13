@@ -625,11 +625,13 @@
     name: Setup buildx
     id: setup_buildx
     uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+    env:
+      # renovate: datasource=github-releases depName=docker/buildx
+      BUILDX_VERSION: v0.19.1
     with:
       driver-opts: network=host
       install: true
-      # FIXME: "Error: cannot parse bake definitions: ERROR: EOF" with v0.19.2
-      version: v0.19.1
+      version: ${{ env.BUILDX_VERSION }}
 
   - &setupQemuBinfmt # https://github.com/docker/setup-qemu-action
     name: Setup QEMU
