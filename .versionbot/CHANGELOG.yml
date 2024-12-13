@@ -1,4 +1,18 @@
 - commits:
+    - subject: Pin buildx to v0.19.1 to fix broken bake definiton parsing
+      hash: 4d1c9e9614a975ac5117064edf73138fbdae9b6c
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.2.4
+  title: ""
+  date: 2024-12-13T16:43:36.334Z
+- commits:
     - subject: Update github/codeql-action digest to df409f7
       hash: abd84cc8e38ebe954e5c8cadccb89d536a3be6d8
       body: |
