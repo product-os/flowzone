@@ -1,4 +1,20 @@
 - commits:
+    - subject: Add top-level flowzone.yml to custom regex manager
+      hash: d44bc6a613738e1079745e69e701ab2495d4f02c
+      body: |
+        Manager preset is copied from here:
+        https://docs.renovatebot.com/presets-customManagers/#custommanagersgithubactionsversions
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.2.6
+  title: ""
+  date: 2024-12-14T15:32:45.003Z
+- commits:
     - subject: Allow renovate to bump buildx versions
       hash: c0fa482f461216b227463d525f97c84c85e396f6
       body: ""
