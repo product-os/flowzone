@@ -14,7 +14,7 @@
 	],
 	"packageRules": [
 		{
-			"matchManagers": ["github-actions"],
+			"matchManagers": ["github-actions","regex"],
 			"matchFileNames": ["flowzone.yml"],
 			"postUpgradeTasks": {
 				"commands": ["npm ci", "npm run build"],
