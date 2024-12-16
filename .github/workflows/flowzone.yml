@@ -1304,7 +1304,7 @@ jobs:
           fi
       - name: Setup buildx
         id: setup_buildx
-        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349
+        uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5
         env:
           BUILDX_VERSION: v0.19.1
         with:
@@ -2491,7 +2491,7 @@ jobs:
           echo "repo=${repo_slug}" >> "${GITHUB_OUTPUT}"
       - name: Setup buildx
         id: setup_buildx
-        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349
+        uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5
         env:
           BUILDX_VERSION: v0.19.1
         with:
@@ -2781,7 +2781,7 @@ jobs:
             suffix=${{ steps.strings.outputs.suffix }}
       - name: Setup buildx
         id: setup_buildx
-        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349
+        uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5
         env:
           BUILDX_VERSION: v0.19.1
         with:
