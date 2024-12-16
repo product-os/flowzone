@@ -1,4 +1,19 @@
 - commits:
+    - subject: Add regex manager to commit hooks package rule
+      hash: 5c0e458fd2123894fd6d3d3181849ecbf46c4590
+      body: >
+        Whether the manager is github-actions or regex, we still need to
+        re-generate .github/workflows/flowzone.yml if ./flowzone.yml has
+        changed.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Kyle Harding
+      nested: []
+  version: 19.2.8
+  title: ""
+  date: 2024-12-16T16:11:34.114Z
+- commits:
     - subject: Update docker/setup-buildx-action action to v3.8.0
       hash: bd00fc518ace33d7c1fd01a43a35652c32f02c17
       body: |
