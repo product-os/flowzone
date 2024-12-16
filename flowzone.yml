@@ -1708,18 +1708,27 @@ jobs:
     name: octoscan
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: 5
+    # Pull request target events will have the wrong ref and sha for SARIF uploads so skip it for now
+    if: github.event_name != 'pull_request_target'
     # Run this early in the workflow, as soon as we've validated event types
     needs:
       - event_types
 
-    # The calling workflow must set these permissions to use these optional features.
-    # permissions:
-    #   security-events: write # required by github/codeql-action/upload-sarif
-    #   contents: read # required by github/codeql-action/upload-sarif
+    permissions:
+      contents: read # required for checkout without submodules
 
     steps:
-      # No need for the Flowzone Installation App token here as we are not cloning
-      # submodules so the automatic actions token scoped to the repo is fine.
+
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          # security_events: write is required to upload SARIF files
+          permissions: >-
+            {
+              "contents": "read",
+              "metadata": "read",
+              "security_events": "write"
+            }
 
       # https://github.com/actions/checkout
       - name: Checkout event ref
@@ -1744,15 +1753,34 @@ jobs:
           filter_triggers: allnopr
           disable_rules: shellcheck,local-action,runner-label
 
+      # The codeql-action/upload-sarif action uses internal endpoints and does not work with app installation tokens
+      # so here we use the github-script action to upload the SARIF file to GitHub via the REST API
+      # https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
+      # https://github.com/github/codeql-action/blob/main/upload-sarif/action.yml
+      # https://octokit.github.io/rest.js/v21/#code-scanning-upload-sarif
+      # https://github.com/github/codeql-action/issues/2654
       - name: Upload SARIF file to GitHub
-        uses: github/codeql-action/upload-sarif@df409f7d9260372bd5f19e5b04e83cb3c43714ae # v3
-        # Do not fail if the calling workflow failed to provide the security-events:write permission
-        # https://github.com/github/codeql-action?tab=readme-ov-file#workflow-permissions
-        # https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps?apiVersion=2022-11-28#repository-permissions-for-code-scanning-alerts
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        # For now let's just continue on error as this is not a critical path
         continue-on-error: true
+        env:
+          sarif_file: ${{ steps.octoscan.outputs.sarif_output }}
         with:
-          sarif_file: "${{steps.octoscan.outputs.sarif_output}}"
-          category: octoscan
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          script: |
+            const zlib = require("zlib");
+            const fs = require("fs");
+
+            const sarifPayload = fs.readFileSync(process.env.sarif_file, "utf8");
+            const zippedSarif = zlib.gzipSync(sarifPayload).toString("base64");
+
+            const { data } = await github.rest.codeScanning.uploadSarif({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              ref: context.ref,
+              sarif: zippedSarif,
+            });
 
   # This job should be used as a universal and safe method of checking
   # which project files exist in order to skip other jobs entirely.
