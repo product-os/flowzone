@@ -271,6 +271,11 @@ on:
         type: boolean
         required: false
         default: true
+      scan_secrets:
+        description: Scan for secrets in the PR and artifacts using TruffleHog OSS
+        type: boolean
+        required: false
+        default: true
     outputs:
       cloudflare_deployment_url:
         description: Cloudflare Deployment URL
@@ -635,6 +640,42 @@ jobs:
             -f ref="${REF}" \
             -f sha="${SHA}" \
             --include
+  scan_secrets:
+    name: Scan Commits for Secrets
+    runs-on: ubuntu-latest
+    needs:
+      - versioned_source
+    if: inputs.scan_secrets == 'true'
+    steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        continue-on-error: true
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: id
+          installation_retrieval_payload: ${{ inputs.installation_id }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout versioned commit
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+        with:
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-tags: true
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          persist-credentials: false
+      - name: Scan
+        uses: trufflesecurity/trufflehog@v3.82.7
+        with:
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.ref }}
+          extra_args: --only-verified
   release_notes:
     name: Generate release notes
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1083,6 +1124,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1198,6 +1240,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1428,6 +1471,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -1530,6 +1574,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     if: inputs.cargo_targets != ''
     defaults:
       run:
@@ -1613,6 +1658,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     if: inputs.balena_slugs != ''
     defaults:
       run:
@@ -1686,6 +1732,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     defaults:
       run:
         working-directory: .
@@ -1872,6 +1919,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     if: inputs.cloudflare_website != ''
     defaults:
       run:
@@ -1920,6 +1968,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+      - scan_secrets
     if: inputs.cloudformation_templates != ''
     defaults:
       run:
@@ -2131,6 +2180,18 @@ jobs:
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
+      - name: Install trufflehog
+        if: inputs.scan_secrets == 'true'
+        run: |
+          # install trufflesecurity/trufflehog
+          curl https://github.com/trufflesecurity/trufflehog/releases/download/v3.82.7/trufflehog_3.82.7_linux_amd64.tar.gz -o trufflehog.tar.gz && \
+          tar -xzf trufflehog.tar.gz && \
+          chmod +x trufflehog
+      - name: Scan artifacts
+        if: inputs.scan_secrets == 'true'
+        run: ./trufflehog filesystem ${{env.scanPath}} --no-update --only-verified --fail
+        env:
+          scanPath: ${{ runner.temp }}/npm-pack
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
@@ -2142,6 +2203,11 @@ jobs:
         if: needs.is_npm.outputs.npm_docs == 'true'
         shell: bash
         run: npm run doc
+      - name: Scan artifacts
+        if: inputs.scan_secrets == 'true'
+        run: ./trufflehog filesystem ${{env.scanPath}} --no-update --only-verified --fail
+        env:
+          scanPath: ./docs
       - name: Compress docs
         if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
         run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
@@ -2666,6 +2732,17 @@ jobs:
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
           zstd -v ${DOCKER_TAR}
+      - name: Install trufflehog
+        if: inputs.scan_secrets == 'true'
+        run: |
+          # install trufflesecurity/trufflehog
+          curl https://github.com/trufflesecurity/trufflehog/releases/download/v3.82.7/trufflehog_3.82.7_linux_amd64.tar.gz -o trufflehog.tar.gz && \
+          tar -xzf trufflehog.tar.gz && \
+          chmod +x trufflehog
+      - name: Scan for secrets
+        if: inputs.scan_secrets == 'true'
+        run: |
+          trufflehog docker --image file://${DOCKER_TAR} --only-verified --no-update --fail
       - name: Enable KVM group perms
         if: contains(matrix.runs_on,'ubuntu-latest') || contains(matrix.runs_on,'ubuntu-22.04')
         continue-on-error: true
@@ -3540,6 +3617,18 @@ jobs:
       - name: Run poetry install
         run: |
           poetry install
+      - name: Install trufflehog
+        if: inputs.scan_secrets == 'true'
+        run: |
+          # install trufflesecurity/trufflehog
+          curl https://github.com/trufflesecurity/trufflehog/releases/download/v3.82.7/trufflehog_3.82.7_linux_amd64.tar.gz -o trufflehog.tar.gz && \
+          tar -xzf trufflehog.tar.gz && \
+          chmod +x trufflehog
+      - name: Scan artifacts
+        if: inputs.scan_secrets == 'true'
+        run: ./trufflehog filesystem ${{env.scanPath}} --no-update --only-verified --fail
+        env:
+          scanPath: ./
       - name: Publish draft release
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TEST_TOKEN }}
@@ -3672,6 +3761,18 @@ jobs:
         if: |
           inputs.docusaurus_website == false
         run: npm run deploy-docs --if-present
+      - name: Install trufflehog
+        if: inputs.scan_secrets == 'true'
+        run: |
+          # install trufflesecurity/trufflehog
+          curl https://github.com/trufflesecurity/trufflehog/releases/download/v3.82.7/trufflehog_3.82.7_linux_amd64.tar.gz -o trufflehog.tar.gz && \
+          tar -xzf trufflehog.tar.gz && \
+          chmod +x trufflehog
+      - name: Scan artifacts
+        if: inputs.scan_secrets == 'true'
+        run: ./trufflehog filesystem ${{env.scanPath}} --no-update --only-verified --fail
+        env:
+          scanPath: build/
       - name: Update deploy branch for merged PRs
         if: github.event.pull_request.state != 'open'
         run: |
@@ -3810,6 +3911,18 @@ jobs:
         with:
           path: ${{ runner.temp }}
           name: release-notes
+      - name: Install trufflehog
+        if: inputs.scan_secrets == 'true'
+        run: |
+          # install trufflesecurity/trufflehog
+          curl https://github.com/trufflesecurity/trufflehog/releases/download/v3.82.7/trufflehog_3.82.7_linux_amd64.tar.gz -o trufflehog.tar.gz && \
+          tar -xzf trufflehog.tar.gz && \
+          chmod +x trufflehog
+      - name: Scan artifacts
+        if: inputs.scan_secrets == 'true'
+        run: ./trufflehog filesystem ${{env.scanPath}} --no-update --only-verified --fail
+        env:
+          scanPath: ${{ runner.temp }}
       - name: Publish draft release
         uses: softprops/action-gh-release@01570a1f39cb168c169c802c3bceb9e93fb10974
         with:
@@ -4131,6 +4244,18 @@ jobs:
       - name: Compress
         run: |
           tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
+      - name: Install trufflehog
+        if: inputs.scan_secrets == 'true'
+        run: |
+          # install trufflesecurity/trufflehog
+          curl https://github.com/trufflesecurity/trufflehog/releases/download/v3.82.7/trufflehog_3.82.7_linux_amd64.tar.gz -o trufflehog.tar.gz && \
+          tar -xzf trufflehog.tar.gz && \
+          chmod +x trufflehog
+      - name: Scan artifacts
+        if: inputs.scan_secrets == 'true'
+        run: ./trufflehog filesystem ${{env.scanPath}} --no-update --only-verified --fail
+        env:
+          scanPath: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
       - name: Upload artifact
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
         with:
