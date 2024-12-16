@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v3.8.0
+      hash: bd00fc518ace33d7c1fd01a43a35652c32f02c17
+      body: |
+        Update docker/setup-buildx-action from 3.7.1 to 3.8.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.2.7
+  title: ""
+  date: 2024-12-16T11:12:36.687Z
+- commits:
     - subject: Add top-level flowzone.yml to custom regex manager
       hash: d44bc6a613738e1079745e69e701ab2495d4f02c
       body: |
