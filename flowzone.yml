@@ -683,12 +683,26 @@
 
   - &sortNodeVersions
     name: Sort node versions
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
     id: node_versions
     env:
       VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-    run: |
-      echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-      echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
+    with:
+      result-encoding: json
+      script: |
+        const { compareVersions } = require('util');
+        const versions = JSON.parse(process.env.VERSIONS);
+
+        if (!Array.isArray(versions) || !versions.length) {
+          return { min: null, max: null };
+        }
+
+        // Sort versions in ascending order
+        const sorted = [...versions].sort(compareVersions);
+
+        core.setOutput('sorted', sorted)
+        core.setOutput('min', sorted[0])
+        core.setOutput('max', sorted[sorted.length - 1])
 
   - &waitForCloudFormation
     name: Wait for resources

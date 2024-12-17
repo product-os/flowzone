@@ -2019,12 +2019,26 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Sort node versions
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: node_versions
         env:
           VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        run: |
-          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
+        with:
+          result-encoding: json
+          script: |
+            const { compareVersions } = require('util');
+            const versions = JSON.parse(process.env.VERSIONS);
+
+            if (!Array.isArray(versions) || !versions.length) {
+              return { min: null, max: null };
+            }
+
+            // Sort versions in ascending order
+            const sorted = [...versions].sort(compareVersions);
+
+            core.setOutput('sorted', sorted)
+            core.setOutput('min', sorted[0])
+            core.setOutput('max', sorted[sorted.length - 1])
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
@@ -2203,12 +2217,26 @@ jobs:
     permissions: {}
     steps:
       - name: Sort node versions
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: node_versions
         env:
           VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        run: |
-          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
+        with:
+          result-encoding: json
+          script: |
+            const { compareVersions } = require('util');
+            const versions = JSON.parse(process.env.VERSIONS);
+
+            if (!Array.isArray(versions) || !versions.length) {
+              return { min: null, max: null };
+            }
+
+            // Sort versions in ascending order
+            const sorted = [...versions].sort(compareVersions);
+
+            core.setOutput('sorted', sorted)
+            core.setOutput('min', sorted[0])
+            core.setOutput('max', sorted[sorted.length - 1])
       - name: Download npm artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
@@ -2268,12 +2296,26 @@ jobs:
               "metadata": "read"
             }
       - name: Sort node versions
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: node_versions
         env:
           VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        run: |
-          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
+        with:
+          result-encoding: json
+          script: |
+            const { compareVersions } = require('util');
+            const versions = JSON.parse(process.env.VERSIONS);
+
+            if (!Array.isArray(versions) || !versions.length) {
+              return { min: null, max: null };
+            }
+
+            // Sort versions in ascending order
+            const sorted = [...versions].sort(compareVersions);
+
+            core.setOutput('sorted', sorted)
+            core.setOutput('min', sorted[0])
+            core.setOutput('max', sorted[sorted.length - 1])
       - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
@@ -2325,12 +2367,26 @@ jobs:
               "metadata": "read"
             }
       - name: Sort node versions
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: node_versions
         env:
           VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        run: |
-          echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-          echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
+        with:
+          result-encoding: json
+          script: |
+            const { compareVersions } = require('util');
+            const versions = JSON.parse(process.env.VERSIONS);
+
+            if (!Array.isArray(versions) || !versions.length) {
+              return { min: null, max: null };
+            }
+
+            // Sort versions in ascending order
+            const sorted = [...versions].sort(compareVersions);
+
+            core.setOutput('sorted', sorted)
+            core.setOutput('min', sorted[0])
+            core.setOutput('max', sorted[sorted.length - 1])
       - name: Download npm docs artifact from last run
         uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
