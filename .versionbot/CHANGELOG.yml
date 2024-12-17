@@ -1,4 +1,26 @@
 - commits:
+    - subject: Use app installation tokens to upload octoscan SARIF
+      hash: aa4a2998df73c7749cdb96dc785d72c0310a8cd9
+      body: |
+        The security-events permission is not granted by the restricted
+        automatic token policy so in order for this to run at scale we
+        need to use app installation tokens.
+
+        The codeql-action/upload-sarif action using internal endpoints
+        and does not work with app installation tokens so here we use
+        the github-script action to upload the SARIF file to GitHub via
+        the REST API.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.2.11
+  title: ""
+  date: 2024-12-17T17:05:49.115Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.1.36
       hash: 6dea65c56248b44f50b5914b0d91b0bcb707e10b
       body: |
