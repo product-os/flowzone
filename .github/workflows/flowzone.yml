@@ -979,9 +979,27 @@ jobs:
     name: octoscan
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: 5
+    if: github.event_name != 'pull_request_target'
     needs:
       - event_types
+    permissions:
+      contents: read
     steps:
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: organization
+          installation_retrieval_payload: ${{ github.repository_owner }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read",
+              "security_events": "write"
+            }
       - name: Checkout event ref
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -996,11 +1014,26 @@ jobs:
           filter_triggers: allnopr
           disable_rules: shellcheck,local-action,runner-label
       - name: Upload SARIF file to GitHub
-        uses: github/codeql-action/upload-sarif@df409f7d9260372bd5f19e5b04e83cb3c43714ae
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         continue-on-error: true
+        env:
+          sarif_file: ${{ steps.octoscan.outputs.sarif_output }}
         with:
-          sarif_file: ${{steps.octoscan.outputs.sarif_output}}
-          category: octoscan
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          script: |
+            const zlib = require("zlib");
+            const fs = require("fs");
+
+            const sarifPayload = fs.readFileSync(process.env.sarif_file, "utf8");
+            const zippedSarif = zlib.gzipSync(sarifPayload).toString("base64");
+
+            const { data } = await github.rest.codeScanning.uploadSarif({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              ref: context.ref,
+              sarif: zippedSarif,
+            });
   file_list:
     name: File list
     runs-on: ${{ fromJSON(inputs.runs_on) }}
