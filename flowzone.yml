@@ -360,30 +360,24 @@
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &jsonArrayBuilder
-    name: Build JSON array
+    name: Build JSON list from comma-separated input
     uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
-    env:
-      INPUT: ${{ env.INPUT }}
-      DELIMITER: ${{ env.DELIMITER }}
     with:
       result-encoding: json
       script: |
         // Remove whitespace from input
         const input = process.env.INPUT?.replace(/\s+/g, '') || '';
-        const delimiter = process.env.DELIMITER;
 
         // Split by delimiter (will return [''] for empty input)
-        return input.split(delimiter);
+        return input.split(',');
 
   - &newlineListBuilder
-    name: Build newline-separated list from JSON array
-    id: to_newline_list
-    run: |
-      build="$(echo "${{ join(fromJSON(env.INPUT),' ') }}" | tr " " "\n")"
-      DELIMITER="$(echo $RANDOM | md5sum | head -c 32)"
-      echo "build<<${DELIMITER}" >> "${GITHUB_OUTPUT}"
-      echo "${build}" >> "${GITHUB_OUTPUT}"
-      echo "${DELIMITER}" >> "${GITHUB_OUTPUT}"
+    name: Build newline-separated list from JSON list input
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    with:
+      result-encoding: string
+      script: |
+        return JSON.parse(process.env.INPUT).join('\n');
 
   - &dockerPlatformSlugMap
     PLATFORM_SLUG_MAP: >
@@ -2021,7 +2015,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.docker_images }}
-          DELIMITER: ","
 
       - id: docker_images_crlf
         <<: *newlineListBuilder
@@ -2032,7 +2025,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.bake_targets }}
-          DELIMITER: ","
 
       - name: Check for docker compose test files
         id: docker_compose_tests
@@ -2315,7 +2307,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.cargo_targets }}
-          DELIMITER: ","
 
       - name: Check Cargo.toml
         id: cargo_yml
@@ -2362,7 +2353,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.balena_slugs }}
-          DELIMITER: ","
 
       - name: Check for balena.yml
         id: balena_yml
@@ -2409,7 +2399,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_test_matrix }}
-          DELIMITER: ","
 
       # FIXME: remove this handling of deprecated comma-separated values
       - &customValuesInput
@@ -2432,7 +2421,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
-          DELIMITER: ","
 
       # FIXME: remove this handling of deprecated comma-separated values
       - <<: *customValuesInput
@@ -2451,7 +2439,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
-          DELIMITER: ","
 
       # FIXME: remove this handling of deprecated comma-separated values
       - <<: *customValuesInput
@@ -2973,7 +2960,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ steps.setup_buildx.outputs.platforms }}
-          DELIMITER: ","
 
       # only register qemu binfmt if the target platform is not supported by the host natively
       - <<: *setupQemuBinfmt

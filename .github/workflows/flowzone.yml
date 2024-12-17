@@ -1269,45 +1269,40 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - id: docker_images_json
-        name: Build JSON array
+        name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        env:
-          INPUT: ${{ inputs.docker_images }}
-          DELIMITER: ","
         with:
           result-encoding: json
           script: |
             // Remove whitespace from input
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
-            const delimiter = process.env.DELIMITER;
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(delimiter);
+            return input.split(',');
+        env:
+          INPUT: ${{ inputs.docker_images }}
       - id: docker_images_crlf
-        name: Build newline-separated list from JSON array
-        run: |
-          build="$(echo "${{ join(fromJSON(env.INPUT),' ') }}" | tr " " "\n")"
-          DELIMITER="$(echo $RANDOM | md5sum | head -c 32)"
-          echo "build<<${DELIMITER}" >> "${GITHUB_OUTPUT}"
-          echo "${build}" >> "${GITHUB_OUTPUT}"
-          echo "${DELIMITER}" >> "${GITHUB_OUTPUT}"
+        name: Build newline-separated list from JSON list input
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          result-encoding: string
+          script: |
+            return JSON.parse(process.env.INPUT).join('\n');
         env:
           INPUT: ${{ steps.docker_images_json.outputs.result }}
       - id: bake_targets_json
-        name: Build JSON array
+        name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        env:
-          INPUT: ${{ inputs.bake_targets }}
-          DELIMITER: ","
         with:
           result-encoding: json
           script: |
             // Remove whitespace from input
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
-            const delimiter = process.env.DELIMITER;
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(delimiter);
+            return input.split(',');
+        env:
+          INPUT: ${{ inputs.bake_targets }}
       - name: Check for docker compose test files
         id: docker_compose_tests
         run: |
@@ -1581,20 +1576,18 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - id: cargo_targets
-        name: Build JSON array
+        name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        env:
-          INPUT: ${{ inputs.cargo_targets }}
-          DELIMITER: ","
         with:
           result-encoding: json
           script: |
             // Remove whitespace from input
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
-            const delimiter = process.env.DELIMITER;
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(delimiter);
+            return input.split(',');
+        env:
+          INPUT: ${{ inputs.cargo_targets }}
       - name: Check Cargo.toml
         id: cargo_yml
         run: |
@@ -1653,20 +1646,18 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - id: balena_slugs
-        name: Build JSON array
+        name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        env:
-          INPUT: ${{ inputs.balena_slugs }}
-          DELIMITER: ","
         with:
           result-encoding: json
           script: |
             // Remove whitespace from input
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
-            const delimiter = process.env.DELIMITER;
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(delimiter);
+            return input.split(',');
+        env:
+          INPUT: ${{ inputs.balena_slugs }}
       - name: Check for balena.yml
         id: balena_yml
         run: |
@@ -1731,20 +1722,18 @@ jobs:
           git checkout FETCH_HEAD -- .github
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
-        name: Build JSON array
+        name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        env:
-          INPUT: ${{ inputs.custom_test_matrix }}
-          DELIMITER: ","
         with:
           result-encoding: json
           script: |
             // Remove whitespace from input
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
-            const delimiter = process.env.DELIMITER;
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(delimiter);
+            return input.split(',');
+        env:
+          INPUT: ${{ inputs.custom_test_matrix }}
       - name: Create matrix from custom values
         id: custom_test_matrix
         if: steps.custom_test_values.outputs.result != ''
@@ -1759,20 +1748,18 @@ jobs:
           echo "json=${json}" >> "${GITHUB_OUTPUT}"
       - id: custom_publish_values
         if: contains(inputs.custom_publish_matrix, '{') != true
-        name: Build JSON array
+        name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        env:
-          INPUT: ${{ inputs.custom_publish_matrix }}
-          DELIMITER: ","
         with:
           result-encoding: json
           script: |
             // Remove whitespace from input
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
-            const delimiter = process.env.DELIMITER;
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(delimiter);
+            return input.split(',');
+        env:
+          INPUT: ${{ inputs.custom_publish_matrix }}
       - name: Create matrix from custom values
         id: custom_publish_matrix
         if: steps.custom_publish_values.outputs.result != ''
@@ -1787,20 +1774,18 @@ jobs:
           echo "json=${json}" >> "${GITHUB_OUTPUT}"
       - id: custom_finalize_values
         if: contains(inputs.custom_finalize_matrix, '{') != true
-        name: Build JSON array
+        name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        env:
-          INPUT: ${{ inputs.custom_finalize_matrix }}
-          DELIMITER: ","
         with:
           result-encoding: json
           script: |
             // Remove whitespace from input
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
-            const delimiter = process.env.DELIMITER;
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(delimiter);
+            return input.split(',');
+        env:
+          INPUT: ${{ inputs.custom_finalize_matrix }}
       - name: Create matrix from custom values
         id: custom_finalize_matrix
         if: steps.custom_finalize_values.outputs.result != ''
@@ -2469,20 +2454,18 @@ jobs:
           install: true
           version: ${{ env.BUILDX_VERSION }}
       - id: native_platforms
-        name: Build JSON array
+        name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        env:
-          INPUT: ${{ steps.setup_buildx.outputs.platforms }}
-          DELIMITER: ","
         with:
           result-encoding: json
           script: |
             // Remove whitespace from input
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
-            const delimiter = process.env.DELIMITER;
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(delimiter);
+            return input.split(',');
+        env:
+          INPUT: ${{ steps.setup_buildx.outputs.platforms }}
       - name: Setup QEMU
         id: qemu_binfmt
         uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf
