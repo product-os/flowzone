@@ -1237,10 +1237,10 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     outputs:
-      docker_images: ${{ steps.docker_images_json.outputs.build }}
+      docker_images: ${{ steps.docker_images_json.outputs.result }}
       docker_images_crlf: ${{ steps.docker_images_crlf.outputs.build }}
       docker_compose_tests: ${{ steps.docker_compose_tests.outputs.found }}
-      bake_targets: ${{ steps.bake_targets_json.outputs.build }}
+      bake_targets: ${{ steps.bake_targets_json.outputs.result }}
       docker_bake_json: ${{ steps.docker_bake.outputs.json }}
       docker_test_matrix: ${{ steps.docker_test.outputs.build }}
       docker_publish_matrix: ${{ steps.docker_publish.outputs.build }}
@@ -1270,28 +1270,19 @@ jobs:
           persist-credentials: false
       - id: docker_images_json
         name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           INPUT: ${{ inputs.docker_images }}
           DELIMITER: ","
+        with:
+          result-encoding: json
+          script: |
+            // Remove whitespace from input
+            const input = process.env.INPUT?.replace(/\s+/g, '') || '';
+            const delimiter = process.env.DELIMITER;
+
+            // Split by delimiter (will return [''] for empty input)
+            return input.split(delimiter);
       - id: docker_images_crlf
         name: Build newline-separated list from JSON array
         run: |
@@ -1301,31 +1292,22 @@ jobs:
           echo "${build}" >> "${GITHUB_OUTPUT}"
           echo "${DELIMITER}" >> "${GITHUB_OUTPUT}"
         env:
-          INPUT: ${{ steps.docker_images_json.outputs.build }}
+          INPUT: ${{ steps.docker_images_json.outputs.result }}
       - id: bake_targets_json
         name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           INPUT: ${{ inputs.bake_targets }}
           DELIMITER: ","
+        with:
+          result-encoding: json
+          script: |
+            // Remove whitespace from input
+            const input = process.env.INPUT?.replace(/\s+/g, '') || '';
+            const delimiter = process.env.DELIMITER;
+
+            // Split by delimiter (will return [''] for empty input)
+            return input.split(delimiter);
       - name: Check for docker compose test files
         id: docker_compose_tests
         run: |
@@ -1345,7 +1327,7 @@ jobs:
       - name: Pre-process Docker bake files
         id: docker_bake
         if: |
-          join(fromJSON(steps.docker_images_json.outputs.build)) != '' ||
+          join(fromJSON(steps.docker_images_json.outputs.result)) != '' ||
           steps.docker_compose_tests.outputs.found == 'true'
         env:
           BAKE_FILE: /tmp/docker-bake.json
@@ -1354,14 +1336,14 @@ jobs:
           then
             files="$(echo "$(ls -1 docker-bake{.override,}.{json,hcl} 2>/dev/null)" | sed 's/ / -f /')"
           else
-            echo '${{ steps.bake_targets_json.outputs.build }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
+            echo '${{ steps.bake_targets_json.outputs.result }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
             files="${BAKE_FILE}"
           fi
 
           # log merged files and targets
-          docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.build),' ') }} -f ${files}
+          docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.result),' ') }} -f ${files}
 
-          json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.build),' ') }} -f ${files} \
+          json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.result),' ') }} -f ${files} \
             | jq -cr '
               .target |= map_values(."inherits" += ["docker-metadata-action"]) |
               .target |= map_values(."platforms" //= ["linux/amd64"]) |
@@ -1434,11 +1416,11 @@ jobs:
             }
           BAKE_JSON: ${{ steps.docker_bake.outputs.json }}
         if: |
-          join(fromJSON(steps.docker_images_json.outputs.build)) != '' && join(fromJSON(steps.bake_targets_json.outputs.build)) != ''
+          join(fromJSON(steps.docker_images_json.outputs.result)) != '' && join(fromJSON(steps.bake_targets_json.outputs.result)) != ''
         run: |
           matrix="$(jq -ncr \
-            --argjson images '${{ steps.docker_images_json.outputs.build }}' \
-            --argjson targets '${{ steps.bake_targets_json.outputs.build }}' \
+            --argjson images '${{ steps.docker_images_json.outputs.result }}' \
+            --argjson targets '${{ steps.bake_targets_json.outputs.result }}' \
             '{include: [([$images, $targets] | combinations | {image: .[0], target: .[1]})]}')"
 
           matrix="$(jq -cr '.include[] |= . + {"target_slug": (.target | gsub("[^[:alnum:]]"; "-"))}' <<< "${matrix}")"
@@ -1570,7 +1552,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     outputs:
-      cargo_targets: ${{ steps.cargo_targets.outputs.build }}
+      cargo_targets: ${{ steps.cargo_targets.outputs.result }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
       cargo_sbom: ${{ inputs.generate_sbom }}
       cargo_publish: ${{ steps.cargo_publish.outputs.value }}
@@ -1600,28 +1582,19 @@ jobs:
           persist-credentials: false
       - id: cargo_targets
         name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           INPUT: ${{ inputs.cargo_targets }}
           DELIMITER: ","
+        with:
+          result-encoding: json
+          script: |
+            // Remove whitespace from input
+            const input = process.env.INPUT?.replace(/\s+/g, '') || '';
+            const delimiter = process.env.DELIMITER;
+
+            // Split by delimiter (will return [''] for empty input)
+            return input.split(delimiter);
       - name: Check Cargo.toml
         id: cargo_yml
         run: |
@@ -1653,7 +1626,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     outputs:
-      balena_slugs: ${{ steps.balena_slugs.outputs.build }}
+      balena_slugs: ${{ steps.balena_slugs.outputs.result }}
       balena_yml: ${{ steps.balena_yml.outputs.enabled }}
     steps:
       - name: Generate GitHub App installation token
@@ -1681,28 +1654,19 @@ jobs:
           persist-credentials: false
       - id: balena_slugs
         name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           INPUT: ${{ inputs.balena_slugs }}
           DELIMITER: ","
+        with:
+          result-encoding: json
+          script: |
+            // Remove whitespace from input
+            const input = process.env.INPUT?.replace(/\s+/g, '') || '';
+            const delimiter = process.env.DELIMITER;
+
+            // Split by delimiter (will return [''] for empty input)
+            return input.split(delimiter);
       - name: Check for balena.yml
         id: balena_yml
         run: |
@@ -1768,35 +1732,26 @@ jobs:
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
         name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           INPUT: ${{ inputs.custom_test_matrix }}
           DELIMITER: ","
+        with:
+          result-encoding: json
+          script: |
+            // Remove whitespace from input
+            const input = process.env.INPUT?.replace(/\s+/g, '') || '';
+            const delimiter = process.env.DELIMITER;
+
+            // Split by delimiter (will return [''] for empty input)
+            return input.split(delimiter);
       - name: Create matrix from custom values
         id: custom_test_matrix
-        if: steps.custom_test_values.outputs.json != ''
+        if: steps.custom_test_values.outputs.result != ''
         env:
           MATRIX: |
             {
-              "value": ${{ steps.custom_test_values.outputs.json }},
+              "value": ${{ steps.custom_test_values.outputs.result }},
               "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
             }
         run: |
@@ -1805,35 +1760,26 @@ jobs:
       - id: custom_publish_values
         if: contains(inputs.custom_publish_matrix, '{') != true
         name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
           DELIMITER: ","
+        with:
+          result-encoding: json
+          script: |
+            // Remove whitespace from input
+            const input = process.env.INPUT?.replace(/\s+/g, '') || '';
+            const delimiter = process.env.DELIMITER;
+
+            // Split by delimiter (will return [''] for empty input)
+            return input.split(delimiter);
       - name: Create matrix from custom values
         id: custom_publish_matrix
-        if: steps.custom_publish_values.outputs.json != ''
+        if: steps.custom_publish_values.outputs.result != ''
         env:
           MATRIX: |
             {
-              "value": ${{ steps.custom_publish_values.outputs.json }},
+              "value": ${{ steps.custom_publish_values.outputs.result }},
               "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
             }
         run: |
@@ -1842,35 +1788,26 @@ jobs:
       - id: custom_finalize_values
         if: contains(inputs.custom_finalize_matrix, '{') != true
         name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
           DELIMITER: ","
+        with:
+          result-encoding: json
+          script: |
+            // Remove whitespace from input
+            const input = process.env.INPUT?.replace(/\s+/g, '') || '';
+            const delimiter = process.env.DELIMITER;
+
+            // Split by delimiter (will return [''] for empty input)
+            return input.split(delimiter);
       - name: Create matrix from custom values
         id: custom_finalize_matrix
-        if: steps.custom_finalize_values.outputs.json != ''
+        if: steps.custom_finalize_values.outputs.result != ''
         env:
           MATRIX: |
             {
-              "value": ${{ steps.custom_finalize_values.outputs.json }},
+              "value": ${{ steps.custom_finalize_values.outputs.result }},
               "os": ${{ inputs.custom_runs_on || format('[{0}]', inputs.runs_on) }}
             }
         run: |
@@ -2533,28 +2470,19 @@ jobs:
           version: ${{ env.BUILDX_VERSION }}
       - id: native_platforms
         name: Build JSON array
-        shell: bash
-        run: |
-          set -x
-
-          # Remove spaces and newlines from the input
-          INPUT="$(echo "${INPUT}" | tr -d '[:space:]')"
-
-          # Convert to JSON array using jq to split the string by the given delimiter
-          # Add a step to check if the array is empty, default to [""] if so
-          JSON_ARRAY="$(jq --raw-input --compact-output --null-input --arg delim "$DELIMITER" --arg input "$INPUT" '
-            if $input == "" then
-              [""] # Default to a single empty string element if input is empty
-            else
-              $input | split($delim) # Split the input by the delimiter
-            end
-          ')"
-
-          echo "build=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
-          echo "json=${JSON_ARRAY}" >> "${GITHUB_OUTPUT}"
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           INPUT: ${{ steps.setup_buildx.outputs.platforms }}
           DELIMITER: ","
+        with:
+          result-encoding: json
+          script: |
+            // Remove whitespace from input
+            const input = process.env.INPUT?.replace(/\s+/g, '') || '';
+            const delimiter = process.env.DELIMITER;
+
+            // Split by delimiter (will return [''] for empty input)
+            return input.split(delimiter);
       - name: Setup QEMU
         id: qemu_binfmt
         uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf
@@ -2564,7 +2492,7 @@ jobs:
         with:
           platforms: ${{ matrix.platform }}
           image: tonistiigi/binfmt:${{ env.BINFMT_VERSION }}
-        if: contains(steps.native_platforms.outputs.build, matrix.platform) != true
+        if: contains(steps.native_platforms.outputs.result, matrix.platform) != true
       - name: Login to GitHub Container Registry
         continue-on-error: true
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
