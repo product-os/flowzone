@@ -2400,50 +2400,59 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Sanitize docker strings
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: strings
         env:
           TARGET: ${{ matrix.target }}
           IMAGE: ${{ matrix.image }}
-        run: |
-          target_slug="$(echo "${TARGET}" | sed 's/[^[:alnum:]]/-/g')"
+          DOCKER_INVERT_TAGS: ${{ inputs.docker_invert_tags }}
+        with:
+          result-encoding: json
+          script: |
+            const target = process.env.TARGET;
+            const image = process.env.IMAGE;
+            const invertTags = process.env.DOCKER_INVERT_TAGS === 'true';
 
-          if [ -n "${TARGET}" ] && [ -z "${target_slug}" ]
-          then
-            echo "::error::Unsupported platform: ${TARGET}"
-          fi
+            // Sanitize target to slug
+            const targetSlug = target.replace(/[^a-zA-Z0-9]/g, '-');
 
-          if [ "${TARGET}" != "default" ]
-          then
-            if [ "${{ inputs.docker_invert_tags }}" = "true" ]
-            then
-              prefix_slug="${target_slug}-"
-            else
-              suffix_slug="-${target_slug}"
-            fi
-          fi
+            if (target && !targetSlug) {
+              core.setFailed(`Unsupported platform: ${target}`);
+              return;
+            }
 
-          case ${IMAGE} in
-          '')
-            image_slug=
-            ;;
-          *.*/*)
-            # convert tl.d/org/repo(:tag)? to tl.d/org/repo
-            image_slug="${IMAGE%%:*}"
-            ;;
-          *)
-            # convert org/repo(:tag)? to docker.io/org/repo
-            image_slug="docker.io/${IMAGE%%:*}"
-            ;;
-          esac
+            // Set prefix/suffix based on target
+            let prefixSlug = '';
+            let suffixSlug = '';
+            if (target !== 'default') {
+              if (invertTags) {
+                prefixSlug = `${targetSlug}-`;
+              } else {
+                suffixSlug = `-${targetSlug}`;
+              }
+            }
 
-          # convert tl.d/org/repo to org/repo
-          repo_slug="${image_slug#*/}"
+            // Process image string
+            let imageSlug = '';
+            let repoSlug = '';
 
-          echo "image=${image_slug}" >> "${GITHUB_OUTPUT}"
-          echo "target=${target_slug}" >> "${GITHUB_OUTPUT}"
-          echo "prefix=${prefix_slug}" >> "${GITHUB_OUTPUT}"
-          echo "suffix=${suffix_slug}" >> "${GITHUB_OUTPUT}"
-          echo "repo=${repo_slug}" >> "${GITHUB_OUTPUT}"
+            if (image) {
+              if (image.includes('.')) {
+                // tl.d/org/repo(:tag)? -> tl.d/org/repo
+                imageSlug = image.split(':')[0];
+              } else {
+                // org/repo(:tag)? -> docker.io/org/repo
+                imageSlug = `docker.io/${image.split(':')[0]}`;
+              }
+              // tl.d/org/repo -> org/repo
+              repoSlug = imageSlug.split('/').slice(1).join('/');
+            }
+
+            core.setOutput('image', imageSlug)
+            core.setOutput('target', targetSlug)
+            core.setOutput('prefix', prefixSlug)
+            core.setOutput('suffix', suffixSlug)
+            core.setOutput('repo', repoSlug)
       - name: Setup buildx
         id: setup_buildx
         uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5
@@ -2662,50 +2671,59 @@ jobs:
       LOCAL_TAG: localhost:5000/sut:latest
     steps:
       - name: Sanitize docker strings
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: strings
         env:
           TARGET: ${{ matrix.target }}
           IMAGE: ${{ matrix.image }}
-        run: |
-          target_slug="$(echo "${TARGET}" | sed 's/[^[:alnum:]]/-/g')"
+          DOCKER_INVERT_TAGS: ${{ inputs.docker_invert_tags }}
+        with:
+          result-encoding: json
+          script: |
+            const target = process.env.TARGET;
+            const image = process.env.IMAGE;
+            const invertTags = process.env.DOCKER_INVERT_TAGS === 'true';
 
-          if [ -n "${TARGET}" ] && [ -z "${target_slug}" ]
-          then
-            echo "::error::Unsupported platform: ${TARGET}"
-          fi
+            // Sanitize target to slug
+            const targetSlug = target.replace(/[^a-zA-Z0-9]/g, '-');
 
-          if [ "${TARGET}" != "default" ]
-          then
-            if [ "${{ inputs.docker_invert_tags }}" = "true" ]
-            then
-              prefix_slug="${target_slug}-"
-            else
-              suffix_slug="-${target_slug}"
-            fi
-          fi
+            if (target && !targetSlug) {
+              core.setFailed(`Unsupported platform: ${target}`);
+              return;
+            }
 
-          case ${IMAGE} in
-          '')
-            image_slug=
-            ;;
-          *.*/*)
-            # convert tl.d/org/repo(:tag)? to tl.d/org/repo
-            image_slug="${IMAGE%%:*}"
-            ;;
-          *)
-            # convert org/repo(:tag)? to docker.io/org/repo
-            image_slug="docker.io/${IMAGE%%:*}"
-            ;;
-          esac
+            // Set prefix/suffix based on target
+            let prefixSlug = '';
+            let suffixSlug = '';
+            if (target !== 'default') {
+              if (invertTags) {
+                prefixSlug = `${targetSlug}-`;
+              } else {
+                suffixSlug = `-${targetSlug}`;
+              }
+            }
 
-          # convert tl.d/org/repo to org/repo
-          repo_slug="${image_slug#*/}"
+            // Process image string
+            let imageSlug = '';
+            let repoSlug = '';
 
-          echo "image=${image_slug}" >> "${GITHUB_OUTPUT}"
-          echo "target=${target_slug}" >> "${GITHUB_OUTPUT}"
-          echo "prefix=${prefix_slug}" >> "${GITHUB_OUTPUT}"
-          echo "suffix=${suffix_slug}" >> "${GITHUB_OUTPUT}"
-          echo "repo=${repo_slug}" >> "${GITHUB_OUTPUT}"
+            if (image) {
+              if (image.includes('.')) {
+                // tl.d/org/repo(:tag)? -> tl.d/org/repo
+                imageSlug = image.split(':')[0];
+              } else {
+                // org/repo(:tag)? -> docker.io/org/repo
+                imageSlug = `docker.io/${image.split(':')[0]}`;
+              }
+              // tl.d/org/repo -> org/repo
+              repoSlug = imageSlug.split('/').slice(1).join('/');
+            }
+
+            core.setOutput('image', imageSlug)
+            core.setOutput('target', targetSlug)
+            core.setOutput('prefix', prefixSlug)
+            core.setOutput('suffix', suffixSlug)
+            core.setOutput('repo', repoSlug)
       - name: Generate docker metadata
         id: draft_meta
         uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96
@@ -2913,50 +2931,59 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - name: Sanitize docker strings
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: strings
         env:
           TARGET: ${{ matrix.target }}
           IMAGE: ${{ matrix.image }}
-        run: |
-          target_slug="$(echo "${TARGET}" | sed 's/[^[:alnum:]]/-/g')"
+          DOCKER_INVERT_TAGS: ${{ inputs.docker_invert_tags }}
+        with:
+          result-encoding: json
+          script: |
+            const target = process.env.TARGET;
+            const image = process.env.IMAGE;
+            const invertTags = process.env.DOCKER_INVERT_TAGS === 'true';
 
-          if [ -n "${TARGET}" ] && [ -z "${target_slug}" ]
-          then
-            echo "::error::Unsupported platform: ${TARGET}"
-          fi
+            // Sanitize target to slug
+            const targetSlug = target.replace(/[^a-zA-Z0-9]/g, '-');
 
-          if [ "${TARGET}" != "default" ]
-          then
-            if [ "${{ inputs.docker_invert_tags }}" = "true" ]
-            then
-              prefix_slug="${target_slug}-"
-            else
-              suffix_slug="-${target_slug}"
-            fi
-          fi
+            if (target && !targetSlug) {
+              core.setFailed(`Unsupported platform: ${target}`);
+              return;
+            }
 
-          case ${IMAGE} in
-          '')
-            image_slug=
-            ;;
-          *.*/*)
-            # convert tl.d/org/repo(:tag)? to tl.d/org/repo
-            image_slug="${IMAGE%%:*}"
-            ;;
-          *)
-            # convert org/repo(:tag)? to docker.io/org/repo
-            image_slug="docker.io/${IMAGE%%:*}"
-            ;;
-          esac
+            // Set prefix/suffix based on target
+            let prefixSlug = '';
+            let suffixSlug = '';
+            if (target !== 'default') {
+              if (invertTags) {
+                prefixSlug = `${targetSlug}-`;
+              } else {
+                suffixSlug = `-${targetSlug}`;
+              }
+            }
 
-          # convert tl.d/org/repo to org/repo
-          repo_slug="${image_slug#*/}"
+            // Process image string
+            let imageSlug = '';
+            let repoSlug = '';
 
-          echo "image=${image_slug}" >> "${GITHUB_OUTPUT}"
-          echo "target=${target_slug}" >> "${GITHUB_OUTPUT}"
-          echo "prefix=${prefix_slug}" >> "${GITHUB_OUTPUT}"
-          echo "suffix=${suffix_slug}" >> "${GITHUB_OUTPUT}"
-          echo "repo=${repo_slug}" >> "${GITHUB_OUTPUT}"
+            if (image) {
+              if (image.includes('.')) {
+                // tl.d/org/repo(:tag)? -> tl.d/org/repo
+                imageSlug = image.split(':')[0];
+              } else {
+                // org/repo(:tag)? -> docker.io/org/repo
+                imageSlug = `docker.io/${image.split(':')[0]}`;
+              }
+              // tl.d/org/repo -> org/repo
+              repoSlug = imageSlug.split('/').slice(1).join('/');
+            }
+
+            core.setOutput('image', imageSlug)
+            core.setOutput('target', targetSlug)
+            core.setOutput('prefix', prefixSlug)
+            core.setOutput('suffix', suffixSlug)
+            core.setOutput('repo', repoSlug)
       - name: Generate docker metadata
         id: final_meta
         uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96

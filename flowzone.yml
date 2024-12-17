@@ -397,50 +397,59 @@
 
   - &sanitizeDockerStrings
     name: Sanitize docker strings
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
     id: strings
     env:
       TARGET: ${{ matrix.target }}
       IMAGE: ${{ matrix.image }}
-    run: |
-      target_slug="$(echo "${TARGET}" | sed 's/[^[:alnum:]]/-/g')"
+      DOCKER_INVERT_TAGS: ${{ inputs.docker_invert_tags }}
+    with:
+      result-encoding: json
+      script: |
+        const target = process.env.TARGET;
+        const image = process.env.IMAGE;
+        const invertTags = process.env.DOCKER_INVERT_TAGS === 'true';
 
-      if [ -n "${TARGET}" ] && [ -z "${target_slug}" ]
-      then
-        echo "::error::Unsupported platform: ${TARGET}"
-      fi
+        // Sanitize target to slug
+        const targetSlug = target.replace(/[^a-zA-Z0-9]/g, '-');
 
-      if [ "${TARGET}" != "default" ]
-      then
-        if [ "${{ inputs.docker_invert_tags }}" = "true" ]
-        then
-          prefix_slug="${target_slug}-"
-        else
-          suffix_slug="-${target_slug}"
-        fi
-      fi
+        if (target && !targetSlug) {
+          core.setFailed(`Unsupported platform: ${target}`);
+          return;
+        }
 
-      case ${IMAGE} in
-      '')
-        image_slug=
-        ;;
-      *.*/*)
-        # convert tl.d/org/repo(:tag)? to tl.d/org/repo
-        image_slug="${IMAGE%%:*}"
-        ;;
-      *)
-        # convert org/repo(:tag)? to docker.io/org/repo
-        image_slug="docker.io/${IMAGE%%:*}"
-        ;;
-      esac
+        // Set prefix/suffix based on target
+        let prefixSlug = '';
+        let suffixSlug = '';
+        if (target !== 'default') {
+          if (invertTags) {
+            prefixSlug = `${targetSlug}-`;
+          } else {
+            suffixSlug = `-${targetSlug}`;
+          }
+        }
 
-      # convert tl.d/org/repo to org/repo
-      repo_slug="${image_slug#*/}"
+        // Process image string
+        let imageSlug = '';
+        let repoSlug = '';
 
-      echo "image=${image_slug}" >> "${GITHUB_OUTPUT}"
-      echo "target=${target_slug}" >> "${GITHUB_OUTPUT}"
-      echo "prefix=${prefix_slug}" >> "${GITHUB_OUTPUT}"
-      echo "suffix=${suffix_slug}" >> "${GITHUB_OUTPUT}"
-      echo "repo=${repo_slug}" >> "${GITHUB_OUTPUT}"
+        if (image) {
+          if (image.includes('.')) {
+            // tl.d/org/repo(:tag)? -> tl.d/org/repo
+            imageSlug = image.split(':')[0];
+          } else {
+            // org/repo(:tag)? -> docker.io/org/repo
+            imageSlug = `docker.io/${image.split(':')[0]}`;
+          }
+          // tl.d/org/repo -> org/repo
+          repoSlug = imageSlug.split('/').slice(1).join('/');
+        }
+
+        core.setOutput('image', imageSlug)
+        core.setOutput('target', targetSlug)
+        core.setOutput('prefix', prefixSlug)
+        core.setOutput('suffix', suffixSlug)
+        core.setOutput('repo', repoSlug)
 
   - &dockerTestMetadata # https://github.com/docker/metadata-action
     name: Generate docker metadata
