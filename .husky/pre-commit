@@ -3,3 +3,7 @@ set -e
 npm run build
 npm run lint
 git add .github/workflows/flowzone.yml README.md
+
+if command -v pre-commit &> /dev/null; then
+  pre-commit run --all-files
+fi
