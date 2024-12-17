@@ -1278,7 +1278,7 @@ jobs:
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(',');
+            return !input ? [''] : input.split(',');
         env:
           INPUT: ${{ inputs.docker_images }}
       - id: docker_images_crlf
@@ -1300,7 +1300,7 @@ jobs:
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(',');
+            return !input ? [''] : input.split(',');
         env:
           INPUT: ${{ inputs.bake_targets }}
       - name: Check for docker compose test files
@@ -1585,7 +1585,7 @@ jobs:
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(',');
+            return !input ? [''] : input.split(',');
         env:
           INPUT: ${{ inputs.cargo_targets }}
       - name: Check Cargo.toml
@@ -1655,7 +1655,7 @@ jobs:
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(',');
+            return !input ? [''] : input.split(',');
         env:
           INPUT: ${{ inputs.balena_slugs }}
       - name: Check for balena.yml
@@ -1731,7 +1731,7 @@ jobs:
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(',');
+            return !input ? [''] : input.split(',');
         env:
           INPUT: ${{ inputs.custom_test_matrix }}
       - name: Create matrix from custom values
@@ -1757,7 +1757,7 @@ jobs:
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(',');
+            return !input ? [''] : input.split(',');
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
       - name: Create matrix from custom values
@@ -1783,7 +1783,7 @@ jobs:
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(',');
+            return !input ? [''] : input.split(',');
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
       - name: Create matrix from custom values
@@ -2528,7 +2528,7 @@ jobs:
             const input = process.env.INPUT?.replace(/\s+/g, '') || '';
 
             // Split by delimiter (will return [''] for empty input)
-            return input.split(',');
+            return !input ? [''] : input.split(',');
         env:
           INPUT: ${{ steps.setup_buildx.outputs.platforms }}
       - name: Setup QEMU
@@ -5131,32 +5131,35 @@ jobs:
               "metadata": "read",
               "pull_requests": "read"
             }
-      - name: Check if PR is draft
-        id: is_draft_pr
-        env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          result="$(gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq '.isDraft == true')"
-          echo "result=${result}" >> "${GITHUB_OUTPUT}"
+      - name: Get the PR state
+        id: get-pr
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          result-encoding: json
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          script: |
+            const { data } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+            return data;
       - name: Check if branch has rules
-        if: steps.is_draft_pr.outputs.result == 'false'
-        id: branch_has_rules
-        env:
-          GH_DEBUG: "true"
-          GH_PAGER: cat
-          GH_PROMPT_DISABLED: "true"
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          result="$(gh api -H "Accept: application/vnd.github+json" \
-            "/repos/${{ github.repository }}/rules/branches/${{ github.base_ref }}" | jq 'length != 0')"
-          echo "result=${result}" >> "${GITHUB_OUTPUT}"
+        if: ${{ fromJSON(steps.get-pr.outputs.result).draft == false }}
+        id: get-branch-rules
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          result-encoding: json
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          script: |
+            const { data } = await github.rest.repos.getBranchRules({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: context.payload.pull_request.base.ref
+            });
+            return data;
       - name: Toggle auto-merge
-        if: steps.is_draft_pr.outputs.result == 'false' && steps.branch_has_rules.outputs.result == 'true'
+        if: ${{ fromJSON(steps.get-pr.outputs.result).draft == false && steps.get-branch-rules.outputs.result != '[]' }}
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat

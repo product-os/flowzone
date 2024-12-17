@@ -369,7 +369,7 @@
         const input = process.env.INPUT?.replace(/\s+/g, '') || '';
 
         // Split by delimiter (will return [''] for empty input)
-        return input.split(',');
+        return !input ? [''] : input.split(',');
 
   - &newlineListBuilder
     name: Build newline-separated list from JSON list input
@@ -4738,40 +4738,48 @@ jobs:
               "pull_requests": "read"
             }
 
-      # Check if the PR is currently in draft state.
-      # We aren't using the existing github context values here as those
-      # are not updated on re-runs, or mid-execution.
-      - name: Check if PR is draft
-        id: is_draft_pr
-        env:
-          <<: *gitHubCliEnvironment
-          GH_TOKEN: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
-        run: |
-          result="$(gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq '.isDraft == true')"
-          echo "result=${result}" >> "${GITHUB_OUTPUT}"
+      # Get the current state of the PR so we can check if it is in draft state
+      - name: Get the PR state
+        id: get-pr
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          result-encoding: json
+          github-token: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
+          script: |
+            const { data } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+            return data;
 
       # This prevents merging PRs that do not have any required
       # checks, in theory. In practice the rules may not contain
       # required status checks but the presence of any branch rule is good enough.
-      # https://docs.github.com/en/rest/repos/rules?apiVersion=2022-11-28#get-rules-for-a-branch
       # The fine-grained token must have the following permission set:
       # - "Metadata" repository permissions (read)
+      # https://octokit.github.io/rest.js/v21/#repos-get-branch-rules
+      # https://docs.github.com/en/rest/repos/rules#get-rules-for-a-branch
       - name: Check if branch has rules
-        if: steps.is_draft_pr.outputs.result == 'false'
-        id: branch_has_rules
-        env:
-          <<: *gitHubCliEnvironment
-          GH_TOKEN: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
-        run: |
-          result="$(gh api -H "Accept: application/vnd.github+json" \
-            "/repos/${{ github.repository }}/rules/branches/${{ github.base_ref }}" | jq 'length != 0')"
-          echo "result=${result}" >> "${GITHUB_OUTPUT}"
+        if: ${{ fromJSON(steps.get-pr.outputs.result).draft == false }}
+        id: get-branch-rules
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          result-encoding: json
+          github-token: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
+          script: |
+            const { data } = await github.rest.repos.getBranchRules({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: context.payload.pull_request.base.ref
+            });
+            return data;
 
       # Only toggle auto-merge if:
       # - there are one or more required status checks on the branch via rulesets
       # - and the PR is not in draft state
       - name: Toggle auto-merge
-        if: steps.is_draft_pr.outputs.result == 'false' && steps.branch_has_rules.outputs.result == 'true'
+        if: ${{ fromJSON(steps.get-pr.outputs.result).draft == false && steps.get-branch-rules.outputs.result != '[]' }}
         env:
           <<: *gitHubCliEnvironment
           # DO NOT use the automatic github token (GITHUB_TOKEN) as it will not trigger merge events!
