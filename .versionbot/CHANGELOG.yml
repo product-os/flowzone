@@ -1,4 +1,20 @@
 - commits:
+    - subject: Replace json array builder shell with github-script
+      hash: ffa7d5f1c2471ee5da18bf6cb2f9a27a498be099
+      body: |
+        This is a more concise and secure method and avoids the risks
+        of jq processing typos.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.2.12
+  title: ""
+  date: 2024-12-17T18:29:52.261Z
+- commits:
     - subject: Use app installation tokens to upload octoscan SARIF
       hash: aa4a2998df73c7749cdb96dc785d72c0310a8cd9
       body: |
