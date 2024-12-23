@@ -360,30 +360,24 @@
       GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   - &jsonArrayBuilder
-    name: Build JSON array
+    name: Build JSON list from comma-separated input
     uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
-    env:
-      INPUT: ${{ env.INPUT }}
-      DELIMITER: ${{ env.DELIMITER }}
     with:
       result-encoding: json
       script: |
         // Remove whitespace from input
         const input = process.env.INPUT?.replace(/\s+/g, '') || '';
-        const delimiter = process.env.DELIMITER;
 
         // Split by delimiter (will return [''] for empty input)
-        return input.split(delimiter);
+        return !input ? [''] : input.split(',');
 
   - &newlineListBuilder
-    name: Build newline-separated list from JSON array
-    id: to_newline_list
-    run: |
-      build="$(echo "${{ join(fromJSON(env.INPUT),' ') }}" | tr " " "\n")"
-      DELIMITER="$(echo $RANDOM | md5sum | head -c 32)"
-      echo "build<<${DELIMITER}" >> "${GITHUB_OUTPUT}"
-      echo "${build}" >> "${GITHUB_OUTPUT}"
-      echo "${DELIMITER}" >> "${GITHUB_OUTPUT}"
+    name: Build newline-separated list from JSON list input
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    with:
+      result-encoding: string
+      script: |
+        return JSON.parse(process.env.INPUT).join('\n');
 
   - &dockerPlatformSlugMap
     PLATFORM_SLUG_MAP: >
@@ -403,50 +397,59 @@
 
   - &sanitizeDockerStrings
     name: Sanitize docker strings
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
     id: strings
     env:
       TARGET: ${{ matrix.target }}
       IMAGE: ${{ matrix.image }}
-    run: |
-      target_slug="$(echo "${TARGET}" | sed 's/[^[:alnum:]]/-/g')"
+      DOCKER_INVERT_TAGS: ${{ inputs.docker_invert_tags }}
+    with:
+      result-encoding: json
+      script: |
+        const target = process.env.TARGET;
+        const image = process.env.IMAGE;
+        const invertTags = process.env.DOCKER_INVERT_TAGS === 'true';
 
-      if [ -n "${TARGET}" ] && [ -z "${target_slug}" ]
-      then
-        echo "::error::Unsupported platform: ${TARGET}"
-      fi
+        // Sanitize target to slug
+        const targetSlug = target.replace(/[^a-zA-Z0-9]/g, '-');
 
-      if [ "${TARGET}" != "default" ]
-      then
-        if [ "${{ inputs.docker_invert_tags }}" = "true" ]
-        then
-          prefix_slug="${target_slug}-"
-        else
-          suffix_slug="-${target_slug}"
-        fi
-      fi
+        if (target && !targetSlug) {
+          core.setFailed(`Unsupported platform: ${target}`);
+          return;
+        }
 
-      case ${IMAGE} in
-      '')
-        image_slug=
-        ;;
-      *.*/*)
-        # convert tl.d/org/repo(:tag)? to tl.d/org/repo
-        image_slug="${IMAGE%%:*}"
-        ;;
-      *)
-        # convert org/repo(:tag)? to docker.io/org/repo
-        image_slug="docker.io/${IMAGE%%:*}"
-        ;;
-      esac
+        // Set prefix/suffix based on target
+        let prefixSlug = '';
+        let suffixSlug = '';
+        if (target !== 'default') {
+          if (invertTags) {
+            prefixSlug = `${targetSlug}-`;
+          } else {
+            suffixSlug = `-${targetSlug}`;
+          }
+        }
 
-      # convert tl.d/org/repo to org/repo
-      repo_slug="${image_slug#*/}"
+        // Process image string
+        let imageSlug = '';
+        let repoSlug = '';
 
-      echo "image=${image_slug}" >> "${GITHUB_OUTPUT}"
-      echo "target=${target_slug}" >> "${GITHUB_OUTPUT}"
-      echo "prefix=${prefix_slug}" >> "${GITHUB_OUTPUT}"
-      echo "suffix=${suffix_slug}" >> "${GITHUB_OUTPUT}"
-      echo "repo=${repo_slug}" >> "${GITHUB_OUTPUT}"
+        if (image) {
+          if (image.includes('.')) {
+            // tl.d/org/repo(:tag)? -> tl.d/org/repo
+            imageSlug = image.split(':')[0];
+          } else {
+            // org/repo(:tag)? -> docker.io/org/repo
+            imageSlug = `docker.io/${image.split(':')[0]}`;
+          }
+          // tl.d/org/repo -> org/repo
+          repoSlug = imageSlug.split('/').slice(1).join('/');
+        }
+
+        core.setOutput('image', imageSlug)
+        core.setOutput('target', targetSlug)
+        core.setOutput('prefix', prefixSlug)
+        core.setOutput('suffix', suffixSlug)
+        core.setOutput('repo', repoSlug)
 
   - &dockerTestMetadata # https://github.com/docker/metadata-action
     name: Generate docker metadata
@@ -680,12 +683,26 @@
 
   - &sortNodeVersions
     name: Sort node versions
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
     id: node_versions
     env:
       VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-    run: |
-      echo "min=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort | head -n1)" >> "${GITHUB_OUTPUT}"
-      echo "max=$(echo "${VERSIONS}" | jq -r '.[]' | sort --version-sort --reverse | head -n1)" >> "${GITHUB_OUTPUT}"
+    with:
+      result-encoding: json
+      script: |
+        const { compareVersions } = require('util');
+        const versions = JSON.parse(process.env.VERSIONS);
+
+        if (!Array.isArray(versions) || !versions.length) {
+          return { min: null, max: null };
+        }
+
+        // Sort versions in ascending order
+        const sorted = [...versions].sort(compareVersions);
+
+        core.setOutput('sorted', sorted)
+        core.setOutput('min', sorted[0])
+        core.setOutput('max', sorted[sorted.length - 1])
 
   - &waitForCloudFormation
     name: Wait for resources
@@ -2021,7 +2038,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.docker_images }}
-          DELIMITER: ","
 
       - id: docker_images_crlf
         <<: *newlineListBuilder
@@ -2032,7 +2048,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.bake_targets }}
-          DELIMITER: ","
 
       - name: Check for docker compose test files
         id: docker_compose_tests
@@ -2315,7 +2330,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.cargo_targets }}
-          DELIMITER: ","
 
       - name: Check Cargo.toml
         id: cargo_yml
@@ -2362,7 +2376,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.balena_slugs }}
-          DELIMITER: ","
 
       - name: Check for balena.yml
         id: balena_yml
@@ -2409,7 +2422,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_test_matrix }}
-          DELIMITER: ","
 
       # FIXME: remove this handling of deprecated comma-separated values
       - &customValuesInput
@@ -2432,7 +2444,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_publish_matrix }}
-          DELIMITER: ","
 
       # FIXME: remove this handling of deprecated comma-separated values
       - <<: *customValuesInput
@@ -2451,7 +2462,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.custom_finalize_matrix }}
-          DELIMITER: ","
 
       # FIXME: remove this handling of deprecated comma-separated values
       - <<: *customValuesInput
@@ -2973,7 +2983,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ steps.setup_buildx.outputs.platforms }}
-          DELIMITER: ","
 
       # only register qemu binfmt if the target platform is not supported by the host natively
       - <<: *setupQemuBinfmt
@@ -4729,40 +4738,48 @@ jobs:
               "pull_requests": "read"
             }
 
-      # Check if the PR is currently in draft state.
-      # We aren't using the existing github context values here as those
-      # are not updated on re-runs, or mid-execution.
-      - name: Check if PR is draft
-        id: is_draft_pr
-        env:
-          <<: *gitHubCliEnvironment
-          GH_TOKEN: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
-        run: |
-          result="$(gh pr view ${{ github.event.pull_request.number }} --json isDraft | jq '.isDraft == true')"
-          echo "result=${result}" >> "${GITHUB_OUTPUT}"
+      # Get the current state of the PR so we can check if it is in draft state
+      - name: Get the PR state
+        id: get-pr
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          result-encoding: json
+          github-token: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
+          script: |
+            const { data } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+            return data;
 
       # This prevents merging PRs that do not have any required
       # checks, in theory. In practice the rules may not contain
       # required status checks but the presence of any branch rule is good enough.
-      # https://docs.github.com/en/rest/repos/rules?apiVersion=2022-11-28#get-rules-for-a-branch
       # The fine-grained token must have the following permission set:
       # - "Metadata" repository permissions (read)
+      # https://octokit.github.io/rest.js/v21/#repos-get-branch-rules
+      # https://docs.github.com/en/rest/repos/rules#get-rules-for-a-branch
       - name: Check if branch has rules
-        if: steps.is_draft_pr.outputs.result == 'false'
-        id: branch_has_rules
-        env:
-          <<: *gitHubCliEnvironment
-          GH_TOKEN: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
-        run: |
-          result="$(gh api -H "Accept: application/vnd.github+json" \
-            "/repos/${{ github.repository }}/rules/branches/${{ github.base_ref }}" | jq 'length != 0')"
-          echo "result=${result}" >> "${GITHUB_OUTPUT}"
+        if: ${{ fromJSON(steps.get-pr.outputs.result).draft == false }}
+        id: get-branch-rules
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          result-encoding: json
+          github-token: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
+          script: |
+            const { data } = await github.rest.repos.getBranchRules({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: context.payload.pull_request.base.ref
+            });
+            return data;
 
       # Only toggle auto-merge if:
       # - there are one or more required status checks on the branch via rulesets
       # - and the PR is not in draft state
       - name: Toggle auto-merge
-        if: steps.is_draft_pr.outputs.result == 'false' && steps.branch_has_rules.outputs.result == 'true'
+        if: ${{ fromJSON(steps.get-pr.outputs.result).draft == false && steps.get-branch-rules.outputs.result != '[]' }}
         env:
           <<: *gitHubCliEnvironment
           # DO NOT use the automatic github token (GITHUB_TOKEN) as it will not trigger merge events!
