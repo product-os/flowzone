@@ -1,4 +1,30 @@
 - commits:
+    - subject: Replace sanitize docker strings step with github-script
+      hash: 2bcc9323b8966f3d7548059f9b39c77ceb53cc0f
+      body: |
+        This resolves 15 code-scanning warnings.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Replace newline list builder step with github-script
+      hash: e2b24ba89867eb91758a1b424ddaeae981fa3873
+      body: |
+        This resolves 4 code-scanning warning.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.2.15
+  title: ""
+  date: 2024-12-23T19:00:49.771Z
+- commits:
     - subject: Update actions/upload-artifact digest to 6f51ac0
       hash: cabcd3859379dc8f3cf5d7c4e23de74dd6933d81
       body: |
