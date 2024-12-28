@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update rhysd/actionlint Docker tag to v1.7.5
+      hash: 75c6ab2ed1d3fee219c9b81e089abe6116a66c82
+      body: |
+        Update rhysd/actionlint from 1.7.4 to 1.7.5
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.2.16
+  title: ""
+  date: 2024-12-28T12:06:41.092Z
+- commits:
     - subject: Replace sanitize docker strings step with github-script
       hash: 2bcc9323b8966f3d7548059f9b39c77ceb53cc0f
       body: |
