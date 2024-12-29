@@ -2366,7 +2366,6 @@ jobs:
 
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
-      balena_yml: ${{ steps.balena_yml.outputs.enabled }}
 
     steps:
       - *getGitHubAppToken
@@ -2376,17 +2375,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.balena_slugs }}
-
-      - name: Check for balena.yml
-        id: balena_yml
-        run: |
-          if test -f balena.yml
-          then
-            echo "found balena.yml"
-            echo "enabled=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "enabled=false" >> "${GITHUB_OUTPUT}"
-          fi
 
   # check for custom actions in source
   is_custom:
