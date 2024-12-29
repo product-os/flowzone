@@ -2498,37 +2498,6 @@ jobs:
             echo "always=true" >> "${GITHUB_OUTPUT}"
           fi
 
-  is_website:
-    name: Is website
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      - versioned_source
-    if: inputs.cloudflare_website != ''
-
-    <<: *customWorkingDirectory
-
-    permissions: {}
-
-    outputs:
-      has_readme: ${{ steps.has_readme.outputs.enabled }}
-
-    steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-
-      # Check if we have at least a README to build a website from
-      - name: Check for README for building a website
-        id: has_readme
-        run: |
-          if test -e "README.md"
-          then
-            echo "found README.md"
-            echo "enabled=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "enabled=false" >> "${GITHUB_OUTPUT}"
-          fi
-
   is_cloudformation:
     name: Is CloudFormation
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3612,7 +3581,7 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
-      - is_website
+      - file_list
       - npm_test
       - custom_test
       - docker_test
@@ -3622,9 +3591,9 @@ jobs:
     # allow some dependencies to be skipped
     # skip unmerged closed PRs, allow all other events
     if: |
-      !failure() && !cancelled() &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
-      needs.is_website.result == 'success'
+      !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
+      inputs.cloudflare_website != '' &&
+      (github.event.action != 'closed' || github.event.pull_request.merged == true)
 
     permissions: {}
 
@@ -3649,7 +3618,7 @@ jobs:
 
       - name: Docusaurus Builder
         if: |
-          needs.is_website.outputs.has_readme == 'true' &&
+          contains(needs.file_list.outputs.workdir, 'README.md') &&
           inputs.docusaurus_website != false
         uses: product-os/docusaurus-builder@699d83eb85945ac55f5699579987159d3754f268 # v2.1.36
         with:
@@ -4674,7 +4643,6 @@ jobs:
       - is_cargo
       - is_balena
       - is_custom
-      - is_website
       - all_tests
       - npm_sbom
       - python_sbom
