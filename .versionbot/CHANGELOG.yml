@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update pre-commit hook pre-commit/pre-commit-hooks to v5
+      hash: 7a603c439cdbcc0c08ad8976200888dde10716ec
+      body: |
+        Update pre-commit/pre-commit-hooks from 3.4.0 to 5.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.2.19
+  title: ""
+  date: 2024-12-30T21:09:45.470Z
+- commits:
     - subject: Combine balena publish and finalize jobs
       hash: 5c30f74d24aac49a3f01bbc7a47e377fe20bc668
       body: |
