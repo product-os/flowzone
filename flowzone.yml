@@ -58,29 +58,6 @@
       echo "version=${version}" >> "${GITHUB_OUTPUT}"
       echo "version_tag=${version_tag}" >> "${GITHUB_OUTPUT}"
 
-  - &deployToBalenaAction
-    uses: balena-io/deploy-to-balena-action@9c9d61c6b9ecb89b32557299f0c5534c18c97d14 # v2.0.85
-    id: balena_deploy
-    with:
-      balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
-      environment: ${{ inputs.balena_environment }}
-      fleet: ${{ matrix.slug }}
-      source: ${{ inputs.working_directory }}
-      note: ${{ needs.release_notes.outputs.note }}
-      # Feb 2023: as per GitHub support: "You cannot authenticate with a GitHub App token on the GitHub Package Registry"
-      # Nov 2024: Still cannot use GitHub App Tokens to authenticate with the GitHub Package Registry (login works, push/pull fails)
-      registry_secrets: |
-        {
-          "ghcr.io": {
-            "username": "${{ github.actor }}",
-            "password": "${{ secrets.GITHUB_TOKEN }}"
-          },
-          "docker.io": {
-            "username": "${{ secrets.DOCKERHUB_USER }}",
-            "password": "${{ secrets.DOCKERHUB_TOKEN }}"
-          }
-        }
-
   - &getTimeStamp
     name: Get and format timestamp
     id: timestamp
@@ -2366,7 +2343,6 @@ jobs:
 
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
-      balena_yml: ${{ steps.balena_yml.outputs.enabled }}
 
     steps:
       - *getGitHubAppToken
@@ -2376,17 +2352,6 @@ jobs:
         <<: *jsonArrayBuilder
         env:
           INPUT: ${{ inputs.balena_slugs }}
-
-      - name: Check for balena.yml
-        id: balena_yml
-        run: |
-          if test -f balena.yml
-          then
-            echo "found balena.yml"
-            echo "enabled=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "enabled=false" >> "${GITHUB_OUTPUT}"
-          fi
 
   # check for custom actions in source
   is_custom:
@@ -2496,37 +2461,6 @@ jobs:
           if [ -d .github/actions/always ]
           then
             echo "always=true" >> "${GITHUB_OUTPUT}"
-          fi
-
-  is_website:
-    name: Is website
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      - versioned_source
-    if: inputs.cloudflare_website != ''
-
-    <<: *customWorkingDirectory
-
-    permissions: {}
-
-    outputs:
-      has_readme: ${{ steps.has_readme.outputs.enabled }}
-
-    steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-
-      # Check if we have at least a README to build a website from
-      - name: Check for README for building a website
-        id: has_readme
-        run: |
-          if test -e "README.md"
-          then
-            echo "found README.md"
-            echo "enabled=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
 
   is_cloudformation:
@@ -3338,7 +3272,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
-      github.event.pull_request.state == 'open'
+      (github.event.action != 'closed' || github.event.pull_request.merged == true)
 
     strategy:
       fail-fast: false
@@ -3354,35 +3288,27 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
-      - *deployToBalenaAction
-
-  balena_finalize:
-    name: Finalize balena
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      - is_balena
-      - versioned_source
-      - release_notes
-    if: |
-      github.event.pull_request.merged == true || github.event_name == 'push'
-
-    strategy:
-      fail-fast: false
-      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
-      matrix:
-        slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
-
-    # Permissions required for push events, as merge events should only be toggling the is_final flag
-    permissions:
-      packages: read # pull private base images from ghcr.io
-
-    <<: *customWorkingDirectory
-
-    steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *deployToBalenaAction
+      - uses: balena-io/deploy-to-balena-action@9c9d61c6b9ecb89b32557299f0c5534c18c97d14 # v2.0.85
+        id: balena_deploy
+        with:
+          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
+          environment: ${{ inputs.balena_environment }}
+          fleet: ${{ matrix.slug }}
+          source: ${{ inputs.working_directory }}
+          note: ${{ needs.release_notes.outputs.note }}
+          # Feb 2023: as per GitHub support: "You cannot authenticate with a GitHub App token on the GitHub Package Registry"
+          # Nov 2024: Still cannot use GitHub App Tokens to authenticate with the GitHub Package Registry (login works, push/pull fails)
+          registry_secrets: |
+            {
+              "ghcr.io": {
+                "username": "${{ github.actor }}",
+                "password": "${{ secrets.GITHUB_TOKEN }}"
+              },
+              "docker.io": {
+                "username": "${{ secrets.DOCKERHUB_USER }}",
+                "password": "${{ secrets.DOCKERHUB_TOKEN }}"
+              }
+            }
 
   ###################################################
   ## Python
@@ -3612,7 +3538,7 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
-      - is_website
+      - file_list
       - npm_test
       - custom_test
       - docker_test
@@ -3622,9 +3548,9 @@ jobs:
     # allow some dependencies to be skipped
     # skip unmerged closed PRs, allow all other events
     if: |
-      !failure() && !cancelled() &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
-      needs.is_website.result == 'success'
+      !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
+      inputs.cloudflare_website != '' &&
+      (github.event.action != 'closed' || github.event.pull_request.merged == true)
 
     permissions: {}
 
@@ -3649,7 +3575,7 @@ jobs:
 
       - name: Docusaurus Builder
         if: |
-          needs.is_website.outputs.has_readme == 'true' &&
+          contains(needs.file_list.outputs.workdir, 'README.md') &&
           inputs.docusaurus_website != false
         uses: product-os/docusaurus-builder@699d83eb85945ac55f5699579987159d3754f268 # v2.1.36
         with:
@@ -4674,7 +4600,6 @@ jobs:
       - is_cargo
       - is_balena
       - is_custom
-      - is_website
       - all_tests
       - npm_sbom
       - python_sbom

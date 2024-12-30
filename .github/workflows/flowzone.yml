@@ -1620,7 +1620,6 @@ jobs:
     permissions: {}
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
-      balena_yml: ${{ steps.balena_yml.outputs.enabled }}
     steps:
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1658,16 +1657,6 @@ jobs:
             return !input ? [''] : input.split(',');
         env:
           INPUT: ${{ inputs.balena_slugs }}
-      - name: Check for balena.yml
-        id: balena_yml
-        run: |
-          if test -f balena.yml
-          then
-            echo "found balena.yml"
-            echo "enabled=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "enabled=false" >> "${GITHUB_OUTPUT}"
-          fi
   is_custom:
     name: Is custom
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1820,54 +1809,6 @@ jobs:
           if [ -d .github/actions/always ]
           then
             echo "always=true" >> "${GITHUB_OUTPUT}"
-          fi
-  is_website:
-    name: Is website
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      - versioned_source
-    if: inputs.cloudflare_website != ''
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
-    outputs:
-      has_readme: ${{ steps.has_readme.outputs.enabled }}
-    steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: organization
-          installation_retrieval_payload: ${{ github.repository_owner }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Check for README for building a website
-        id: has_readme
-        run: |
-          if test -e "README.md"
-          then
-            echo "found README.md"
-            echo "enabled=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
   is_cloudformation:
     name: Is CloudFormation
@@ -3183,71 +3124,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
-      github.event.pull_request.state == 'open'
-    strategy:
-      fail-fast: false
-      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
-      matrix:
-        slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
-    permissions:
-      packages: read
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-        shell: bash --noprofile --norc -eo pipefail -x {0}
-    steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: organization
-          installation_retrieval_payload: ${{ github.repository_owner }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - uses: balena-io/deploy-to-balena-action@9c9d61c6b9ecb89b32557299f0c5534c18c97d14
-        id: balena_deploy
-        with:
-          balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
-          environment: ${{ inputs.balena_environment }}
-          fleet: ${{ matrix.slug }}
-          source: ${{ inputs.working_directory }}
-          note: ${{ needs.release_notes.outputs.note }}
-          registry_secrets: |
-            {
-              "ghcr.io": {
-                "username": "${{ github.actor }}",
-                "password": "${{ secrets.GITHUB_TOKEN }}"
-              },
-              "docker.io": {
-                "username": "${{ secrets.DOCKERHUB_USER }}",
-                "password": "${{ secrets.DOCKERHUB_TOKEN }}"
-              }
-            }
-  balena_finalize:
-    name: Finalize balena
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
-    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
-    needs:
-      - is_balena
-      - versioned_source
-      - release_notes
-    if: |
-      github.event.pull_request.merged == true || github.event_name == 'push'
+      (github.event.action != 'closed' || github.event.pull_request.merged == true)
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -3639,7 +3516,7 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
-      - is_website
+      - file_list
       - npm_test
       - custom_test
       - docker_test
@@ -3647,9 +3524,9 @@ jobs:
       - python_test
       - versioned_source
     if: |
-      !failure() && !cancelled() &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
-      needs.is_website.result == 'success'
+      !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
+      inputs.cloudflare_website != '' &&
+      (github.event.action != 'closed' || github.event.pull_request.merged == true)
     permissions: {}
     steps:
       - name: Generate GitHub App installation token
@@ -3687,7 +3564,7 @@ jobs:
           node-version: 18
       - name: Docusaurus Builder
         if: |
-          needs.is_website.outputs.has_readme == 'true' &&
+          contains(needs.file_list.outputs.workdir, 'README.md') &&
           inputs.docusaurus_website != false
         uses: product-os/docusaurus-builder@699d83eb85945ac55f5699579987159d3754f268
         with:
@@ -5060,7 +4937,6 @@ jobs:
       - is_cargo
       - is_balena
       - is_custom
-      - is_website
       - all_tests
       - npm_sbom
       - python_sbom
