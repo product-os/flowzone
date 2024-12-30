@@ -1,4 +1,32 @@
 - commits:
+    - subject: Combine balena publish and finalize jobs
+      hash: 5c30f74d24aac49a3f01bbc7a47e377fe20bc668
+      body: |
+        These jobs were identical except for the run conditions,
+        so this removes a redundant job and some LOC.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Remove unnecessary website helper job
+      hash: 7a6f9fcbe86764d3f649897fdb7cb1e9483d1c4d
+      body: |
+        Use a common job for listing files in the project root
+        and remove redundant job.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.2.18
+  title: ""
+  date: 2024-12-30T20:04:24.999Z
+- commits:
     - subject: Update pre-commit hook pre-commit/pre-commit-hooks to v3.4.0
       hash: 821c87b05c5ca13bd21d1be7384271277884d82a
       body: |
