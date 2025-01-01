@@ -648,7 +648,7 @@
   - &setupPoetry # https://github.com/abatilo/actions-poetry
     name: Setup poetry
     if: steps.setup-python.outputs.python-version != ''
-    uses: abatilo/actions-poetry@e78f54a89cb052fff327414dd9ff010b5d2b4dbd # v3.0.1
+    uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1 # v4.0.0
     with:
       poetry-version: "1.5.1"
 
