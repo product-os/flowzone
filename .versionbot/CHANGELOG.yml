@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update rhysd/actionlint Docker tag to v1.7.6
+      hash: 3b8cddff1031e578451609c883250cf231bbb44a
+      body: |
+        Update rhysd/actionlint from 1.7.5 to 1.7.6
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.2.21
+  title: ""
+  date: 2025-01-04T16:06:33.041Z
+- commits:
     - subject: Use github-script to generate versioned blobs and commits
       hash: 27aaed5ba027782d06c010bd59d73b9d1510636a
       body: ""
