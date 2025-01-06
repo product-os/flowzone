@@ -1,4 +1,23 @@
 - commits:
+    - subject: Add tree sha to create_tree outputs
+      hash: 35790a0c953d0422ccf72d7f2841e4d98e113759
+      body: |
+        Parsing the tree JSON will break the workflow
+        if versioning is disabled and the JSON is null.
+
+        Add a new 'sha' output in addition to the entire
+        tree returned object.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.2.25
+  title: ""
+  date: 2025-01-06T20:52:01.092Z
+- commits:
     - subject: Update abatilo/actions-poetry action to v4
       hash: 0bf856759224e15ceda1cce3129c53247726bc75
       body: |
