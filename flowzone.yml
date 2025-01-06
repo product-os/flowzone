@@ -1337,6 +1337,7 @@ jobs:
               base_tree: baseTreeSha
             });
 
+            core.setOutput('sha', tree.sha);
             return tree;
 
       # https://octokit.github.io/rest.js/v21/#git-create-commit
@@ -1346,7 +1347,7 @@ jobs:
         id: create_commit
         env:
           MESSAGE: ${{ steps.versionist.outputs.tag }}
-          TREE_SHA: ${{ fromJSON(steps.create_tree.outputs.result).sha }}
+          TREE_SHA: ${{ steps.create_tree.outputs.sha }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         with:
