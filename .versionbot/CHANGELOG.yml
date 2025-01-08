@@ -1,4 +1,20 @@
 - commits:
+    - subject: Pin helper jobs to ubuntu-24.04 runners by default
+      hash: 95ea458c80bc806ee6ecf4fdeafedbd31d87fa1b
+      body: |
+        This is the new default "ubuntu-latest" tag provided by GitHub
+        starting in Dec 2024.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.3.0
+  title: ""
+  date: 2025-01-08T21:00:00.959Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.91
       hash: 63c208343910f761261a4d0e64785a8d6caffcbd
       body: |
