@@ -665,29 +665,6 @@
     with:
       version: "2.15.43"
 
-  - &sortNodeVersions
-    name: Sort node versions
-    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
-    id: node_versions
-    env:
-      VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-    with:
-      result-encoding: json
-      script: |
-        const { compareVersions } = require('util');
-        const versions = JSON.parse(process.env.VERSIONS);
-
-        if (!Array.isArray(versions) || !versions.length) {
-          return { min: null, max: null };
-        }
-
-        // Sort versions in ascending order
-        const sorted = [...versions].sort(compareVersions);
-
-        core.setOutput('sorted', sorted)
-        core.setOutput('min', sorted[0])
-        core.setOutput('max', sorted[sorted.length - 1])
-
   - &waitForCloudFormation
     name: Wait for resources
     run: |
@@ -1891,7 +1868,8 @@ jobs:
 
     steps:
       # https://github.com/actions/checkout
-      - name: Checkout event ref
+      - &checkoutEventRef
+        name: Checkout event ref
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           # We only need to scan workflow files, so disable submodules and deep cloning
@@ -1909,112 +1887,112 @@ jobs:
 
   # check if the repository has a package.json file and which engine versions are supported
   is_npm:
-    name: Is npm
+    name: Check NodeJS versions
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - versioned_source
+      - file_list
+    if: contains(needs.file_list.outputs.workdir, 'package.json')
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    # No need for the Flowzone Installation App token here as we are not cloning
+    # submodules so the automatic actions token scoped to the repo is fine.
+    permissions:
+      contents: read # Required to checkout source project, without submodules
 
     outputs:
-      npm: ${{ steps.npm.outputs.enabled }}
-      has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
-      npm_private: ${{ steps.npm.outputs.private }} # can be null or unset
-      npm_docs: ${{ steps.npm.outputs.docs }} # can be null or unset
+      npm: 'true'
+      has_npm_lockfile: ${{ contains(needs.file_list.outputs.workdir, 'package-lock.json') || contains(needs.file_list.outputs.workdir, 'npm-shrinkwrap.json') }}
+      npm_private: ${{ steps.package_json.outputs.private }}
+      npm_docs: ${{ steps.package_json.outputs.docs }}
       npm_sbom: ${{ inputs.generate_sbom }} # default true
-      node_versions: ${{ steps.node_versions.outputs.json }}
-      npm_access: ${{ steps.access.outputs.access }}
+      npm_access: ${{ steps.package_json.outputs.access }}
+      node_versions: ${{ steps.node_versions.outputs.result }} # Default to 20.x if no versions were matched
+      max_node_version: ${{ steps.node_versions.outputs.max }}
+
+    env:
+      NODE_VERSIONS: '[]'
+      PACKAGE_JSON_PATH: '${{ inputs.working_directory }}/package.json'
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *checkoutEventRef
 
-      - name: Check for package.json
-        id: npm
-        run: |
-          if test -f "package.json"
-          then
-            echo "found package.json"
-            echo "enabled=true" >> "${GITHUB_OUTPUT}"
-            echo "private=$(jq -r '.private' package.json)" >> "${GITHUB_OUTPUT}"
-            echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> "${GITHUB_OUTPUT}"
-            echo "NODE_VERSIONS=[]" >> "${GITHUB_ENV}"
-          else
-            echo "enabled=false" >> "${GITHUB_OUTPUT}"
-          fi
+      - name: Process package.json
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        id: package_json
+        with:
+          result-encoding: json
+          script: |
+            const fs = require('fs');
+            const packageJson = fs.readFileSync(process.env.PACKAGE_JSON_PATH, 'utf8');
+            const json = JSON.parse(packageJson);
+            console.log(JSON.stringify(json, null, 2));
 
-      - name: Check for package locks
-        id: npm_lock
-        run: |
-          has_npm_lockfile="$([ -e package-lock.json ] || [ -e npm-shrinkwrap.json ] && echo true || echo false)"
-          echo "has_npm_lockfile=${has_npm_lockfile}" >> "${GITHUB_OUTPUT}"
+            if (json.name == 'flowzone') {
+              core.setFailed('It looks like we are not in the test directory!');
+            }
 
-      - name: Set access
-        id: access
-        run: |
-          access="public"
-          if [ "${{ github.event.repository.private }}" = "true" ]
-          then
-            access="restricted"
-          fi
-          echo "access=${access}" >> "${GITHUB_OUTPUT}"
+            core.setOutput('private', json.private);
+            core.setOutput('docs', json.scripts.doc);
+
+            if (context.repo.private) {
+              core.setOutput('access', 'restricted');
+            } else {
+              core.setOutput('access', 'public');
+            }
+
+            return json;
 
       # check which past and current and future Node.js LTS releases meet the engine requirements
       # if there are no engine requirements then the current LTS will be used
 
       - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
         with:
           node-version: 18.x
 
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+      # https://www.npmjs.com/package/check-engine
+      - &checkEngine
+        name: Check engine
+        id: check_engine_18
         run: |
+          node_version="$(node --version)"
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> "${GITHUB_ENV}"
+            echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
 
       - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
         with:
           node-version: 20.x
 
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> "${GITHUB_ENV}"
-          fi
+      - <<: *checkEngine
+        id: check_engine_20
 
       - <<: *setupNode
-        if: steps.npm.outputs.enabled == 'true'
         with:
           node-version: 22.x
 
-      - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
-        run: |
-          if npx -q -y -- check-engine
-          then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.x"]')" >> "${GITHUB_ENV}"
-          fi
+      - <<: *checkEngine
+        id: check_engine_22
 
-      # default to the current LTS version if none were matched
-      # by the engine checks above
+      # Default to 20.x if no versions were matched
+      # https://github.com/actions/github-script
       - name: Set Node.js versions
-        if: steps.npm.outputs.enabled == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         id: node_versions
-        run: |
-          echo "json=[\"20.x\"]" >> "${GITHUB_OUTPUT}"
-          if [ "${NODE_VERSIONS}" != "[]" ]
-          then
-            echo "json=${NODE_VERSIONS}" >> "${GITHUB_OUTPUT}"
-          fi
+        env:
+          NODE_VERSIONS: ${{ toJSON(steps.*.outputs.node_version) }}
+        with:
+          result-encoding: json
+          script: |
+            const { compareVersions } = require('util');
+            const versions = JSON.parse(process.env.NODE_VERSIONS) || '["20.x"]';
+            const sorted = [...versions].sort(compareVersions);
+
+            core.setOutput('min', sorted[0]);
+            core.setOutput('max', sorted.at(-1));
+            return sorted;
 
   # pre-process any docker-compose and docker-bake files
   is_docker:
@@ -2607,7 +2585,6 @@ jobs:
       - *getGitHubAppToken
       - *checkoutVersionedSha
       - *createLocalRefs
-      - *sortNodeVersions
 
       - <<: *setupNode
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
@@ -2676,7 +2653,7 @@ jobs:
         run: npm test
 
       - name: Run pack
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         run: |
           mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
@@ -2684,7 +2661,7 @@ jobs:
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
 
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -2697,11 +2674,11 @@ jobs:
         run: npm run doc
 
       - name: Compress docs
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_docs == 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
 
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_docs == 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -2773,13 +2750,11 @@ jobs:
     permissions: {}
 
     steps:
-      - *sortNodeVersions
-
       - name: Download npm artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ needs.is_npm.outputs.max_node_version }}
 
       - <<: *setupNode
         with:
@@ -2827,7 +2802,6 @@ jobs:
 
     steps:
       - *getGitHubAppToken
-      - *sortNodeVersions
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
@@ -2838,7 +2812,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ needs.is_npm.outputs.max_node_version }}
 
       - <<: *setupNode
         with:
@@ -2882,8 +2856,6 @@ jobs:
               "metadata": "read"
             }
 
-      - *sortNodeVersions
-
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm docs artifact from last run
@@ -2893,7 +2865,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ needs.is_npm.outputs.max_node_version }}
 
       - name: Extract docs artifact
         run: |
