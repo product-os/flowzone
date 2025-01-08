@@ -1,4 +1,27 @@
 - commits:
+    - subject: Add dangerous-write to octoscan ignore list
+      hash: 427af63bbe89299604ed11152d29126c7c128ce9
+      body: |
+        The octoscan commit that added this check was clear
+        that it needs some improved regex.
+
+        As it stands it will flag any writes to GITHUB_ENV
+        or GITHUB_OUTPUT whether they are being used
+        unsafely in a following step or not.
+
+        For now let's disable it to get past all the noise
+        until octoscan can correctly identify improper usage.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.4.0
+  title: ""
+  date: 2025-01-08T21:38:54.322Z
+- commits:
     - subject: Pin helper jobs to ubuntu-24.04 runners by default
       hash: 95ea458c80bc806ee6ecf4fdeafedbd31d87fa1b
       body: |
