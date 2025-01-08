@@ -293,7 +293,7 @@ jobs:
       # Required: false
       runs_on: >
         [
-          "ubuntu-22.04"
+          "ubuntu-24.04"
         ]
 
       # JSON key-value pairs mapping platforms to arrays of runner labels. Unlisted platforms will
