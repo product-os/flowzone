@@ -1982,12 +1982,21 @@ jobs:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         id: node_versions
         env:
+          # Tested that this will always return a JSON array.
+          # If the engines in package.json are not satisified by any of the above
+          # engine checks, the NODE_VERSIONS value will be [] and the script should
+          # instead return ["20.x"] so we always test something.
           NODE_VERSIONS: ${{ toJSON(steps.*.outputs.node_version) }}
         with:
           result-encoding: json
           script: |
             const { compareVersions } = require('util');
-            const versions = JSON.parse(process.env.NODE_VERSIONS) || '["20.x"]';
+            const versions = JSON.parse(process.env.NODE_VERSIONS);
+
+            if (versions.length < 1) {
+              versions.push('20.x')
+            }
+
             const sorted = [...versions].sort(compareVersions);
 
             core.setOutput('min', sorted[0]);

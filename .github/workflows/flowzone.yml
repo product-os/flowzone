@@ -1245,7 +1245,12 @@ jobs:
           result-encoding: json
           script: |
             const { compareVersions } = require('util');
-            const versions = JSON.parse(process.env.NODE_VERSIONS) || '["20.x"]';
+            const versions = JSON.parse(process.env.NODE_VERSIONS);
+
+            if (versions.length < 1) {
+              versions.push('20.x')
+            }
+
             const sorted = [...versions].sort(compareVersions);
 
             core.setOutput('min', sorted[0]);
