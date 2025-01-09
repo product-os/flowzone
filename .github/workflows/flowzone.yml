@@ -1143,120 +1143,119 @@ jobs:
           python-version: "3.9"
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd
   is_npm:
-    name: Is npm
+    name: Check NodeJS versions
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - versioned_source
+      - file_list
+    if: contains(needs.file_list.outputs.workdir, 'package.json')
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
-      npm: ${{ steps.npm.outputs.enabled }}
-      has_npm_lockfile: ${{ steps.npm_lock.outputs.has_npm_lockfile }}
-      npm_private: ${{ steps.npm.outputs.private }}
-      npm_docs: ${{ steps.npm.outputs.docs }}
+      npm: "true"
+      has_npm_lockfile: ${{ contains(needs.file_list.outputs.workdir, 'package-lock.json') || contains(needs.file_list.outputs.workdir, 'npm-shrinkwrap.json') }}
+      npm_private: ${{ steps.package_json.outputs.private }}
+      npm_docs: ${{ steps.package_json.outputs.docs }}
       npm_sbom: ${{ inputs.generate_sbom }}
-      node_versions: ${{ steps.node_versions.outputs.json }}
-      npm_access: ${{ steps.access.outputs.access }}
+      npm_access: ${{ steps.package_json.outputs.access }}
+      node_versions: ${{ steps.node_versions.outputs.result }}
+      max_node_version: ${{ steps.node_versions.outputs.max }}
+    env:
+      NODE_VERSIONS: "[]"
+      PACKAGE_JSON_PATH: ${{ inputs.working_directory }}/package.json
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: organization
-          installation_retrieval_payload: ${{ github.repository_owner }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
+      - name: Checkout event ref
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          fetch-depth: 1
+          submodules: false
           persist-credentials: false
-      - name: Check for package.json
-        id: npm
-        run: |
-          if test -f "package.json"
-          then
-            echo "found package.json"
-            echo "enabled=true" >> "${GITHUB_OUTPUT}"
-            echo "private=$(jq -r '.private' package.json)" >> "${GITHUB_OUTPUT}"
-            echo "docs=$(jq -r '.scripts | has("doc")' package.json)" >> "${GITHUB_OUTPUT}"
-            echo "NODE_VERSIONS=[]" >> "${GITHUB_ENV}"
-          else
-            echo "enabled=false" >> "${GITHUB_OUTPUT}"
-          fi
-      - name: Check for package locks
-        id: npm_lock
-        run: |
-          has_npm_lockfile="$([ -e package-lock.json ] || [ -e npm-shrinkwrap.json ] && echo true || echo false)"
-          echo "has_npm_lockfile=${has_npm_lockfile}" >> "${GITHUB_OUTPUT}"
-      - name: Set access
-        id: access
-        run: |
-          access="public"
-          if [ "${{ github.event.repository.private }}" = "true" ]
-          then
-            access="restricted"
-          fi
-          echo "access=${access}" >> "${GITHUB_OUTPUT}"
+          token: ${{ github.token }}
+      - name: Process package.json
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        id: package_json
+        with:
+          result-encoding: json
+          script: |
+            const fs = require('fs');
+            const packageJson = fs.readFileSync(process.env.PACKAGE_JSON_PATH, 'utf8');
+            const json = JSON.parse(packageJson);
+            console.log(JSON.stringify(json, null, 2));
+
+            if (json.name == 'flowzone') {
+              core.setFailed('It looks like we are not in the test directory!');
+            }
+
+            core.setOutput('private', json.private);
+            core.setOutput('docs', json.scripts.doc);
+
+            if (context.repo.private) {
+              core.setOutput('access', 'restricted');
+            } else {
+              core.setOutput('access', 'public');
+            }
+
+            return json;
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
           node-version: 18.x
-        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+        id: check_engine_18
         run: |
+          node_version="$(node --version)"
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["18.x"]')" >> "${GITHUB_ENV}"
+            echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
           node-version: 20.x
-        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+        id: check_engine_20
         run: |
+          node_version="$(node --version)"
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["20.x"]')" >> "${GITHUB_ENV}"
+            echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
           node-version: 22.x
-        if: steps.npm.outputs.enabled == 'true'
       - name: Check engine
-        if: steps.npm.outputs.enabled == 'true'
+        id: check_engine_22
         run: |
+          node_version="$(node --version)"
           if npx -q -y -- check-engine
           then
-            echo "NODE_VERSIONS=$(echo "${NODE_VERSIONS}" | jq -c '. + ["22.x"]')" >> "${GITHUB_ENV}"
+            echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Set Node.js versions
-        if: steps.npm.outputs.enabled == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: node_versions
-        run: |
-          echo "json=[\"20.x\"]" >> "${GITHUB_OUTPUT}"
-          if [ "${NODE_VERSIONS}" != "[]" ]
-          then
-            echo "json=${NODE_VERSIONS}" >> "${GITHUB_OUTPUT}"
-          fi
+        env:
+          NODE_VERSIONS: ${{ toJSON(steps.*.outputs.node_version) }}
+        with:
+          result-encoding: json
+          script: |
+            const { compareVersions } = require('util');
+            const versions = JSON.parse(process.env.NODE_VERSIONS);
+
+            if (versions.length < 1) {
+              versions.push('20.x')
+            }
+
+            const sorted = [...versions].sort(compareVersions);
+
+            core.setOutput('min', sorted[0]);
+            core.setOutput('max', sorted.at(-1));
+            return sorted;
   is_docker:
     name: Is docker
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1991,27 +1990,6 @@ jobs:
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
-      - name: Sort node versions
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        id: node_versions
-        env:
-          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        with:
-          result-encoding: json
-          script: |
-            const { compareVersions } = require('util');
-            const versions = JSON.parse(process.env.VERSIONS);
-
-            if (!Array.isArray(versions) || !versions.length) {
-              return { min: null, max: null };
-            }
-
-            // Sort versions in ascending order
-            const sorted = [...versions].sort(compareVersions);
-
-            core.setOutput('sorted', sorted)
-            core.setOutput('min', sorted[0])
-            core.setOutput('max', sorted[sorted.length - 1])
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
@@ -2067,14 +2045,14 @@ jobs:
         shell: script -q -e -c "bash --noprofile --norc -eo pipefail -x {0}" /tmp/test-session
         run: npm test
       - name: Run pack
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         run: |
           mkdir ${{ runner.temp }}/npm-pack && npm pack --pack-destination=${{ runner.temp }}/npm-pack
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_private != 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
         with:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -2085,10 +2063,10 @@ jobs:
         shell: bash
         run: npm run doc
       - name: Compress docs
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_docs == 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
       - name: Upload artifact
-        if: needs.is_npm.outputs.npm_docs == 'true' && steps.node_versions.outputs.max == matrix.node_version
+        if: needs.is_npm.outputs.npm_docs == 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
         with:
           name: docs-${{ github.event.pull_request.head.sha }}-${{ matrix.node_version }}
@@ -2189,32 +2167,11 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Sort node versions
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        id: node_versions
-        env:
-          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        with:
-          result-encoding: json
-          script: |
-            const { compareVersions } = require('util');
-            const versions = JSON.parse(process.env.VERSIONS);
-
-            if (!Array.isArray(versions) || !versions.length) {
-              return { min: null, max: null };
-            }
-
-            // Sort versions in ascending order
-            const sorted = [...versions].sort(compareVersions);
-
-            core.setOutput('sorted', sorted)
-            core.setOutput('min', sorted[0])
-            core.setOutput('max', sorted[sorted.length - 1])
       - name: Download npm artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ needs.is_npm.outputs.max_node_version }}
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
@@ -2268,27 +2225,6 @@ jobs:
               "contents": "read",
               "metadata": "read"
             }
-      - name: Sort node versions
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        id: node_versions
-        env:
-          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        with:
-          result-encoding: json
-          script: |
-            const { compareVersions } = require('util');
-            const versions = JSON.parse(process.env.VERSIONS);
-
-            if (!Array.isArray(versions) || !versions.length) {
-              return { min: null, max: null };
-            }
-
-            // Sort versions in ascending order
-            const sorted = [...versions].sort(compareVersions);
-
-            core.setOutput('sorted', sorted)
-            core.setOutput('min', sorted[0])
-            core.setOutput('max', sorted[sorted.length - 1])
       - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
@@ -2296,7 +2232,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: npm-${{ github.event.pull_request.head.sha }}-${{ needs.is_npm.outputs.max_node_version }}
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
@@ -2339,27 +2275,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-      - name: Sort node versions
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        id: node_versions
-        env:
-          VERSIONS: ${{ needs.is_npm.outputs.node_versions }}
-        with:
-          result-encoding: json
-          script: |
-            const { compareVersions } = require('util');
-            const versions = JSON.parse(process.env.VERSIONS);
-
-            if (!Array.isArray(versions) || !versions.length) {
-              return { min: null, max: null };
-            }
-
-            // Sort versions in ascending order
-            const sorted = [...versions].sort(compareVersions);
-
-            core.setOutput('sorted', sorted)
-            core.setOutput('min', sorted[0])
-            core.setOutput('max', sorted[sorted.length - 1])
       - name: Download npm docs artifact from last run
         uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
@@ -2367,7 +2282,7 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ steps.node_versions.outputs.max }}
+          name: docs-${{ github.event.pull_request.head.sha }}-${{ needs.is_npm.outputs.max_node_version }}
       - name: Extract docs artifact
         run: |
           docs="$(ls ${{ runner.temp }}/*.tar.zst | sort -t- -n -k3 | tail -n1)"
