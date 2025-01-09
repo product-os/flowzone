@@ -1,4 +1,30 @@
 - commits:
+    - subject: Force bake-action path context and disable git context
+      hash: ffcee71ac2af249f20e1d43d51e98c4ffdf14496
+      body: |
+        This action now defaults to git context which fetches
+        the sources directly from git. We don't want this behaviour
+        as we already have versioned sources checked out.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Update docker/bake-action action to v6
+      hash: 38c9ab4c96d50d0d644e1e6333cd5fd7805fb432
+      body: |
+        Update docker/bake-action from 5.11.0 to 6.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.4.1
+  title: ""
+  date: 2025-01-09T15:52:14.898Z
+- commits:
     - subject: Add dangerous-write to octoscan ignore list
       hash: 427af63bbe89299604ed11152d29126c7c128ce9
       body: |
