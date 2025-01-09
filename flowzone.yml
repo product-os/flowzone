@@ -3030,6 +3030,11 @@ jobs:
         id: docker_bake
         uses: docker/bake-action@5ca506d06f70338a4968df87fd8bfee5cbfb84c7 # v6.0.0
         with:
+          # Use path context as v6 defaults to git context
+          # https://github.com/docker/bake-action/releases/tag/v6.0.0
+          # https://github.com/docker/bake-action?tab=readme-ov-file#git-context
+          # https://github.com/docker/bake-action?tab=readme-ov-file#path-context
+          source: .
           workdir: ${{ inputs.working_directory }}
           files: |
             ${{ env.DOCKER_BAKE_FILE }}
