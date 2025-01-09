@@ -1,4 +1,23 @@
 - commits:
+    - subject: Cleanup is_npm job steps and conditions
+      hash: 412249f17dd2a75c123810df0b0b44798d51871c
+      body: |
+        Replace multiple shell steps with a single github-script
+        and skip the job entirely if package.json is not found.
+
+        Also move the node versions sorting functionality inside
+        the is_npm job as it's used by all downstream jobs.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.5.0
+  title: ""
+  date: 2025-01-09T17:44:37.156Z
+- commits:
     - subject: Force bake-action path context and disable git context
       hash: ffcee71ac2af249f20e1d43d51e98c4ffdf14496
       body: |
