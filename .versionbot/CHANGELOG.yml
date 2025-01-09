@@ -1,4 +1,20 @@
 - commits:
+    - subject: Revert "Test with unsupported node version (should use 20.x)"
+      hash: 41cfb8fc9d6077e2e249514f07791651e7a941ab
+      body: |
+        This reverts commit 441c9e81fa5e562870de346b1dc16e0b00e1a124.
+
+        This commit was only for testing, but the PR was merged by mistake
+        when I didn't mark it as draft.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Kyle Harding
+      nested: []
+  version: 19.5.1
+  title: ""
+  date: 2025-01-09T18:20:08.223Z
+- commits:
     - subject: Cleanup is_npm job steps and conditions
       hash: 412249f17dd2a75c123810df0b0b44798d51871c
       body: |
