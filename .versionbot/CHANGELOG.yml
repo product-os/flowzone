@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/upload-artifact action to v4.6.0
+      hash: ce20b3541256df9897a509b2a32574498179f9fb
+      body: |
+        Update actions/upload-artifact from 4.5.0 to 4.6.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.5.2
+  title: ""
+  date: 2025-01-10T16:05:11.184Z
+- commits:
     - subject: Revert "Test with unsupported node version (should use 20.x)"
       hash: 41cfb8fc9d6077e2e249514f07791651e7a941ab
       body: |
