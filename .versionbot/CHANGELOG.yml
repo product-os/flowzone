@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/bake-action action to v6.1.0
+      hash: 907866ed74aa17f4879844babb5cd0cc85ccd247
+      body: |
+        Update docker/bake-action from 6.0.0 to 6.1.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.5.4
+  title: ""
+  date: 2025-01-14T13:13:02.145Z
+- commits:
     - subject: Update actions/upload-artifact digest to 65c4c4a
       hash: f08d6677c7370d9b28e7461daa6f5fb9f1d51852
       body: |
