@@ -3009,7 +3009,7 @@ jobs:
       # https://github.com/docker/bake-action
       - name: Docker bake
         id: docker_bake
-        uses: docker/bake-action@5dd4f8e2d6e60a471ecfe0a66e429bae1506b899 # v6.1.1
+        uses: docker/bake-action@60f5d53310314dbf8c33f0c8a01042536f2f6c36 # v6.2.0
         with:
           # Use path context as v6 defaults to git context
           # https://github.com/docker/bake-action/releases/tag/v6.0.0
