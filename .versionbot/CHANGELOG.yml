@@ -1,4 +1,20 @@
 - commits:
+    - subject: Use Renovate to pin to latest LTS node releases
+      hash: 5f91344adbfd2e31e63effcef0ac89add3e82d94
+      body: |
+        This prevents drift of node versions in the tool cache between
+        main and development branches.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.5.7
+  title: ""
+  date: 2025-01-16T18:43:50.397Z
+- commits:
     - subject: Update docker/bake-action action to v6.2.0
       hash: 2b0a4467255e536fff76bba7d89d6a9657837a7f
       body: |
