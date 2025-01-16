@@ -995,13 +995,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout event ref
+      - name: Checkout source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 1
           submodules: false
           persist-credentials: false
           token: ${{ github.token }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Add problem matcher
         run: |
           curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/.github/actionlint-matcher.json > ${{ runner.temp }}/actionlint-matcher.json
@@ -1040,13 +1041,14 @@ jobs:
               "metadata": "read",
               "security_events": "write"
             }
-      - name: Checkout event ref
+      - name: Checkout source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 1
           submodules: false
           persist-credentials: false
           token: ${{ github.token }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - id: octoscan
         name: Run octoscan
         uses: synacktiv/action-octoscan@6b1cf2343893dfb9e5f75652388bd2dc83f456b0
@@ -1101,7 +1103,7 @@ jobs:
             const { data } = await github.rest.repos.getContent({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.ref
+              ref: context.payload.pull_request.head.sha || context.ref
             });
 
             return data
@@ -1120,7 +1122,7 @@ jobs:
             const { data } = await github.rest.repos.getContent({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.ref,
+              ref: context.payload.pull_request.head.sha || context.ref,
               path: process.env.WORKING_DIRECTORY.startsWith('./') ? process.env.WORKING_DIRECTORY.slice(2) : process.env.WORKING_DIRECTORY
             });
 
@@ -1139,13 +1141,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout event ref
+      - name: Checkout source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 1
           submodules: false
           persist-credentials: false
           token: ${{ github.token }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
@@ -1183,13 +1186,14 @@ jobs:
       NODE_VERSIONS: "[]"
       PACKAGE_JSON_PATH: ${{ inputs.working_directory }}/package.json
     steps:
-      - name: Checkout event ref
+      - name: Checkout source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 1
           submodules: false
           persist-credentials: false
           token: ${{ github.token }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Process package.json
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: package_json
