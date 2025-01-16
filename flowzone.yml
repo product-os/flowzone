@@ -1662,6 +1662,8 @@ jobs:
     name: actionlint
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: 5
+    # Do not run on PR close or merge events
+    if: github.event.action != 'closed'
     # Run this early in the workflow, as soon as we've validated event types
     needs:
       - event_types
@@ -1705,8 +1707,14 @@ jobs:
     name: octoscan
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: 5
-    # Pull request target events will have the wrong ref and sha for SARIF uploads so skip it for now
-    if: github.event_name != 'pull_request_target'
+    # Pull request target events will have the wrong ref and sha for SARIF uploads so skip it for now.
+    # Do not run on PR close events.
+    if: |
+      github.event_name != 'pull_request_target' &&
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      )
     # Run this early in the workflow, as soon as we've validated event types
     needs:
       - event_types
@@ -1862,7 +1870,10 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
-    if: contains(needs.file_list.outputs.root, '.pre-commit-config.yaml')
+    # Do not run on PR close or merge events.
+    if: |
+      contains(needs.file_list.outputs.root, '.pre-commit-config.yaml') &&
+      github.event.action != 'closed'
 
     # No need for the Flowzone Installation App token here as we are not cloning
     # submodules so the automatic actions token scoped to the repo is fine.
@@ -1895,7 +1906,13 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
-    if: contains(needs.file_list.outputs.workdir, 'package.json')
+    # Do not run on PR close events.
+    if: |
+      contains(needs.file_list.outputs.workdir, 'package.json') &&
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      )
 
     <<: *customWorkingDirectory
 

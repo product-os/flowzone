@@ -989,6 +989,7 @@ jobs:
     name: actionlint
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: 5
+    if: github.event.action != 'closed'
     needs:
       - event_types
     permissions:
@@ -1013,7 +1014,12 @@ jobs:
     name: octoscan
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: 5
-    if: github.event_name != 'pull_request_target'
+    if: |
+      github.event_name != 'pull_request_target' &&
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      )
     needs:
       - event_types
     permissions:
@@ -1127,7 +1133,9 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
-    if: contains(needs.file_list.outputs.root, '.pre-commit-config.yaml')
+    if: |
+      contains(needs.file_list.outputs.root, '.pre-commit-config.yaml') &&
+      github.event.action != 'closed'
     permissions:
       contents: read
     steps:
@@ -1150,7 +1158,12 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
-    if: contains(needs.file_list.outputs.workdir, 'package.json')
+    if: |
+      contains(needs.file_list.outputs.workdir, 'package.json') &&
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
