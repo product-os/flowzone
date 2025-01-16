@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-22 to v22.13.0
+      hash: 262150952b6ebf483f0708e066535d34e3ff832f
+      body: |
+        Update node-22 from 22.12.0 to 22.13.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.5.8
+  title: ""
+  date: 2025-01-16T19:06:33.046Z
+- commits:
     - subject: Use Renovate to pin to latest LTS node releases
       hash: 5f91344adbfd2e31e63effcef0ac89add3e82d94
       body: |
