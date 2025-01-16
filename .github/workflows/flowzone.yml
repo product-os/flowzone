@@ -472,8 +472,10 @@ jobs:
           fi
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        env:
+          NODE_VERSION: 20.18.1
         with:
-          node-version: 20.x
+          node-version: ${{ env.NODE_VERSION }}
       - name: Install versioning tools
         if: inputs.disable_versioning != true
         run: |
@@ -1202,8 +1204,10 @@ jobs:
             return json;
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        env:
+          NODE_VERSION: 18.20.5
         with:
-          node-version: 18.x
+          node-version: ${{ env.NODE_VERSION }}
       - name: Check engine
         id: check_engine_18
         run: |
@@ -1214,8 +1218,10 @@ jobs:
           fi
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        env:
+          NODE_VERSION: 20.18.1
         with:
-          node-version: 20.x
+          node-version: ${{ env.NODE_VERSION }}
       - name: Check engine
         id: check_engine_20
         run: |
@@ -1226,8 +1232,10 @@ jobs:
           fi
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        env:
+          NODE_VERSION: 22.12.0
         with:
-          node-version: 22.x
+          node-version: ${{ env.NODE_VERSION }}
       - name: Check engine
         id: check_engine_22
         run: |
@@ -1992,6 +2000,8 @@ jobs:
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        env:
+          NODE_VERSION: 20.18.1
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -1999,6 +2009,8 @@ jobs:
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        env:
+          NODE_VERSION: 20.18.1
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2116,6 +2128,8 @@ jobs:
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        env:
+          NODE_VERSION: 20.18.1
         with:
           node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
       - run: npm install
@@ -2174,8 +2188,10 @@ jobs:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ needs.is_npm.outputs.max_node_version }}
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        env:
+          NODE_VERSION: 20.18.1
         with:
-          node-version: "18"
+          node-version: ${{ needs.is_npm.outputs.max_node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
       - name: Publish draft release
         env:
@@ -2235,8 +2251,10 @@ jobs:
           name: npm-${{ github.event.pull_request.head.sha }}-${{ needs.is_npm.outputs.max_node_version }}
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        env:
+          NODE_VERSION: 20.18.1
         with:
-          node-version: "18"
+          node-version: ${{ needs.is_npm.outputs.max_node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
       - name: Publish final release
         env:
@@ -3508,6 +3526,8 @@ jobs:
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        env:
+          NODE_VERSION: 20.18.1
         with:
           node-version: 18
       - name: Docusaurus Builder
