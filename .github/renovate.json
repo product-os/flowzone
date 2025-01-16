@@ -21,6 +21,18 @@
 				"fileFilters": [".github/workflows/flowzone.yml"],
 				"executionMode": "update"
 			}
+		},
+		{
+			"matchPackageNames": ["node-18.x"],
+			"allowedVersions": "18"
+		},
+		{
+			"matchPackageNames": ["node-20.x"],
+			"allowedVersions": "20"
+		},
+		{
+			"matchPackageNames": ["node-22.x"],
+			"allowedVersions": "22"
 		}
 	],
 	"customManagers": [

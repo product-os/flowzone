@@ -629,8 +629,11 @@
   - &setupNode # https://github.com/actions/setup-node
     name: Setup Node.js
     uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+    env:
+      # renovate: datasource=node-version depName=node packageName=node-20.x
+      NODE_VERSION: 20.18.1
     with:
-      node-version: 20.x
+      node-version: ${{ env.NODE_VERSION }}
 
   - &setupCrane # https://github.com/imjasonh/setup-crane
     name: Setup crane
@@ -1948,8 +1951,9 @@ jobs:
       # if there are no engine requirements then the current LTS will be used
 
       - <<: *setupNode
-        with:
-          node-version: 18.x
+        env:
+         # renovate: datasource=node-version depName=node packageName=node-18.x
+          NODE_VERSION: 18.20.5
 
       # https://www.npmjs.com/package/check-engine
       - &checkEngine
@@ -1963,15 +1967,17 @@ jobs:
           fi
 
       - <<: *setupNode
-        with:
-          node-version: 20.x
+        env:
+          # renovate: datasource=node-version depName=node packageName=node-20.x
+          NODE_VERSION: 20.18.1
 
       - <<: *checkEngine
         id: check_engine_20
 
       - <<: *setupNode
-        with:
-          node-version: 22.x
+        env:
+          # renovate: datasource=node-version depName=node-22 packageName=node-22.x
+          NODE_VERSION: 22.12.0
 
       - <<: *checkEngine
         id: check_engine_22
@@ -2769,7 +2775,7 @@ jobs:
         with:
           # use npm v9 or later as the access flag behaviour has changed
           # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
-          node-version: "18"
+          node-version: "${{ needs.is_npm.outputs.max_node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
 
       # unpack the tarball provided by the tests so we can apply the draft version to package.json
@@ -2827,7 +2833,7 @@ jobs:
         with:
           # use npm v9 or later as the access flag behaviour has changed
           # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
-          node-version: "18"
+          node-version: "${{ needs.is_npm.outputs.max_node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
 
       - name: Publish final release
@@ -3586,6 +3592,7 @@ jobs:
       - *createLocalRefs
 
       - <<: *setupNode
+        # FIXME: does this need to be pinned to 18? Remove the property and use the global default otherwise.
         with:
           node-version: 18
 
