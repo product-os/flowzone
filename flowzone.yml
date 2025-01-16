@@ -1956,7 +1956,7 @@ jobs:
         name: Check engine
         id: check_engine_18
         run: |
-          node_version="$(node --version)"
+          node_version="$(node --version | cut -d'.' -f1).x"
           if npx -q -y -- check-engine
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
