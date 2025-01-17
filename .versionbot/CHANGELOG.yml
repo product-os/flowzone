@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update cloudflare/wrangler-action action to v3.13.1
+      hash: 372996b8cba9a618af5380b4849e2590093c11f4
+      body: |
+        Update cloudflare/wrangler-action from 3.13.0 to 3.13.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.6.1
+  title: ""
+  date: 2025-01-17T16:05:49.627Z
+- commits:
     - subject: Use shallow checkout with github token for linting jobs
       hash: 9fb52184007c20373daaad945d92949f468ca23d
       body: |
