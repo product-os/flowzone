@@ -185,6 +185,21 @@
       ref: "${{ needs.versioned_source.outputs.sha || '¯\_(ツ)_/¯' }}"
       <<: *checkoutAuth
 
+  - &shallowCheckout # https://github.com/actions/checkout
+    name: Checkout source
+    uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    with:
+      # Disable submodules and deep cloning.
+      fetch-depth: 1
+      submodules: false
+      # Do not persist credentials.
+      persist-credentials: false
+      # Use the automatic actions token with contents:read permissions
+      token: ${{ github.token }}
+      # Use the tip of the pull request branch for pull request (target) events.
+      # Use the event sha for other events.
+      ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
   - &resetGitHubDirectory
     # checkout the tip of BASE if the PR is from a fork
     # or the merge commit if the PR is internal
@@ -1168,7 +1183,6 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
-
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1662,6 +1676,8 @@ jobs:
     name: actionlint
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: 5
+    # Do not run on PR close or merge events
+    if: github.event.action != 'closed'
     # Run this early in the workflow, as soon as we've validated event types
     needs:
       - event_types
@@ -1673,16 +1689,13 @@ jobs:
       # No need for the Flowzone Installation App token here as we are not cloning
       # submodules so the automatic actions token scoped to the repo is fine.
 
+      # Disable submodules and deep cloning.
+      # Do not persist credentials.
+      # Use the automatic actions token with contents:read permissions.
+      # Use the tip of the pull request branch for pull request (target) events.
+      # Use the event sha for other events.
       # https://github.com/actions/checkout
-      - name: Checkout event ref
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          # We only need to scan workflow files, so disable submodules and deep cloning
-          fetch-depth: 1
-          submodules: false
-          persist-credentials: false
-          # Use the automatic actions token with contents:read permissions
-          token: ${{ github.token }}
+      - *shallowCheckout
 
       # https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
       - name: Add problem matcher
@@ -1705,8 +1718,14 @@ jobs:
     name: octoscan
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: 5
-    # Pull request target events will have the wrong ref and sha for SARIF uploads so skip it for now
-    if: github.event_name != 'pull_request_target'
+    # Pull request target events will have the wrong ref and sha for SARIF uploads so skip it for now.
+    # Do not run on PR close events.
+    if: |
+      github.event_name != 'pull_request_target' &&
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      )
     # Run this early in the workflow, as soon as we've validated event types
     needs:
       - event_types
@@ -1715,7 +1734,6 @@ jobs:
       contents: read # required for checkout without submodules
 
     steps:
-
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1727,16 +1745,13 @@ jobs:
               "security_events": "write"
             }
 
+      # Disable submodules and deep cloning.
+      # Do not persist credentials.
+      # Use the automatic actions token with contents:read permissions.
+      # Use the tip of the pull request branch for pull request (target) events.
+      # Use the event sha for other events.
       # https://github.com/actions/checkout
-      - name: Checkout event ref
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          # We only need to scan workflow files, so disable submodules and deep cloning
-          fetch-depth: 1
-          submodules: false
-          persist-credentials: false
-          # Use the automatic actions token with contents:read permissions
-          token: ${{ github.token }}
+      - *shallowCheckout
 
       # https://github.com/synacktiv/octoscan
       # https://github.com/synacktiv/action-octoscan
@@ -1814,11 +1829,13 @@ jobs:
         with:
           github-token: ${{ github.token }}
           result-encoding: json
+          # Use the tip of the pull request branch for pull request (target) events.
+          # Use the event sha for other events.
           script: |
             const { data } = await github.rest.repos.getContent({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.ref
+              ref: context.payload.pull_request.head.sha || context.ref
             });
 
             return data
@@ -1826,6 +1843,7 @@ jobs:
               .map(item => item.name);
 
       # Use GitHub REST API to safely get contents, limiting to one directory
+      # https://github.com/actions/github-script
       # https://octokit.github.io/rest.js/v21/#repos-get-content
       - name: List files in working directory
         id: working-dir
@@ -1836,19 +1854,20 @@ jobs:
         with:
           github-token: ${{ github.token }}
           result-encoding: json
-          # remove preceeding ./ from the working directory if it exists
+          # Use the tip of the pull request branch for pull request (target) events.
+          # Use the event sha for other events.
+          # Remove preceeding ./ from the working directory if it exists.
           script: |
             const { data } = await github.rest.repos.getContent({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.ref,
+              ref: context.payload.pull_request.head.sha || context.ref,
               path: process.env.WORKING_DIRECTORY.startsWith('./') ? process.env.WORKING_DIRECTORY.slice(2) : process.env.WORKING_DIRECTORY
             });
 
             return data
               .filter(item => item.type === 'file')
               .map(item => item.name);
-
 
   # Run pre-commit hooks if the config file exists in the project root.
   # This step will fail if the hooks find any differences after running.
@@ -1862,7 +1881,10 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
-    if: contains(needs.file_list.outputs.root, '.pre-commit-config.yaml')
+    # Do not run on PR close or merge events.
+    if: |
+      contains(needs.file_list.outputs.root, '.pre-commit-config.yaml') &&
+      github.event.action != 'closed'
 
     # No need for the Flowzone Installation App token here as we are not cloning
     # submodules so the automatic actions token scoped to the repo is fine.
@@ -1870,17 +1892,13 @@ jobs:
       contents: read # Required to checkout source project, without submodules
 
     steps:
+      # Disable submodules and deep cloning.
+      # Do not persist credentials.
+      # Use the automatic actions token with contents:read permissions.
+      # Use the tip of the pull request branch for pull request (target) events.
+      # Use the event sha for other events.
       # https://github.com/actions/checkout
-      - &checkoutEventRef
-        name: Checkout event ref
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          # We only need to scan workflow files, so disable submodules and deep cloning
-          fetch-depth: 1
-          submodules: false
-          persist-credentials: false
-          # Use the automatic actions token with contents:read permissions
-          token: ${{ github.token }}
+      - *shallowCheckout
 
       # https://github.com/actions/setup-python
       - *setupPython
@@ -1895,7 +1913,13 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
-    if: contains(needs.file_list.outputs.workdir, 'package.json')
+    # Do not run on PR close events.
+    if: |
+      contains(needs.file_list.outputs.workdir, 'package.json') &&
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      )
 
     <<: *customWorkingDirectory
 
@@ -1905,7 +1929,7 @@ jobs:
       contents: read # Required to checkout source project, without submodules
 
     outputs:
-      npm: 'true'
+      npm: "true"
       has_npm_lockfile: ${{ contains(needs.file_list.outputs.workdir, 'package-lock.json') || contains(needs.file_list.outputs.workdir, 'npm-shrinkwrap.json') }}
       npm_private: ${{ steps.package_json.outputs.private }}
       npm_docs: ${{ steps.package_json.outputs.docs }}
@@ -1915,11 +1939,17 @@ jobs:
       max_node_version: ${{ steps.node_versions.outputs.max }}
 
     env:
-      NODE_VERSIONS: '[]'
-      PACKAGE_JSON_PATH: '${{ inputs.working_directory }}/package.json'
+      NODE_VERSIONS: "[]"
+      PACKAGE_JSON_PATH: "${{ inputs.working_directory }}/package.json"
 
     steps:
-      - *checkoutEventRef
+      # Disable submodules and deep cloning.
+      # Do not persist credentials.
+      # Use the automatic actions token with contents:read permissions.
+      # Use the tip of the pull request branch for pull request (target) events.
+      # Use the event sha for other events.
+      # https://github.com/actions/checkout
+      - *shallowCheckout
 
       - name: Process package.json
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
@@ -1952,7 +1982,7 @@ jobs:
 
       - <<: *setupNode
         env:
-         # renovate: datasource=node-version depName=node packageName=node-18.x
+          # renovate: datasource=node-version depName=node packageName=node-18.x
           NODE_VERSION: 18.20.5
 
       # https://www.npmjs.com/package/check-engine
