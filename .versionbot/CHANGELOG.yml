@@ -1,4 +1,41 @@
 - commits:
+    - subject: Use shallow checkout with github token for linting jobs
+      hash: 9fb52184007c20373daaad945d92949f468ca23d
+      body: |
+        These jobs do not rely on versioned source, so they
+        can default to the pull request HEAD sha and fallback
+        to the github ref for other event types.
+
+        Using the github ref is not appropriate for pull_request_target
+        events where the ref/sha is always the base branch.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Prevent some jobs from running on PR close events
+      hash: 954b36e63cfee79154379140a5b78ae4ca42fd80
+      body: |
+        There is no value in running actionlint or pre-commit checks
+        on PR merge or close events.
+
+        Same with the Node version checks, no need on close events.
+
+        The octoscan checks should run on merge to update the main
+        branch code scanning results, but not on PR close.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.6.0
+  title: ""
+  date: 2025-01-17T14:12:18.603Z
+- commits:
     - subject: Update dependency node-22 to v22.13.0
       hash: 262150952b6ebf483f0708e066535d34e3ff832f
       body: |
