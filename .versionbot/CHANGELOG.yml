@@ -1,4 +1,23 @@
 - commits:
+    - subject: Use shallow clone when there are no git submodules
+      hash: 3d6c7ae9e62d0244f9aaf3c90399dc4d752fb575
+      body: |
+        Now that release note generation does not require
+        a local checkout with previous tags we can default
+        to a depth of 1 when checking out versioned source.
+
+        This saves a lot of time on each job that needs to checkout.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.8.0
+  title: ""
+  date: 2025-01-20T16:57:35.267Z
+- commits:
     - subject: Restore previous conditions for release_notes
       hash: 4888781ea14cf95156ecac3ba71396debf474cd6
       body: |
