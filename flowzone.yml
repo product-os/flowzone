@@ -2141,7 +2141,7 @@ jobs:
             const { execSync } = require('child_process');
 
             const tempBakeFile = process.env.TEMP_BAKE_FILE;
-            const bakeTargets = process.env.BAKE_TARGETS.trim().replace(/\s+/g,',').split(',');
+            const bakeTargets = process.env.BAKE_TARGETS.trim().replace(/[\s,]+/g,',').split(',');
             const bakeFiles = JSON.parse(process.env.ALL_FILES)
               .filter(f => f.match(/docker-bake(\.override)?\.(json|hcl)/))
               .map(f => path.join(process.env.WORKDIR.trim(), f));
@@ -2336,7 +2336,7 @@ jobs:
           script: |
             const bakeJson = JSON.parse(process.env.BAKE_JSON);
             const platformSlugMap = JSON.parse(process.env.PLATFORM_SLUG_MAP);
-            const images = process.env.IMAGES.trim().replace(/\s+/g,',').split(',');
+            const images = process.env.IMAGES.trim().replace(/[\s,]+/g,',').split(',');
             const imagesCrlf = images.join('\n');
             const targets = JSON.parse(process.env.BAKE_TARGETS);
 
