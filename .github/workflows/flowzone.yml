@@ -670,7 +670,6 @@ jobs:
     needs:
       - versioned_source
     if: |
-      inputs.release_notes == true &&
       needs.versioned_source.outputs.tag != '' &&
       (
         github.event.action != 'closed' ||
@@ -856,6 +855,12 @@ jobs:
     needs:
       - versioned_source
       - release_notes
+    if: |
+      inputs.release_notes == true &&
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      )
     defaults:
       run:
         working-directory: .
