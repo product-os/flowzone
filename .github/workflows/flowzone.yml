@@ -378,7 +378,7 @@ jobs:
       commit_sha: ${{ steps.create_commit.outputs.sha }}
       author: ${{ steps.create_commit.outputs.author }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
-      depth: 0
+      depth: ${{ steps.git_describe.outputs.depth || 0 }}
     env:
       GH_DEBUG: "true"
       GH_PAGER: cat
@@ -466,7 +466,7 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
           if [[ "$(git submodule)" = "" ]]; then
-            echo "depth=100" >> "${GITHUB_OUTPUT}"
+            echo "depth=1" >> "${GITHUB_OUTPUT}"
           else
             echo "depth=0" >> "${GITHUB_OUTPUT}"
           fi
