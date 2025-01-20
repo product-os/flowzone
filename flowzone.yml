@@ -453,7 +453,7 @@
     <<: *dockerTestMetadata
     id: cache_meta
     # ensure docker_images_crlf is not an empty list
-    if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+    if: needs.is_docker.outputs.docker_images_crlf != ''
     with:
       images: |
         ${{ needs.is_docker.outputs.docker_images_crlf }}
@@ -2061,53 +2061,56 @@ jobs:
 
   # pre-process any docker-compose and docker-bake files
   is_docker:
-    name: Is docker
+    name: Process docker files
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
-      - versioned_source
+      - file_list
+    # Do not run on PR close events.
+    # Match any of the following file globs:
+    #  docker-bake{.override,}.{json,hcl}
+    #  docker-compose{.test,}.{yml,yaml}
+    #  Dockerfile
+    if: |
+      (
+        inputs.docker_images ||
+        contains(needs.file_list.outputs.workdir, 'docker-compose.yml') ||
+        contains(needs.file_list.outputs.workdir, 'docker-compose.yaml') ||
+        contains(needs.file_list.outputs.workdir, 'docker-bake.json') ||
+        contains(needs.file_list.outputs.workdir, 'docker-bake.hcl') ||
+        contains(needs.file_list.outputs.workdir, 'docker-compose.test.yaml') ||
+        contains(needs.file_list.outputs.workdir, 'docker-compose.test.yml') ||
+        contains(needs.file_list.outputs.workdir, 'docker-bake.override.json') ||
+        contains(needs.file_list.outputs.workdir, 'docker-bake.override.hcl') ||
+        contains(needs.file_list.outputs.workdir, 'Dockerfile')
+      ) && (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      )
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    # No need for the Flowzone Installation App token here as we are not cloning
+    # submodules so the automatic actions token scoped to the repo is fine.
+    permissions:
+      contents: read # Required to checkout source project, without submodules
 
     outputs:
-      docker_images: ${{ steps.docker_images_json.outputs.result }}
-      docker_images_crlf: ${{ steps.docker_images_crlf.outputs.build }}
-      docker_compose_tests: ${{ steps.docker_compose_tests.outputs.found }}
-      bake_targets: ${{ steps.bake_targets_json.outputs.result }}
-      docker_bake_json: ${{ steps.docker_bake.outputs.json }}
-      docker_test_matrix: ${{ steps.docker_test.outputs.build }}
-      docker_publish_matrix: ${{ steps.docker_publish.outputs.build }}
+      docker_images: ${{ steps.docker_publish.outputs.images }}
+      docker_images_crlf: ${{ steps.docker_publish.outputs.images_crlf }}
+      docker_compose_tests: ${{ contains(needs.file_list.outputs.workdir, 'docker-compose.test.yaml') || contains(needs.file_list.outputs.workdir, 'docker-compose.test.yml') }}
+      docker_bake_json: ${{ steps.docker_bake.outputs.result }}
+      docker_test_matrix: ${{ steps.docker_test.outputs.result }}
+      docker_publish_matrix: ${{ steps.docker_publish.outputs.result }}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-
-      - id: docker_images_json
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.docker_images }}
-
-      - id: docker_images_crlf
-        <<: *newlineListBuilder
-        env:
-          INPUT: ${{ steps.docker_images_json.outputs.result }}
-
-      - id: bake_targets_json
-        <<: *jsonArrayBuilder
-        env:
-          INPUT: ${{ inputs.bake_targets }}
-
-      - name: Check for docker compose test files
-        id: docker_compose_tests
-        run: |
-          if [ -n "$(ls docker-compose.test.{yml,yaml} 2>/dev/null)" ]
-          then
-            echo "found=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "found=false" >> "${GITHUB_OUTPUT}"
-          fi
+      # Disable submodules and deep cloning.
+      # Do not persist credentials.
+      # Use the automatic actions token with contents:read permissions.
+      # Use the tip of the pull request branch for pull request (target) events.
+      # Use the event sha for other events.
+      # https://github.com/actions/checkout
+      - *shallowCheckout
 
       - <<: *setupBuildx
         with:
@@ -2120,32 +2123,67 @@ jobs:
       # in this custom bake json we also set some default cache values, and inherit the docker-metadata-action
       - name: Pre-process Docker bake files
         id: docker_bake
-        if: |
-          join(fromJSON(steps.docker_images_json.outputs.result)) != '' ||
-          steps.docker_compose_tests.outputs.found == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         env:
-          BAKE_FILE: /tmp/docker-bake.json
-        run: |
-          if [ -n "$(ls docker-bake{.override,}.{json,hcl} 2>/dev/null)" ]
-          then
-            files="$(echo "$(ls -1 docker-bake{.override,}.{json,hcl} 2>/dev/null)" | sed 's/ / -f /')"
-          else
-            echo '${{ steps.bake_targets_json.outputs.result }}' | jq -s '{target: (map({(.[]):{}}))}' > ${BAKE_FILE}
-            files="${BAKE_FILE}"
-          fi
+          TEMP_BAKE_FILE: ${{ runner.temp }}/docker-bake.json
+          BAKE_TARGETS: ${{ inputs.bake_targets }}
+          ALL_FILES: ${{ needs.file_list.outputs.workdir }}
+          WORKDIR: ${{ inputs.working_directory }}
+        with:
+          result-encoding: json
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const { execSync } = require('child_process');
 
-          # log merged files and targets
-          docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.result),' ') }} -f ${files}
+            const tempBakeFile = process.env.TEMP_BAKE_FILE;
+            const bakeTargets = process.env.BAKE_TARGETS.trim().replace(/\s+/g,',').split(',');
+            const bakeFiles = JSON.parse(process.env.ALL_FILES)
+              .filter(f => f.match(/docker-bake(\.override)?\.(json|hcl)/))
+              .map(f => path.join(process.env.WORKDIR.trim(), f));
 
-          json="$(docker buildx bake --print ${{ join(fromJSON(steps.bake_targets_json.outputs.result),' ') }} -f ${files} \
-            | jq -cr '
-              .target |= map_values(."inherits" += ["docker-metadata-action"]) |
-              .target |= map_values(."platforms" //= ["linux/amd64"]) |
-              del(.group."default") |
-              if .group == {} then del(.group) else . end
-            ')"
+            const bakeConfig = {
+              target: Object.fromEntries(bakeTargets.map(t => [t, {}]))
+            };
+            fs.writeFileSync(tempBakeFile, JSON.stringify(bakeConfig));
+            bakeFiles.push(tempBakeFile);
 
-          echo "json=${json}">> "${GITHUB_OUTPUT}"
+            console.log(JSON.stringify(bakeTargets, null, 2));
+            console.log(JSON.stringify(bakeFiles, null, 2));
+            console.log(JSON.stringify(bakeConfig, null, 2));
+
+            core.setOutput('targets', bakeTargets);
+            core.setOutput('files', bakeFiles);
+
+            const fileArgs = bakeFiles.map(f => `-f ${f}`).join(' ');
+            const bakeCmd = `docker buildx bake --print ${bakeTargets.join(' ')} ${fileArgs}`;
+
+            console.log(bakeCmd);
+
+            const bakeOutput = execSync(bakeCmd).toString().trim();
+            const bakeJson = JSON.parse(bakeOutput);
+
+            console.log(JSON.stringify(bakeJson, null, 2));
+
+            // Transform the data
+            if (bakeJson.target) {
+              Object.values(bakeJson.target).forEach(target => {
+                target.inherits = target.inherits || [];
+                target.inherits.push('docker-metadata-action');
+                target.platforms = target.platforms || ['linux/amd64'];
+              });
+            }
+
+            if (bakeJson.group) {
+              delete bakeJson.group.default;
+              if (Object.keys(bakeJson.group).length === 0) {
+                delete bakeJson.group;
+              }
+            }
+
+            console.log(JSON.stringify(bakeJson, null, 2));
+
+            return bakeJson;
 
       # generate a test matrix with this structure
       # {
@@ -2153,14 +2191,20 @@ jobs:
       #     {
       #       "target": "default",
       #       "platform": "linux/amd64",
-      #       "runs_on": ["ubuntu-22.04"],
+      #       "runs_on": [
+      #         "self-hosted",
+      #         "X64"
+      #       ],
       #       "platform_slug": "amd64",
       #       "target_slug": "default"
       #     },
       #     {
       #       "target": "multiarch",
       #       "platform": "linux/amd64",
-      #       "runs_on": ["ubuntu-22.04"],
+      #       "runs_on": [
+      #         "self-hosted",
+      #         "X64"
+      #       ],
       #       "platform_slug": "amd64",
       #       "target_slug": "multiarch",
       #       "tag_suffix": "-multiarch"
@@ -2168,7 +2212,10 @@ jobs:
       #     {
       #       "target": "multiarch",
       #       "platform": "linux/arm64",
-      #       "runs_on": ["self-hosted", "ARM64"],
+      #       "runs_on": [
+      #         "self-hosted",
+      #         "ARM64"
+      #       ],
       #       "platform_slug": "arm64v8",
       #       "target_slug": "multiarch",
       #       "tag_suffix": "-multiarch"
@@ -2176,7 +2223,10 @@ jobs:
       #     {
       #       "target": "multiarch",
       #       "platform": "linux/arm/v7",
-      #       "runs_on": ["self-hosted", "ARM64"],
+      #       "runs_on": [
+      #         "self-hosted",
+      #         "ARM64"
+      #       ],
       #       "platform_slug": "arm32v7",
       #       "target_slug": "multiarch",
       #       "tag_suffix": "-multiarch"
@@ -2184,45 +2234,68 @@ jobs:
       #     {
       #       "target": "multiarch",
       #       "platform": "linux/arm/v6",
-      #       "runs_on": ["self-hosted", "X64"],
+      #       "runs_on": [
+      #         "self-hosted",
+      #         "ARM64"
+      #       ],
       #       "platform_slug": "arm32v6",
       #       "target_slug": "multiarch",
       #       "tag_suffix": "-multiarch"
       #     }
       #   ]
       # }
+
       - name: Build docker test matrix
         id: docker_test
-        if: steps.docker_bake.outputs.json != ''
+        if: steps.docker_bake.outputs.result != ''
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         env:
           <<: *dockerPlatformSlugMap
-          BAKE_JSON: "${{ steps.docker_bake.outputs.json }}"
+          BAKE_JSON: "${{ steps.docker_bake.outputs.result }}"
           RUNS_ON: "${{ inputs.runs_on }}"
           DOCKER_RUNS_ON: "${{ inputs.docker_runs_on }}"
-        run: |
-          matrix="$(jq -cr '.target | to_entries |
-            {include: map(.value.platforms[] as $p |
-            {target: .key, platform: $p}
-          )}' <<< "${BAKE_JSON}")"
+        with:
+          result-encoding: json
+          script: |
+            const bakeJson = JSON.parse(process.env.BAKE_JSON);
+            const platformSlugMap = JSON.parse(process.env.PLATFORM_SLUG_MAP);
+            const dockerRunsOn = JSON.parse(process.env.DOCKER_RUNS_ON);
+            const defaultRunsOn = JSON.parse(process.env.RUNS_ON);
 
-          matrix="$(jq -cr --argjson in "$DOCKER_RUNS_ON" --argjson default "$RUNS_ON" '.include |=
-            map(.platform as $p |
-            .runs_on = if ($in | has($p)) then $in[$p] else $default end)' <<< "${matrix}")"
+            // Create initial matrix from targets and platforms
+            const matrix = {
+              include: Object.entries(bakeJson.target).flatMap(([target, value]) =>
+                value.platforms.map(platform => ({
+                  target,
+                  platform,
+                  // Set runs_on based on platform or default
+                  runs_on: dockerRunsOn[platform] || defaultRunsOn,
+                  // Set platform_slug from map or error
+                  platform_slug: platformSlugMap[platform] || (() => {
+                    throw new Error(`Unsupported platform: ${platform}`);
+                  })(),
+                  // Set target_slug by replacing non-alphanumeric chars
+                  target_slug: target.replace(/[^a-zA-Z0-9]/g, '-')
+                }))
+              )
+            };
 
-          matrix="$(jq -cr --argjson in "$PLATFORM_SLUG_MAP" '.include |=
-            map(.platform as $p |
-            .platform_slug = if ($in | has($p)) then $in[$p] else error("Unsupported platform: \($p)") end)' <<< "${matrix}")"
+            // Add tag prefix/suffix based on docker_invert_tags
+            const invertTags = ${{ inputs.docker_invert_tags }};
+            matrix.include = matrix.include.map(item => {
+              if (item.target !== 'default') {
+                if (invertTags) {
+                  item.tag_prefix = item.target + '-';
+                } else {
+                  item.tag_suffix = '-' + item.target;
+                }
+              }
+              return item;
+            });
 
-          matrix="$(jq -cr '.include[] |= . + {"target_slug": (.target | gsub("[^[:alnum:]]"; "-"))}' <<< "${matrix}")"
+            console.log(JSON.stringify(matrix, null, 2));
 
-          if [ "${{ inputs.docker_invert_tags }}" = "true" ]
-          then
-            matrix="$(jq -cr '.include[] |= (if .target != "default" then .tag_prefix = .target + "-" else . end)'  <<< "${matrix}")"
-          else
-            matrix="$(jq -cr '.include[] |= (if .target != "default" then .tag_suffix = "-" + .target else . end)'  <<< "${matrix}")"
-          fi
-
-          echo "build=${matrix}">> "${GITHUB_OUTPUT}"
+            return matrix;
 
       # generate a publish matrix with this structure
       # {
@@ -2241,27 +2314,73 @@ jobs:
       #     }
       #   ]
       # }
+
       - name: Build docker publish matrix
         id: docker_publish
+        if: |
+          inputs.docker_images != '' &&
+          join(fromJSON(steps.docker_bake.outputs.targets)) != '' &&
+          steps.docker_bake.outputs.result != ''
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         env:
           <<: *dockerPlatformSlugMap
-          BAKE_JSON: "${{ steps.docker_bake.outputs.json }}"
-        if: |
-          join(fromJSON(steps.docker_images_json.outputs.result)) != '' && join(fromJSON(steps.bake_targets_json.outputs.result)) != ''
-        run: |
-          matrix="$(jq -ncr \
-            --argjson images '${{ steps.docker_images_json.outputs.result }}' \
-            --argjson targets '${{ steps.bake_targets_json.outputs.result }}' \
-            '{include: [([$images, $targets] | combinations | {image: .[0], target: .[1]})]}')"
+          BAKE_JSON: ${{ steps.docker_bake.outputs.result }}
+          BAKE_TARGETS: ${{ steps.docker_bake.outputs.targets }}
+          IMAGES: ${{ inputs.docker_images }}
+        with:
+          result-encoding: json
+          script: |
+            const bakeJson = JSON.parse(process.env.BAKE_JSON);
+            const platformSlugMap = JSON.parse(process.env.PLATFORM_SLUG_MAP);
+            const images = process.env.IMAGES.trim().replace(/\s+/g,',').split(',');
+            const imagesCrlf = images.join('\n');
+            const targets = JSON.parse(process.env.BAKE_TARGETS);
 
-          matrix="$(jq -cr '.include[] |= . + {"target_slug": (.target | gsub("[^[:alnum:]]"; "-"))}' <<< "${matrix}")"
+            console.log(JSON.stringify(images, null, 2));
+            core.setOutput('images', images);
 
-          matrix="$(jq -cr --argjson in "$BAKE_JSON" --argjson slugs "$PLATFORM_SLUG_MAP" '.include |=
-            map(.target as $t |
-            .platform_slugs = if ($in.target | has($t)) then ($in.target[$t].platforms | map($slugs[.]) | join(" "))
-            else error("Unsupported target: \($t)") end)' <<< "${matrix}")"
+            console.log(imagesCrlf);
+            core.setOutput('images_crlf', imagesCrlf);
 
-          echo "build=${matrix}">> "${GITHUB_OUTPUT}"
+            // Generate combinations of images and targets
+            const combinations = images.flatMap(image =>
+              targets.map(target => ({
+                image,
+                target,
+                target_slug: target.replace(/[^a-zA-Z0-9]/g, '-')
+              }))
+            );
+
+            console.log(JSON.stringify(combinations, null, 2));
+
+            // Add platform_slugs to each combination
+            const matrix = {
+              include: combinations.map(item => {
+                const targetPlatforms = bakeJson.target?.[item.target]?.platforms;
+                if (!targetPlatforms) {
+                  throw new Error(`Unsupported target: ${item.target}`);
+                }
+
+                const platformSlugs = targetPlatforms
+                  .map(platform => {
+                    const slug = platformSlugMap[platform];
+                    if (!slug) {
+                      throw new Error(`Unsupported platform: ${platform}`);
+                    }
+                    return slug;
+                  })
+                  .join(' ');
+
+                return {
+                  ...item,
+                  platform_slugs: platformSlugs
+                };
+              })
+            };
+
+            console.log(JSON.stringify(matrix, null, 2));
+
+            return matrix;
 
   is_python:
     name: Is python
@@ -3094,7 +3213,7 @@ jobs:
 
       # save image to file before running compose tests to avoid tainting the published image
       - name: Save image to file
-        if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+        if: needs.is_docker.outputs.docker_publish_matrix != ''
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
           zstd -v ${DOCKER_TAR}
@@ -3120,7 +3239,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
-        if: join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+        if: needs.is_docker.outputs.docker_publish_matrix != ''
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           # this docker-{sha}-{target}-{platform} naming scheme is used by docker_publish to find the correct artifact
@@ -3144,7 +3263,7 @@ jobs:
     if: |
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
-      join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+      needs.is_docker.outputs.docker_publish_matrix != ''
 
     <<: *rootWorkingDirectory
 
@@ -3271,7 +3390,7 @@ jobs:
       - versioned_source
     if: |
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
-      join(fromJSON(needs.is_docker.outputs.docker_images)) != ''
+      needs.is_docker.outputs.docker_publish_matrix != ''
 
     <<: *rootWorkingDirectory
 
