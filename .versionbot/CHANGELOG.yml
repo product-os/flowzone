@@ -1,4 +1,23 @@
 - commits:
+    - subject: Fix parsing of inputs with commas and newlines
+      hash: 7226c89909e9d2acf59c5399dea2516da8b8eb9d
+      body: |
+        Currently inputs with both commas and newlines are
+        being parsed as multiple separators.
+
+        This change ensures we match both whitespace and commas
+        and replace them with a single comma.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.8.3
+  title: ""
+  date: 2025-01-20T21:38:52.420Z
+- commits:
     - subject: Filter the current tag for merge events
       hash: 2faed229f285ba2ee0747986aef1c0762d9020f6
       body: |
