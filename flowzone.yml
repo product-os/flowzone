@@ -1399,7 +1399,6 @@ jobs:
     # By filtering on the tag output of versioned_source, we can ensure that this job
     # only runs when versioning is enabled, or when a tag is pushed.
     if: |
-        inputs.release_notes == true &&
         needs.versioned_source.outputs.tag != '' &&
         (
           github.event.action != 'closed' ||
@@ -1590,6 +1589,12 @@ jobs:
     needs:
       - versioned_source
       - release_notes
+    if: |
+      inputs.release_notes == true &&
+      (
+        github.event.action != 'closed' ||
+        github.event.pull_request.merged == true
+      )
 
     <<: *rootWorkingDirectory
 
