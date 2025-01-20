@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.20.0
+      hash: f33d57b0231dd4d9109ce3a8044f8ffe149ff21b
+      body: |
+        Update docker/buildx from 0.19.3 to 0.20.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.8.4
+  title: ""
+  date: 2025-01-20T22:05:28.951Z
+- commits:
     - subject: Fix parsing of inputs with commas and newlines
       hash: 7226c89909e9d2acf59c5399dea2516da8b8eb9d
       body: |
