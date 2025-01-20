@@ -1,4 +1,26 @@
 - commits:
+    - subject: Use github-script to generate release notes
+      hash: b7e2f9d9b33f9cc11afb4e4c4a3f9a203bcac8c1
+      body: |
+        This uses the GitHub API to get previous tags
+        and commit messages, while avoiding issues due to
+        extremely long strings and special characters.
+
+        This also means we don't need to clone the repo
+        with the last n tags in order to generate release
+        notes so we can change the default checkout depth
+        in a future PR.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.7.0
+  title: ""
+  date: 2025-01-20T16:13:51.038Z
+- commits:
     - subject: Update rhysd/actionlint Docker tag to v1.7.7
       hash: 67ed04d4e71c1b2d4cab89de5dca25d7aa1b9673
       body: |
