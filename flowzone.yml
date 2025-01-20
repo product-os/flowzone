@@ -1393,11 +1393,18 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
+    # On tag push events, we only want to generate release notes if versioning is disabled.
+    # On pull_request events, we want to generate release notes if versioning is enabled.
+    # Skip pull_request closed events, but allow pull_request merged events.
+    # By filtering on the tag output of versioned_source, we can ensure that this job
+    # only runs when versioning is enabled, or when a tag is pushed.
     if: |
-      (
-        github.event.action != 'closed' ||
-        github.event.pull_request.merged == true
-      )
+        inputs.release_notes == true &&
+        needs.versioned_source.outputs.tag != '' &&
+        (
+          github.event.action != 'closed' ||
+          github.event.pull_request.merged == true
+        )
 
     <<: *rootWorkingDirectory
 
@@ -1407,7 +1414,7 @@ jobs:
     outputs:
       body: ${{ steps.format_release_notes.outputs.body }}
       comment: ${{ steps.format_release_notes.outputs.comment }}
-      note: ${{ steps.short_release_notes.outputs.note }}
+      note: ${{ steps.short_release_notes.outputs.result }}
 
     env:
       <<: *gitHubCliEnvironment
@@ -1583,12 +1590,6 @@ jobs:
     needs:
       - versioned_source
       - release_notes
-    if: |
-      (
-        github.event.action != 'closed' ||
-        github.event.pull_request.merged == true
-      ) &&
-      inputs.release_notes == true
 
     <<: *rootWorkingDirectory
 
@@ -3769,7 +3770,8 @@ jobs:
     # allow some dependencies to be skipped
     if: |
       !failure() && !cancelled() &&
-      github.event.pull_request.state == 'open'
+      github.event.pull_request.state == 'open' &&
+      needs.versioned_source.outputs.tag != ''
 
     <<: *rootWorkingDirectory
 

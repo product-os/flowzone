@@ -670,6 +670,8 @@ jobs:
     needs:
       - versioned_source
     if: |
+      inputs.release_notes == true &&
+      needs.versioned_source.outputs.tag != '' &&
       (
         github.event.action != 'closed' ||
         github.event.pull_request.merged == true
@@ -683,7 +685,7 @@ jobs:
     outputs:
       body: ${{ steps.format_release_notes.outputs.body }}
       comment: ${{ steps.format_release_notes.outputs.comment }}
-      note: ${{ steps.short_release_notes.outputs.note }}
+      note: ${{ steps.short_release_notes.outputs.result }}
     env:
       GH_DEBUG: "true"
       GH_PAGER: cat
@@ -854,12 +856,6 @@ jobs:
     needs:
       - versioned_source
       - release_notes
-    if: |
-      (
-        github.event.action != 'closed' ||
-        github.event.pull_request.merged == true
-      ) &&
-      inputs.release_notes == true
     defaults:
       run:
         working-directory: .
@@ -3668,7 +3664,8 @@ jobs:
       - cargo_sbom
     if: |
       !failure() && !cancelled() &&
-      github.event.pull_request.state == 'open'
+      github.event.pull_request.state == 'open' &&
+      needs.versioned_source.outputs.tag != ''
     defaults:
       run:
         working-directory: .
