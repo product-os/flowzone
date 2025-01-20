@@ -1,4 +1,23 @@
 - commits:
+    - subject: Restore previous conditions for release_notes
+      hash: 4888781ea14cf95156ecac3ba71396debf474cd6
+      body: |
+        The release_notes input is meant to control
+        whether we take special balena-specific steps
+        to publish release notes to internal message boards.
+
+        It is NOT a flag to disable or enable creating releases.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.7.1
+  title: ""
+  date: 2025-01-20T16:47:34.850Z
+- commits:
     - subject: Use github-script to generate release notes
       hash: b7e2f9d9b33f9cc11afb4e4c4a3f9a203bcac8c1
       body: |
