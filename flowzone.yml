@@ -1492,6 +1492,7 @@ jobs:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         env:
           USER_DEFINED: ${{ steps.format_release_notes.outputs.body }}
+          CURRENT_TAG: ${{ needs.versioned_source.outputs.tag }}
         with:
           result-encoding: json
           script: |
@@ -1502,11 +1503,14 @@ jobs:
               page: 1
             });
 
-            console.log('tags:', JSON.stringify(tags, null, 2));
-            core.setOutput('tags', tags);
+            // Filter out the current tag
+            const filteredTags = tags.filter(tag => tag.name !== process.env.CURRENT_TAG);
+
+            console.log('tags:', JSON.stringify(filteredTags, null, 2));
+            core.setOutput('tags', filteredTags);
 
             // Get the previous version tag
-            const previousTag = tags.find(tag => tag.name.match(/^v\d+\.\d+\.\d+/));
+            const previousTag = filteredTags.find(tag => tag.name.match(/^v\d+\.\d+\.\d+/));
 
             if (!previousTag) {
               core.setFailed('No previous version tag found');
