@@ -1,4 +1,17 @@
 - commits:
+    - subject: Set correct npm_docs output value
+      hash: 41850e885189e356f8a8209a45bf0a343b222f3a
+      body: |
+        The output should have the value `true` if the doc script exists
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 19.8.9
+  title: ""
+  date: 2025-01-22T22:27:18.264Z
+- commits:
     - subject: Update dependency node to v18.20.6
       hash: b4067d10ba4e5f235fa81ffeffe8fbfaecd23f0b
       body: |
