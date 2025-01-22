@@ -2007,7 +2007,7 @@ jobs:
       - <<: *setupNode
         env:
           # renovate: datasource=node-version depName=node packageName=node-18.x
-          NODE_VERSION: 18.20.5
+          NODE_VERSION: 18.20.6
 
       # https://www.npmjs.com/package/check-engine
       - &checkEngine
