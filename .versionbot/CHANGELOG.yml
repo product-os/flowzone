@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node to v18.20.6
+      hash: b4067d10ba4e5f235fa81ffeffe8fbfaecd23f0b
+      body: |
+        Update node from 18.20.5 to 18.20.6
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.8.8
+  title: ""
+  date: 2025-01-22T16:08:14.849Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.92
       hash: 0d443600dbbcc6358334cf1d4549bca0944017ff
       body: |
