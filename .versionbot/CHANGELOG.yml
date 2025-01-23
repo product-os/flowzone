@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/bake-action action to v6.3.0
+      hash: 5bbc8c67cba66da0f95359b22f2620620ea043db
+      body: |
+        Update docker/bake-action from 6.2.0 to 6.3.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.8.10
+  title: ""
+  date: 2025-01-23T14:06:50.142Z
+- commits:
     - subject: Set correct npm_docs output value
       hash: 41850e885189e356f8a8209a45bf0a343b222f3a
       body: |
