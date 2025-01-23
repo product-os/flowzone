@@ -3016,7 +3016,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm config set ignore-scripts true
-          pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
+          pack="$(ls ${{ runner.temp }}/*/*.tgz | sort -t- -n -k3 | tail -n1)"
           npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
 
   npm_docs_finalize:
@@ -3061,7 +3061,7 @@ jobs:
 
       - name: Extract docs artifact
         run: |
-          docs="$(ls ${{ runner.temp }}/*.tar.zst | sort -t- -n -k3 | tail -n1)"
+          docs="$(ls ${{ runner.temp }}/*/*.tar.zst | sort -t- -n -k3 | tail -n1)"
           tar -xvf "${docs}"
 
       - name: Publish generated docs to GitHub Pages
