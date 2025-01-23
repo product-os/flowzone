@@ -1,4 +1,33 @@
 - commits:
+    - subject: Use regex matching for npm artifacts on finalize
+      hash: d7f9dddd869475d331ae395794ca71e0adef0be5
+      body: |
+        This avoids artifact download failures when the node
+        version changes between draft and merge.
+      footer:
+        CHange-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Remove node version from artifact names
+      hash: 0b1997a45cff7336ab07d8b34557112558347b4d
+      body: |
+        The artifact download regex on finalize treats the node
+        version string as optional, and we only upload
+        a single node artifact matching the max version anyway.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.9.0
+  title: ""
+  date: 2025-01-23T15:20:08.467Z
+- commits:
     - subject: Restore docker build+test conditions
       hash: 05733bc4c823c553b703879951bdd466de489dad
       body: |
