@@ -2353,7 +2353,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm config set ignore-scripts true
-          pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
+          pack="$(ls ${{ runner.temp }}/*/*.tgz | sort -t- -n -k3 | tail -n1)"
           npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
   npm_docs_finalize:
     name: Finalize npm docs
@@ -2396,7 +2396,7 @@ jobs:
           name_is_regexp: true
       - name: Extract docs artifact
         run: |
-          docs="$(ls ${{ runner.temp }}/*.tar.zst | sort -t- -n -k3 | tail -n1)"
+          docs="$(ls ${{ runner.temp }}/*/*.tar.zst | sort -t- -n -k3 | tail -n1)"
           tar -xvf "${docs}"
       - name: Publish generated docs to GitHub Pages
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
