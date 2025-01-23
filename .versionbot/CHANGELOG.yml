@@ -1,4 +1,23 @@
 - commits:
+    - subject: Restore docker build+test conditions
+      hash: 05733bc4c823c553b703879951bdd466de489dad
+      body: |
+        Prior to the last change, we only ran docker build+test
+        jobs if there were images to publish, or compose files to test.
+
+        Restore that behaviour to avoid running docker bake for
+        repos only meant to publish to balena.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.8.11
+  title: ""
+  date: 2025-01-23T14:36:46.845Z
+- commits:
     - subject: Update docker/bake-action action to v6.3.0
       hash: 5bbc8c67cba66da0f95359b22f2620620ea043db
       body: |
