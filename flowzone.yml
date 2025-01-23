@@ -2998,7 +2998,10 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: npm-${{ github.event.pull_request.head.sha }}-${{ needs.is_npm.outputs.max_node_version }}
+          # Optionally match version suffix in the format -v22.13.1 or -22.x as we used to
+          # include a version suffix on draft artifacts.
+          name: npm-${{ github.event.pull_request.head.sha }}(-v[0-9]+\.[0-9]+\.[0-9]+|-[0-9][0-9]\.x)?
+          name_is_regexp: true
 
       - <<: *setupNode
         with:
@@ -3051,7 +3054,10 @@ jobs:
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}
           workflow_conclusion: success
-          name: docs-${{ github.event.pull_request.head.sha }}-${{ needs.is_npm.outputs.max_node_version }}
+          # Optionally match version suffix in the format -v22.13.1 or -22.x as we used to
+          # include a version suffix on draft artifacts.
+          name: docs-${{ github.event.pull_request.head.sha }}(-v[0-9]+\.[0-9]+\.[0-9]+|-[0-9][0-9]\.x)?
+          name_is_regexp: true
 
       - name: Extract docs artifact
         run: |
