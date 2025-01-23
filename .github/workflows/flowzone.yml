@@ -1315,15 +1315,8 @@ jobs:
     if: |
       (
         inputs.docker_images ||
-        contains(needs.file_list.outputs.workdir, 'docker-compose.yml') ||
-        contains(needs.file_list.outputs.workdir, 'docker-compose.yaml') ||
-        contains(needs.file_list.outputs.workdir, 'docker-bake.json') ||
-        contains(needs.file_list.outputs.workdir, 'docker-bake.hcl') ||
         contains(needs.file_list.outputs.workdir, 'docker-compose.test.yaml') ||
-        contains(needs.file_list.outputs.workdir, 'docker-compose.test.yml') ||
-        contains(needs.file_list.outputs.workdir, 'docker-bake.override.json') ||
-        contains(needs.file_list.outputs.workdir, 'docker-bake.override.hcl') ||
-        contains(needs.file_list.outputs.workdir, 'Dockerfile')
+        contains(needs.file_list.outputs.workdir, 'docker-compose.test.yml')
       ) && (
         github.event.action != 'closed' ||
         github.event.pull_request.merged == true
