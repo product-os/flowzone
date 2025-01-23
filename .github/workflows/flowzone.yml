@@ -2653,7 +2653,7 @@ jobs:
         if: needs.is_docker.outputs.docker_images_crlf != ''
       - name: Docker bake
         id: docker_bake
-        uses: docker/bake-action@60f5d53310314dbf8c33f0c8a01042536f2f6c36
+        uses: docker/bake-action@7bff531c65a5cda33e52e43950a795b91d450f63
         with:
           source: .
           workdir: ${{ inputs.working_directory }}
