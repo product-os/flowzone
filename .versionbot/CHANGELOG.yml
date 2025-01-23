@@ -1,4 +1,18 @@
 - commits:
+    - subject: Extract npm and docs artifact from subdirectory
+      hash: 7795e134bea3dd0cfdf4ff2841a36c945c7fd492
+      body: |
+        Using regex to download artifacts caused the artifact to be downloaded
+        into a subdirectory causing issues with the publish step.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 19.9.1
+  title: ""
+  date: 2025-01-23T21:52:30.352Z
+- commits:
     - subject: Use regex matching for npm artifacts on finalize
       hash: d7f9dddd869475d331ae395794ca71e0adef0be5
       body: |
