@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/setup-node action to v4.2.0
+      hash: bba9ed97a3527bc9b63aeec8b92f3386e1debe1d
+      body: |
+        Update actions/setup-node from 4.1.0 to 4.2.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.9.2
+  title: ""
+  date: 2025-01-27T04:06:40.200Z
+- commits:
     - subject: Extract npm and docs artifact from subdirectory
       hash: 7795e134bea3dd0cfdf4ff2841a36c945c7fd492
       body: |
