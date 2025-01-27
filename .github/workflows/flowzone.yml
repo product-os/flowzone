@@ -2867,7 +2867,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
       - name: Configure AWS credentials
         id: aws_credentials
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        uses: aws-actions/configure-aws-credentials@4fc4975a852c8cd99761e2de1f4ba73402e44dd9
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
           github.event.pull_request.head.repo.full_name == github.repository
@@ -3081,7 +3081,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
       - name: Configure AWS credentials
         id: aws_credentials
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        uses: aws-actions/configure-aws-credentials@4fc4975a852c8cd99761e2de1f4ba73402e44dd9
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
           github.event.pull_request.head.repo.full_name == github.repository
@@ -4547,7 +4547,7 @@ jobs:
           sleep "${random}s"
       - name: Configure AWS credentials
         id: aws_credentials
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        uses: aws-actions/configure-aws-credentials@4fc4975a852c8cd99761e2de1f4ba73402e44dd9
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
           github.event.pull_request.head.repo.full_name == github.repository
@@ -4848,7 +4848,7 @@ jobs:
           sleep "${random}s"
       - name: Configure AWS credentials
         id: aws_credentials
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        uses: aws-actions/configure-aws-credentials@4fc4975a852c8cd99761e2de1f4ba73402e44dd9
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
           github.event.pull_request.head.repo.full_name == github.repository
