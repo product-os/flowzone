@@ -2091,6 +2091,25 @@ jobs:
       # https://github.com/actions/checkout
       - *shallowCheckout
 
+      # enforce .dockerignore requirement and warn (for now) if .git isn't excluded
+      - name: Check for .dockerignore
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        env:
+          WORKDIR: ${{ inputs.working_directory }}
+        with:
+          script: |
+            const fs = require('fs');
+            fs.readFile(`${process.env.WORKDIR}/.dockerignore`, 'utf8', (err, data) => {
+              if (err) {
+                console.error('::error:: Docker builds require .dockerignore file.');
+                process.exit(1);
+              } else {
+                if (!data.split('\n').includes('.git')) {
+                  console.warn('::warning:: .dockerignore should exclude .git directory/folder for security reasons.');
+                }
+              }
+            });
+
       - <<: *setupBuildx
         env:
           # Note that versions between v0.10.0 and v0.20.0 (inclusive) have a bug where the default group
