@@ -1349,7 +1349,9 @@ jobs:
         env:
           BUILDX_VERSION: v0.20.1
         with:
-          version: v0.9.1
+          driver-opts: network=host
+          install: true
+          version: ${{ env.BUILDX_VERSION }}
       - name: Pre-process Docker bake files
         id: docker_bake
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
