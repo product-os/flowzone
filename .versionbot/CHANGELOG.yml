@@ -1,4 +1,28 @@
 - commits:
+    - subject: Avoid empty set cache args passed to docker bake
+      hash: 593c351340060be38594dc1514f3f3e99781d0ba
+      body: >
+        buildx v0.20.1 and above does not handle the empty --set *.cache-to= args
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Update dependency docker/buildx to v0.20.1
+      hash: 3eb364a6cc5b76bfcd9d9cf840345d6f2b8875a3
+      body: |
+        Update docker/buildx from 0.20.0 to 0.20.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.9.5
+  title: ""
+  date: 2025-02-03T18:45:51.803Z
+- commits:
     - subject: Update actions/setup-python action to v5.4.0
       hash: ebdc151df213280608b831c42bf1dded88840eea
       body: |
