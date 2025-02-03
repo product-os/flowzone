@@ -3208,14 +3208,7 @@ jobs:
             *.platform=${{ matrix.platform }}
             *.cache-to=type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=type=gha,scope=${{ matrix.target }}-${{ matrix.platform }}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[0] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[1] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[2] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[3] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[4] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[5] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[6] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[7] || ''}}
+            *.cache-from=${{join(fromJSON(steps.cache_meta.outputs.json || '{}').tags || fromJSON('[]'),',')}}
           load: true
           provenance: false
 
