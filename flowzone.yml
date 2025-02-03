@@ -613,11 +613,11 @@
     env:
       LOG_LEVEL: debug
       # renovate: datasource=docker depName=tonistiigi/binfmt
-      BINFMT_VERSION: qemu-v8.0.4-33
+      BINFMT_VERSION: v9.2.0-46
     with:
       platforms: ${{ matrix.platform }}
       # https://hub.docker.com/r/tonistiigi/binfmt
-      image: tonistiigi/binfmt:${{ env.BINFMT_VERSION }}
+      image: tonistiigi/binfmt:qemu-${{ env.BINFMT_VERSION }}
 
   - &setupNode # https://github.com/actions/setup-node
     name: Setup Node.js
