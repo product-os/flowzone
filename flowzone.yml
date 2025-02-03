@@ -2112,10 +2112,12 @@ jobs:
       - *shallowCheckout
 
       - <<: *setupBuildx
-        with:
-          # pin to a known working version because v0.10.x will
-          # create a group called "default" that does not contain multiple targets
-          version: v0.9.1
+        env:
+          # Note that versions between v0.10.0 and v0.20.0 (inclusive) have a bug where the default group
+          # is created without the "default" target.
+          # See https://github.com/docker/buildx/issues/2859
+          # renovate: datasource=github-releases depName=docker/buildx
+          BUILDX_VERSION: v0.20.1
 
       # generate a custom bake json string from the provided bake targets and any discovered bake files
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
@@ -3104,8 +3106,7 @@ jobs:
       - *checkoutVersionedSha
       - *createLocalRefs
       - *sanitizeDockerStrings
-
-      - <<: *setupBuildx
+      - *setupBuildx
 
       - id: native_platforms
         <<: *jsonArrayBuilder
