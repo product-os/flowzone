@@ -1347,7 +1347,7 @@ jobs:
         id: setup_buildx
         uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5
         env:
-          BUILDX_VERSION: v0.20.0
+          BUILDX_VERSION: v0.20.1
         with:
           version: v0.9.1
       - name: Pre-process Docker bake files
@@ -2512,7 +2512,7 @@ jobs:
         id: setup_buildx
         uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5
         env:
-          BUILDX_VERSION: v0.20.0
+          BUILDX_VERSION: v0.20.1
         with:
           driver-opts: network=host
           install: true
@@ -2660,14 +2660,7 @@ jobs:
             *.platform=${{ matrix.platform }}
             *.cache-to=type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=type=gha,scope=${{ matrix.target }}-${{ matrix.platform }}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[0] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[1] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[2] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[3] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[4] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[5] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[6] || ''}}
-            *.cache-from=${{fromJSON(steps.cache_meta.outputs.json || '{}').tags[7] || ''}}
+            *.cache-from=${{join(fromJSON(steps.cache_meta.outputs.json || '{}').tags || fromJSON('[]'),',')}}
           load: true
           provenance: false
       - name: Save image to file
@@ -2801,7 +2794,7 @@ jobs:
         id: setup_buildx
         uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5
         env:
-          BUILDX_VERSION: v0.20.0
+          BUILDX_VERSION: v0.20.1
         with:
           driver-opts: network=host
           install: true
