@@ -1,4 +1,19 @@
 - commits:
+    - subject: Align buildx versions to v0.20.1 for default target fix
+      hash: 7bcb1b03c352efeb2212d2ced731027d21476007
+      body: |
+        The bug introduced in v0.10.0 has been fixed in v0.20.1.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.9.6
+  title: ""
+  date: 2025-02-03T20:41:29.408Z
+- commits:
     - subject: Avoid empty set cache args passed to docker bake
       hash: 593c351340060be38594dc1514f3f3e99781d0ba
       body: >
