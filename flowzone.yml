@@ -612,12 +612,12 @@
     uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # v3.3.0
     env:
       LOG_LEVEL: debug
-      # renovate: datasource=docker depName=tonistiigi/binfmt
-      BINFMT_VERSION: v9.2.0-46
+      # renovate: datasource=docker depName=tonistiigi/binfmt versioning=regex:^(?<compatibility>.*)-v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)-(?<build>\d+)$
+      BINFMT_VERSION: qemu-v9.2.0-46
     with:
       platforms: ${{ matrix.platform }}
       # https://hub.docker.com/r/tonistiigi/binfmt
-      image: tonistiigi/binfmt:qemu-${{ env.BINFMT_VERSION }}
+      image: tonistiigi/binfmt:${{ env.BINFMT_VERSION }}
 
   - &setupNode # https://github.com/actions/setup-node
     name: Setup Node.js

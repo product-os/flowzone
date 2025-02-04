@@ -2537,10 +2537,10 @@ jobs:
         uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a
         env:
           LOG_LEVEL: debug
-          BINFMT_VERSION: v9.2.0-46
+          BINFMT_VERSION: qemu-v9.2.0-46
         with:
           platforms: ${{ matrix.platform }}
-          image: tonistiigi/binfmt:qemu-${{ env.BINFMT_VERSION }}
+          image: tonistiigi/binfmt:${{ env.BINFMT_VERSION }}
         if: contains(steps.native_platforms.outputs.result, matrix.platform) != true
       - name: Login to GitHub Container Registry
         continue-on-error: true
