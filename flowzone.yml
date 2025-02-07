@@ -1213,38 +1213,39 @@ jobs:
             "$(npm root -g)"/versionist/scripts/generate-changelog.sh .
           fi
 
-      # run balena-versionist
-      # print the error if anything fails
-      # fail the workflow if the error is anything other than "No such file or directory"
-      - name: Run versionist
+      # https://github.com/actions/github-script
+      - name: Run balena-versionist
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         if: inputs.disable_versioning != true
         id: versionist
         env:
+          # Use to authenticate with GitHub for private nested changelogs
           GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          out="$(balena-versionist 2>&1)"
-          error="$(awk '/Error:/{getline; print}' <<< "${out}")"
+        with:
+          result-encoding: json
+          script: |
+            const path = require('path');
+            const { execSync } = require('child_process');
 
-          case ${error} in
-            "") # no error
-              ;;
-            'No such file or directory'*'/package.json')
-              echo "::error file=.versionbot/CHANGELOG.yml,line=1::Versionist expects a package.json if repo.yml does not provide a 'type' for the project"
-              ;;
-            *)
-              echo "::error::${error}"
-              exit 1
-              ;;
-          esac
+            // Get global node_modules path
+            const globalNodeModules = execSync('npm root -g').toString().trim();
+            const { runBalenaVersionist } = require(path.join(globalNodeModules, 'balena-versionist'));
 
-          git status --porcelain
+            let version;
+            try {
+              const runPath = process.env.GITHUB_WORKSPACE;
+              version = await runBalenaVersionist(runPath, {
+                silent: false,
+              });
+            } catch (e) {
+              core.setFailed(e.message);
+            }
 
-          versions=()
-          [ -f .versionbot/CHANGELOG.yml ] && read -r -a versions < <(yq e '.[0].version' .versionbot/CHANGELOG.yml)
-          semver="${versions[0]}"
+            console.log('New version: ', version);
 
-          echo "semver=${semver}" >> "${GITHUB_OUTPUT}"
-          echo "tag=v${semver}" >> "${GITHUB_OUTPUT}"
+            core.setOutput('semver', version);
+            core.setOutput('tag', `v${version}`);
+            return version;
 
       # https://github.com/orgs/community/discussions/50055
       # https://www.levibotelho.com/development/commit-a-file-with-the-github-api/
