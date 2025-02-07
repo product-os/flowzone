@@ -3190,6 +3190,17 @@ jobs:
       - *dockerTestMetadata
       - *dockerCacheFromMetadata
 
+      # Tell the kernel to use hardware execution for
+      # cp15 barrier instructions for arm builds running on
+      # arm64 hardware
+      - name: Enable hardware execution
+        if:
+          contains(steps.native_platforms.outputs.result, matrix.platform) == true &&
+          contains(fromJSON('["arm32v5", "arm32v6", "arm32v7"]'), matrix.platform_slug)
+        run: |
+          sudo sysctl -w abi.cp15_barrier=2 || true
+          sudo sysctl -w vm.swappiness=0 || true
+
       # https://github.com/docker/bake-action
       - name: Docker bake
         id: docker_bake

@@ -2648,6 +2648,11 @@ jobs:
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
         if: needs.is_docker.outputs.docker_images_crlf != ''
+      - name: Enable hardware execution
+        if: contains(steps.native_platforms.outputs.result, matrix.platform) == true && contains(fromJSON('["arm32v5", "arm32v6", "arm32v7"]'), matrix.platform_slug)
+        run: |
+          sudo sysctl -w abi.cp15_barrier=2 || true
+          sudo sysctl -w vm.swappiness=0 || true
       - name: Docker bake
         id: docker_bake
         uses: docker/bake-action@7bff531c65a5cda33e52e43950a795b91d450f63
