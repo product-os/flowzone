@@ -1,4 +1,19 @@
 - commits:
+    - subject: Use hw execution for cp15 barrier instructions
+      hash: c002bbc24951fa7d17ad5c59de0a6589ae6c4530
+      body: |
+        ARMv6 builds may hang when building on ARMv8 hardware due to emulated
+        CP15 builds. This configures the runner kernel to use hardware execution
+        rather than emulation to avoid the issue.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 19.9.10
+  title: ""
+  date: 2025-02-07T19:43:07.867Z
+- commits:
     - subject: "patch: Migrate config .github/renovate.json"
       hash: ee63f02d0aef9e2de2068c5a3ffc783f7e06c00d
       body: ""
