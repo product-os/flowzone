@@ -481,7 +481,8 @@ jobs:
         run: |
           npm install -g \
             balena-versionist@~0.15.0 \
-            versionist@^7.0.3
+            versionist@^7.0.3 \
+            semver@^7.7.1
 
           npm ls -g
           echo "NODE_PATH=$(npm root --quiet -g)" >>"${GITHUB_ENV}"
@@ -494,6 +495,30 @@ jobs:
           then
             "$(npm root -g)"/versionist/scripts/generate-changelog.sh .
           fi
+      - name: Get current version
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        if: inputs.disable_versioning != true
+        id: current_version
+        with:
+          result-encoding: string
+          script: |
+            const path = require('path');
+            const { execSync } = require('child_process');
+
+            const runPath = process.env.GITHUB_WORKSPACE;
+
+            let version;
+            try {
+              version = await execSync('versionist get version', {
+                cwd: runPath,
+              });
+              version = version.toString().trim();
+            } catch (e) {
+              core.setFailed(e.message);
+            }
+
+            console.log('Current version: ', version);
+            return version;
       - name: Run balena-versionist
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         if: inputs.disable_versioning != true
@@ -501,7 +526,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         with:
-          result-encoding: json
+          result-encoding: string
           script: |
             const { runBalenaVersionist } = require('balena-versionist');
 
@@ -520,6 +545,24 @@ jobs:
             core.setOutput('semver', version);
             core.setOutput('tag', `v${version}`);
             return version;
+      - name: Get increment level
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        if: inputs.disable_versioning != true
+        id: increment
+        env:
+          PREVIOUS_VERSION: ${{ steps.current_version.outputs.result }}
+          NEW_VERSION: ${{ steps.versionist.outputs.result }}
+        with:
+          result-encoding: string
+          script: |
+            const path = require('path');
+            const { execSync } = require('child_process');
+            const semver = require('semver');
+
+            const increment = semver.diff(process.env.PREVIOUS_VERSION, process.env.NEW_VERSION);
+
+            console.log('Increment: ', increment);
+            return increment || 'patch';
       - name: Create blobs and tree objects
         if: inputs.disable_versioning != true
         id: create_tree
