@@ -1,4 +1,20 @@
 - commits:
+    - subject: Run balena-versionist via github-script
+      hash: 1ba727fa0dc2656d7e07aad7ae22f01251c374f7
+      body: |
+        This provides better control over the output and
+        returns the new version directly.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.9.12
+  title: ""
+  date: 2025-02-07T21:16:47.125Z
+- commits:
     - subject: Update docker/setup-buildx-action action to v3.9.0
       hash: f23e7776bd10fb6201fa97115d9f3d2c2f18513b
       body: |
