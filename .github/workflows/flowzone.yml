@@ -484,6 +484,7 @@ jobs:
             versionist@^7.0.3
 
           npm ls -g
+          echo "NODE_PATH=$(npm root --quiet -g)" >>"${GITHUB_ENV}"
       - name: Generate changelog
         if: inputs.disable_versioning != true
         env:
@@ -493,35 +494,32 @@ jobs:
           then
             "$(npm root -g)"/versionist/scripts/generate-changelog.sh .
           fi
-      - name: Run versionist
+      - name: Run balena-versionist
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         if: inputs.disable_versioning != true
         id: versionist
         env:
           GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          out="$(balena-versionist 2>&1)"
-          error="$(awk '/Error:/{getline; print}' <<< "${out}")"
+        with:
+          result-encoding: json
+          script: |
+            const { runBalenaVersionist } = require('balena-versionist');
 
-          case ${error} in
-            "") # no error
-              ;;
-            'No such file or directory'*'/package.json')
-              echo "::error file=.versionbot/CHANGELOG.yml,line=1::Versionist expects a package.json if repo.yml does not provide a 'type' for the project"
-              ;;
-            *)
-              echo "::error::${error}"
-              exit 1
-              ;;
-          esac
+            let version;
+            try {
+              const runPath = process.env.GITHUB_WORKSPACE;
+              version = await runBalenaVersionist(runPath, {
+                silent: false,
+              });
+            } catch (e) {
+              core.setFailed(e.message);
+            }
 
-          git status --porcelain
+            console.log('New version: ', version);
 
-          versions=()
-          [ -f .versionbot/CHANGELOG.yml ] && read -r -a versions < <(yq e '.[0].version' .versionbot/CHANGELOG.yml)
-          semver="${versions[0]}"
-
-          echo "semver=${semver}" >> "${GITHUB_OUTPUT}"
-          echo "tag=v${semver}" >> "${GITHUB_OUTPUT}"
+            core.setOutput('semver', version);
+            core.setOutput('tag', `v${version}`);
+            return version;
       - name: Create blobs and tree objects
         if: inputs.disable_versioning != true
         id: create_tree
