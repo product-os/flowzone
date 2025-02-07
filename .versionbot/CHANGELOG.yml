@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v3.9.0
+      hash: f23e7776bd10fb6201fa97115d9f3d2c2f18513b
+      body: |
+        Update docker/setup-buildx-action from 3.8.0 to 3.9.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.9.11
+  title: ""
+  date: 2025-02-07T20:08:34.371Z
+- commits:
     - subject: Use hw execution for cp15 barrier instructions
       hash: c002bbc24951fa7d17ad5c59de0a6589ae6c4530
       body: |
