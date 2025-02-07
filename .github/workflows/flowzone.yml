@@ -484,6 +484,7 @@ jobs:
             versionist@^7.0.3
 
           npm ls -g
+          echo "NODE_PATH=$(npm root --quiet -g)" >>"${GITHUB_ENV}"
       - name: Generate changelog
         if: inputs.disable_versioning != true
         env:
@@ -502,12 +503,7 @@ jobs:
         with:
           result-encoding: json
           script: |
-            const path = require('path');
-            const { execSync } = require('child_process');
-
-            // Get global node_modules path
-            const globalNodeModules = execSync('npm root -g').toString().trim();
-            const { runBalenaVersionist } = require(path.join(globalNodeModules, 'balena-versionist'));
+            const { runBalenaVersionist } = require('balena-versionist');
 
             let version;
             try {
