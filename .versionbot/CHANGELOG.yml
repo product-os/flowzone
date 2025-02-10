@@ -1,4 +1,14 @@
 - commits:
+    - subject: "patch: fix sbom filename extension"
+      hash: b40d2a76cfaac1111dc9026e32a48cb73be09001
+      body: Was producing a json file with an xml extension for node/npm projects.
+      footer: {}
+      author: Edwin Joassart
+      nested: []
+  version: 19.9.14
+  title: ""
+  date: 2025-02-10T06:50:07.460Z
+- commits:
     - subject: Update docker/setup-qemu-action action to v3.4.0
       hash: 693f476d679c798639e5f2a723d79902d9fd470a
       body: |
