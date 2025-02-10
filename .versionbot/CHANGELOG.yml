@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node to v20.18.3
+      hash: 2d633f451b66c4d00887bfe0bf9604378d1b1946
+      body: |
+        Update node from 20.18.2 to 20.18.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.9.15
+  title: ""
+  date: 2025-02-10T15:11:04.406Z
+- commits:
     - subject: "patch: fix sbom filename extension"
       hash: b40d2a76cfaac1111dc9026e32a48cb73be09001
       body: Was producing a json file with an xml extension for node/npm projects.
