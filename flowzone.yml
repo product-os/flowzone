@@ -1217,7 +1217,9 @@ jobs:
                 silent: false,
               });
             } catch (e) {
-              core.setFailed(e.message);
+              if (! /^No such file or directory:.*$/.test(e.message)) {
+                core.setFailed(e.message);
+              }
             }
 
             console.log('New version: ', version);
