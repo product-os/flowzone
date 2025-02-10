@@ -1,4 +1,29 @@
 - commits:
+    - subject: Combine test and cache metadata to prevent empty cache-from values
+      hash: 3509ad9ed149d91e0278f91122f5b04ae3b27283
+      body: >
+        These two steps were largely redundant anyway, and the latter was only
+
+        used to populate a list of possible image cache sources as fallback if
+        gha
+
+        doesn't have a current cache.
+
+
+        Rather than run two metadata steps, just run it once with all possible
+
+        image tag combinations.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.9.16
+  title: ""
+  date: 2025-02-10T18:43:19.178Z
+- commits:
     - subject: Update dependency node to v20.18.3
       hash: 2d633f451b66c4d00887bfe0bf9604378d1b1946
       body: |
