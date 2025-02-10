@@ -473,7 +473,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
         env:
-          NODE_VERSION: 20.18.2
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install versioning tools
@@ -1259,7 +1259,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
         env:
-          NODE_VERSION: 20.18.2
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Check engine
@@ -2092,7 +2092,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
         env:
-          NODE_VERSION: 20.18.2
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2101,7 +2101,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
         env:
-          NODE_VERSION: 20.18.2
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2220,7 +2220,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
         env:
-          NODE_VERSION: 20.18.2
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
       - run: npm install
@@ -2280,7 +2280,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
         env:
-          NODE_VERSION: 20.18.2
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ needs.is_npm.outputs.max_node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2344,7 +2344,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
         env:
-          NODE_VERSION: 20.18.2
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ needs.is_npm.outputs.max_node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -3618,7 +3618,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
         env:
-          NODE_VERSION: 20.18.2
+          NODE_VERSION: 20.18.3
         with:
           node-version: 18
       - name: Docusaurus Builder
