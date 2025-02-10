@@ -2623,20 +2623,6 @@ jobs:
             org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
-            type=raw,value=${{ github.event.pull_request.head.sha }}
-            type=raw,value=build-${{ github.event.pull_request.head.sha }}
-            type=raw,value=build-${{ github.event.pull_request.head.ref }}
-          flavor: |
-            latest=true
-            prefix=${{ steps.strings.outputs.prefix }}
-            suffix=${{ steps.strings.outputs.suffix }}
-      - name: Generate docker metadata
-        id: cache_meta
-        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96
-        with:
-          images: |
-            ${{ needs.is_docker.outputs.docker_images_crlf }}
-          tags: |
             type=raw,value=${{ github.base_ref || github.ref_name }}
             type=raw,value=${{ github.event.pull_request.head.sha }}
             type=raw,value=build-${{ github.event.pull_request.head.sha }}
@@ -2645,7 +2631,6 @@ jobs:
             latest=true
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
-        if: needs.is_docker.outputs.docker_images_crlf != ''
       - name: Enable hardware execution
         if: contains(steps.native_platforms.outputs.result, matrix.platform) == true && contains(fromJSON('["arm32v5", "arm32v6", "arm32v7"]'), matrix.platform_slug)
         run: |
@@ -2665,7 +2650,7 @@ jobs:
             *.platform=${{ matrix.platform }}
             *.cache-to=type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=type=gha,scope=${{ matrix.target }}-${{ matrix.platform }}
-            *.cache-from=${{join(fromJSON(steps.cache_meta.outputs.json || '{}').tags || fromJSON('[]'),',')}}
+            *.cache-from=${{join(fromJSON(steps.test_meta.outputs.json || '{}').tags || fromJSON('[]'),',')}}
           load: true
           provenance: false
       - name: Save image to file
@@ -2788,6 +2773,7 @@ jobs:
             org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
+            type=raw,value=${{ github.base_ref || github.ref_name }}
             type=raw,value=${{ github.event.pull_request.head.sha }}
             type=raw,value=build-${{ github.event.pull_request.head.sha }}
             type=raw,value=build-${{ github.event.pull_request.head.ref }}

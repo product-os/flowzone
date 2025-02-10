@@ -441,23 +441,6 @@
         org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
         org.opencontainers.image.ref.name=${{ matrix.target }}
       tags: |
-        type=raw,value=${{ github.event.pull_request.head.sha }}
-        type=raw,value=build-${{ github.event.pull_request.head.sha }}
-        type=raw,value=build-${{ github.event.pull_request.head.ref }}
-      flavor: |
-        latest=true
-        prefix=${{ steps.strings.outputs.prefix }}
-        suffix=${{ steps.strings.outputs.suffix }}
-
-  - &dockerCacheFromMetadata
-    <<: *dockerTestMetadata
-    id: cache_meta
-    # ensure docker_images_crlf is not an empty list
-    if: needs.is_docker.outputs.docker_images_crlf != ''
-    with:
-      images: |
-        ${{ needs.is_docker.outputs.docker_images_crlf }}
-      tags: |
         type=raw,value=${{ github.base_ref || github.ref_name }}
         type=raw,value=${{ github.event.pull_request.head.sha }}
         type=raw,value=build-${{ github.event.pull_request.head.sha }}
@@ -3185,7 +3168,6 @@ jobs:
           yq . "${COMPOSE_FILE}"
 
       - *dockerTestMetadata
-      - *dockerCacheFromMetadata
 
       # Tell the kernel to use hardware execution for
       # cp15 barrier instructions for arm builds running on
@@ -3217,7 +3199,7 @@ jobs:
             *.platform=${{ matrix.platform }}
             *.cache-to=type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=type=gha,scope=${{ matrix.target }}-${{ matrix.platform }}
-            *.cache-from=${{join(fromJSON(steps.cache_meta.outputs.json || '{}').tags || fromJSON('[]'),',')}}
+            *.cache-from=${{join(fromJSON(steps.test_meta.outputs.json || '{}').tags || fromJSON('[]'),',')}}
           load: true
           provenance: false
 
