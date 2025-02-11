@@ -4764,6 +4764,7 @@ jobs:
       - cloudformation_test
       - actionlint
       - octoscan
+      - pre_commit_hooks
     if: |
       always() &&
       github.event.pull_request.state == 'open'
