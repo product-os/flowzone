@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update tonistiigi/binfmt Docker tag to qemu-v9.2.0-51
+      hash: 1ad6cd5c38c1fabfa7bd1d57cda9b090f1d85868
+      body: |
+        Update tonistiigi/binfmt from qemu-9.2.0-46 to qemu-9.2.0-51
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.9.20
+  title: ""
+  date: 2025-02-11T22:10:20.865Z
+- commits:
     - subject: Update dependency node-22 to v22.14.0
       hash: f7ac4b33eb57ffe7f09e8ee05d13fca0d717de54
       body: |
