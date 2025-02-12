@@ -1,4 +1,18 @@
 - commits:
+    - subject: Default to NodeJS 22.x when engines property cannot be satisfied
+      hash: d472111c949322a4c19adf36e9937127f7bf2aff
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.9.22
+  title: ""
+  date: 2025-02-12T19:27:23.038Z
+- commits:
     - subject: Mark pre-commit hooks as required if the config exists
       hash: 366c5c4d56db9a18f17fa2031e99fe8349bb6d0e
       body: ""
