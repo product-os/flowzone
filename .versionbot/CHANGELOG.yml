@@ -1,4 +1,18 @@
 - commits:
+    - subject: Mark pre-commit hooks as required if the config exists
+      hash: 366c5c4d56db9a18f17fa2031e99fe8349bb6d0e
+      body: ""
+      footer:
+        CHange-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.9.21
+  title: ""
+  date: 2025-02-12T08:44:37.388Z
+- commits:
     - subject: Update tonistiigi/binfmt Docker tag to qemu-v9.2.0-51
       hash: 1ad6cd5c38c1fabfa7bd1d57cda9b090f1d85868
       body: |
