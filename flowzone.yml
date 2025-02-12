@@ -2797,6 +2797,7 @@ jobs:
       - npm_test
       - custom_test
       - docker_test
+      - sbom
       - cargo_test
       - python_test
     # allow some dependencies to be skipped
