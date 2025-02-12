@@ -2036,7 +2036,7 @@ jobs:
             const versions = JSON.parse(process.env.NODE_VERSIONS);
 
             if (versions.length < 1) {
-              versions.push('20.x')
+              versions.push('22.x')
             }
 
             const sorted = [...versions].sort(compareVersions);
