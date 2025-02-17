@@ -3611,7 +3611,7 @@ jobs:
         if: |
           contains(needs.file_list.outputs.workdir, 'README.md') &&
           inputs.docusaurus_website != false
-        uses: product-os/docusaurus-builder@632aaa69f984eff0be2b4618fd2014d6c94703bc
+        uses: product-os/docusaurus-builder@d4aad09d43a529ac768464182ebb24b634838f30
         with:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
