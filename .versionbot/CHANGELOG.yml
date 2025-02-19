@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/bake-action action to v6.4.0
+      hash: e56c042c3101dd73232e79bbb173e1423ddb992a
+      body: |
+        Update docker/bake-action from 6.3.0 to 6.4.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.9.26
+  title: ""
+  date: 2025-02-19T16:08:48.330Z
+- commits:
     - subject: Update product-os/setup-awscli-action action to v0.0.10
       hash: 6e5721fcaf33cfa0d242fc9b41d6e2432997f580
       body: |
