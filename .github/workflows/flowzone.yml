@@ -2623,14 +2623,14 @@ jobs:
             org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
-            type=raw,value=${{ github.base_ref || github.ref_name }}
-            type=raw,value=${{ github.event.pull_request.head.sha }}
-            type=raw,value=build-${{ github.event.pull_request.head.sha }}
-            type=raw,value=build-${{ github.event.pull_request.head.ref }}
+            type=raw,value=latest
+            type=raw,value=latest,prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+            type=raw,value=${{ github.base_ref || github.ref_name }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+            type=raw,value=${{ github.event.pull_request.head.sha }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+            type=raw,value=build-${{ github.event.pull_request.head.sha }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+            type=raw,value=build-${{ github.event.pull_request.head.ref }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
           flavor: |
-            latest=true
-            prefix=${{ steps.strings.outputs.prefix }},onlatest=true
-            suffix=${{ steps.strings.outputs.suffix }},onlatest=true
+            latest=false
       - name: Enable hardware execution
         if: contains(steps.native_platforms.outputs.result, matrix.platform) == true && contains(fromJSON('["arm32v5", "arm32v6", "arm32v7"]'), matrix.platform_slug)
         run: |
