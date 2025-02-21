@@ -1,4 +1,25 @@
 - commits:
+    - subject: Restore the "sut:latest" tag for local compose tests
+      hash: cedd235571f55fb7579839e52b7db16e8937cfb3
+      body: |
+        The last change to the labels metadata broke conditions
+        when there was a tag prefix or suffixand we were expecting
+        to test "sut:latest" via the compose file.
+
+        We were only creating local tags with the format "sut:prefix-latest"
+        or "sut:latest-suffix" so docker compose couldn't find the expected
+        "sut:latest" tag and would rebuild, possibly with the wrong targets.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.9.32
+  title: ""
+  date: 2025-02-21T21:18:28.518Z
+- commits:
     - subject: Update actions/upload-artifact action to v4.6.1
       hash: 40c7f60923edf941273badccd7791cfcddb79805
       body: |
