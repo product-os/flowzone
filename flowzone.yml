@@ -432,43 +432,52 @@
     name: Generate docker metadata
     id: test_meta
     uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
-    with: &dockerTestMetaWith
+    with:
       images: |
         sut
         localhost:5000/sut
         ${{ needs.is_docker.outputs.docker_images_crlf }}
-      labels: |
+      labels: &dockerMetaLabels |
         org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
         org.opencontainers.image.ref.name=${{ matrix.target }}
+      # These are just local convenience tags, not pushed to any registry.
+      # They can be referenced in docker compose tests to avoid rebuilding images that should be tested as-is.
+      # They are ALSO used to populate an additional cache-from source list in case the GHA cache is expired.
+      # It doesn't matter if the tags in the list don't exist, the cache source will be skipped and continue the build.
+      tags: |
+        type=raw,value=latest
+        type=raw,value=latest,prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+        type=raw,value=${{ github.base_ref || github.ref_name }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+        type=raw,value=${{ github.event.pull_request.head.sha }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+        type=raw,value=build-${{ github.event.pull_request.head.sha }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+        type=raw,value=build-${{ github.event.pull_request.head.ref }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+      flavor: |
+        latest=false
+
+  - &dockerDraftMetadata  # https://github.com/docker/metadata-action
+    <<: *dockerTestMetadata
+    id: draft_meta
+    with:
+      images: |
+        ${{ matrix.image }}
+      labels: *dockerMetaLabels
       tags: |
         type=raw,value=${{ github.base_ref || github.ref_name }}
         type=raw,value=${{ github.event.pull_request.head.sha }}
         type=raw,value=build-${{ github.event.pull_request.head.sha }}
         type=raw,value=build-${{ github.event.pull_request.head.ref }}
       flavor: |
-        latest=true
-        prefix=${{ steps.strings.outputs.prefix }},onlatest=true
-        suffix=${{ steps.strings.outputs.suffix }},onlatest=true
-
-  - &dockerDraftMetadata
-    <<: *dockerTestMetadata
-    id: draft_meta
-    with:
-      <<: *dockerTestMetaWith
-      images: |
-        ${{ matrix.image }}
-      flavor: |
         latest=false
         prefix=${{ steps.strings.outputs.prefix }}
         suffix=${{ steps.strings.outputs.suffix }}
 
-  - &dockerFinalMetadata
+  - &dockerFinalMetadata  # https://github.com/docker/metadata-action
     <<: *dockerTestMetadata
     id: final_meta
     with:
-      <<: *dockerTestMetaWith
       images: |
         ${{ matrix.image }}
+      labels: *dockerMetaLabels
       # for unversioned merges we will use the base branch as the tag
       # and version tag and semver will be empty
       tags: |
