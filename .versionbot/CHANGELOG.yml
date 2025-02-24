@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update balena-io/deploy-to-balena-action action to v2.0.93
+      hash: a078ab927a6c2a0fff06656aa19c52d65926c274
+      body: |
+        Update balena-io/deploy-to-balena-action from 2.0.92 to 2.0.93
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.9.33
+  title: ""
+  date: 2025-02-24T13:12:15.861Z
+- commits:
     - subject: Restore the "sut:latest" tag for local compose tests
       hash: cedd235571f55fb7579839e52b7db16e8937cfb3
       body: |
