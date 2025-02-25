@@ -1110,7 +1110,7 @@ jobs:
       # https://github.com/product-os/review-commit-action
       - name: Wait for approval on pull_request_target events
         if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
-        uses: product-os/review-commit-action@290a77f51aa8c9378e420867a84c55bc6679e195 # v0.1.9
+        uses: product-os/review-commit-action@716e459ff4c5c17cc67b8f5f799fab6883dd44a3 # v0.1.10
         with:
           poll-interval: "10"
           allow-authors: false
