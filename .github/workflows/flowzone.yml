@@ -395,6 +395,7 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: |-
             {
+              "administration": "read",
               "contents": "write",
               "metadata": "read",
               "pull_requests": "read"
@@ -434,6 +435,29 @@ jobs:
             if (!commit.parents.some(({ sha }) => sha === context.payload.pull_request.head.sha)) {
               throw new Error('Non-linear history detected - HEAD branch commit is not a parent of the merge commit');
             }
+      - name: Check for legacy branch protection
+        uses: actions/github-script@v7
+        if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open'
+        with:
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          script: |
+            try {
+              const data = await github.rest.repos.getBranchProtection({
+                ...context.repo,
+                branch: context.payload.pull_request.base.ref,
+              });
+            } catch (e) {
+              if (e.status === 404) {
+                // Branch not protected
+                return;
+              }
+              core.setFailed(e.message);
+              return;
+            }
+
+            core.setFailed("Legacy branch protection rules detected!\n\n" +
+              "Switching to Rulesets is required to allow GitHub Apps to bypass branch rules.\n\n" +
+              "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
       - name: Checkout pull request head sha
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
