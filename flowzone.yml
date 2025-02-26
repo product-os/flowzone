@@ -854,7 +854,7 @@ on:
         required: false
         default: ""
       app_id:
-        description: "GitHub App ID to impersonate"
+        description: "GitHub App ID to generate an installation token"
         type: string
         required: false
         default: "${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}"
@@ -871,7 +871,6 @@ on:
         # https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-a-scoped-access-token
         default: >-
           {
-            "administration": "write",
             "contents": "write",
             "metadata": "read",
             "packages": "write",
@@ -1154,11 +1153,11 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
-          # administration: write is required to bypass branch protection rules
           # contents: write is required to push git commit and tag references
+          # This GitHub App should also be added to exceptions in branch rulesets in order to
+          # bypass branch rules and push versioned commits directly to the main branch.
           permissions: >-
             {
-              "administration": "write",
               "contents": "write",
               "metadata": "read",
               "pull_requests": "read"

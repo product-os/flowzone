@@ -104,7 +104,7 @@ on:
         required: false
         default: ""
       app_id:
-        description: GitHub App ID to impersonate
+        description: GitHub App ID to generate an installation token
         type: string
         required: false
         default: ${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}
@@ -118,7 +118,6 @@ on:
         required: false
         default: |-
           {
-            "administration": "write",
             "contents": "write",
             "metadata": "read",
             "packages": "write",
@@ -396,7 +395,6 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: |-
             {
-              "administration": "write",
               "contents": "write",
               "metadata": "read",
               "pull_requests": "read"
