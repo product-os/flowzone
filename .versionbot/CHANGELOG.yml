@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-qemu-action action to v3.5.0
+      hash: 3d43d59fd9a82f5d4035a24a28f36cd2d6ab8dea
+      body: |
+        Update docker/setup-qemu-action from 3.4.0 to 3.5.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.9.43
+  title: ""
+  date: 2025-02-26T19:08:27.712Z
+- commits:
     - subject: Update docker/setup-buildx-action action to v3.10.0
       hash: f66e632ecf6fe161fb0fdcfcc596b64264a1f003
       body: |
