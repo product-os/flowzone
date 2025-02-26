@@ -208,7 +208,6 @@ jobs:
       # Required: false
       token_scope: >
         {
-          "administration": "write",
           "contents": "write",
           "metadata": "read",
           "packages": "write",

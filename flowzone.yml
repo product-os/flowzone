@@ -871,7 +871,6 @@ on:
         # https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-a-scoped-access-token
         default: >-
           {
-            "administration": "write",
             "contents": "write",
             "metadata": "read",
             "packages": "write",
@@ -1154,11 +1153,9 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
-          # administration: write is required to bypass branch protection rules
           # contents: write is required to push git commit and tag references
           permissions: >-
             {
-              "administration": "write",
               "contents": "write",
               "metadata": "read",
               "pull_requests": "read"
