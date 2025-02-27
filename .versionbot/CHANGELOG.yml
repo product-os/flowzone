@@ -1,4 +1,38 @@
 - commits:
+    - subject: Add check for legacy branch protection
+      hash: f6a32edc112fed17d65ef95c882808e700b5adc7
+      body: |
+        This will allow us to detect classic branch protection
+        rules that would otherwise break versioning on merge.
+
+        Unfortunately it requires admin:read to check for existing
+        classic protection rules, but it's better than admin:write
+        and it's only temporary until we are confident all legacy rules
+        are gone and/or versioning is moved out of Flowzone.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Remove admin:write from versioning steps
+      hash: a9354f6bba9f748ba36ac30a5b63434bae14fbf1
+      body: |
+        Now that we are using rulesets across all orgs we can add
+        the Flowzone GitHub App to the ruleset exceptions and no
+        longer require admin permissions to push directly to main branches.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.10.0
+  title: ""
+  date: 2025-02-27T16:22:12.506Z
+- commits:
     - subject: Update docker/setup-qemu-action action to v3.5.0
       hash: 3d43d59fd9a82f5d4035a24a28f36cd2d6ab8dea
       body: |
