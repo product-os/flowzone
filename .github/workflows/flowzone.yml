@@ -2557,7 +2557,7 @@ jobs:
         uses: docker/setup-qemu-action@5964de0df58d5ad28b04d8fe2e6b80ad47105b91
         env:
           LOG_LEVEL: debug
-          BINFMT_VERSION: qemu-v9.2.0-51
+          BINFMT_VERSION: qemu-v9.2.2-52
         with:
           platforms: ${{ matrix.platform }}
           image: tonistiigi/binfmt:${{ env.BINFMT_VERSION }}
