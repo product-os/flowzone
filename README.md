@@ -193,7 +193,7 @@ jobs:
       # Required: false
       cloudformation_templates: 
 
-      # GitHub App ID to impersonate
+      # GitHub App ID to generate an installation token
       # Type: string
       # Required: false
       app_id: ${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}
@@ -208,7 +208,6 @@ jobs:
       # Required: false
       token_scope: >
         {
-          "administration": "write",
           "contents": "write",
           "metadata": "read",
           "packages": "write",
