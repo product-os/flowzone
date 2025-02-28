@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-qemu-action action to v3.6.0
+      hash: d174b57640405e56a522f6e29475eee6370b08c0
+      body: |
+        Update docker/setup-qemu-action from 3.5.0 to 3.6.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.10.3
+  title: ""
+  date: 2025-02-28T13:11:52.926Z
+- commits:
     - subject: Update tonistiigi/binfmt Docker tag to qemu-v9.2.2-52
       hash: 787a0b0a1238dca41e35f147475e79083e7e2168
       body: |
