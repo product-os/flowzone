@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update tonistiigi/binfmt Docker tag to qemu-v9.2.2-52
+      hash: 787a0b0a1238dca41e35f147475e79083e7e2168
+      body: |
+        Update tonistiigi/binfmt from qemu-9.2.0-51 to qemu-9.2.2-52
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.10.2
+  title: ""
+  date: 2025-02-28T00:04:18.109Z
+- commits:
     - subject: Update product-os/setup-awscli-action action to v0.0.11
       hash: 27298117a49e976b77f7ed3037233bbdc38faff3
       body: |
