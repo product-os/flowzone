@@ -193,15 +193,24 @@ jobs:
       # Required: false
       cloudformation_templates: 
 
-      # GitHub App ID to generate an installation token
+      # GitHub App ID to generate an installation token.
+      # See https://github.com/tibdex/github-app-token for more info.
       # Type: string
       # Required: false
       app_id: ${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}
 
-      # Deprecated, no longer used
+      # The mode used to retrieve the installation for which the token will be requested.
+      # One of 'id', 'organization', 'repository', 'user'.
+      # See https://github.com/tibdex/github-app-token for more info.
       # Type: string
       # Required: false
-      installation_id:
+      token_retrieval_mode: organization
+
+      # The payload used to retrieve the installation token, based on the token retrieval mode.
+      # See https://github.com/tibdex/github-app-token for more info.
+      # Type: string
+      # Required: false
+      token_retrieval_payload: ${{ github.repository_owner }}
 
       # Ephemeral token scope(s)
       # Type: string
