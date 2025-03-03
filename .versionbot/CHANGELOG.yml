@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.21.2
+      hash: 000777cc776eb7e450f47644300d368a67bbc1a3
+      body: |
+        Update docker/buildx from 0.21.1 to 0.21.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.11.2
+  title: ""
+  date: 2025-03-03T17:08:27.328Z
+- commits:
     - subject: Pin actions/github-script action to 60a0d83
       hash: 47ddb3e299de2f0423a6e14273ac44adda7c48d7
       body: |
