@@ -11,15 +11,15 @@
   - &ifPublicRepository
     if: github.event.repository.private != true
 
-  - &getGitHubAppToken # https://github.com/marketplace/actions/github-app-token
+  - &getGitHubAppToken # https://github.com/tibdex/github-app-token
     name: Generate GitHub App installation token
     uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
     if: inputs.app_id
     id: gh_app_token
     with: &getGitHubAppTokenWith
       app_id: ${{ inputs.app_id }}
-      installation_retrieval_mode: organization
-      installation_retrieval_payload: ${{ github.repository_owner }}
+      installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+      installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
       private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
       permissions: >-
         {
@@ -854,15 +854,31 @@ on:
         required: false
         default: ""
       app_id:
-        description: "GitHub App ID to generate an installation token"
+        description: >-
+          GitHub App ID to generate an installation token.
+
+          See https://github.com/tibdex/github-app-token for more info.
         type: string
         required: false
         default: "${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}"
-      # not needed if installed on this current org/repo
-      installation_id:
-        description: "Deprecated, no longer used"
+      token_retrieval_mode:
+        description: >-
+          The mode used to retrieve the installation for which the token will be requested.
+
+          One of 'id', 'organization', 'repository', 'user'.
+
+          See https://github.com/tibdex/github-app-token for more info.
         type: string
         required: false
+        default: organization
+      token_retrieval_payload:
+        description: >-
+          The payload used to retrieve the installation token, based on the token retrieval mode.
+
+          See https://github.com/tibdex/github-app-token for more info.
+        type: string
+        required: false
+        default: ${{ github.repository_owner }}
       token_scope:
         description: "Ephemeral token scope(s)"
         type: string
