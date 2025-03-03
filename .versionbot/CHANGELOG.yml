@@ -1,4 +1,24 @@
 - commits:
+    - subject: Allow customizing the token retrieval modes
+      hash: 12dd2580dedac3c715d451ba41a39a7a64ec154f
+      body: |
+        The existing behaviour prevents using flowzone with
+        user or repository app installations, and only works with orgs.
+
+        This change keeps orgs as the default, but allows other
+        installation types to use flowzone with app installations
+        which is the preferred secure approach.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.11.0
+  title: ""
+  date: 2025-03-03T15:37:34.790Z
+- commits:
     - subject: Update product-os/review-commit-action action to v0.2.0
       hash: 794ca4cc63d4f38e08662f8b2b1288f9dc10d4e6
       body: |
