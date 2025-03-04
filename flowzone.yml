@@ -1232,7 +1232,7 @@ jobs:
         run: |
           npm install -g \
             balena-versionist@~0.15.0 \
-            versionist@^7.0.3
+            versionist@^8.0.0
 
           npm ls -g
           echo "NODE_PATH=$(npm root --quiet -g)" >>"${GITHUB_ENV}"
