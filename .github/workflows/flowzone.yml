@@ -2611,6 +2611,8 @@ jobs:
 
             while read -r line
             do
+              name="$(echo "${line}" | awk -F'=' '{print $1}')"
+              echo "::info::masking COMPOSE_VARS:'${name}'"
               secret="$(echo "${line}" | awk -F'=' '{print $2}')"
               echo "::add-mask::${secret}"
             done < "${COMPOSE_ENV_FILE}"
