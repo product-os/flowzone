@@ -1,4 +1,19 @@
 - commits:
+    - subject: Update product-os/versionist to v8.0.0
+      hash: 0a42c81f24b500caed80997ba4a5976bf1df3788
+      body: |
+        This includes a fix to balena-semver with major|minor|patch above 1000.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.11.5
+  title: ""
+  date: 2025-03-04T14:08:42.729Z
+- commits:
     - subject: Update product-os/review-commit-action action to v0.2.2
       hash: f10c03d609ca0adbd2a23d37e7deb483bdf8e1b0
       body: |
