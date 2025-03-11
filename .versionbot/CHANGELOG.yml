@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency python to 3.13
+      hash: 7a09ac13e5f2aad6d9796d246765efdd1bc04879
+      body: |
+        Update python from 3.9.21 to 3.13.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.11.8
+  title: ""
+  date: 2025-03-11T15:05:10.069Z
+- commits:
     - subject: Update product-os/review-commit-action action to v0.2.3
       hash: b2db3745c596abe445873bf84326346a802d59f2
       body: |
