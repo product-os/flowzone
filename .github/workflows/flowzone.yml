@@ -1209,7 +1209,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38
         with:
-          python-version: "3.9"
+          python-version: "3.13"
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd
   is_npm:
     name: Check NodeJS versions
@@ -3412,7 +3412,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38
         with:
-          python-version: "3.9"
+          python-version: "3.13"
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
@@ -3503,7 +3503,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38
         with:
-          python-version: "3.9"
+          python-version: "3.13"
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
@@ -3576,7 +3576,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38
         with:
-          python-version: "3.9"
+          python-version: "3.13"
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
