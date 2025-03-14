@@ -259,7 +259,7 @@
   - &loginWithDockerHub
     name: Login to Docker Hub
     continue-on-error: true
-    uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+    uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
     with:
       registry: docker.io
       username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
@@ -268,7 +268,7 @@
   - &loginWithGitHubContainerRegistry
     name: Login to GitHub Container Registry
     continue-on-error: true
-    uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+    uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
     with:
       # Feb 2023: as per GitHub support: "You cannot authenticate with a GitHub App token on the GitHub Package Registry"
       # Nov 2024: Still cannot use GitHub App Tokens to authenticate with the GitHub Package Registry (login works, push/pull fails)
@@ -280,7 +280,7 @@
     name: Login to AWS/ECR (public)
     if: steps.aws_credentials.outcome == 'success'
     continue-on-error: true
-    uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+    uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
     with:
       registry: public.ecr.aws
 
@@ -288,7 +288,7 @@
     name: Login to AWS/ECR (private)
     if: steps.aws_credentials.outcome == 'success'
     continue-on-error: true
-    uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+    uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
     with:
       registry: ${{ matrix.image }}
 
