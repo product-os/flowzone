@@ -2096,6 +2096,7 @@ jobs:
         with:
           script: |
             const { execSync } = require('child_process');
+            const { format } = require('util');
 
             // Parse the JSON input
             const stacks = JSON.parse(process.env.TEMPLATES_JSON);
@@ -2116,16 +2117,17 @@ jobs:
             // Get modified files between BASE and HEAD
             const getModifiedFiles = () => {
               const diff = execSync(
-                `git diff --submodule=diff "${process.env.BASE_SHA}" "${process.env.HEAD_SHA}"`,
+                format('sh -c "git diff --submodule=diff %s %s | sed -rn \'s|^--- a/(.*)$|\\1|p\'"',
+                  process.env.BASE_SHA,
+                  process.env.HEAD_SHA
+                ),
                 { encoding: 'utf8' }
               );
-              return diff
-                .split('\n')
-                .filter(line => line.startsWith('--- a/'))
-                .map(line => line.replace('--- a/', ''));
+              return diff.split('\n').filter(f => f != null && !!f.trim())
             };
 
             const modifiedFiles = getModifiedFiles();
+            console.log(`modifiedFiles:\n${modifiedFiles}`)
 
             // Filter out unmodified stacks
             stackNames = stackNames.filter(stackName => {
