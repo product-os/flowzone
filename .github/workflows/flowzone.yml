@@ -76,30 +76,7 @@ on:
         default: ${{ vars.AWS_IAM_ROLE || '' }}
       cloudformation_templates:
         description: |
-          AWS CloudFormation templates to deploy (e.g.)
-
-          ```
-          {
-            "stacks": [
-              {
-                "name": "foo",
-                "template": "aws/bar.yaml",
-                "tags": [
-                  "Name=foo",
-                  "Environment=${FOO}"
-                ],
-                "capabilities": [
-                  "CAPABILITY_IAM",
-                  "CAPABILITY_NAMED_IAM"
-                ]
-              },
-              ...
-            ]
-          }
-          ```
-
-          * assumes `aws/bar.yaml` exists.
-          * `${ENVVARS}` injected at runtime from `vars` and `secrets` contexts
+          This input is deprecated. To deploy CloudFormation stacks, create a `aws-cf-templates.yaml` file in the root of the repository.
         type: string
         required: false
         default: ""
@@ -508,7 +485,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
-          NODE_VERSION: 20.19.0
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install versioning tools
@@ -1294,7 +1271,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
-          NODE_VERSION: 20.19.0
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Check engine
@@ -1981,14 +1958,20 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - versioned_source
-    if: inputs.cloudformation_templates != ''
+      - file_list
+    if: |
+      inputs.cloudformation_templates != '' ||
+      contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yaml') ||
+      contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yml') ||
+      contains(needs.file_list.outputs.workdir, 'aws-cf-templates.json')
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     outputs:
-      cloudformation: ${{ steps.validate_json.outputs.enabled }}
+      cloudformation: ${{ steps.validate_files.outputs.enabled || steps.validate_input.outputs.enabled }}
+      templates_json: ${{ steps.validate_files.outputs.result || steps.validate_input.outputs.result }}
       stacks: ${{ steps.cloudformation_stacks.outputs.matrix }}
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
     steps:
@@ -2015,61 +1998,151 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
-      - name: Validate CloudFormation input
-        id: validate_json
+      - name: Install yaml module
         run: |
-          if echo '${{ inputs.cloudformation_templates }}' | yq e -P - | yq e -o=json - | jq -r .stacks
-          then
-            if [[ '${{ github.event.pull_request.head.repo.full_name }}' != '${{ github.repository }}' ]]; then
-              echo '::warning:: CloudFormation stacks are skipped for external contributions.'
-              echo "enabled=false" >> "${GITHUB_OUTPUT}"
-              exit 0
-            fi
-            echo "enabled=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo '::warning::invalid JSON or no CloudFormation stacks?'
-            echo "enabled=false" >> "${GITHUB_OUTPUT}"
-          fi
+          npm install -g yaml
+          echo "NODE_PATH=$(npm root --quiet -g)" >>"${GITHUB_ENV}"
+      - name: Validate CloudFormation file(s)
+        id: validate_files
+        if: |
+          contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yaml') ||
+          contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yml') ||
+          contains(needs.file_list.outputs.workdir, 'aws-cf-templates.json')
+        uses: actions/github-script@v7
+        with:
+          result-encoding: json
+          script: |
+            const fs = require('fs');
+            const yaml = require('yaml');
+
+            try {
+              // Read JSON file if it exists, followed by YAML, followed by YML
+              let parsed;
+              if (fs.existsSync('aws-cf-templates.json')) {
+                parsed = JSON.parse(fs.readFileSync('aws-cf-templates.json', 'utf8'));
+              } else if (fs.existsSync('aws-cf-templates.yaml')) {
+                parsed = yaml.parse(fs.readFileSync('aws-cf-templates.yaml', 'utf8'));
+              } else if (fs.existsSync('aws-cf-templates.yml')) {
+                parsed = yaml.parse(fs.readFileSync('aws-cf-templates.yml', 'utf8'));
+              }
+              const hasStacks = parsed && parsed.stacks;
+
+              if (!hasStacks) {
+                core.warning('invalid YAML/JSON or no CloudFormation stacks?');
+                core.setOutput('enabled', 'false');
+                return;
+              }
+
+              // Check if this is an external PR
+              const isExternalPR = context.payload.pull_request.head.repo.full_name != context.payload.repository.full_name;
+
+              if (isExternalPR) {
+                core.warning('CloudFormation stacks are skipped for external contributions.');
+                core.setOutput('enabled', 'false');
+                return;
+              }
+
+              core.setOutput('enabled', 'true');
+              return parsed;
+
+            } catch (error) {
+              core.warning(`Failed to parse CloudFormation templates: ${error.message}`);
+              core.setOutput('enabled', 'false');
+            }
+      - name: Validate CloudFormation input
+        id: validate_input
+        if: inputs.cloudformation_templates != '' && steps.validate_files.outputs.enabled != 'true'
+        uses: actions/github-script@v7
+        with:
+          result-encoding: json
+          script: |
+            const yaml = require('yaml');
+
+            try {
+              // Parse the input YAML/JSON and validate stacks field exists
+              const parsed = yaml.parse(context.payload.inputs.cloudformation_templates);
+              const hasStacks = parsed && parsed.stacks;
+
+              if (!hasStacks) {
+                core.warning('invalid YAML/JSON or no CloudFormation stacks?');
+                core.setOutput('enabled', 'false');
+                return;
+              }
+
+              // Check if this is an external PR
+              const isExternalPR = context.payload.pull_request.head.repo.full_name != context.payload.repository.full_name;
+
+              if (isExternalPR) {
+                core.warning('CloudFormation stacks are skipped for external contributions.');
+                core.setOutput('enabled', 'false');
+                return;
+              }
+
+              core.setOutput('enabled', 'true');
+              return parsed;
+
+            } catch (error) {
+              core.warning(`Failed to parse CloudFormation templates: ${error.message}`);
+              core.setOutput('enabled', 'false');
+            }
       - name: Generate stacks matrix
         id: cloudformation_stacks
+        if: steps.validate_files.outputs.enabled == 'true' || steps.validate_input.outputs.enabled == 'true'
+        uses: actions/github-script@v7
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-        run: |
-          stacks="$(echo '${{ inputs.cloudformation_templates }}' \
-            | yq e -P - | yq e -o=json - \
-            | jq -r '.stacks[]')"
+          TEMPLATES_JSON: ${{ steps.validate_files.outputs.result || steps.validate_input.outputs.result }}
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            const { format } = require('util');
 
-          stack_names="$(echo '${{ inputs.cloudformation_templates }}' \
-            | yq e -P - | yq e -o=json - \
-            | jq -r '.stacks[].name' | jq -Rcn '[inputs'])"
+            // Parse the JSON input
+            const stacks = JSON.parse(process.env.TEMPLATES_JSON);
 
-          includes="$(echo '${{ inputs.cloudformation_templates }}' \
-            | yq e -P - | yq e -o=json - \
-            | jq -r '.stacks[] | with_entries(if .key == "name" then .key = "stack" else . end)' \
-            | jq -rsc)"
+            // Extract stack names into array
+            let stackNames = stacks.stacks.map(s => s.name);
 
-          template_files="$(echo '${{ inputs.cloudformation_templates }}' \
-            | yq e -P - | yq e -o=json - \
-            | jq -r '.stacks[].template')"
+            // Transform stacks for includes (rename 'name' to 'stack')
+            const includes = stacks.stacks.map(stack => {
+              const transformed = { ...stack };
+              if (transformed.name) {
+                transformed.stack = transformed.name;
+                delete transformed.name;
+              }
+              return transformed;
+            });
 
-          # include templates in the matrix only if modified
-          for template in ${template_files}; do
-              modified_files="$(git diff --submodule=diff "${BASE_SHA}" "${HEAD_SHA}" | sed -n 's#^--- a/\(.*\)$#\1#p')"
+            // Get modified files between BASE and HEAD
+            const getModifiedFiles = () => {
+              const diff = execSync(
+                format('sh -c "git diff --submodule=diff %s %s | sed -rn \'s|^--- a/(.*)$|\\1|p\'"',
+                  process.env.BASE_SHA,
+                  process.env.HEAD_SHA
+                ),
+                { encoding: 'utf8' }
+              );
+              return diff.split('\n').filter(f => f != null && !!f.trim())
+            };
 
-              if ! echo "${modified_files}" | grep -Eq "^${template}$|^.github/workflows/"; then
-                  unmodified_stacks="$(echo "${stacks}" \
-                    | jq -r --arg tmpl "${template}" 'select(.template==$tmpl).name')"
+            const modifiedFiles = getModifiedFiles();
+            console.log(`modifiedFiles:\n${modifiedFiles}`)
 
-                  for stack in ${unmodified_stacks}; do
-                      stack_names="$(echo "${stack_names}" \
-                        | jq -rc --arg stack "${stack}" 'map(select(.!=$stack))')"
-                  done
-              fi
-          done
+            // Filter out unmodified stacks
+            stackNames = stackNames.filter(stackName => {
+              const stack = stacks.stacks.find(s => s.name === stackName);
+              const template = stack.template;
 
-          echo "matrix=${stack_names}" >> "${GITHUB_OUTPUT}"
-          echo "includes=${includes}" >> "${GITHUB_OUTPUT}"
+              // Keep stack if template is modified or workflow is modified
+              return modifiedFiles.some(file =>
+                file === template || file.startsWith('.github/workflows/')
+              );
+            });
+
+            // Set outputs
+            core.setOutput('matrix', stackNames);
+            core.setOutput('includes', includes);
   npm_test:
     name: Test npm
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -2127,7 +2200,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
-          NODE_VERSION: 20.19.0
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2136,7 +2209,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
-          NODE_VERSION: 20.19.0
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2255,7 +2328,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
-          NODE_VERSION: 20.19.0
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
       - run: npm install
@@ -2315,7 +2388,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
-          NODE_VERSION: 20.19.0
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ needs.is_npm.outputs.max_node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2379,7 +2452,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
-          NODE_VERSION: 20.19.0
+          NODE_VERSION: 20.18.3
         with:
           node-version: ${{ needs.is_npm.outputs.max_node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -3641,7 +3714,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
-          NODE_VERSION: 20.19.0
+          NODE_VERSION: 20.18.3
         with:
           node-version: 18
       - name: Docusaurus Builder
@@ -4667,7 +4740,7 @@ jobs:
             '${{ toJSON(matrix.tags) }}' \
             '${{ toJSON(matrix.capabilities) }}'
 
-          stacks="$(echo '${{ inputs.cloudformation_templates }}' | yq e -P - | yq e -o=json -)"
+          stacks='${{ needs.is_cloudformation.outputs.templates_json }}'
           stack="$(echo "${stacks}" | jq -r '.stacks[] | select(.name=="${{ matrix.stack }}")')"
           template_file="$(echo "${stack}" | jq -rc .template)"
           tags="$(echo "${stack}" | jq -rc .tags[] | paste -sd' ' -) github_pull_request=${{ github.event.pull_request.number }} github_sha=${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"

@@ -167,28 +167,8 @@ jobs:
       # Required: false
       aws_iam_role: ${{ vars.AWS_IAM_ROLE || '' }}
 
-      # AWS CloudFormation templates to deploy (e.g.)
-      # ```
-      # {
-      # "stacks": [
-      # {
-      # "name": "foo",
-      # "template": "aws/bar.yaml",
-      # "tags": [
-      # "Name=foo",
-      # "Environment=${FOO}"
-      # ],
-      # "capabilities": [
-      # "CAPABILITY_IAM",
-      # "CAPABILITY_NAMED_IAM"
-      # ]
-      # },
-      # ...
-      # ]
-      # }
-      # ```
-      # * assumes `aws/bar.yaml` exists.
-      # * `${ENVVARS}` injected at runtime from `vars` and `secrets` contexts
+      # This input is deprecated. To deploy CloudFormation stacks, create a
+      # `aws-cf-templates.yaml` file in the root of the repository.
       # Type: string
       # Required: false
       cloudformation_templates: 
