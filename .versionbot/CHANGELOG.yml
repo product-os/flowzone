@@ -1,4 +1,34 @@
 - commits:
+    - subject: Add support for CloudFormation templates as files
+      hash: 3f97ae96358b719677d76be2f638b074431e61cd
+      body: >
+        CloudFormation templates as inputs are difficult to manage
+
+        due to their size, and being embedded in another yaml file.
+
+
+        This change allows moving CloudFormation templates to their own
+
+        file template in the root of the project where they can be
+        autodiscovered
+
+        by Flowzone and deployed.
+
+
+        It also allows us to modify CF templates on repositories that otherwise
+
+        have push restrictions applied to the .github directories.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.12.0
+  title: ""
+  date: 2025-03-17T20:37:03.855Z
+- commits:
     - subject: Update dependency docker/buildx to v0.21.3
       hash: 424392c50cdb64d5a201199f27cf0230632dfc70
       body: |
