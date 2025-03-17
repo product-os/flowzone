@@ -506,7 +506,7 @@ jobs:
             echo "depth=0" >> "${GITHUB_OUTPUT}"
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
           NODE_VERSION: 20.19.0
         with:
@@ -1278,7 +1278,7 @@ jobs:
 
             return json;
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
           NODE_VERSION: 18.20.7
         with:
@@ -1292,7 +1292,7 @@ jobs:
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
           NODE_VERSION: 20.19.0
         with:
@@ -1306,7 +1306,7 @@ jobs:
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
           NODE_VERSION: 22.14.0
         with:
@@ -2125,7 +2125,7 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
           NODE_VERSION: 20.19.0
         with:
@@ -2134,7 +2134,7 @@ jobs:
           cache: npm
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
           NODE_VERSION: 20.19.0
         with:
@@ -2253,7 +2253,7 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
           NODE_VERSION: 20.19.0
         with:
@@ -2313,7 +2313,7 @@ jobs:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha }}
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
           NODE_VERSION: 20.19.0
         with:
@@ -2377,7 +2377,7 @@ jobs:
           name: npm-${{ github.event.pull_request.head.sha }}(-v[0-9]+\.[0-9]+\.[0-9]+|-[0-9][0-9]\.x)?
           name_is_regexp: true
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
           NODE_VERSION: 20.19.0
         with:
@@ -3639,7 +3639,7 @@ jobs:
         run: |
           git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
           NODE_VERSION: 20.19.0
         with:
