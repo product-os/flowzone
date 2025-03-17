@@ -360,7 +360,7 @@ jobs:
             }
       - name: Wait for approval on pull_request_target events
         if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
-        uses: product-os/review-commit-action@5de80f19607c9052fa1c3cce94c1d0571dfc13c7
+        uses: product-os/review-commit-action@d8382149ef160e9b9f352e16992958a8473bd827
         with:
           poll-interval: "10"
           allow-authors: false
