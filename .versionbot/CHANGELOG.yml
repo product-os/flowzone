@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.21.3
+      hash: 424392c50cdb64d5a201199f27cf0230632dfc70
+      body: |
+        Update docker/buildx from 0.21.2 to 0.21.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.11.15
+  title: ""
+  date: 2025-03-17T18:02:58.787Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.1.39
       hash: bffbdbefbee1c4c5f412b2f3a06d022e7e9ab405
       body: |
