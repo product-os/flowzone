@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.22.0
+      hash: 1d6a531969e8717e3459ecc7c12a1e2356e95639
+      body: |
+        Update docker/buildx from 0.21.3 to 0.22.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.12.1
+  title: ""
+  date: 2025-03-18T15:03:27.182Z
+- commits:
     - subject: Add support for CloudFormation templates as files
       hash: 3f97ae96358b719677d76be2f638b074431e61cd
       body: >
