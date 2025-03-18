@@ -5,7 +5,7 @@ description = ""
 authors = ["Team balena <team@balena.io>"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.10"
+python = ">=3.8,<=3.13"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"
