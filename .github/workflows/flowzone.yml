@@ -2136,7 +2136,7 @@ jobs:
 
               // Keep stack if template is modified or workflow is modified
               return modifiedFiles.some(file =>
-                file === template || file.startsWith('.github/workflows/')
+                file === template || file.startsWith('.github/workflows/' || /^aws-cf-templates\.(y(a)?ml|json)$/.test(file))
               );
             });
 
