@@ -2126,13 +2126,18 @@ jobs:
               return diff.split('\n').filter(f => f != null && !!f.trim())
             };
 
-            const modifiedFiles = getModifiedFiles();
+            let modifiedFiles = getModifiedFiles();
             console.log(`modifiedFiles:\n${modifiedFiles}`)
 
             // Filter out unmodified stacks
             stackNames = stackNames.filter(stackName => {
               const stack = stacks.stacks.find(s => s.name === stackName);
               const template = stack.template;
+
+              // Keep stack if any config is modified
+              if (modifiedFiles.some(file => file.startsWith('.github/workflows/')) || modifiedFiles.includes('aws-cf-templates.yml') || modifiedFiles.includes('aws-cf-templates.yaml') || modifiedFiles.includes('aws-cf-templates.json')) {
+                modifiedFiles.push(template);
+              }
 
               // Keep stack if template is modified or workflow is modified
               return modifiedFiles.some(file =>
