@@ -2386,7 +2386,7 @@ jobs:
     permissions: {}
     steps:
       - name: Download npm artifact
-        uses: actions/download-artifact@b14cf4c92620c250e1c074ab0a5800e37df86765
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
         with:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha }}
@@ -2921,7 +2921,7 @@ jobs:
         if: needs.is_docker.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
       - name: Download required artifacts
-        uses: actions/download-artifact@b14cf4c92620c250e1c074ab0a5800e37df86765
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
         with:
           path: ${{ runner.temp }}
           pattern: docker-${{ matrix.target_slug }}-*
@@ -3865,13 +3865,13 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - name: Download release artifacts
-        uses: actions/download-artifact@b14cf4c92620c250e1c074ab0a5800e37df86765
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
         with:
           path: ${{ runner.temp }}/artifacts
           pattern: gh-release-*
           merge-multiple: true
       - name: Download release notes
-        uses: actions/download-artifact@b14cf4c92620c250e1c074ab0a5800e37df86765
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
         with:
           path: ${{ runner.temp }}
           name: release-notes
@@ -3934,7 +3934,7 @@ jobs:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
       - name: Download release notes
-        uses: actions/download-artifact@b14cf4c92620c250e1c074ab0a5800e37df86765
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
         with:
           path: ${{ runner.temp }}
           name: release-notes
