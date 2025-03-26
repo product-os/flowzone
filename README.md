@@ -288,7 +288,13 @@ jobs:
       # use `runs_on`.
       # Type: string
       # Required: false
-      docker_runs_on: {}
+      docker_runs_on: >
+        {
+          "linux/amd64": ["ubuntu-24.04"],
+          "linux/arm64": ["ubuntu-24.04-arm"],
+          "linux/arm/v7": ["ubuntu-24.04-arm"],
+          "linux/arm/v6": ["ubuntu-24.04-arm"]
+        }
 
       # JSON array of runner label strings for cloudformation jobs.
       # Type: string

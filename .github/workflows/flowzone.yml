@@ -196,7 +196,13 @@ on:
         description: JSON key-value pairs mapping platforms to arrays of runner labels. Unlisted platforms will use `runs_on`.
         type: string
         required: false
-        default: "{}"
+        default: |
+          {
+            "linux/amd64": ["ubuntu-24.04"],
+            "linux/arm64": ["ubuntu-24.04-arm"],
+            "linux/arm/v7": ["ubuntu-24.04-arm"],
+            "linux/arm/v6": ["ubuntu-24.04-arm"]
+          }
       cloudformation_runs_on:
         description: JSON array of runner label strings for cloudformation jobs.
         type: string
