@@ -1,4 +1,20 @@
 - commits:
+    - subject: Use hosted Ubuntu 24.04 X64 and ARM runners for Docker by default
+      hash: 3685e2808acdcce63f7ed54f3ad8152fbffced3c
+      body: |
+        Now that GitHub offers free hosted runners in both architectures
+        we should default to these in Flowzone.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.13.0
+  title: ""
+  date: 2025-03-26T23:00:50.575Z
+- commits:
     - subject: Update actions/setup-python action to v5.5.0
       hash: 62dc60967168da6e671b7c92fd1028dbe51bcf9d
       body: |
