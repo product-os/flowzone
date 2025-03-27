@@ -1263,7 +1263,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         env:
-          NODE_VERSION: 18.20.7
+          NODE_VERSION: 18.20.8
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Check engine
