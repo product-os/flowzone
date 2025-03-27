@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node to v18.20.8
+      hash: 43589b3a582777e61e983c706b379ed526b48ade
+      body: |
+        Update node from 18.20.7 to 18.20.8
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.13.2
+  title: ""
+  date: 2025-03-27T14:05:06.361Z
+- commits:
     - subject: Check KVM support on any X64 Linux runner
       hash: dde243827c8b427681cd48b78f2ffe3e2d17e111
       body: |
