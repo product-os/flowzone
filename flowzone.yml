@@ -616,7 +616,7 @@
     uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
     env:
       # renovate: datasource=node-version depName=node packageName=node-20.x
-      NODE_VERSION: 20.18.3
+      NODE_VERSION: 20.19.0
     with:
       node-version: ${{ env.NODE_VERSION }}
 
@@ -2038,7 +2038,7 @@ jobs:
       - <<: *setupNode
         env:
           # renovate: datasource=node-version depName=node packageName=node-20.x
-          NODE_VERSION: 20.18.3
+          NODE_VERSION: 20.19.0
 
       - <<: *checkEngine
         id: check_engine_20
