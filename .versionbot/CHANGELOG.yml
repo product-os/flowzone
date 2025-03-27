@@ -1,4 +1,20 @@
 - commits:
+    - subject: Check KVM support on any X64 Linux runner
+      hash: dde243827c8b427681cd48b78f2ffe3e2d17e111
+      body: |
+        This includes large runners we may provision during
+        outages of self-hosted runners.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.13.1
+  title: ""
+  date: 2025-03-27T13:28:28.987Z
+- commits:
     - subject: Use hosted Ubuntu 24.04 X64 and ARM runners for Docker by default
       hash: 3685e2808acdcce63f7ed54f3ad8152fbffced3c
       body: |
