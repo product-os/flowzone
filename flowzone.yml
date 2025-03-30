@@ -176,11 +176,10 @@
     name: Checkout versioned commit
     uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
     with:
-      fetch-depth: "${{ needs.versioned_source.outputs.depth || 0 }}"
-      # Note that fetch-tags is not currently working as described:
-      # https://github.com/actions/checkout/issues/1781
-      fetch-tags: true
-      submodules: "recursive"
+      # Disable submodules and deep cloning.
+      fetch-depth: 1
+      fetch-tags: false
+      submodules: false
       # fallback to an invalid ref if the checkout ref is undefined
       ref: "${{ needs.versioned_source.outputs.sha || '¯\_(ツ)_/¯' }}"
       <<: *checkoutAuth
@@ -2446,6 +2445,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
 
       - name: Identify Poetry project
         id: python_poetry
@@ -2532,6 +2532,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
 
       - id: cargo_targets
         <<: *jsonArrayBuilder
@@ -2577,6 +2578,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
 
       - id: balena_slugs
         <<: *jsonArrayBuilder
@@ -2609,6 +2611,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *resetGitHubDirectory
 
       # FIXME: remove this handling of deprecated comma-separated values
@@ -2720,6 +2723,7 @@ jobs:
 
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
 
       - name: Install yaml module
         run: |
@@ -2912,6 +2916,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *createLocalRefs
 
       - <<: *setupNode
@@ -3032,6 +3037,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *createLocalRefs
 
       - <<: *setupNode
@@ -3247,6 +3253,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *createLocalRefs
       - *sanitizeDockerStrings
       - *setupBuildx
@@ -3578,6 +3585,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *sanitizeDockerStrings
       - *dockerFinalMetadata
       - *setupCrane
@@ -3650,6 +3658,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - uses: balena-io/deploy-to-balena-action@272ac9e33392eda88c3aa0887fdfddc811494b17 # v2.0.94
         id: balena_deploy
         with:
@@ -3707,6 +3716,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *createLocalRefs
 
       - <<: *setupPython
@@ -3782,6 +3792,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *createLocalRefs
 
       - *setupPython
@@ -3838,6 +3849,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *createLocalRefs
 
       - *setupPython
@@ -3877,6 +3889,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
 
       - *setupPython
       - *setupPoetry
@@ -3929,6 +3942,7 @@ jobs:
               "pull_requests": "write"
             }
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *createLocalRefs
 
       - <<: *setupNode
@@ -4061,6 +4075,7 @@ jobs:
 
       - *deleteDraftGitHubRelease
       - *checkoutVersionedSha
+      - *checkoutSubmodules
 
       # https://github.com/actions/download-artifact
       - name: Download release artifacts
@@ -4125,6 +4140,7 @@ jobs:
             }
 
       - *checkoutVersionedSha
+      - *checkoutSubmodules
 
       # https://github.com/actions/download-artifact
       - name: Download release notes
@@ -4195,6 +4211,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *createLocalRefs
 
       - name: Set up toolchain ${{ matrix.target }}
@@ -4250,6 +4267,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *createLocalRefs
 
       - name: Set up toolchain
@@ -4310,6 +4328,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *createLocalRefs
 
       - name: Set up toolchain ${{ matrix.target }}
@@ -4359,6 +4378,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
 
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -4407,6 +4427,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *resetGitHubDirectory
       - *createLocalRefs
 
@@ -4463,6 +4484,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *resetGitHubDirectory
       - *createLocalRefs
 
@@ -4512,6 +4534,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *resetGitHubDirectory
 
       - name: Set the matrix value env var
@@ -4559,6 +4582,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *resetGitHubDirectory
 
       - uses: ./.github/actions/clean
@@ -4600,6 +4624,7 @@ jobs:
           permissions: ${{ inputs.token_scope }}
 
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *resetGitHubDirectory
 
       - uses: ./.github/actions/always
@@ -4652,6 +4677,7 @@ jobs:
       - *setupAwsCli
       - *getGitHubAppToken
       - *checkoutVersionedSha
+      - *checkoutSubmodules
       - *randomDelay # Why do people always forget that you need to add a little jitter?
       - *configureAWSCredentials
       - *getAWSCallerIdentity

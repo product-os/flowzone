@@ -1614,12 +1614,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Identify Poetry project
         id: python_poetry
         run: |
@@ -1717,12 +1725,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - id: cargo_targets
         name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
@@ -1786,12 +1802,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - id: balena_slugs
         name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
@@ -1843,12 +1867,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Reset .github directory to ${{ github.ref }}
         env:
           GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1998,12 +2030,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Install yaml module
         run: |
           npm install -g yaml
@@ -2198,12 +2238,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -2326,12 +2374,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -2563,12 +2619,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3099,12 +3163,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Sanitize docker strings
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: strings
@@ -3332,12 +3404,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - uses: balena-io/deploy-to-balena-action@272ac9e33392eda88c3aa0887fdfddc811494b17
         id: balena_deploy
         with:
@@ -3401,12 +3481,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3496,12 +3584,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3587,12 +3683,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3664,12 +3768,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55
@@ -3726,12 +3838,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -3878,12 +3998,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Download release artifacts
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
         with:
@@ -3947,12 +4075,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Download release notes
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
         with:
@@ -4030,12 +4166,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -4102,12 +4246,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -4190,12 +4342,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
         run: |
@@ -4255,12 +4415,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
@@ -4310,12 +4478,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Reset .github directory to ${{ github.ref }}
         env:
           GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4385,12 +4561,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Reset .github directory to ${{ github.ref }}
         env:
           GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4454,12 +4638,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Reset .github directory to ${{ github.ref }}
         env:
           GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4520,12 +4712,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Reset .github directory to ${{ github.ref }}
         env:
           GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4581,12 +4781,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Reset .github directory to ${{ github.ref }}
         env:
           GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4652,12 +4860,20 @@ jobs:
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
+      - name: Checkout submodules recursively
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        shell: bash
+        run: |
+          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
+          git submodule update --init --recursive
       - name: Random delay
         run: |
           DELAY="${DELAY-5}"
