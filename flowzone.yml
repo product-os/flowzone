@@ -75,7 +75,7 @@
       TAG: ${{ steps.versionist.outputs.tag }}
       MESSAGE: ${{ steps.versionist.outputs.tag }}
       SHA: ${{ steps.create_commit.outputs.sha }}
-    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
     with:
       github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       result-encoding: json
@@ -98,7 +98,7 @@
     env:
       REF: "heads/${{ github.base_ref }}"
       SHA: ${{ steps.create_commit.outputs.sha }}
-    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
     with:
       github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       result-encoding: json
@@ -118,7 +118,7 @@
     env:
       REF: "refs/tags/${{ steps.versionist.outputs.tag }}"
       SHA: ${{ steps.create_tag.outputs.sha }}
-    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
     with:
       github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       result-encoding: json
@@ -338,7 +338,7 @@
 
   - &jsonArrayBuilder
     name: Build JSON list from comma-separated input
-    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
     with:
       result-encoding: json
       script: |
@@ -350,7 +350,7 @@
 
   - &newlineListBuilder
     name: Build newline-separated list from JSON list input
-    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
     with:
       result-encoding: string
       script: |
@@ -374,7 +374,7 @@
 
   - &sanitizeDockerStrings
     name: Sanitize docker strings
-    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
     id: strings
     env:
       TARGET: ${{ matrix.target }}
@@ -543,7 +543,7 @@
     # https://octokit.github.io/rest.js/v21/#pulls-list-commits
     name: Reject HEAD branches containing merge commits
     if: github.event.pull_request.state == 'open'
-    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
     with:
       github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       result-encoding: json
@@ -567,7 +567,7 @@
     # This check passes when the PR is open too, but only on pull_request events and not pull_request_target.
     # So only check on merged PRs where the HEAD sha should always be a parent of the merge commit.
     if: github.event.pull_request.merged
-    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
     with:
       github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       result-encoding: json
@@ -1168,7 +1168,7 @@ jobs:
       - *rejectNonLinearMerge
 
       - name: Check for legacy branch protection
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open'
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -1232,7 +1232,7 @@ jobs:
 
       # https://github.com/actions/github-script
       - name: Run balena-versionist
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         if: inputs.disable_versioning != true
         id: versionist
         env:
@@ -1268,7 +1268,7 @@ jobs:
         id: create_tree
         env:
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           script: |
@@ -1332,7 +1332,7 @@ jobs:
           MESSAGE: ${{ steps.versionist.outputs.tag }}
           TREE_SHA: ${{ steps.create_tree.outputs.sha }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: json
@@ -1502,7 +1502,7 @@ jobs:
       # https://docs.github.com/en/rest/commits/commits#compare-two-commits
       - name: Generate short release note
         id: short_release_notes
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         env:
           USER_DEFINED: ${{ steps.format_release_notes.outputs.body }}
           CURRENT_TAG: ${{ needs.versioned_source.outputs.tag }}
@@ -1809,7 +1809,7 @@ jobs:
       # https://octokit.github.io/rest.js/v21/#code-scanning-upload-sarif
       # https://github.com/github/codeql-action/issues/2654
       - name: Upload SARIF file to GitHub
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         # For now let's just continue on error as this is not a critical path
         continue-on-error: true
         env:
@@ -1862,7 +1862,7 @@ jobs:
       # https://octokit.github.io/rest.js/v21/#repos-get-content
       - name: List files in project root
         id: project-root
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ github.token }}
           result-encoding: json
@@ -1887,7 +1887,7 @@ jobs:
         if: inputs.working_directory && inputs.working_directory != '.'
         env:
           WORKING_DIRECTORY: ${{ inputs.working_directory }}
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ github.token }}
           result-encoding: json
@@ -1989,7 +1989,7 @@ jobs:
       - *shallowCheckout
 
       - name: Process package.json
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         id: package_json
         with:
           result-encoding: json
@@ -2054,7 +2054,7 @@ jobs:
       # Default to 20.x if no versions were matched
       # https://github.com/actions/github-script
       - name: Set Node.js versions
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         id: node_versions
         env:
           # Tested that this will always return a JSON array.
@@ -2137,7 +2137,7 @@ jobs:
       # in this custom bake json we also set some default cache values, and inherit the docker-metadata-action
       - name: Pre-process Docker bake files
         id: docker_bake
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         env:
           TEMP_BAKE_FILE: ${{ runner.temp }}/docker-bake.json
           BAKE_TARGETS: ${{ inputs.bake_targets }}
@@ -2262,7 +2262,7 @@ jobs:
       - name: Build docker test matrix
         id: docker_test
         if: steps.docker_bake.outputs.result != ''
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         env:
           <<: *dockerPlatformSlugMap
           BAKE_JSON: "${{ steps.docker_bake.outputs.result }}"
@@ -2335,7 +2335,7 @@ jobs:
           inputs.docker_images != '' &&
           join(fromJSON(steps.docker_bake.outputs.targets)) != '' &&
           steps.docker_bake.outputs.result != ''
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         env:
           <<: *dockerPlatformSlugMap
           BAKE_JSON: ${{ steps.docker_bake.outputs.result }}
@@ -2708,7 +2708,7 @@ jobs:
           contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yaml') ||
           contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yml') ||
           contains(needs.file_list.outputs.workdir, 'aws-cf-templates.json')
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           result-encoding: json
           script: |
@@ -2755,7 +2755,7 @@ jobs:
       - name: Validate CloudFormation input
         id: validate_input
         if: inputs.cloudformation_templates != '' && steps.validate_files.outputs.enabled != 'true'
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           result-encoding: json
           script: |
@@ -2792,7 +2792,7 @@ jobs:
       - name: Generate stacks matrix
         id: cloudformation_stacks
         if: steps.validate_files.outputs.enabled == 'true' || steps.validate_input.outputs.enabled == 'true'
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -5007,7 +5007,7 @@ jobs:
       # Get the current state of the PR so we can check if it is in draft state
       - name: Get the PR state
         id: get-pr
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           result-encoding: json
           github-token: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
@@ -5029,7 +5029,7 @@ jobs:
       - name: Check if branch has rules
         if: ${{ fromJSON(steps.get-pr.outputs.result).draft == false }}
         id: get-branch-rules
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           result-encoding: json
           github-token: "${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}"
