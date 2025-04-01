@@ -2014,7 +2014,7 @@ jobs:
           contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yaml') ||
           contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yml') ||
           contains(needs.file_list.outputs.workdir, 'aws-cf-templates.json')
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         with:
           result-encoding: json
           script: |
@@ -2058,7 +2058,7 @@ jobs:
       - name: Validate CloudFormation input
         id: validate_input
         if: inputs.cloudformation_templates != '' && steps.validate_files.outputs.enabled != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         with:
           result-encoding: json
           script: |
@@ -2094,7 +2094,7 @@ jobs:
       - name: Generate stacks matrix
         id: cloudformation_stacks
         if: steps.validate_files.outputs.enabled == 'true' || steps.validate_input.outputs.enabled == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
