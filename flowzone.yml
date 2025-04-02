@@ -1863,16 +1863,18 @@ jobs:
       - name: List files in project root
         id: project-root
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          # Use the tip of the pull request branch for pull request (target) events.
+          # Use the event sha for other events.
+          REF: ${{ github.event.pull_request.head.sha || github.sha }}
         with:
           github-token: ${{ github.token }}
           result-encoding: json
-          # Use the tip of the pull request branch for pull request (target) events.
-          # Use the event sha for other events.
           script: |
             const { data } = await github.rest.repos.getContent({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.payload.pull_request.head.sha || context.ref
+              ref: process.env.REF
             });
 
             return data
@@ -1887,18 +1889,19 @@ jobs:
         if: inputs.working_directory && inputs.working_directory != '.'
         env:
           WORKING_DIRECTORY: ${{ inputs.working_directory }}
+          # Use the tip of the pull request branch for pull request (target) events.
+          # Use the event sha for other events.
+          REF: ${{ github.event.pull_request.head.sha || github.sha }}
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ github.token }}
           result-encoding: json
-          # Use the tip of the pull request branch for pull request (target) events.
-          # Use the event sha for other events.
           # Remove preceeding ./ from the working directory if it exists.
           script: |
             const { data } = await github.rest.repos.getContent({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.payload.pull_request.head.sha || context.ref,
+              ref: process.env.REF,
               path: process.env.WORKING_DIRECTORY.startsWith('./') ? process.env.WORKING_DIRECTORY.slice(2) : process.env.WORKING_DIRECTORY
             });
 
