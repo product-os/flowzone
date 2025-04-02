@@ -1,4 +1,25 @@
 - commits:
+    - subject: Fix file list for non pull request events
+      hash: eb9fa414309e521fb524fbffaa4003e12d2ef87b
+      body: |
+        We still support push events for some projects
+        but file list has been broken for a while because
+        pull_request does not exist on the event context so
+        node aborts.
+
+        Instead use the actions || condition that handles
+        all failures of the first condition.
+      footer:
+        CHange-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.13.14
+  title: ""
+  date: 2025-04-02T14:37:48.529Z
+- commits:
     - subject: Update dependency node to v20.19.0
       hash: 9222f7e9ec87b9b674d5f8cc680b36fb09f6a9c5
       body: |
