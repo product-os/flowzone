@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node to v20.19.0
+      hash: 9222f7e9ec87b9b674d5f8cc680b36fb09f6a9c5
+      body: |
+        Update node from 20.18.3 to 20.19.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.13.13
+  title: ""
+  date: 2025-04-02T12:48:39.539Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.100
       hash: a7c339d5737204cb1c25728272446d19db645569
       body: |
