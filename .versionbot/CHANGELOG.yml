@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update balena-io/deploy-to-balena-action action to v2.0.101
+      hash: 23b5d8a32fa2e27faefcc0ce78a835364716dc9e
+      body: |
+        Update balena-io/deploy-to-balena-action from 2.0.100 to 2.0.101
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.13.15
+  title: ""
+  date: 2025-04-02T16:05:02.874Z
+- commits:
     - subject: Fix file list for non pull request events
       hash: eb9fa414309e521fb524fbffaa4003e12d2ef87b
       body: |
