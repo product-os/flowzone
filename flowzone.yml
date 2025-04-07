@@ -3629,7 +3629,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
-      - uses: balena-io/deploy-to-balena-action@538ef9922db50bed346bdb5fb271e54155a50fba # v2.0.105
+      - uses: balena-io/deploy-to-balena-action@6468fbf4f1417ec6f752f9313a81b46b0adaf4de # v2.0.106
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
