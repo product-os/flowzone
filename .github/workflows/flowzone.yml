@@ -725,77 +725,68 @@ jobs:
       - name: Format release notes
         id: format_release_notes
         continue-on-error: true
-        env:
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        run: |
-          set -x
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          result-encoding: string
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
 
-          pr_title="$(gh pr view ${{ github.event.pull_request.number }} --json title --jq .title)"
-          raw_body="$(gh pr view ${{ github.event.pull_request.number }} --json body --jq .body)"
+            if (!pr.title) {
+              return;
+            }
 
-          if [[ -n "$pr_title" ]]; then
+            // Check if PR is from Renovate
+            const isRenovate = pr.user.type === 'Bot' && pr.user.login.includes('renovate');
+            const renovateReleaseNotesMatch = pr.body.match(/### Release Notes([\s\S]*?)---/);
 
-              # if Renovate did this, extract its release notes from pull request body and
-              # massage until they resemble balena-io-modules/balena-deploy-request output
-              renovate_bot="$(gh pr view ${{ github.event.pull_request.number }} --json author --jq \
-                  'select((.author.is_bot==true) and (.author.login | contains("renovate"))).author.login')"
+            if (isRenovate && renovateReleaseNotesMatch[1]) {
+              const releaseNotesBody = renovateReleaseNotesMatch[1].trim();
 
-              title_pattern="## (R|r)elease (N|n)otes"
-              if [[ -n "$renovate_bot" ]] && [[ "$raw_body" =~ '### Release Notes' ]]; then
-                  # TODO: remove duplicate <details> sections on the pr_body
-                  # https://github.com/renovatebot/renovate/issues/13037
-                  pr_body="$(echo "${raw_body}" \
-                    | sed -n '/^### Release Notes$/,/^---$/p' \
-                    | sed "s|^### Release Notes$||g" \
-                    | sed 's/^---$//g')"
+              // Extract notable changes
+              const notableChanges = releaseNotesBody
+                .split('\n')
+                .filter(line => line.match(/^> -|^-|^<summary>/))
+                .map(line => line.replace(/^<summary>(.*)<\/summary>/, '-$1'))
+                .filter((line, index, self) => self.indexOf(line) === index)
+                .slice(1);
 
-                  notable_changes="$(echo "${pr_body}" |
-                    # Only get lines starting with `-`, `> -` or `<summary>`
-                    grep -E '^> -|^-|^<summary>' |
-                    # Replace the contents of the summary tag with a list item
-                    sed -E 's|^<summary>(.*)</summary>|-\1|g' |
-                    # Remove duplicate lines
-                    awk '!(NF && seen[$0]++)' |
-                    # Remove first line
-                    sed 1d)"
+              // Format release notes
+              const releaseNotesChanges = notableChanges
+                .map(line => line.replace(/^> -(.*)/, '  -$1'))
+                .join('\n');
 
-                  # Prepare the release notes
-                  release_notes_changes="$(echo "${notable_changes}" | sed -E 's|^> -(.*)|  -\1|g')"
-                  release_notes="$(printf '## %s\n\n### Notable changes\n\n%s\n\n%s' "${pr_title}" "${release_notes_changes}" "${pr_body}")"
+              const releaseNotes = `## ${pr.title}\n\n### Notable changes\n\n${releaseNotesChanges}\n\n${releaseNotesBody}`;
+              core.setOutput('body', releaseNotes);
 
-                  # Prepare the comment body
-                  notable_changes="$(echo "${notable_changes}" | sed -E 's|^|* |g')"
-                  notable_changes="$(printf 'Notable changes\n* [only keep the important and rephrase, leaving this in place will avoid posting release notes]\n%s' "${notable_changes}")"
+              // Format comment
+              const notableChangesFormatted = notableChanges
+                .map(line => `* ${line.replace(/^> -|^-/, '')}`)
+                .join('\n');
 
-                  # https://zulip.com/help/format-your-message-using-markdown
-                  # shortnames: https://pygments.org/docs/lexers/
-                  release_notes_comment="$(printf '#release-notes %s\n\n%s%s' "${pr_title}" "${notable_changes}" "${pr_body}")"
+              const releaseNotesComment = `#release-notes ${pr.title}\n\nNotable changes\n* [only keep the important and rephrase, leaving this in place will avoid posting release notes]\n${notableChangesFormatted}\n\n${releaseNotesBody}`;
+              core.setOutput('comment', releaseNotesComment);
 
-              # Handle non-renovate cases
-              elif [[ "$raw_body" =~ $title_pattern ]]; then
-                # Find a section `## Release notes` and use that as the release notes body
-                release_notes_body="$(echo "${raw_body}" \
-                    | sed -n '/^## Release Notes/I,/^## /p' \
-                    | sed '/^## /d' \
-                    | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')" # Remove starting/trailing empty lines
+              return releaseNotes;
+            }
 
-                release_notes="$(printf '## %s\n%s' "${pr_title}" "${release_notes_body}")"
-              fi
+            // Handle custom release notes
+            const customReleaseNotesMatch = pr.body.match(/## Release Notes([\s\S]*?)(?=## |$)/i);
+            console.log('match:', JSON.stringify(customReleaseNotesMatch, null, 2));
 
-              if [[ -n "$release_notes" ]]; then
-                  EOF="$(openssl rand -hex 16)"
-                  echo "body<<$EOF" >> $GITHUB_OUTPUT
-                  echo "${release_notes}" >> $GITHUB_OUTPUT
-                  echo "$EOF" >> $GITHUB_OUTPUT
-              fi
+            if (customReleaseNotesMatch[1]) {
+              const releaseNotesBody = customReleaseNotesMatch[1].trim();
+              console.log('releaseNotesBody:', releaseNotesBody);
 
-              if [[ -n "$release_notes_comment" ]]; then
-                  EOF="$(openssl rand -hex 16)"
-                  echo "comment<<$EOF" >> $GITHUB_OUTPUT
-                  echo "${release_notes_comment}" >> $GITHUB_OUTPUT
-                  echo "$EOF" >> $GITHUB_OUTPUT
-              fi
-          fi
+              const releaseNotes = `## ${pr.title}\n${releaseNotesBody}`;
+              core.setOutput('body', releaseNotes);
+
+              return releaseNotes;
+            }
       - name: Generate short release note
         id: short_release_notes
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
