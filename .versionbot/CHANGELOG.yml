@@ -1,4 +1,22 @@
 - commits:
+    - subject: Format release notes with github script
+      hash: 843282146c046fc6336c1905b60c09e2c00832e7
+      body: |
+        The previous function was throwing errors in some cases
+        when the gh cli expected a local .git directory.
+
+        Instead we should avoid an interactive CLI for steps like this.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.13.22
+  title: ""
+  date: 2025-04-07T15:04:48.841Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.107
       hash: fb297e4557a6cd4f304f59d7d20ab4fae40a4066
       body: |
