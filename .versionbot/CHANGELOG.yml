@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.23.0
+      hash: c37b35171ffe731868a934d51494b2b05d7ecab4
+      body: |
+        Update docker/buildx from 0.22.0 to 0.23.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.13.26
+  title: ""
+  date: 2025-04-16T16:08:59.201Z
+- commits:
     - subject: Test all targets and features for Rust projects
       hash: c52b6c2f52cde893d7c414ebe56603a0bdb8d3ec
       body: ""
