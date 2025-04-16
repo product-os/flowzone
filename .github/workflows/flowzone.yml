@@ -4047,7 +4047,7 @@ jobs:
       - name: Lint with clippy
         run: cross -v clippy --all-targets --all-features --target ${{ matrix.target }} -- -D warnings
       - name: Run tests for toolchain ${{ matrix.target }}
-        run: cross -v test --locked --target ${{ matrix.target }}
+        run: cross -v test --all-targets --all-features --locked --target ${{ matrix.target }}
       - name: Generate metadata
         id: meta
         run: |
