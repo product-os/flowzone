@@ -1,4 +1,19 @@
 - commits:
+    - subject: Catch unhandled type errors when release notes are not matched
+      hash: 5c367674a9ae3df15867aa127c65a3141a4bf986
+      body: |
+        Unhandled error: TypeError: Cannot read properties of null (reading '1')
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.13.27
+  title: ""
+  date: 2025-04-17T18:20:53.642Z
+- commits:
     - subject: Update dependency docker/buildx to v0.23.0
       hash: c37b35171ffe731868a934d51494b2b05d7ecab4
       body: |
