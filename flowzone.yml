@@ -1441,7 +1441,7 @@ jobs:
             const isRenovate = pr.user.type === 'Bot' && pr.user.login.includes('renovate');
             const renovateReleaseNotesMatch = pr.body.match(/### Release Notes([\s\S]*?)---/);
 
-            if (isRenovate && renovateReleaseNotesMatch[1]) {
+            if (isRenovate && renovateReleaseNotesMatch != null && renovateReleaseNotesMatch[1]) {
               const releaseNotesBody = renovateReleaseNotesMatch[1].trim();
 
               // Extract notable changes
@@ -1475,7 +1475,7 @@ jobs:
             const customReleaseNotesMatch = pr.body.match(/## Release Notes([\s\S]*?)(?=## |$)/i);
             console.log('match:', JSON.stringify(customReleaseNotesMatch, null, 2));
 
-            if (customReleaseNotesMatch[1]) {
+            if (customReleaseNotesMatch != null && customReleaseNotesMatch[1]) {
               const releaseNotesBody = customReleaseNotesMatch[1].trim();
               console.log('releaseNotesBody:', releaseNotesBody);
 
