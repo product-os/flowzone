@@ -686,9 +686,9 @@ jobs:
     needs:
       - versioned_source
     if: |
-      needs.versioned_source.outputs.tag != '' &&
+      inputs.disable_versioning != true &&
       (
-        github.event.action != 'closed' ||
+        github.event.pull_request.state == 'open' ||
         github.event.pull_request.merged == true
       )
     defaults:
