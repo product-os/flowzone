@@ -1,4 +1,21 @@
 - commits:
+    - subject: Remove tag push events from release notes generation
+      hash: 4dd924045ac016ff9e0df77e0825c61722d966ab
+      body: |
+        Tag push events are only somewhat supported, and there
+        is no situation where this ever would have worked since
+        we need to look at the PR body and commits to generate notes.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.13.36
+  title: ""
+  date: 2025-04-24T18:26:43.492Z
+- commits:
     - subject: Update actions/download-artifact action to v4.3.0
       hash: 579f3311908ae1f2f3fca39f4daa3da7d296992d
       body: |
