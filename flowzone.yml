@@ -16,7 +16,7 @@
     uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
     if: inputs.app_id
     id: gh_app_token
-    with: &getGitHubAppTokenWith
+    with: &appInstallationCreds
       app_id: ${{ inputs.app_id }}
       installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
       installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
@@ -130,8 +130,27 @@
         });
         return ref;
 
+  # If the repo is private, generate a read-only GitHub App installation token
+  # for the checkout step as there may be private submodules that cannot be fetched
+  # with the automatic GitHub Actions token.
+  - &getCheckoutToken # https://github.com/tibdex/github-app-token
+    name: (Private Repo) Generate Read-Only GitHub App installation token
+    uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+    if: inputs.app_id && github.event.repository.private
+    id: checkout_token
+    with:
+      app_id: ${{ inputs.app_id }}
+      installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+      installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+      private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      permissions: >-
+        {
+          "contents": "read",
+          "metadata": "read"
+        }
+
   - &checkoutAuth
-    token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+    token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
     persist-credentials: false
 
   - &checkoutPullRequestMergeRef
@@ -185,6 +204,7 @@
       ref: "${{ needs.versioned_source.outputs.sha || '¯\_(ツ)_/¯' }}"
       <<: *checkoutAuth
 
+  # Shallow checkout does not include submodules and always uses the automatic GitHub Actions token.
   - &shallowCheckout # https://github.com/actions/checkout
     name: Checkout source
     uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -205,7 +225,7 @@
     # or the merge commit if the PR is internal
     name: Reset .github directory to ${{ github.ref }}
     env:
-      GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
     # Use bash without tracing to avoid leaking secrets
     shell: bash
     # Create base64 encoded auth header
@@ -1092,7 +1112,7 @@ jobs:
 
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # pull_requests: write is required to create or update pull request comments
           permissions: >-
             {
@@ -1151,7 +1171,7 @@ jobs:
     steps:
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # contents: write is required to push git commit and tag references
           # This GitHub App should also be added to exceptions in branch rulesets in order to
           # bypass branch rules and push versioned commits directly to the main branch.
@@ -1190,6 +1210,8 @@ jobs:
             core.setFailed("Legacy branch protection rules detected!\n\n" +
               "Switching to Rulesets is required to allow GitHub Apps to bypass branch rules.\n\n" +
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
+
+      - *getCheckoutToken
 
       # Checkout the tip of the pull request branch for open PRs.
       # The default behaviour for GitHub Actions is to checkout the merge commit but we
@@ -1407,7 +1429,7 @@ jobs:
     steps:
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           permissions: >-
             {
               "contents": "read",
@@ -1586,7 +1608,7 @@ jobs:
     steps:
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # contents: write is required to create or update pull request comments
           # pull_requests: write is required to create or update pull request comments
           permissions: >-
@@ -1760,7 +1782,7 @@ jobs:
     steps:
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # security_events: write is required to upload SARIF files
           permissions: >-
             {
@@ -2410,7 +2432,7 @@ jobs:
       python_sbom: ${{ inputs.generate_sbom }}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
 
       - name: Identify Poetry project
@@ -2496,7 +2518,7 @@ jobs:
       cargo_publish: ${{ steps.cargo_publish.outputs.value }}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
 
       - id: cargo_targets
@@ -2541,7 +2563,7 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
 
       - id: balena_slugs
@@ -2573,7 +2595,7 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
 
@@ -2684,7 +2706,7 @@ jobs:
 
     steps:
 
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
 
       - name: Install yaml module
@@ -2876,7 +2898,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -2996,7 +3018,7 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -3147,7 +3169,7 @@ jobs:
     steps:
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # need permissions to push to docs branch and publish to github pages
           permissions: >-
             {
@@ -3211,7 +3233,7 @@ jobs:
       packages: read # pull private base images from ghcr.io
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *createLocalRefs
       - *sanitizeDockerStrings
@@ -3542,7 +3564,7 @@ jobs:
     #   packages: write # push manifests to ghcr.io
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *sanitizeDockerStrings
       - *dockerFinalMetadata
@@ -3614,7 +3636,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - uses: balena-io/deploy-to-balena-action@a4eb179bbb33c30c348c2840b35c048819a188bd # v2.0.111
         id: balena_deploy
@@ -3671,7 +3693,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -3746,7 +3768,7 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -3802,7 +3824,7 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -3841,7 +3863,7 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
 
       - *setupPython
@@ -3883,17 +3905,7 @@ jobs:
     permissions: {}
 
     steps:
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # pull_requests: write is required to create or update pull request comments
-          permissions: >-
-            {
-              "metadata": "read",
-              "contents": "read",
-              "issues": "read",
-              "pull_requests": "write"
-            }
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -3940,6 +3952,18 @@ jobs:
         run: |
           echo "cloudflare_deployment_url=${DEPLOYMENT_URL}" >> "$GITHUB_OUTPUT"
 
+      - <<: *getGitHubAppToken
+        with:
+          <<: *appInstallationCreds
+          # pull_requests: write is required to create or update pull request comments
+          permissions: >-
+            {
+              "metadata": "read",
+              "contents": "read",
+              "issues": "read",
+              "pull_requests": "write"
+            }
+
       - name: Find Cloudflare Pages link comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
         id: find_cf_comment
@@ -3980,7 +4004,7 @@ jobs:
     steps:
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # contents:write permissions for managing releases
           permissions: >-
             {
@@ -4017,7 +4041,7 @@ jobs:
     steps:
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # contents:write permissions for managing releases
           permissions: >-
             {
@@ -4026,6 +4050,8 @@ jobs:
             }
 
       - *deleteDraftGitHubRelease
+
+      - *getCheckoutToken
       - *checkoutVersionedSha
 
       # https://github.com/actions/download-artifact
@@ -4080,17 +4106,18 @@ jobs:
     permissions: {}
 
     steps:
+      - *getCheckoutToken
+      - *checkoutVersionedSha
+
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # contents:write permissions for managing releases
           permissions: >-
             {
               "contents": "write",
               "metadata": "read"
             }
-
-      - *checkoutVersionedSha
 
       # https://github.com/actions/download-artifact
       - name: Download release notes
@@ -4159,7 +4186,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -4214,7 +4241,7 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -4274,7 +4301,7 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *createLocalRefs
 
@@ -4323,7 +4350,7 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
 
       - name: Set up toolchain
@@ -4368,10 +4395,11 @@ jobs:
       - *rejectExternalCustomActions
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
 
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
       - *createLocalRefs
@@ -4424,10 +4452,11 @@ jobs:
 
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
 
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
       - *createLocalRefs
@@ -4473,10 +4502,11 @@ jobs:
 
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
 
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
 
@@ -4520,10 +4550,11 @@ jobs:
 
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
 
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
 
@@ -4561,10 +4592,11 @@ jobs:
 
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
 
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *resetGitHubDirectory
 
@@ -4616,7 +4648,7 @@ jobs:
 
     steps:
       - *setupAwsCli
-      - *getGitHubAppToken
+      - *getCheckoutToken
       - *checkoutVersionedSha
       - *randomDelay # Why do people always forget that you need to add a little jitter?
       - *configureAWSCredentials
@@ -4985,7 +5017,7 @@ jobs:
     steps:
       - <<: *getGitHubAppToken
         with:
-          <<: *getGitHubAppTokenWith
+          <<: *appInstallationCreds
           # contents: write is required to enable automerge on a pull request
           permissions: >-
             {
