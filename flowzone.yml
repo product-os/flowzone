@@ -1494,7 +1494,7 @@ jobs:
           USER_DEFINED: ${{ steps.format_release_notes.outputs.body }}
           CURRENT_TAG: ${{ needs.versioned_source.outputs.tag }}
         with:
-          result-encoding: json
+          result-encoding: string
           script: |
             // Get all tags sorted by version in descending order
             const { data: tags } = await github.rest.repos.listTags({
