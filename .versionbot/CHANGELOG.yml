@@ -1,4 +1,23 @@
 - commits:
+    - subject: Encode short-release-notes as string
+      hash: 10dd105d8753000e4f3404c76faff2fc54e47c39
+      body: >
+        The job step was encoding as JSON, resulting in additional escaped
+
+        characters when publishing the notes to balenaCloud.
+
+
+        See this as an example
+        https://dashboard.balena-cloud.com/apps/1667443/releases/3416828/summary
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 19.13.38
+  title: ""
+  date: 2025-05-02T12:54:57.377Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.111
       hash: 9d51d7c8ee4484a0c80aa410b508ef0e6755efec
       body: |
