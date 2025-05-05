@@ -1,4 +1,21 @@
 - commits:
+    - subject: Remove extra docker draft publish tags
+      hash: cc152e6aa4a553de8d13342c88c9619fffe93b15
+      body: |
+        Draft PRs should not publish with the base branch as a tag, and
+        the extra SHA tag without the build- prefix was redundant and we want
+        to encourage the use of the tags with build- prefix only.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.14.0
+  title: ""
+  date: 2025-05-05T20:05:03.961Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.113
       hash: 752ae5f64fcc7c6427b4cdafb317f765b8c1f5b1
       body: |
