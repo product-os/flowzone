@@ -462,8 +462,6 @@
         ${{ matrix.image }}
       labels: *dockerMetaLabels
       tags: |
-        type=raw,value=${{ github.base_ref || github.ref_name }}
-        type=raw,value=${{ github.event.pull_request.head.sha }}
         type=raw,value=build-${{ github.event.pull_request.head.sha }}
         type=raw,value=build-${{ github.event.pull_request.head.ref }}
       flavor: |
