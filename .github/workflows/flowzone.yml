@@ -3330,7 +3330,7 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           persist-credentials: false
-      - uses: balena-io/deploy-to-balena-action@3f03ce5214a368c61ca95c597598fad25798e84d
+      - uses: balena-io/deploy-to-balena-action@5b3cfc83f30f7a1dee07968803cd710147994c96
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
