@@ -454,13 +454,27 @@ jobs:
             core.setFailed("Legacy branch protection rules detected!\n\n" +
               "Switching to Rulesets is required to allow GitHub Apps to bypass branch rules.\n\n" +
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
       - name: Checkout pull request head sha
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
           submodules: recursive
           ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
         if: github.event.pull_request.state == 'open'
       - name: Checkout ${{ github.sha }}
@@ -469,7 +483,7 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
         if: github.event.pull_request.state != 'open'
       - name: Describe git state
@@ -1591,10 +1605,10 @@ jobs:
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
       python_sbom: ${{ inputs.generate_sbom }}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -1612,7 +1626,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Identify Poetry project
         id: python_poetry
@@ -1694,10 +1708,10 @@ jobs:
       cargo_sbom: ${{ inputs.generate_sbom }}
       cargo_publish: ${{ steps.cargo_publish.outputs.value }}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -1715,7 +1729,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - id: cargo_targets
         name: Build JSON list from comma-separated input
@@ -1763,10 +1777,10 @@ jobs:
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -1784,7 +1798,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - id: balena_slugs
         name: Build JSON list from comma-separated input
@@ -1820,10 +1834,10 @@ jobs:
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.json || inputs.custom_publish_matrix }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -1841,11 +1855,11 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
         shell: bash
         run: |
           auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
@@ -1975,10 +1989,10 @@ jobs:
       stacks: ${{ steps.cloudformation_stacks.outputs.matrix }}
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -1996,7 +2010,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Install yaml module
         run: |
@@ -2175,10 +2189,10 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -2196,7 +2210,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -2303,10 +2317,10 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -2324,7 +2338,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -2540,10 +2554,10 @@ jobs:
     permissions:
       packages: read
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -2561,7 +2575,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -3074,10 +3088,10 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -3095,7 +3109,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Sanitize docker strings
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
@@ -3307,10 +3321,10 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -3328,7 +3342,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - uses: balena-io/deploy-to-balena-action@45991f31cb74431e365a9ad53cc466dd7972e86b
         id: balena_deploy
@@ -3376,10 +3390,10 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -3397,7 +3411,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -3471,10 +3485,10 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -3492,7 +3506,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -3562,10 +3576,10 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -3583,7 +3597,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -3639,10 +3653,10 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -3660,7 +3674,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Setup python
         id: setup-python
@@ -3699,10 +3713,10 @@ jobs:
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -3710,10 +3724,8 @@ jobs:
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: |-
             {
-              "metadata": "read",
               "contents": "read",
-              "issues": "read",
-              "pull_requests": "write"
+              "metadata": "read"
             }
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -3722,7 +3734,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -3767,6 +3779,22 @@ jobs:
           DEPLOYMENT_URL: ${{ steps.deploy_cf_pages.outputs.deployment-url }}
         run: |
           echo "cloudflare_deployment_url=${DEPLOYMENT_URL}" >> "$GITHUB_OUTPUT"
+      - name: Generate GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id
+        id: gh_app_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "metadata": "read",
+              "contents": "read",
+              "issues": "read",
+              "pull_requests": "write"
+            }
       - name: Find Cloudflare Pages link comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
         id: find_cf_comment
@@ -3867,6 +3895,20 @@ jobs:
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -3874,7 +3916,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Download release artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
@@ -3922,6 +3964,29 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
+      - name: Checkout versioned commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+          fetch-tags: true
+          submodules: recursive
+          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          persist-credentials: false
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -3936,15 +4001,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
       - name: Download release notes
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -4005,10 +4061,10 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -4026,7 +4082,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -4077,10 +4133,10 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -4098,7 +4154,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -4165,10 +4221,10 @@ jobs:
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -4186,7 +4242,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Create local tag for draft version
         if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
@@ -4230,10 +4286,10 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -4251,7 +4307,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -4299,6 +4355,20 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -4306,11 +4376,11 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
         shell: bash
         run: |
           auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
@@ -4374,6 +4444,20 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -4381,11 +4465,11 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
         shell: bash
         run: |
           auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
@@ -4443,6 +4527,20 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -4450,11 +4548,11 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
         shell: bash
         run: |
           auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
@@ -4509,6 +4607,20 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -4516,11 +4628,11 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
         shell: bash
         run: |
           auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
@@ -4570,6 +4682,20 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
+        with:
+          app_id: ${{ inputs.app_id }}
+          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permissions: |-
+            {
+              "contents": "read",
+              "metadata": "read"
+            }
       - name: Checkout versioned commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -4577,11 +4703,11 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Reset .github directory to ${{ github.ref }}
         env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
         shell: bash
         run: |
           auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
@@ -4627,10 +4753,10 @@ jobs:
         uses: product-os/setup-awscli-action@b5e9d5a0afb5b62fb8fb8bb079dcd84354cef03d
         with:
           version: 2.15.43
-      - name: Generate GitHub App installation token
+      - name: (Private Repo) Generate Read-Only GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+        if: inputs.app_id && github.event.repository.private
+        id: checkout_token
         with:
           app_id: ${{ inputs.app_id }}
           installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
@@ -4648,7 +4774,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
           ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
       - name: Random delay
         run: |
