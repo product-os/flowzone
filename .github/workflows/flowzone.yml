@@ -2753,7 +2753,7 @@ jobs:
           sudo sysctl -w vm.swappiness=0 || true
       - name: Docker bake
         id: docker_bake
-        uses: docker/bake-action@76f9fa3a758507623da19f6092dc4089a7e61592
+        uses: docker/bake-action@212c36739681a6271d58dcfe0d001d2ad13f8e75
         with:
           source: .
           workdir: ${{ inputs.working_directory }}
