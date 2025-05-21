@@ -3614,7 +3614,7 @@ jobs:
     steps:
       - *getGitHubAppToken
       - *checkoutVersionedSha
-      - uses: balena-io/deploy-to-balena-action@5328e4539efc9dc95a0471c8fcf4bd16fc75e70d # v2.0.120
+      - uses: balena-io/deploy-to-balena-action@a441072af54dd3293e77ca0f4732109de9f207bd # v2.0.121
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
