@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-22 to v22.16.0
+      hash: c64858b331dbf745834fbcc671ab3e4d3fc8ee1e
+      body: |
+        Update node-22 from 22.15.1 to 22.16.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.14.15
+  title: ""
+  date: 2025-05-21T16:09:58.494Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.121
       hash: 958421e57b2c0d3c7682f932ceaa498cb893c50f
       body: |
