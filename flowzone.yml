@@ -1509,16 +1509,17 @@ jobs:
 
             // Get the previous version tag
             const previousTag = filteredTags.find(tag => tag.name.match(/^v\d+\.\d+\.\d+/));
+            const head = context.payload.pull_request?.head.sha || context.sha;
+            let base;
 
             if (!previousTag) {
-              core.setFailed('No previous version tag found');
+              const baseRef = context.payload.pull_request?.base.ref;
+              core.warning(`No previous version tag found, using ${baseRef}`);
+              base = baseRef;
+            } else {
+              core.info(`Found previous versioned tag: ${previousTag.name}`);
+              base = previousTag.name;
             }
-
-            console.log('previousTag:', JSON.stringify(previousTag, null, 2));
-            core.setOutput('previousTag', previousTag);
-
-            const base = previousTag.name;
-            const head = context.payload.pull_request?.head.sha || context.sha;
 
             // Get commit history between previous tag and current commit
             const { data: { commits } } = await github.rest.repos.compareCommitsWithBasehead({
