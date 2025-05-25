@@ -1,4 +1,20 @@
 - commits:
+    - subject: Fallback to the base ref if the previous tag cannot be found
+      hash: dc8866c1a9f6befb2ec33b60ea7b1aa63df8314b
+      body: |
+        The previous tag may not exist on new projects, so just list
+        the new commits compared to the base ref.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.14.18
+  title: ""
+  date: 2025-05-25T19:51:26.256Z
+- commits:
     - subject: Update dependency docker/buildx to v0.24.0
       hash: 2238bb34887b0525386ef285f04176be1b74af60
       body: |
