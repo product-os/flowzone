@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update balena-io/deploy-to-balena-action action to v2.0.124
+      hash: 45d64da20a87693fd63d68b9974b1adde206b41f
+      body: |
+        Update balena-io/deploy-to-balena-action from 2.0.122 to 2.0.124
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 19.14.19
+  title: ""
+  date: 2025-05-27T13:32:26.305Z
+- commits:
     - subject: Fallback to the base ref if the previous tag cannot be found
       hash: dc8866c1a9f6befb2ec33b60ea7b1aa63df8314b
       body: |
