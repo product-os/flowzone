@@ -52,18 +52,6 @@ runs:
         git submodule
         git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged
 
-    # https://github.com/marketplace/actions/github-app-token
-    - name: Generate GitHub App installation token
-      uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
-      if: ${{ fromJSON(inputs.json).app_id }}
-      id: gh_app_installation_token
-      with:
-        app_id: ${{ fromJSON(inputs.json).app_id }}
-        installation_retrieval_mode: organization
-        installation_retrieval_payload: ${{ github.repository_owner }}
-        private_key: ${{ fromJSON(inputs.secrets).GH_APP_PRIVATE_KEY }}
-        permissions: ${{ fromJSON(inputs.json).token_scope }}
-
     # https://github.com/actions/runner-images/discussions/7191#discussioncomment-8351370
     # https://github.com/reactivecircus/android-emulator-runner?tab=readme-ov-file#running-hardware-accelerated-emulators-on-linux-runners
     # https://github.com/ankidroid/Anki-Android/commit/3a5ecaa9837691817022d11b0dbe383b8e82d9fe

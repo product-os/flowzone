@@ -192,18 +192,6 @@ jobs:
       # Required: false
       token_retrieval_payload: ${{ github.repository_owner }}
 
-      # Ephemeral token scope(s)
-      # Type: string
-      # Required: false
-      token_scope: >
-        {
-          "contents": "write",
-          "metadata": "read",
-          "packages": "write",
-          "pages": "write",
-          "pull_requests": "read"
-        }
-
       # Timeout for the job(s).
       # Type: number
       # Required: false
