@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update registry Docker tag to v3
+      hash: 242f18a0515560d60802b0942fea7dba88e72ca3
+      body: |
+        Update registry from 2.8.3 to 3.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 20.0.1
+  title: ""
+  date: 2025-05-27T21:34:29.963Z
+- commits:
     - subject: Remove the custom token_scope input
       hash: d04aef4a6428460aadad786177339635009af303
       body: |
