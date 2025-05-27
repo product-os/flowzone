@@ -2729,7 +2729,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     services:
       registry:
-        image: registry:2.8.3
+        image: registry:3.0.0
         ports:
           - 5000:5000
     strategy:
