@@ -787,20 +787,6 @@ on:
         type: string
         required: false
         default: ${{ github.repository_owner }}
-      token_scope:
-        description: "Ephemeral token scope(s)"
-        type: string
-        required: false
-        # https://github.com/organizations/product-os/settings/installations/34040165
-        # https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-a-scoped-access-token
-        default: >-
-          {
-            "contents": "write",
-            "metadata": "read",
-            "packages": "write",
-            "pages": "write",
-            "pull_requests": "read"
-          }
       jobs_timeout_minutes:
         description: "Timeout for the job(s)."
         type: number
@@ -4416,12 +4402,6 @@ jobs:
       - *downloadVersionedSource
       - *extractVersionedSource
 
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # use permissions from the token_scope input
-          permissions: ${{ inputs.token_scope }}
-
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4471,12 +4451,6 @@ jobs:
       - *downloadVersionedSource
       - *extractVersionedSource
 
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # use permissions from the token_scope input
-          permissions: ${{ inputs.token_scope }}
-
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4519,12 +4493,6 @@ jobs:
       - *downloadVersionedSource
       - *extractVersionedSource
 
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # use permissions from the token_scope input
-          permissions: ${{ inputs.token_scope }}
-
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4566,12 +4534,6 @@ jobs:
       - *downloadVersionedSource
       - *extractVersionedSource
 
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # use permissions from the token_scope input
-          permissions: ${{ inputs.token_scope }}
-
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -4606,12 +4568,6 @@ jobs:
 
       - *downloadVersionedSource
       - *extractVersionedSource
-
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # use permissions from the token_scope input
-          permissions: ${{ inputs.token_scope }}
 
       - uses: ./.github/actions/always
         with:

@@ -102,18 +102,6 @@ on:
         type: string
         required: false
         default: ${{ github.repository_owner }}
-      token_scope:
-        description: Ephemeral token scope(s)
-        type: string
-        required: false
-        default: |-
-          {
-            "contents": "write",
-            "metadata": "read",
-            "packages": "write",
-            "pages": "write",
-            "pull_requests": "read"
-          }
       jobs_timeout_minutes:
         description: Timeout for the job(s).
         type: number
@@ -4043,16 +4031,6 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4106,16 +4084,6 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4163,16 +4131,6 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4221,16 +4179,6 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -4274,16 +4222,6 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: ${{ inputs.token_scope }}
       - uses: ./.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}
