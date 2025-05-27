@@ -1,4 +1,24 @@
 - commits:
+    - subject: Remove the custom token_scope input
+      hash: d04aef4a6428460aadad786177339635009af303
+      body: |
+        No workflows are using this input, and instead we use the
+        automatic GITHUB_TOKEN with a custom permissions block in the
+        calling workflow.
+
+        This removes 5 instances of token generation that was otherwise
+        unused.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 20.0.0
+  title: ""
+  date: 2025-05-27T20:50:39.118Z
+- commits:
     - subject: Download versioned source rather than re-clone
       hash: bbd729b5a1e1848fea06bd6ed5060b7971533b59
       body: |
