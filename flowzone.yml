@@ -165,7 +165,14 @@
     uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
     with:
       name: versioned-source
-      path: .
+      path: ${{ runner.temp }}
+
+  - &extractVersionedSource
+    name: Extract versioned source
+    # tar: Cannot connect to D: resolve failed
+    shell: pwsh
+    working-directory: .
+    run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
 
   - &shallowCheckout # https://github.com/actions/checkout
     name: Checkout source
@@ -1385,16 +1392,21 @@ jobs:
           git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin "${REF}"
           git checkout FETCH_HEAD -- .github
 
+      # Compress versioned source to maintain file permissions and case-sensitivity
+      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
+      - name: Compress versioned source
+        working-directory: versioned-source
+        run: tar --auto-compress --create --file ${{ runner.temp }}/versioned_source.tar.zst .
+
       # This artifact is consumed by all other jobs instead of re-cloning the sources.
       # https://github.com/actions/upload-artifact
       - name: Upload versioned source artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: versioned-source
-          path: versioned-source
+          path: ${{ runner.temp }}/versioned_source.tar.zst
           retention-days: 7
           if-no-files-found: error
-          include-hidden-files: true
 
   release_notes:
     name: Generate release notes
@@ -2432,6 +2444,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Identify Poetry project
         id: python_poetry
@@ -2517,6 +2530,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - id: cargo_targets
         <<: *jsonArrayBuilder
@@ -2561,6 +2575,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - id: balena_slugs
         <<: *jsonArrayBuilder
@@ -2592,6 +2607,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       # FIXME: remove this handling of deprecated comma-separated values
       - id: custom_test_values
@@ -2701,6 +2717,7 @@ jobs:
     steps:
 
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Install yaml module
         run: |
@@ -2892,6 +2909,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - <<: *setupNode
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
@@ -3010,6 +3028,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - <<: *setupNode
         with:
@@ -3223,6 +3242,8 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
+
       - *sanitizeDockerStrings
       - *setupBuildx
 
@@ -3552,6 +3573,8 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
+
       - *sanitizeDockerStrings
       - *dockerFinalMetadata
       - *setupCrane
@@ -3623,6 +3646,8 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
+
       - uses: balena-io/deploy-to-balena-action@96d0df6f94f8490c66ab33bc266de06d58e0f652 # v2.0.124
         id: balena_deploy
         with:
@@ -3679,6 +3704,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - <<: *setupPython
         with:
@@ -3752,6 +3778,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - *setupPython
 
@@ -3806,6 +3833,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - *setupPython
       - *setupPoetry
@@ -3843,6 +3871,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - *setupPython
       - *setupPoetry
@@ -3884,6 +3913,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - <<: *getGitHubAppToken
         with:
@@ -4015,6 +4045,9 @@ jobs:
     permissions: {}
 
     steps:
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -4026,7 +4059,6 @@ jobs:
             }
 
       - *deleteDraftGitHubRelease
-      - *downloadVersionedSource
 
       # https://github.com/actions/download-artifact
       - name: Download release artifacts
@@ -4080,6 +4112,9 @@ jobs:
     permissions: {}
 
     steps:
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -4089,8 +4124,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-
-      - *downloadVersionedSource
 
       # https://github.com/actions/download-artifact
       - name: Download release notes
@@ -4160,6 +4193,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -4213,6 +4247,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@master
@@ -4271,6 +4306,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -4318,6 +4354,7 @@ jobs:
 
     steps:
       - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -4359,13 +4396,15 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
+
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-
-      - *downloadVersionedSource
 
       - name: Set the matrix value env var
         shell: bash
@@ -4413,13 +4452,14 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-
-      - *downloadVersionedSource
 
       - name: Set the matrix value env var
         shell: bash
@@ -4460,13 +4500,14 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-
-      - *downloadVersionedSource
 
       - name: Set the matrix value env var
         shell: bash
@@ -4506,13 +4547,14 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-
-      - *downloadVersionedSource
 
       - uses: ./.github/actions/clean
         with:
@@ -4546,13 +4588,14 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-
-      - *downloadVersionedSource
 
       - uses: ./.github/actions/always
         with:
@@ -4601,8 +4644,10 @@ jobs:
     #   id-token: write # AWS GitHub OIDC provider
 
     steps:
-      - *setupAwsCli
       - *downloadVersionedSource
+      - *extractVersionedSource
+
+      - *setupAwsCli
       - *randomDelay # Why do people always forget that you need to add a little jitter?
       - *configureAWSCredentials
       - *getAWSCallerIdentity

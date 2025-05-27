@@ -712,14 +712,16 @@ jobs:
           auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
           git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin "${REF}"
           git checkout FETCH_HEAD -- .github
+      - name: Compress versioned source
+        working-directory: versioned-source
+        run: tar --auto-compress --create --file ${{ runner.temp }}/versioned_source.tar.zst .
       - name: Upload versioned source artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: versioned-source
-          path: versioned-source
+          path: ${{ runner.temp }}/versioned_source.tar.zst
           retention-days: 7
           if-no-files-found: error
-          include-hidden-files: true
   release_notes:
     name: Generate release notes
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1637,7 +1639,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Identify Poetry project
         id: python_poetry
         run: |
@@ -1722,7 +1728,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - id: cargo_targets
         name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
@@ -1773,7 +1783,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - id: balena_slugs
         name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
@@ -1812,7 +1826,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
         name: Build JSON list from comma-separated input
@@ -1941,7 +1959,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Install yaml module
         run: |
           npm install -g yaml
@@ -2123,7 +2145,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         env:
@@ -2229,7 +2255,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         env:
@@ -2444,7 +2474,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Sanitize docker strings
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: strings
@@ -2956,7 +2990,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Sanitize docker strings
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: strings
@@ -3171,7 +3209,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - uses: balena-io/deploy-to-balena-action@96d0df6f94f8490c66ab33bc266de06d58e0f652
         id: balena_deploy
         with:
@@ -3222,7 +3264,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -3295,7 +3341,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -3364,7 +3414,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -3419,7 +3473,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -3461,7 +3519,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -3595,6 +3657,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -3617,11 +3688,6 @@ jobs:
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Download versioned source
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: versioned-source
-          path: .
       - name: Download release artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -3668,6 +3734,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -3682,11 +3757,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-      - name: Download versioned source
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: versioned-source
-          path: .
       - name: Download release notes
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -3751,7 +3821,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:
@@ -3801,7 +3875,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -3867,7 +3945,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:
@@ -3910,7 +3992,11 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
@@ -3947,6 +4033,15 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -3957,11 +4052,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Download versioned source
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: versioned-source
-          path: .
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4006,6 +4096,15 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -4016,11 +4115,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Download versioned source
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: versioned-source
-          path: .
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4059,6 +4153,15 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -4069,11 +4172,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Download versioned source
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: versioned-source
-          path: .
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4113,6 +4211,15 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -4123,11 +4230,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Download versioned source
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: versioned-source
-          path: .
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -4162,6 +4264,15 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -4172,11 +4283,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Download versioned source
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: versioned-source
-          path: .
       - uses: ./.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}
@@ -4213,15 +4319,19 @@ jobs:
       TIMEOUT: 3
     environment: ${{ matrix.environment }}
     steps:
-      - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@b5e9d5a0afb5b62fb8fb8bb079dcd84354cef03d
-        with:
-          version: 2.15.43
       - name: Download versioned source
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: versioned-source
-          path: .
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
+      - name: Setup AWS CLI
+        uses: product-os/setup-awscli-action@b5e9d5a0afb5b62fb8fb8bb079dcd84354cef03d
+        with:
+          version: 2.15.43
       - name: Random delay
         run: |
           DELAY="${DELAY-5}"
