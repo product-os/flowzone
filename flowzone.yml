@@ -134,32 +134,6 @@
     token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
     persist-credentials: false
 
-  - &checkoutPullRequestHeadSha
-    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
-    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
-    # https://github.com/actions/checkout
-    name: Checkout pull request head sha
-    uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    with:
-      fetch-depth: 0
-      submodules: "recursive"
-      # fallback to an invalid ref if the checkout ref is undefined
-      ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
-      <<: *checkoutAuth
-
-  - &checkoutEventSha
-    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
-    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
-    # https://github.com/actions/checkout
-    name: Checkout ${{ github.sha }}
-    uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    with:
-      fetch-depth: 0
-      submodules: "recursive"
-      # fallback to an invalid ref if the checkout ref is undefined
-      ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
-      <<: *checkoutAuth
-
   - &downloadVersionedSource # https://github.com/actions/download-artifact
     name: Download versioned source
     uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
@@ -173,21 +147,6 @@
     shell: pwsh
     working-directory: .
     run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
-
-  - &shallowCheckout # https://github.com/actions/checkout
-    name: Checkout source
-    uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    with:
-      # Disable submodules and deep cloning.
-      fetch-depth: 1
-      submodules: false
-      # Do not persist credentials.
-      persist-credentials: false
-      # Use the automatic actions token with contents:read permissions
-      token: ${{ github.token }}
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
   - &loginWithDockerHub
     name: Login to Docker Hub
@@ -1116,13 +1075,33 @@ jobs:
       # want to be able test the changes in isolation, and we already require that branches
       # be rebased before testing merging via branch rules.
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
-      - <<: *checkoutPullRequestHeadSha
-        if: github.event.pull_request.state == 'open'
+      - if: github.event.pull_request.state == 'open'
+        # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+        # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+        # https://github.com/actions/checkout
+        name: Checkout pull request head sha
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          submodules: "recursive"
+          # fallback to an invalid ref if the checkout ref is undefined
+          ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
+          <<: *checkoutAuth
 
       # Checkout the event sha for closed/merged PRs.
       # This is the merge commit sha for PRs and the tagged commit sha for tags.
-      - <<: *checkoutEventSha
-        if: github.event.pull_request.state != 'open'
+      - if: github.event.pull_request.state != 'open'
+        # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+        # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+        # https://github.com/actions/checkout
+        name: Checkout ${{ github.sha }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          submodules: "recursive"
+          # fallback to an invalid ref if the checkout ref is undefined
+          ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
+          <<: *checkoutAuth
 
       # The current commit sha is needed as the parent sha for the versioned commit
       # and/or as default tag & semver if versioning is disabled.
@@ -1427,8 +1406,8 @@ jobs:
 
     <<: *rootWorkingDirectory
 
-    permissions:
-      contents: read
+    # No permissions needed for this job.
+    permissions: {}
 
     outputs:
       body: ${{ steps.format_release_notes.outputs.body }}
@@ -1455,6 +1434,8 @@ jobs:
         continue-on-error: true
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
+          # This step requires "pull_request: read" permissions which are not included in
+          # the default "restricted" policy of the automatic github.token.
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: string
           script: |
@@ -1529,6 +1510,10 @@ jobs:
           CURRENT_TAG: ${{ needs.versioned_source.outputs.tag }}
         with:
           result-encoding: string
+          # This step only requires "contents: read", but we are using the generated app
+          # token to remain aligned with the format_release_notes step above. No other reason.
+          # Otherwise, this step could use the automatic github.token without issue.
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           script: |
             // Get all tags sorted by version in descending order
             const { data: tags } = await github.rest.repos.listTags({
@@ -1740,21 +1725,14 @@ jobs:
     # Run this early in the workflow, as soon as we've validated event types
     needs:
       - event_types
+      - versioned_source
 
-    permissions:
-      contents: read # Used for checkout
+    # No permissions needed for this job.
+    permissions: {}
 
     steps:
-      # No need for the Flowzone Installation App token here as we are not cloning
-      # submodules so the automatic actions token scoped to the repo is fine.
-
-      # Disable submodules and deep cloning.
-      # Do not persist credentials.
-      # Use the automatic actions token with contents:read permissions.
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      # https://github.com/actions/checkout
-      - *shallowCheckout
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       # https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
       - name: Add problem matcher
@@ -1788,11 +1766,15 @@ jobs:
     # Run this early in the workflow, as soon as we've validated event types
     needs:
       - event_types
+      - versioned_source
 
-    permissions:
-      contents: read # required for checkout without submodules
+    # No permissions needed for this job.
+    permissions: {}
 
     steps:
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1803,14 +1785,6 @@ jobs:
               "metadata": "read",
               "security_events": "write"
             }
-
-      # Disable submodules and deep cloning.
-      # Do not persist credentials.
-      # Use the automatic actions token with contents:read permissions.
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      # https://github.com/actions/checkout
-      - *shallowCheckout
 
       # https://github.com/synacktiv/octoscan
       # https://github.com/synacktiv/action-octoscan
@@ -1943,24 +1917,18 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
+      - versioned_source
     # Do not run on PR close or merge events.
     if: |
       contains(needs.file_list.outputs.root, '.pre-commit-config.yaml') &&
       github.event.action != 'closed'
 
-    # No need for the Flowzone Installation App token here as we are not cloning
-    # submodules so the automatic actions token scoped to the repo is fine.
-    permissions:
-      contents: read # Required to checkout source project, without submodules
+    # No permissions needed for this job.
+    permissions: {}
 
     steps:
-      # Disable submodules and deep cloning.
-      # Do not persist credentials.
-      # Use the automatic actions token with contents:read permissions.
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      # https://github.com/actions/checkout
-      - *shallowCheckout
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       # https://github.com/actions/setup-python
       - *setupPython
@@ -1975,6 +1943,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
+      - versioned_source
     # Do not run on PR close events.
     if: |
       contains(needs.file_list.outputs.workdir, 'package.json') &&
@@ -1985,10 +1954,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    # No need for the Flowzone Installation App token here as we are not cloning
-    # submodules so the automatic actions token scoped to the repo is fine.
-    permissions:
-      contents: read # Required to checkout source project, without submodules
+    # No permissions needed for this job.
+    permissions: {}
 
     outputs:
       npm: "true"
@@ -2005,13 +1972,8 @@ jobs:
       PACKAGE_JSON_PATH: "${{ inputs.working_directory }}/package.json"
 
     steps:
-      # Disable submodules and deep cloning.
-      # Do not persist credentials.
-      # Use the automatic actions token with contents:read permissions.
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      # https://github.com/actions/checkout
-      - *shallowCheckout
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Process package.json
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
@@ -2110,6 +2072,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
+      - versioned_source
     # Do not run on PR close events.
     # Match any of the following file globs:
     #  docker-bake{.override,}.{json,hcl}
@@ -2127,10 +2090,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    # No need for the Flowzone Installation App token here as we are not cloning
-    # submodules so the automatic actions token scoped to the repo is fine.
-    permissions:
-      contents: read # Required to checkout source project, without submodules
+    # No permissions needed for this job.
+    permissions: {}
 
     outputs:
       docker_images: ${{ steps.docker_publish.outputs.images }}
@@ -2141,13 +2102,8 @@ jobs:
       docker_publish_matrix: ${{ steps.docker_publish.outputs.result }}
 
     steps:
-      # Disable submodules and deep cloning.
-      # Do not persist credentials.
-      # Use the automatic actions token with contents:read permissions.
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      # https://github.com/actions/checkout
-      - *shallowCheckout
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - <<: *setupBuildx
         env:
