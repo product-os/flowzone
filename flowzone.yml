@@ -1333,53 +1333,52 @@ jobs:
           REF: "refs/tags/${{ steps.versionist.outputs.tag }}"
           SHA: ${{ steps.create_tag.outputs.sha }}
 
-      # Checkout the versioned commit we created in the previous steps.
-      # This may seem wasteful, to clone the sources again, but we plan to move
-      # the versioning steps above out of Flowzone entirely and clone from a
-      # branch created by a dedicated GitHub App.
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          # Should be 0 (full depth) if submodules are present, otherwise 1
-          fetch-depth: ${{ steps.git_describe.outputs.depth || 0 }}
-          # Note that fetch-tags is not currently working as described:
-          # https://github.com/actions/checkout/issues/1781
-          fetch-tags: false
-          submodules: "recursive"
-          # fallback to an invalid ref if the checkout ref is undefined
-          ref: "${{ steps.create_commit.outputs.sha || '¯\_(ツ)_/¯' }}"
-          path: versioned-source
-          <<: *checkoutAuth
+      # # Checkout the versioned commit we created in the previous steps.
+      # # This may seem wasteful, to clone the sources again, but we plan to move
+      # # the versioning steps above out of Flowzone entirely and clone from a
+      # # branch created by a dedicated GitHub App.
+      # - name: Checkout versioned commit
+      #   uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      #   with:
+      #     # Should be 0 (full depth) if submodules are present, otherwise 1
+      #     fetch-depth: ${{ steps.git_describe.outputs.depth || 0 }}
+      #     # Note that fetch-tags is not currently working as described:
+      #     # https://github.com/actions/checkout/issues/1781
+      #     fetch-tags: false
+      #     submodules: "recursive"
+      #     # fallback to an invalid ref if the checkout ref is undefined
+      #     ref: "${{ steps.create_commit.outputs.sha || '¯\_(ツ)_/¯' }}"
+      #     path: versioned-source
+      #     <<: *checkoutAuth
 
-      # Create a local reference for the versioned tag.
-      # On open PRs, the tag doesn't exist yet, we couldn't fetch it anyway.
-      # On merged PRs, the tag fetch doesn't work correctly with fetch-depth > 0
-      # https://github.com/actions/checkout/issues/1781
-      - name: Create local tag for draft versions
-        if: inputs.disable_versioning != true
-        working-directory: versioned-source
+      # Create base64 encoded auth header
+      - name: Create base64 encoded auth header
+        id: auth_header
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        with:
+          result-encoding: string
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            core.setSecret(authHeader);
+            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
+            return authHeader;
+
+      # Reset the local workspace to the versioned commit we just created
+      # and add a local annotated tag.
+      # https://github.com/actions/checkout/issues/1781
+      - name: Create a local versioned commit + tag
+        if: steps.versionist.outputs.tag && steps.create_commit.outputs.sha
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
           GIT_AUTHOR_NAME: "${{ steps.create_commit.outputs.author }}"
           GIT_AUTHOR_EMAIL: "${{ steps.create_commit.outputs.author_email }}"
           GIT_COMMITTER_NAME: "${{ steps.create_commit.outputs.author }}"
           GIT_COMMITTER_EMAIL: "${{ steps.create_commit.outputs.author_email }}"
-          REF: refs/tags/${{ steps.versionist.outputs.tag }}
+          TAG: ${{ steps.versionist.outputs.tag }}
           SHA: ${{ steps.create_commit.outputs.sha }}
-        run: |
-          git update-ref "${REF}" "${SHA}"
-
-      # Reset the .github directory to the GitHub ref
-      # For security, this is the tip of BASE if the event is pull_request_target
-      # or the merge commit if the PR is internal
-      - name: Reset .github directory to ${{ github.ref }}
-        working-directory: versioned-source
-        env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          REF: ${{ github.ref }}
-        # Use bash without tracing to avoid leaking secrets
-        shell: bash
-        # Create base64 encoded auth header
-        #
         # Use git-c for non-persistent credential configuration
         #
         # The git -c option sets a configuration value for a single Git command invocation.
@@ -1388,14 +1387,31 @@ jobs:
         # This approach ensures that the authentication credentials are used securely for this
         # specific operation without risk of unintended persistence or exposure in configuration files.
         run: |
-          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
-          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin "${REF}"
+          git -c "${AUTH_CONFIG}" fetch origin "${SHA}"
+          git reset --hard "${SHA}"
+          git tag --annotate "${TAG}" --message "${TAG}" --force
+
+      # Reset the .github directory to the GitHub ref
+      # For security, this is the tip of BASE if the event is pull_request_target
+      # or the merge commit if the PR is internal
+      - name: Reset .github directory to ${{ github.ref }}
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          REF: ${{ github.ref }}
+        # Use git-c for non-persistent credential configuration
+        #
+        # The git -c option sets a configuration value for a single Git command invocation.
+        # It does not modify any configuration files or persist the setting beyond this specific command.
+        #
+        # This approach ensures that the authentication credentials are used securely for this
+        # specific operation without risk of unintended persistence or exposure in configuration files.
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
           git checkout FETCH_HEAD -- .github
 
       # Compress versioned source to maintain file permissions and case-sensitivity
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
       - name: Compress versioned source
-        working-directory: versioned-source
         run: tar --auto-compress --create --file ${{ runner.temp }}/versioned_source.tar.zst .
 
       # This artifact is consumed by all other jobs instead of re-cloning the sources.
