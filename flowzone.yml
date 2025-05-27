@@ -134,18 +134,6 @@
     token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
     persist-credentials: false
 
-  - &checkoutPullRequestMergeRef
-    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
-    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
-    # https://github.com/actions/checkout
-    name: Checkout pull request merge ref
-    uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    with:
-      fetch-depth: 0
-      submodules: "recursive"
-      ref: "refs/pull/${{ github.event.number }}/merge"
-      <<: *checkoutAuth
-
   - &checkoutPullRequestHeadSha
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
@@ -172,18 +160,19 @@
       ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
       <<: *checkoutAuth
 
-  - &checkoutVersionedSha # https://github.com/actions/checkout
-    name: Checkout versioned commit
-    uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+  - &downloadVersionedSource # https://github.com/actions/download-artifact
+    name: Download versioned source
+    uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
     with:
-      fetch-depth: "${{ needs.versioned_source.outputs.depth || 0 }}"
-      # Note that fetch-tags is not currently working as described:
-      # https://github.com/actions/checkout/issues/1781
-      fetch-tags: true
-      submodules: "recursive"
-      # fallback to an invalid ref if the checkout ref is undefined
-      ref: "${{ needs.versioned_source.outputs.sha || '¯\_(ツ)_/¯' }}"
-      <<: *checkoutAuth
+      name: versioned-source
+      path: ${{ runner.temp }}
+
+  - &extractVersionedSource
+    name: Extract versioned source
+    # tar: Cannot connect to D: resolve failed
+    shell: pwsh
+    working-directory: .
+    run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
 
   - &shallowCheckout # https://github.com/actions/checkout
     name: Checkout source
@@ -199,62 +188,6 @@
       # Use the tip of the pull request branch for pull request (target) events.
       # Use the event sha for other events.
       ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-  - &resetGitHubDirectory
-    # checkout the tip of BASE if the PR is from a fork
-    # or the merge commit if the PR is internal
-    name: Reset .github directory to ${{ github.ref }}
-    env:
-      GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-    # Use bash without tracing to avoid leaking secrets
-    shell: bash
-    # Create base64 encoded auth header
-    #
-    # Use git-c for non-persistent credential configuration
-    #
-    # The git -c option sets a configuration value for a single Git command invocation.
-    # It does not modify any configuration files or persist the setting beyond this specific command.
-    #
-    # This approach ensures that the authentication credentials are used securely for this
-    # specific operation without risk of unintended persistence or exposure in configuration files.
-    run: |
-      auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
-      git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
-      git checkout FETCH_HEAD -- .github
-
-  # Resolve tag, semver, sha, and description of current git working copy.
-  # tag is the latest tag that points to the current commit.
-  # semver is the semantic version of the tag.
-  # describe is the output of `git describe --tags --always --dirty`.
-  # sha is the full commit hash.
-  # depth is set to a default number of commits to fetch on downstream jobs
-  # (enough to get last two tags, or 0 for all commits when submodules are present)
-  - &describeGitState
-    name: Describe git state
-    id: git_describe
-    run: |
-      tag="$(git tag --points-at HEAD | tail -n1)"
-      {
-        echo "tag=${tag}" ;
-        echo "semver=$(npx -q -y -- semver -c -l "${tag}")" ;
-        echo "describe=$(git describe --tags --always --dirty | cat)" ;
-        echo "sha=$(git rev-parse HEAD)" ;
-      } >> "${GITHUB_OUTPUT}"
-
-      if [[ "$(git submodule)" = "" ]]; then
-        echo "depth=1" >> "${GITHUB_OUTPUT}"
-      else
-        echo "depth=0" >> "${GITHUB_OUTPUT}"
-      fi
-
-  # Create a local reference for the versioned tag so that it
-  # may be consumed by build steps that need to know the version of the source.
-  # These refs should already exist on merge/finalize.
-  - &createLocalRefs
-    name: Create local tag for draft version
-    if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-    run: |
-      git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
 
   - &loginWithDockerHub
     name: Login to Docker Hub
@@ -1114,6 +1047,9 @@ jobs:
 
       - *logGitHubContext
 
+  # Version the project with balena-versionist,
+  # upload a versioned source artifact to the workflow for use by other jobs,
+  # and create a versioned commit object in GitHub.
   versioned_source:
     name: Versioned source
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1204,7 +1140,29 @@ jobs:
 
       # The current commit sha is needed as the parent sha for the versioned commit
       # and/or as default tag & semver if versioning is disabled.
-      - *describeGitState
+      # Resolve tag, semver, sha, and description of current git working copy.
+      # tag is the latest tag that points to the current commit.
+      # semver is the semantic version of the tag.
+      # describe is the output of `git describe --tags --always --dirty`.
+      # sha is the full commit hash.
+      # depth is set to a default number of commits to fetch on downstream jobs
+      # (enough to get last two tags, or 0 for all commits when submodules are present)
+      - name: Describe git state
+        id: git_describe
+        run: |
+          tag="$(git tag --points-at HEAD | tail -n1)"
+          {
+            echo "tag=${tag}" ;
+            echo "semver=$(npx -q -y -- semver -c -l "${tag}")" ;
+            echo "describe=$(git describe --tags --always --dirty | cat)" ;
+            echo "sha=$(git rev-parse HEAD)" ;
+          } >> "${GITHUB_OUTPUT}"
+
+          if [[ "$(git submodule)" = "" ]]; then
+            echo "depth=1" >> "${GITHUB_OUTPUT}"
+          else
+            echo "depth=0" >> "${GITHUB_OUTPUT}"
+          fi
 
       - *setupNode
 
@@ -1342,6 +1300,7 @@ jobs:
               parents: [process.env.PARENT_COMMIT_SHA]
             });
             core.setOutput('author', commit.author.name);
+            core.setOutput('author_email', commit.author.email);
             core.setOutput('sha', commit.sha);
             return commit;
 
@@ -1373,6 +1332,97 @@ jobs:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: "refs/tags/${{ steps.versionist.outputs.tag }}"
           SHA: ${{ steps.create_tag.outputs.sha }}
+
+      # # Checkout the versioned commit we created in the previous steps.
+      # # This may seem wasteful, to clone the sources again, but we plan to move
+      # # the versioning steps above out of Flowzone entirely and clone from a
+      # # branch created by a dedicated GitHub App.
+      # - name: Checkout versioned commit
+      #   uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      #   with:
+      #     # Should be 0 (full depth) if submodules are present, otherwise 1
+      #     fetch-depth: ${{ steps.git_describe.outputs.depth || 0 }}
+      #     # Note that fetch-tags is not currently working as described:
+      #     # https://github.com/actions/checkout/issues/1781
+      #     fetch-tags: false
+      #     submodules: "recursive"
+      #     # fallback to an invalid ref if the checkout ref is undefined
+      #     ref: "${{ steps.create_commit.outputs.sha || '¯\_(ツ)_/¯' }}"
+      #     path: versioned-source
+      #     <<: *checkoutAuth
+
+      # Create base64 encoded auth header
+      - name: Create base64 encoded auth header
+        id: auth_header
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        with:
+          result-encoding: string
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            core.setSecret(authHeader);
+            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
+            return authHeader;
+
+      # Reset the local workspace to the versioned commit we just created
+      # and add a local annotated tag.
+      # https://github.com/actions/checkout/issues/1781
+      - name: Create a local versioned commit + tag
+        if: steps.versionist.outputs.tag && steps.create_commit.outputs.sha
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          GIT_AUTHOR_NAME: "${{ steps.create_commit.outputs.author }}"
+          GIT_AUTHOR_EMAIL: "${{ steps.create_commit.outputs.author_email }}"
+          GIT_COMMITTER_NAME: "${{ steps.create_commit.outputs.author }}"
+          GIT_COMMITTER_EMAIL: "${{ steps.create_commit.outputs.author_email }}"
+          TAG: ${{ steps.versionist.outputs.tag }}
+          SHA: ${{ steps.create_commit.outputs.sha }}
+        # Use git-c for non-persistent credential configuration
+        #
+        # The git -c option sets a configuration value for a single Git command invocation.
+        # It does not modify any configuration files or persist the setting beyond this specific command.
+        #
+        # This approach ensures that the authentication credentials are used securely for this
+        # specific operation without risk of unintended persistence or exposure in configuration files.
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${SHA}"
+          git reset --hard "${SHA}"
+          git tag --annotate "${TAG}" --message "${TAG}" --force
+
+      # Reset the .github directory to the GitHub ref
+      # For security, this is the tip of BASE if the event is pull_request_target
+      # or the merge commit if the PR is internal
+      - name: Reset .github directory to ${{ github.ref }}
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          REF: ${{ github.ref }}
+        # Use git-c for non-persistent credential configuration
+        #
+        # The git -c option sets a configuration value for a single Git command invocation.
+        # It does not modify any configuration files or persist the setting beyond this specific command.
+        #
+        # This approach ensures that the authentication credentials are used securely for this
+        # specific operation without risk of unintended persistence or exposure in configuration files.
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
+          git checkout FETCH_HEAD -- .github
+
+      # Compress versioned source to maintain file permissions and case-sensitivity
+      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
+      - name: Compress versioned source
+        run: tar --auto-compress --create --file ${{ runner.temp }}/versioned_source.tar.zst .
+
+      # This artifact is consumed by all other jobs instead of re-cloning the sources.
+      # https://github.com/actions/upload-artifact
+      - name: Upload versioned source artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}/versioned_source.tar.zst
+          retention-days: 7
+          if-no-files-found: error
 
   release_notes:
     name: Generate release notes
@@ -2409,8 +2459,8 @@ jobs:
       python_sbom: ${{ inputs.generate_sbom }}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Identify Poetry project
         id: python_poetry
@@ -2495,8 +2545,8 @@ jobs:
       cargo_publish: ${{ steps.cargo_publish.outputs.value }}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - id: cargo_targets
         <<: *jsonArrayBuilder
@@ -2540,8 +2590,8 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - id: balena_slugs
         <<: *jsonArrayBuilder
@@ -2572,9 +2622,8 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *resetGitHubDirectory
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       # FIXME: remove this handling of deprecated comma-separated values
       - id: custom_test_values
@@ -2683,8 +2732,8 @@ jobs:
 
     steps:
 
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Install yaml module
         run: |
@@ -2875,9 +2924,8 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - <<: *setupNode
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
@@ -2995,9 +3043,8 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - <<: *setupNode
         with:
@@ -3210,9 +3257,9 @@ jobs:
       packages: read # pull private base images from ghcr.io
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - *sanitizeDockerStrings
       - *setupBuildx
 
@@ -3541,8 +3588,9 @@ jobs:
     #   packages: write # push manifests to ghcr.io
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - *sanitizeDockerStrings
       - *dockerFinalMetadata
       - *setupCrane
@@ -3613,8 +3661,9 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - uses: balena-io/deploy-to-balena-action@96d0df6f94f8490c66ab33bc266de06d58e0f652 # v2.0.124
         id: balena_deploy
         with:
@@ -3670,9 +3719,8 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - <<: *setupPython
         with:
@@ -3745,9 +3793,8 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - *setupPython
 
@@ -3801,9 +3848,8 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - *setupPython
       - *setupPoetry
@@ -3840,8 +3886,8 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - *setupPython
       - *setupPoetry
@@ -3882,6 +3928,9 @@ jobs:
     permissions: {}
 
     steps:
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -3893,8 +3942,6 @@ jobs:
               "issues": "read",
               "pull_requests": "write"
             }
-      - *checkoutVersionedSha
-      - *createLocalRefs
 
       - <<: *setupNode
         # FIXME: does this need to be pinned to 18? Remove the property and use the global default otherwise.
@@ -4014,6 +4061,9 @@ jobs:
     permissions: {}
 
     steps:
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -4025,7 +4075,6 @@ jobs:
             }
 
       - *deleteDraftGitHubRelease
-      - *checkoutVersionedSha
 
       # https://github.com/actions/download-artifact
       - name: Download release artifacts
@@ -4079,6 +4128,9 @@ jobs:
     permissions: {}
 
     steps:
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -4088,8 +4140,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-
-      - *checkoutVersionedSha
 
       # https://github.com/actions/download-artifact
       - name: Download release notes
@@ -4158,9 +4208,8 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -4213,9 +4262,8 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@master
@@ -4273,9 +4321,8 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
-      - *createLocalRefs
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -4322,8 +4369,8 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -4365,15 +4412,15 @@ jobs:
 
     steps:
       - *rejectExternalCustomActions
+
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-
-      - *checkoutVersionedSha
-      - *resetGitHubDirectory
-      - *createLocalRefs
 
       - name: Set the matrix value env var
         shell: bash
@@ -4421,15 +4468,14 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-
-      - *checkoutVersionedSha
-      - *resetGitHubDirectory
-      - *createLocalRefs
 
       - name: Set the matrix value env var
         shell: bash
@@ -4470,14 +4516,14 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-
-      - *checkoutVersionedSha
-      - *resetGitHubDirectory
 
       - name: Set the matrix value env var
         shell: bash
@@ -4517,14 +4563,14 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-
-      - *checkoutVersionedSha
-      - *resetGitHubDirectory
 
       - uses: ./.github/actions/clean
         with:
@@ -4558,14 +4604,14 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
           # use permissions from the token_scope input
           permissions: ${{ inputs.token_scope }}
-
-      - *checkoutVersionedSha
-      - *resetGitHubDirectory
 
       - uses: ./.github/actions/always
         with:
@@ -4614,9 +4660,10 @@ jobs:
     #   id-token: write # AWS GitHub OIDC provider
 
     steps:
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - *setupAwsCli
-      - *getGitHubAppToken
-      - *checkoutVersionedSha
       - *randomDelay # Why do people always forget that you need to add a little jitter?
       - *configureAWSCredentials
       - *getAWSCallerIdentity

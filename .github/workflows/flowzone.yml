@@ -616,6 +616,7 @@ jobs:
               parents: [process.env.PARENT_COMMIT_SHA]
             });
             core.setOutput('author', commit.author.name);
+            core.setOutput('author_email', commit.author.email);
             core.setOutput('sha', commit.sha);
             return commit;
       - name: Create tag object
@@ -679,6 +680,49 @@ jobs:
         if: |
           github.event.pull_request.merged &&
           steps.create_tag.outputs.sha
+      - name: Create base64 encoded auth header
+        id: auth_header
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+        with:
+          result-encoding: string
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            core.setSecret(authHeader);
+            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
+            return authHeader;
+      - name: Create a local versioned commit + tag
+        if: steps.versionist.outputs.tag && steps.create_commit.outputs.sha
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          GIT_AUTHOR_NAME: ${{ steps.create_commit.outputs.author }}
+          GIT_AUTHOR_EMAIL: ${{ steps.create_commit.outputs.author_email }}
+          GIT_COMMITTER_NAME: ${{ steps.create_commit.outputs.author }}
+          GIT_COMMITTER_EMAIL: ${{ steps.create_commit.outputs.author_email }}
+          TAG: ${{ steps.versionist.outputs.tag }}
+          SHA: ${{ steps.create_commit.outputs.sha }}
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${SHA}"
+          git reset --hard "${SHA}"
+          git tag --annotate "${TAG}" --message "${TAG}" --force
+      - name: Reset .github directory to ${{ github.ref }}
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          REF: ${{ github.ref }}
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
+          git checkout FETCH_HEAD -- .github
+      - name: Compress versioned source
+        run: tar --auto-compress --create --file ${{ runner.temp }}/versioned_source.tar.zst .
+      - name: Upload versioned source artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}/versioned_source.tar.zst
+          retention-days: 7
+          if-no-files-found: error
   release_notes:
     name: Generate release notes
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -1592,29 +1636,15 @@ jobs:
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
       python_sbom: ${{ inputs.generate_sbom }}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Identify Poetry project
         id: python_poetry
         run: |
@@ -1695,29 +1725,15 @@ jobs:
       cargo_sbom: ${{ inputs.generate_sbom }}
       cargo_publish: ${{ steps.cargo_publish.outputs.value }}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - id: cargo_targets
         name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
@@ -1764,29 +1780,15 @@ jobs:
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - id: balena_slugs
         name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
@@ -1821,37 +1823,15 @@ jobs:
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.json || inputs.custom_publish_matrix }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        shell: bash
-        run: |
-          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
-          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
-          git checkout FETCH_HEAD -- .github
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
         name: Build JSON list from comma-separated input
@@ -1976,29 +1956,15 @@ jobs:
       stacks: ${{ steps.cloudformation_stacks.outputs.matrix }}
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Install yaml module
         run: |
           npm install -g yaml
@@ -2176,33 +2142,15 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         env:
@@ -2304,33 +2252,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         env:
@@ -2541,33 +2471,15 @@ jobs:
     permissions:
       packages: read
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Sanitize docker strings
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: strings
@@ -3075,29 +2987,15 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Sanitize docker strings
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         id: strings
@@ -3308,29 +3206,15 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - uses: balena-io/deploy-to-balena-action@96d0df6f94f8490c66ab33bc266de06d58e0f652
         id: balena_deploy
         with:
@@ -3377,33 +3261,15 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -3472,33 +3338,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -3563,33 +3411,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -3640,29 +3470,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -3700,6 +3516,15 @@ jobs:
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
     permissions: {}
     steps:
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -3716,19 +3541,6 @@ jobs:
               "issues": "read",
               "pull_requests": "write"
             }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         env:
@@ -3846,6 +3658,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -3868,15 +3689,6 @@ jobs:
           GH_PROMPT_DISABLED: "true"
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
       - name: Download release artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -3923,6 +3735,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -3937,15 +3758,6 @@ jobs:
               "contents": "write",
               "metadata": "read"
             }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
       - name: Download release notes
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -4006,33 +3818,15 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:
@@ -4078,33 +3872,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -4166,33 +3942,15 @@ jobs:
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:
@@ -4231,29 +3989,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Publish crate to ${{ env.CARGO_REGISTRY }}
@@ -4290,6 +4034,15 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -4300,27 +4053,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        shell: bash
-        run: |
-          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
-          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
-          git checkout FETCH_HEAD -- .github
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4365,6 +4097,15 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -4375,27 +4116,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        shell: bash
-        run: |
-          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
-          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
-          git checkout FETCH_HEAD -- .github
-      - name: Create local tag for draft version
-        if: github.event.pull_request.state == 'open' && inputs.disable_versioning != true
-        run: |
-          git update-ref refs/tags/${{ needs.versioned_source.outputs.tag }} ${{ needs.versioned_source.outputs.tag_sha }}
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4434,6 +4154,15 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -4444,23 +4173,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        shell: bash
-        run: |
-          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
-          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
-          git checkout FETCH_HEAD -- .github
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4500,6 +4212,15 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -4510,23 +4231,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        shell: bash
-        run: |
-          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
-          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
-          git checkout FETCH_HEAD -- .github
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -4561,6 +4265,15 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Generate GitHub App installation token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         if: inputs.app_id
@@ -4571,23 +4284,6 @@ jobs:
           installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
           private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permissions: ${{ inputs.token_scope }}
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        shell: bash
-        run: |
-          auth_header=$(printf "x-access-token:${GIT_AUTH_TOKEN}" | base64 | tr -d '\n')
-          git -c "http.https://github.com/.extraheader=Authorization: basic ${auth_header}" fetch origin ${{ github.ref }}
-          git checkout FETCH_HEAD -- .github
       - uses: ./.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}
@@ -4624,33 +4320,19 @@ jobs:
       TIMEOUT: 3
     environment: ${{ matrix.environment }}
     steps:
+      - name: Download versioned source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: versioned-source
+          path: ${{ runner.temp }}
+      - name: Extract versioned source
+        shell: pwsh
+        working-directory: .
+        run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@b5e9d5a0afb5b62fb8fb8bb079dcd84354cef03d
         with:
           version: 2.15.43
-      - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
-          ref: ${{ needs.versioned_source.outputs.sha || '¯ (ツ)_/¯' }}
-          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          persist-credentials: false
       - name: Random delay
         run: |
           DELAY="${DELAY-5}"
