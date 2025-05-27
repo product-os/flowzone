@@ -1,4 +1,20 @@
 - commits:
+    - subject: Download versioned source rather than re-clone
+      hash: bbd729b5a1e1848fea06bd6ed5060b7971533b59
+      body: |
+        This significantly reduces LOC, and improves performance and security
+        by having to generate far fewer application tokens.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 19.15.0
+  title: ""
+  date: 2025-05-27T20:18:50.023Z
+- commits:
     - subject: Update docker/bake-action action to v6.8.0
       hash: 45501b9e93adbfb9290a201a3247eb62058fb2f5
       body: |
