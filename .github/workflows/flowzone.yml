@@ -3561,7 +3561,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: 3.5.1
+          wranglerVersion: 4.18.0
           command: pages deploy --branch ${{ env.CF_BRANCH }} --project-name=${{ inputs.cloudflare_website }} build/
       - name: Set Cloudflare Pages deployment-url to output
         id: output_cf_url
