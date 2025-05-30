@@ -672,7 +672,7 @@ jobs:
         id: auth_header
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          GIT_AUTH_TOKEN: ${{ github.token }}
         with:
           result-encoding: string
           script: |
@@ -1805,7 +1805,8 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
       custom_publish: ${{ steps.custom.outputs.publish }}
@@ -1825,6 +1826,26 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
+      - name: Create base64 encoded auth header
+        id: auth_header
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          GIT_AUTH_TOKEN: ${{ github.token }}
+        with:
+          result-encoding: string
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            core.setSecret(authHeader);
+            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
+            return authHeader;
+      - name: Reset .github directory to ${{ github.ref }}
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          REF: ${{ github.ref }}
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
+          git checkout FETCH_HEAD -- .github
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
         name: Build JSON list from comma-separated input
@@ -4038,6 +4059,26 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
+      - name: Create base64 encoded auth header
+        id: auth_header
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          GIT_AUTH_TOKEN: ${{ github.token }}
+        with:
+          result-encoding: string
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            core.setSecret(authHeader);
+            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
+            return authHeader;
+      - name: Reset .github directory to ${{ github.ref }}
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          REF: ${{ github.ref }}
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
+          git checkout FETCH_HEAD -- .github
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4091,6 +4132,26 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
+      - name: Create base64 encoded auth header
+        id: auth_header
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          GIT_AUTH_TOKEN: ${{ github.token }}
+        with:
+          result-encoding: string
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            core.setSecret(authHeader);
+            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
+            return authHeader;
+      - name: Reset .github directory to ${{ github.ref }}
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          REF: ${{ github.ref }}
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
+          git checkout FETCH_HEAD -- .github
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4138,6 +4199,26 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
+      - name: Create base64 encoded auth header
+        id: auth_header
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          GIT_AUTH_TOKEN: ${{ github.token }}
+        with:
+          result-encoding: string
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            core.setSecret(authHeader);
+            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
+            return authHeader;
+      - name: Reset .github directory to ${{ github.ref }}
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          REF: ${{ github.ref }}
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
+          git checkout FETCH_HEAD -- .github
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4186,6 +4267,26 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
+      - name: Create base64 encoded auth header
+        id: auth_header
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          GIT_AUTH_TOKEN: ${{ github.token }}
+        with:
+          result-encoding: string
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            core.setSecret(authHeader);
+            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
+            return authHeader;
+      - name: Reset .github directory to ${{ github.ref }}
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          REF: ${{ github.ref }}
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
+          git checkout FETCH_HEAD -- .github
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -4229,6 +4330,26 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
+      - name: Create base64 encoded auth header
+        id: auth_header
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          GIT_AUTH_TOKEN: ${{ github.token }}
+        with:
+          result-encoding: string
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            core.setSecret(authHeader);
+            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
+            return authHeader;
+      - name: Reset .github directory to ${{ github.ref }}
+        env:
+          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+          REF: ${{ github.ref }}
+        run: |
+          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
+          git checkout FETCH_HEAD -- .github
       - uses: ./.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}
