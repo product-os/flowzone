@@ -1,4 +1,37 @@
 - commits:
+    - subject: Only reset the .github directory in custom jobs
+      hash: b38394f4346b192466fa2a6d7e902806e862ba22
+      body: |
+        This step is only required for added security in custom jobs,
+        and there is no benefit to providing it for all jobs consuming versioned
+        source.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Replace shallow checkouts with versioned source artifact
+      hash: e7eacfaaa2238515765178babadaf81fdb092da0
+      body: |
+        We want to avoid superfluous source checkouts and instead
+        rely on the sanitized versioned source artifact.
+
+        This also applies to a future state where versioning is performed
+        externally by a dedicated app, and the job(s) checkout the versioned
+        commit branch.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 20.2.0
+  title: ""
+  date: 2025-06-02T17:41:28.931Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.0.131
       hash: 642953d0dd994f89c41fe2a57be953365ac2f6ab
       body: |
