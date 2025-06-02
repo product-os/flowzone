@@ -3203,7 +3203,7 @@ jobs:
         shell: pwsh
         working-directory: .
         run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
-      - uses: balena-io/deploy-to-balena-action@eb8f8d30709c0275fb4fd324f8c83934d51e6fa6
+      - uses: balena-io/deploy-to-balena-action@b16996eb9552e8082a9a9936e538b637dd7957bc
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}

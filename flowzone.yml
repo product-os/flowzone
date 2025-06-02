@@ -3650,7 +3650,7 @@ jobs:
       - *downloadVersionedSource
       - *extractVersionedSource
 
-      - uses: balena-io/deploy-to-balena-action@eb8f8d30709c0275fb4fd324f8c83934d51e6fa6 # v2.0.129
+      - uses: balena-io/deploy-to-balena-action@b16996eb9552e8082a9a9936e538b637dd7957bc # v2.0.130
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
