@@ -134,32 +134,6 @@
     token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
     persist-credentials: false
 
-  - &checkoutPullRequestHeadSha
-    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
-    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
-    # https://github.com/actions/checkout
-    name: Checkout pull request head sha
-    uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    with:
-      fetch-depth: 0
-      submodules: "recursive"
-      # fallback to an invalid ref if the checkout ref is undefined
-      ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
-      <<: *checkoutAuth
-
-  - &checkoutEventSha
-    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
-    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
-    # https://github.com/actions/checkout
-    name: Checkout ${{ github.sha }}
-    uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    with:
-      fetch-depth: 0
-      submodules: "recursive"
-      # fallback to an invalid ref if the checkout ref is undefined
-      ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
-      <<: *checkoutAuth
-
   - &downloadVersionedSource # https://github.com/actions/download-artifact
     name: Download versioned source
     uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
@@ -174,20 +148,42 @@
     working-directory: .
     run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
 
-  - &shallowCheckout # https://github.com/actions/checkout
-    name: Checkout source
-    uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+  # Create base64 encoded auth header for use in git CLI commands.
+  # Required github.token with contents: read
+  - &createAuthHeader
+    name: Create base64 encoded auth header
+    id: auth_header
+    uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+    env:
+      GIT_AUTH_TOKEN: ${{ github.token }}
     with:
-      # Disable submodules and deep cloning.
-      fetch-depth: 1
-      submodules: false
-      # Do not persist credentials.
-      persist-credentials: false
-      # Use the automatic actions token with contents:read permissions
-      token: ${{ github.token }}
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      result-encoding: string
+      script: |
+        const token = process.env.GIT_AUTH_TOKEN;
+        const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+        core.setSecret(authHeader);
+        core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
+        return authHeader;
+
+  # Reset the .github directory to the GitHub ref.
+  # For security, this is the tip of BASE if the event is pull_request_target
+  # or the merge commit if the PR is internal.
+  # Depends on createAuthHeader.
+  - &resetGithubDirectory
+    name: Reset .github directory to ${{ github.ref }}
+    env:
+      AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+      REF: ${{ github.ref }}
+    # Use git-c for non-persistent credential configuration
+    #
+    # The git -c option sets a configuration value for a single Git command invocation.
+    # It does not modify any configuration files or persist the setting beyond this specific command.
+    #
+    # This approach ensures that the authentication credentials are used securely for this
+    # specific operation without risk of unintended persistence or exposure in configuration files.
+    run: |
+      git -c "${AUTH_CONFIG}" fetch origin "${REF}"
+      git checkout FETCH_HEAD -- .github
 
   - &loginWithDockerHub
     name: Login to Docker Hub
@@ -1050,6 +1046,7 @@ jobs:
 
     permissions:
       # Required to inspect commits in branches for linear history
+      # Also required to reset the workspace to the versioned commit.
       contents: read
 
     outputs:
@@ -1116,13 +1113,33 @@ jobs:
       # want to be able test the changes in isolation, and we already require that branches
       # be rebased before testing merging via branch rules.
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
-      - <<: *checkoutPullRequestHeadSha
-        if: github.event.pull_request.state == 'open'
+      - if: github.event.pull_request.state == 'open'
+        # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+        # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+        # https://github.com/actions/checkout
+        name: Checkout pull request head sha
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          submodules: "recursive"
+          # fallback to an invalid ref if the checkout ref is undefined
+          ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
+          <<: *checkoutAuth
 
       # Checkout the event sha for closed/merged PRs.
       # This is the merge commit sha for PRs and the tagged commit sha for tags.
-      - <<: *checkoutEventSha
-        if: github.event.pull_request.state != 'open'
+      - if: github.event.pull_request.state != 'open'
+        # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+        # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+        # https://github.com/actions/checkout
+        name: Checkout ${{ github.sha }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          submodules: "recursive"
+          # fallback to an invalid ref if the checkout ref is undefined
+          ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
+          <<: *checkoutAuth
 
       # The current commit sha is needed as the parent sha for the versioned commit
       # and/or as default tag & semver if versioning is disabled.
@@ -1338,19 +1355,7 @@ jobs:
       #     <<: *checkoutAuth
 
       # Create base64 encoded auth header
-      - name: Create base64 encoded auth header
-        id: auth_header
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        env:
-          GIT_AUTH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-        with:
-          result-encoding: string
-          script: |
-            const token = process.env.GIT_AUTH_TOKEN;
-            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            core.setSecret(authHeader);
-            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
-            return authHeader;
+      - *createAuthHeader
 
       # Reset the local workspace to the versioned commit we just created
       # and add a local annotated tag.
@@ -1380,20 +1385,7 @@ jobs:
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
       # or the merge commit if the PR is internal
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
-          REF: ${{ github.ref }}
-        # Use git-c for non-persistent credential configuration
-        #
-        # The git -c option sets a configuration value for a single Git command invocation.
-        # It does not modify any configuration files or persist the setting beyond this specific command.
-        #
-        # This approach ensures that the authentication credentials are used securely for this
-        # specific operation without risk of unintended persistence or exposure in configuration files.
-        run: |
-          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
-          git checkout FETCH_HEAD -- .github
+      - *resetGithubDirectory
 
       # Compress versioned source to maintain file permissions and case-sensitivity
       # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
@@ -1427,8 +1419,8 @@ jobs:
 
     <<: *rootWorkingDirectory
 
-    permissions:
-      contents: read
+    # No permissions needed for this job.
+    permissions: {}
 
     outputs:
       body: ${{ steps.format_release_notes.outputs.body }}
@@ -1455,6 +1447,8 @@ jobs:
         continue-on-error: true
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
+          # This step requires "pull_request: read" permissions which are not included in
+          # the default "restricted" policy of the automatic github.token.
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: string
           script: |
@@ -1529,6 +1523,10 @@ jobs:
           CURRENT_TAG: ${{ needs.versioned_source.outputs.tag }}
         with:
           result-encoding: string
+          # This step only requires "contents: read", but we are using the generated app
+          # token to remain aligned with the format_release_notes step above. No other reason.
+          # Otherwise, this step could use the automatic github.token without issue.
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           script: |
             // Get all tags sorted by version in descending order
             const { data: tags } = await github.rest.repos.listTags({
@@ -1740,21 +1738,14 @@ jobs:
     # Run this early in the workflow, as soon as we've validated event types
     needs:
       - event_types
+      - versioned_source
 
-    permissions:
-      contents: read # Used for checkout
+    # No permissions needed for this job.
+    permissions: {}
 
     steps:
-      # No need for the Flowzone Installation App token here as we are not cloning
-      # submodules so the automatic actions token scoped to the repo is fine.
-
-      # Disable submodules and deep cloning.
-      # Do not persist credentials.
-      # Use the automatic actions token with contents:read permissions.
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      # https://github.com/actions/checkout
-      - *shallowCheckout
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       # https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
       - name: Add problem matcher
@@ -1788,11 +1779,15 @@ jobs:
     # Run this early in the workflow, as soon as we've validated event types
     needs:
       - event_types
+      - versioned_source
 
-    permissions:
-      contents: read # required for checkout without submodules
+    # No permissions needed for this job.
+    permissions: {}
 
     steps:
+      - *downloadVersionedSource
+      - *extractVersionedSource
+
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1803,14 +1798,6 @@ jobs:
               "metadata": "read",
               "security_events": "write"
             }
-
-      # Disable submodules and deep cloning.
-      # Do not persist credentials.
-      # Use the automatic actions token with contents:read permissions.
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      # https://github.com/actions/checkout
-      - *shallowCheckout
 
       # https://github.com/synacktiv/octoscan
       # https://github.com/synacktiv/action-octoscan
@@ -1943,24 +1930,18 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
+      - versioned_source
     # Do not run on PR close or merge events.
     if: |
       contains(needs.file_list.outputs.root, '.pre-commit-config.yaml') &&
       github.event.action != 'closed'
 
-    # No need for the Flowzone Installation App token here as we are not cloning
-    # submodules so the automatic actions token scoped to the repo is fine.
-    permissions:
-      contents: read # Required to checkout source project, without submodules
+    # No permissions needed for this job.
+    permissions: {}
 
     steps:
-      # Disable submodules and deep cloning.
-      # Do not persist credentials.
-      # Use the automatic actions token with contents:read permissions.
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      # https://github.com/actions/checkout
-      - *shallowCheckout
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       # https://github.com/actions/setup-python
       - *setupPython
@@ -1975,6 +1956,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
+      - versioned_source
     # Do not run on PR close events.
     if: |
       contains(needs.file_list.outputs.workdir, 'package.json') &&
@@ -1985,10 +1967,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    # No need for the Flowzone Installation App token here as we are not cloning
-    # submodules so the automatic actions token scoped to the repo is fine.
-    permissions:
-      contents: read # Required to checkout source project, without submodules
+    # No permissions needed for this job.
+    permissions: {}
 
     outputs:
       npm: "true"
@@ -2005,13 +1985,8 @@ jobs:
       PACKAGE_JSON_PATH: "${{ inputs.working_directory }}/package.json"
 
     steps:
-      # Disable submodules and deep cloning.
-      # Do not persist credentials.
-      # Use the automatic actions token with contents:read permissions.
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      # https://github.com/actions/checkout
-      - *shallowCheckout
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - name: Process package.json
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
@@ -2110,6 +2085,7 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - file_list
+      - versioned_source
     # Do not run on PR close events.
     # Match any of the following file globs:
     #  docker-bake{.override,}.{json,hcl}
@@ -2127,10 +2103,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    # No need for the Flowzone Installation App token here as we are not cloning
-    # submodules so the automatic actions token scoped to the repo is fine.
-    permissions:
-      contents: read # Required to checkout source project, without submodules
+    # No permissions needed for this job.
+    permissions: {}
 
     outputs:
       docker_images: ${{ steps.docker_publish.outputs.images }}
@@ -2141,13 +2115,8 @@ jobs:
       docker_publish_matrix: ${{ steps.docker_publish.outputs.result }}
 
     steps:
-      # Disable submodules and deep cloning.
-      # Do not persist credentials.
-      # Use the automatic actions token with contents:read permissions.
-      # Use the tip of the pull request branch for pull request (target) events.
-      # Use the event sha for other events.
-      # https://github.com/actions/checkout
-      - *shallowCheckout
+      - *downloadVersionedSource
+      - *extractVersionedSource
 
       - <<: *setupBuildx
         env:
@@ -2594,7 +2563,8 @@ jobs:
 
     <<: *rootWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Required to read and reset the .github directory
 
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
@@ -2610,6 +2580,12 @@ jobs:
     steps:
       - *downloadVersionedSource
       - *extractVersionedSource
+
+      # Reset the .github directory to the GitHub ref
+      # For security, this is the tip of BASE if the event is pull_request_target
+      # or the merge commit if the PR is internal
+      - *createAuthHeader
+      - *resetGithubDirectory
 
       # FIXME: remove this handling of deprecated comma-separated values
       - id: custom_test_values
@@ -4403,6 +4379,12 @@ jobs:
       - *downloadVersionedSource
       - *extractVersionedSource
 
+      # Reset the .github directory to the GitHub ref
+      # For security, this is the tip of BASE if the event is pull_request_target
+      # or the merge commit if the PR is internal
+      - *createAuthHeader
+      - *resetGithubDirectory
+
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4452,6 +4434,12 @@ jobs:
       - *downloadVersionedSource
       - *extractVersionedSource
 
+      # Reset the .github directory to the GitHub ref
+      # For security, this is the tip of BASE if the event is pull_request_target
+      # or the merge commit if the PR is internal
+      - *createAuthHeader
+      - *resetGithubDirectory
+
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4494,6 +4482,12 @@ jobs:
       - *downloadVersionedSource
       - *extractVersionedSource
 
+      # Reset the .github directory to the GitHub ref
+      # For security, this is the tip of BASE if the event is pull_request_target
+      # or the merge commit if the PR is internal
+      - *createAuthHeader
+      - *resetGithubDirectory
+
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4535,6 +4529,12 @@ jobs:
       - *downloadVersionedSource
       - *extractVersionedSource
 
+      # Reset the .github directory to the GitHub ref
+      # For security, this is the tip of BASE if the event is pull_request_target
+      # or the merge commit if the PR is internal
+      - *createAuthHeader
+      - *resetGithubDirectory
+
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -4569,6 +4569,12 @@ jobs:
 
       - *downloadVersionedSource
       - *extractVersionedSource
+
+      # Reset the .github directory to the GitHub ref
+      # For security, this is the tip of BASE if the event is pull_request_target
+      # or the merge commit if the PR is internal
+      - *createAuthHeader
+      - *resetGithubDirectory
 
       - uses: ./.github/actions/always
         with:
