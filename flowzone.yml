@@ -130,10 +130,15 @@
         });
         return ref;
 
+  # Generate a token in order to checkout private submodules in the same namespace/org.
   - &getCheckoutToken # https://github.com/tibdex/github-app-token
     name: Generate GitHub App installation token for checkout
     uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
-    if: inputs.app_id
+    # Only generate a token if the repository is private and the app_id is set.
+    # This is to avoid generating a token for public repositories where the automatic github.token is sufficient.
+    # Public repositories with private submodules are unsupported and will fail checkout.
+    # Also, even with an app token, private submodules must be in the same namespace/org as the repo.
+    if: inputs.app_id && github.event.repository.private
     id: checkout_token
     with:
       app_id: ${{ inputs.app_id }}
@@ -147,14 +152,10 @@
         }
 
   - &checkoutAuth
-    token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+    token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
     persist-credentials: false
 
   # Checkout the versioned commit we created in the previous steps.
-  # This may seem wasteful, to clone the sources again, but we plan to move
-  # the versioning steps above out of Flowzone entirely and clone from a
-  # branch created by a dedicated GitHub App.
-  # We also want to checkout as little depth as possible for the versioned source artifact.
   - &checkoutVersionedCommit
     name: Checkout versioned commit
     uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
