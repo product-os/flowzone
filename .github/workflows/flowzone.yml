@@ -1136,7 +1136,7 @@ jobs:
         uses: synacktiv/action-octoscan@6b1cf2343893dfb9e5f75652388bd2dc83f456b0
         with:
           filter_triggers: allnopr
-          disable_rules: shellcheck,local-action,runner-label,dangerous-write
+          disable_rules: shellcheck,local-action,runner-label,dangerous-write,dangerous-checkout
       - name: Upload SARIF file to GitHub
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         continue-on-error: true

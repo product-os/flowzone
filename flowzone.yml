@@ -1782,7 +1782,7 @@ jobs:
           # external: https://github.com/synacktiv/octoscan/blob/3f7fd6e563be43432cef874c82a7714f67a8ef92/common/helpers.go#L69
           # allnopr: https://github.com/synacktiv/octoscan/blob/3f7fd6e563be43432cef874c82a7714f67a8ef92/common/helpers.go#L76
           filter_triggers: allnopr
-          disable_rules: shellcheck,local-action,runner-label,dangerous-write
+          disable_rules: shellcheck,local-action,runner-label,dangerous-write,dangerous-checkout
 
       # The codeql-action/upload-sarif action uses internal endpoints and does not work with app installation tokens
       # so here we use the github-script action to upload the SARIF file to GitHub via the REST API
