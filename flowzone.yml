@@ -1120,7 +1120,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
-          submodules: "recursive"
+          submodules: "false"
           # fallback to an invalid ref if the checkout ref is undefined
           ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
           <<: *checkoutAuth
@@ -1135,7 +1135,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
-          submodules: "recursive"
+          submodules: "false"
           # fallback to an invalid ref if the checkout ref is undefined
           ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
           <<: *checkoutAuth
