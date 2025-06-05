@@ -1,4 +1,18 @@
 - commits:
+    - subject: Remove deprecated input poll-interval from review-commit-action
+      hash: 2626d6cd934087652ec076ddcf5b29c1af593c88
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 20.3.1
+  title: ""
+  date: 2025-06-05T20:35:48.026Z
+- commits:
     - subject: Avoid full fetch depth for versioned source artifacts
       hash: d7a5309a71ce8b7610143c2ee0d1f257411ea297
       body: |
