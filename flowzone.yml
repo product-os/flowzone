@@ -130,23 +130,57 @@
         });
         return ref;
 
+  - &getCheckoutToken # https://github.com/tibdex/github-app-token
+    name: Generate GitHub App installation token for checkout
+    uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+    if: inputs.app_id
+    id: checkout_token
+    with:
+      app_id: ${{ inputs.app_id }}
+      installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
+      installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
+      private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      permissions: >-
+        {
+          "contents": "read",
+          "metadata": "read"
+        }
+
   - &checkoutAuth
-    token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+    token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN }}
     persist-credentials: false
 
-  - &downloadVersionedSource # https://github.com/actions/download-artifact
-    name: Download versioned source
-    uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+  # Checkout the versioned commit we created in the previous steps.
+  # This may seem wasteful, to clone the sources again, but we plan to move
+  # the versioning steps above out of Flowzone entirely and clone from a
+  # branch created by a dedicated GitHub App.
+  # We also want to checkout as little depth as possible for the versioned source artifact.
+  - &checkoutVersionedCommit
+    name: Checkout versioned commit
+    uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    if: needs.versioned_source.outputs.sha
     with:
-      name: versioned-source
-      path: ${{ runner.temp }}
+      # Should be 0 (full depth) if submodules are present, otherwise 1
+      fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+      # Note that fetch-tags is not currently working as described if fetch depth != 0
+      # https://github.com/actions/checkout/issues/1781
+      fetch-tags: true
+      submodules: "recursive"
+      ref: ${{ needs.versioned_source.outputs.sha }}
+      <<: *checkoutAuth
 
-  - &extractVersionedSource
-    name: Extract versioned source
-    # tar: Cannot connect to D: resolve failed
-    shell: pwsh
-    working-directory: .
-    run: tar --extract --file ${{ runner.temp }}/versioned_source.tar.zst
+  # Update the local tag ref so that it may be consumed by build steps that need to know the version of the source.
+  # On merged PRs, this ref should already be up-to-date locally unless we are hit by this:
+  # https://github.com/actions/checkout/issues/1781
+  - &updateVersionedTagRef
+    name: Update versioned tag reference
+    if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
+    shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      TAG: ${{ needs.versioned_source.outputs.tag }}
+      SHA: ${{ needs.versioned_source.outputs.tag_sha }}
+    run: |
+      git update-ref "refs/tags/${TAG}" "${SHA}"
 
   # Create base64 encoded auth header for use in git CLI commands.
   # Required github.token with contents: read
@@ -1057,6 +1091,7 @@ jobs:
       sha: ${{ steps.create_tag.outputs.sha || steps.git_describe.outputs.sha }}
       commit_sha: ${{ steps.create_commit.outputs.sha }}
       author: ${{ steps.create_commit.outputs.author }}
+      author_email: ${{ steps.create_commit.outputs.author_email }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
       # Should be 0 (full) if git submodules are present, otherwise for minimal fetch depth.
       depth: ${{ steps.git_describe.outputs.depth || 0 }}
@@ -1106,6 +1141,8 @@ jobs:
             core.setFailed("Legacy branch protection rules detected!\n\n" +
               "Switching to Rulesets is required to allow GitHub Apps to bypass branch rules.\n\n" +
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
+
+      - *getCheckoutToken
 
       # Checkout the tip of the pull request branch for open PRs.
       # The default behaviour for GitHub Actions is to checkout the merge commit but we
@@ -1334,59 +1371,6 @@ jobs:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: "refs/tags/${{ steps.versionist.outputs.tag }}"
           SHA: ${{ steps.create_tag.outputs.sha }}
-
-      # Checkout the versioned commit we created in the previous steps.
-      # This may seem wasteful, to clone the sources again, but we plan to move
-      # the versioning steps above out of Flowzone entirely and clone from a
-      # branch created by a dedicated GitHub App.
-      # We also want to checkout as little depth as possible for the versioned source artifact.
-      - name: Checkout versioned commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          # Should be 0 (full depth) if submodules are present, otherwise 1
-          fetch-depth: ${{ steps.git_describe.outputs.depth || 0 }}
-          # Note that fetch-tags is not currently working as described:
-          # https://github.com/actions/checkout/issues/1781
-          fetch-tags: false
-          submodules: "recursive"
-          # fallback to an invalid ref if the checkout ref is undefined
-          ref: "${{ steps.create_commit.outputs.sha || '¯\_(ツ)_/¯' }}"
-          path: versioned-source
-          <<: *checkoutAuth
-
-      # Add a local annotated tag to the versioned commit.
-      # On open PRs, this tag does not exist on the remote.
-      # On merged PRs, the tag exists but the checkout behaviour above
-      # does not include all tags as expected.
-      # https://github.com/actions/checkout/issues/1781
-      - name: Create a local versioned commit + tag
-        if: steps.versionist.outputs.tag && steps.create_commit.outputs.sha
-        working-directory: versioned-source
-        env:
-          GIT_AUTHOR_NAME: "${{ steps.create_commit.outputs.author }}"
-          GIT_AUTHOR_EMAIL: "${{ steps.create_commit.outputs.author_email }}"
-          GIT_COMMITTER_NAME: "${{ steps.create_commit.outputs.author }}"
-          GIT_COMMITTER_EMAIL: "${{ steps.create_commit.outputs.author_email }}"
-          TAG: ${{ steps.versionist.outputs.tag }}
-          SHA: ${{ steps.create_commit.outputs.sha }}
-        run: |
-          git tag --annotate "${TAG}" --message "${TAG}" --force "${SHA}"
-
-      # Compress versioned source to maintain file permissions and case-sensitivity
-      # https://github.com/actions/upload-artifact#maintaining-file-permissions-and-case-sensitive-files
-      - name: Compress versioned source
-        working-directory: versioned-source
-        run: tar --auto-compress --create --file ${{ runner.temp }}/versioned_source.tar.zst .
-
-      # This artifact is consumed by all other jobs instead of re-cloning the sources.
-      # https://github.com/actions/upload-artifact
-      - name: Upload versioned source artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: versioned-source
-          path: ${{ runner.temp }}/versioned_source.tar.zst
-          retention-days: 7
-          if-no-files-found: error
 
   release_notes:
     name: Generate release notes
@@ -1730,8 +1714,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       # https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
       - name: Add problem matcher
@@ -1771,8 +1756,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - <<: *getGitHubAppToken
         with:
@@ -1926,8 +1912,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       # https://github.com/actions/setup-python
       - *setupPython
@@ -1971,8 +1958,9 @@ jobs:
       PACKAGE_JSON_PATH: "${{ inputs.working_directory }}/package.json"
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - name: Process package.json
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
@@ -2101,8 +2089,9 @@ jobs:
       docker_publish_matrix: ${{ steps.docker_publish.outputs.result }}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - <<: *setupBuildx
         env:
@@ -2400,8 +2389,9 @@ jobs:
       python_sbom: ${{ inputs.generate_sbom }}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - name: Identify Poetry project
         id: python_poetry
@@ -2486,8 +2476,9 @@ jobs:
       cargo_publish: ${{ steps.cargo_publish.outputs.value }}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - id: cargo_targets
         <<: *jsonArrayBuilder
@@ -2531,8 +2522,9 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - id: balena_slugs
         <<: *jsonArrayBuilder
@@ -2564,8 +2556,9 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
@@ -2680,8 +2673,9 @@ jobs:
 
     steps:
 
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - name: Install yaml module
         run: |
@@ -2872,8 +2866,9 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - <<: *setupNode
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
@@ -2991,8 +2986,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - <<: *setupNode
         with:
@@ -3205,8 +3201,9 @@ jobs:
       packages: read # pull private base images from ghcr.io
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - *sanitizeDockerStrings
       - *setupBuildx
@@ -3536,8 +3533,9 @@ jobs:
     #   packages: write # push manifests to ghcr.io
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - *sanitizeDockerStrings
       - *dockerFinalMetadata
@@ -3609,8 +3607,9 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - uses: balena-io/deploy-to-balena-action@f7d434197ec7d57218da93bf9c720e4c14c6b197 # v2.0.131
         id: balena_deploy
@@ -3667,8 +3666,9 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - <<: *setupPython
         with:
@@ -3741,8 +3741,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - *setupPython
 
@@ -3796,8 +3797,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - *setupPython
       - *setupPoetry
@@ -3834,8 +3836,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - *setupPython
       - *setupPoetry
@@ -3878,8 +3881,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - <<: *getGitHubAppToken
         with:
@@ -4010,8 +4014,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - <<: *getGitHubAppToken
         with:
@@ -4077,8 +4082,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - <<: *getGitHubAppToken
         with:
@@ -4157,8 +4163,9 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -4211,8 +4218,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@master
@@ -4270,8 +4278,9 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
@@ -4318,8 +4327,9 @@ jobs:
     permissions: {}
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -4362,8 +4372,9 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
@@ -4417,8 +4428,9 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
@@ -4465,8 +4477,9 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
@@ -4512,8 +4525,9 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
@@ -4553,8 +4567,9 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
@@ -4609,8 +4624,9 @@ jobs:
     #   id-token: write # AWS GitHub OIDC provider
 
     steps:
-      - *downloadVersionedSource
-      - *extractVersionedSource
+      - *getCheckoutToken
+      - *checkoutVersionedCommit
+      - *updateVersionedTagRef
 
       - *setupAwsCli
       - *randomDelay # Why do people always forget that you need to add a little jitter?
