@@ -333,7 +333,6 @@ jobs:
         if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
         uses: product-os/review-commit-action@2e3ac2bf51758d00b7cd8f3bab0c35f65bf120b1
         with:
-          poll-interval: "10"
           allow-authors: false
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Log GitHub context
