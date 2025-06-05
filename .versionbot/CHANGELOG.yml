@@ -1,4 +1,23 @@
 - commits:
+    - subject: Avoid full fetch depth for versioned source artifacts
+      hash: d7a5309a71ce8b7610143c2ee0d1f257411ea297
+      body: |
+        For large repos, this can result in files that are hundreds
+        of megabytes.
+
+        Instead, perform a new checkout of the versioned source commit
+        with the minimum fetch depth required.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 20.3.0
+  title: ""
+  date: 2025-06-05T12:38:16.393Z
+- commits:
     - subject: "patch: Update CFN linter"
       hash: 4d530e9a25037a2e74770eb3c38a9c6b00392c46
       body: ""
