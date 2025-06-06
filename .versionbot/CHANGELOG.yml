@@ -1,4 +1,58 @@
 - commits:
+    - subject: Add dangerous-checkout to octoscan exclusions
+      hash: 4bd372031af7e3e99ad23fdd365bc5f44e7e503c
+      body: |
+        This rule is now duplicated by CodeQL actions/untrusted-checkout/high
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Only generate a checkout token on private repositories
+      hash: beed03aa4e75416762c477adc2e9a1cae5c60d84
+      body: |
+        Public repositories should use the automatic github.token.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Revert to per-job versioned source checkout
+      hash: b1875684ea398319602e4e5f1b201ccc665c5b74
+      body: |
+        Unfortunately artifact download on EU self-hosted runners is
+        very slow compared to git checkouts, so after some use in production
+        we decided to roll back this change.
+
+        Still we can use a dedicated token for the checkout step with fixed
+        permissions.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Disable submodules for versioning checkout
+      hash: b79b2bbed8104bc5f788f82b9e203d8b6ad41a96
+      body: |
+        We don't need submodules to run versionist so we can
+        save time and skip this.
+      footer:
+        CHange-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 20.4.0
+  title: ""
+  date: 2025-06-06T19:37:15.838Z
+- commits:
     - subject: Remove deprecated input poll-interval from review-commit-action
       hash: 2626d6cd934087652ec076ddcf5b29c1af593c88
       body: ""
