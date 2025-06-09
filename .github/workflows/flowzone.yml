@@ -461,7 +461,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-          submodules: "false"
+          submodules: recursive
           ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
@@ -470,7 +470,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-          submodules: "false"
+          submodules: recursive
           ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
