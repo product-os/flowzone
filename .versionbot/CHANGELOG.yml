@@ -1,4 +1,20 @@
 - commits:
+    - subject: Restore submodule fetch for yocto-based versioning
+      hash: 459858f6cce2d180bd0167c803e1e662adb9cca6
+      body: |
+        Submodules are required to get the meta-balena version
+        in yocto-based device repos.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 20.4.1
+  title: ""
+  date: 2025-06-09T17:30:27.227Z
+- commits:
     - subject: Add dangerous-checkout to octoscan exclusions
       hash: 4bd372031af7e3e99ad23fdd365bc5f44e7e503c
       body: |
