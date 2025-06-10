@@ -4050,7 +4050,7 @@ jobs:
 
       # https://github.com/softprops/action-gh-release
       - name: Publish draft release
-        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         with:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
