@@ -1,4 +1,24 @@
 - commits:
+    - subject: Remove CARGO_REGISTRY enviroment variable
+      hash: 58c743e86627fa4ed3e4b9bc229645050f11c5d3
+      body: |
+        This was being passed to the `cargo_finalize` job as
+        `CARGO_REGISTRY_DEFAULT` but that is the wrong way to set alternate
+        registries. That variable is a valid configuration but it must not point
+        to an URL, it must point to a registry name configured in Cargo.toml. In
+        fact, all the registry configuration may be configured via Cargo.toml,
+        making the variable a redundant interface.
+      footer:
+        Change-type: patch
+        change-type: patch
+        See: https://doc.rust-lang.org/cargo/reference/registries.html#using-an-alternate-registry
+        see: https://doc.rust-lang.org/cargo/reference/registries.html#using-an-alternate-registry
+      author: Felipe Lalanne
+      nested: []
+  version: 20.4.4
+  title: ""
+  date: 2025-06-11T21:33:38.684Z
+- commits:
     - subject: Fix release notes generation
       hash: fed0e1c10ce8c3cb2f892d3350eba9173add5f82
       body: |
