@@ -1470,11 +1470,11 @@ jobs:
             }
 
             // Handle custom release notes
-            const customReleaseNotesMatch = pr.body.match(/## Release Notes([\s\S]*?)(?=## |$)/i);
+            const customReleaseNotesMatch = pr.body.match(/## Release Notes([\s\S]*?)(?=\n## |\n?$)/i);
             console.log('match:', JSON.stringify(customReleaseNotesMatch, null, 2));
 
             if (customReleaseNotesMatch != null && customReleaseNotesMatch[1]) {
-              const releaseNotesBody = customReleaseNotesMatch[1].trim();
+              const releaseNotesBody = customReleaseNotesMatch[1].replace(/^\s+|\s+$/g, ''); // remove empty lines at the beginning or end
               console.log('releaseNotesBody:', releaseNotesBody);
 
               const releaseNotes = `## ${pr.title}\n${releaseNotesBody}`;
