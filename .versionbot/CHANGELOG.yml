@@ -1,4 +1,19 @@
 - commits:
+    - subject: Fix release notes generation
+      hash: fed0e1c10ce8c3cb2f892d3350eba9173add5f82
+      body: |
+        Release notes were not correctly including all the text in the markdown
+        section. This fixes the regular expression to allow to correctly
+        generate the notes.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 20.4.3
+  title: ""
+  date: 2025-06-11T19:14:30.064Z
+- commits:
     - subject: Update softprops/action-gh-release action to v2.3.2
       hash: 62e0b69cfacec2aed186304e4c33d161f8d97ee0
       body: |
