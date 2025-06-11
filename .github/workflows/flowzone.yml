@@ -263,7 +263,6 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 env:
   NPM_REGISTRY: https://registry.npmjs.org
-  CARGO_REGISTRY: crates.io
 jobs:
   event_types:
     name: Event Types
@@ -4585,10 +4584,9 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
-      - name: Publish crate to ${{ env.CARGO_REGISTRY }}
+      - name: Publish crate to cargo registry
         if: needs.is_cargo.outputs.cargo_publish != 'false'
         env:
-          CARGO_REGISTRY_DEFAULT: ${{ env.CARGO_REGISTRY }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
