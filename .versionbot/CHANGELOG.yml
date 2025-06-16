@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v3.11.0
+      hash: 729ac2f58ad63047e78848da398f163e879e124e
+      body: |
+        Update docker/setup-buildx-action from 3.10.0 to 3.11.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 20.4.5
+  title: ""
+  date: 2025-06-16T13:23:45.067Z
+- commits:
     - subject: Remove CARGO_REGISTRY enviroment variable
       hash: 58c743e86627fa4ed3e4b9bc229645050f11c5d3
       body: |
