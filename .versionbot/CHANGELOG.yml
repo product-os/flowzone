@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v3.11.1
+      hash: ec92f901c87cb364c3f17bc505d2aa83df800181
+      body: |
+        Update docker/setup-buildx-action from 3.11.0 to 3.11.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 20.4.6
+  title: ""
+  date: 2025-06-18T09:11:58.872Z
+- commits:
     - subject: Update docker/setup-buildx-action action to v3.11.0
       hash: 729ac2f58ad63047e78848da398f163e879e124e
       body: |
