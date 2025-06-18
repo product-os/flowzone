@@ -551,7 +551,7 @@
   - &setupBuildx # https://github.com/docker/setup-buildx-action
     name: Setup buildx
     id: setup_buildx
-    uses: docker/setup-buildx-action@18ce135bb5112fa8ce4ed6c17ab05699d7f3a5e0 # v3.11.0
+    uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
     env:
       # renovate: datasource=github-releases depName=docker/buildx
       BUILDX_VERSION: v0.24.0
