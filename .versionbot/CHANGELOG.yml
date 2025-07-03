@@ -1,4 +1,16 @@
 - commits:
+    - subject: Add nodejs 24 to the test matrix as it will be the next LTS
+      hash: 2a197048e19ce7af482066b01a5536c8026503a5
+      body: ""
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Pagan Gazzard
+      nested: []
+  version: 20.5.0
+  title: ""
+  date: 2025-07-03T15:24:55.066Z
+- commits:
     - subject: Update dependency node-22 to v22.17.0
       hash: 8be25e8e26e61a18008257c25e88b6bd02dbd292
       body: |
