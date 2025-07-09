@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-24 to v24.4.0
+      hash: 55c54315bf7bfa2e468369ffc2b85d7231142325
+      body: |
+        Update node-24 from 24.3.0 to 24.4.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 20.5.1
+  title: ""
+  date: 2025-07-09T13:24:07.558Z
+- commits:
     - subject: Add nodejs 24 to the test matrix as it will be the next LTS
       hash: 2a197048e19ce7af482066b01a5536c8026503a5
       body: ""
