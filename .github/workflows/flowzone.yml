@@ -4373,7 +4373,7 @@ jobs:
       - name: Generate metadata
         id: meta
         run: |
-          package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2}')"
+          package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2; exit}')"
           version="${{ needs.versioned_source.outputs.semver }}"
           branch_tag="$(echo "${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
