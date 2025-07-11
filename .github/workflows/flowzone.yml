@@ -3949,8 +3949,7 @@ jobs:
     if: |
       !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
       inputs.cloudflare_website != '' &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
-      needs.is_npm.outputs.npm == 'true'
+      (github.event.action != 'closed' || github.event.pull_request.merged == true)
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
@@ -4006,7 +4005,7 @@ jobs:
         env:
           NODE_VERSION: 20.19.3
         with:
-          node-version: ${{ needs.is_npm.outputs.max_node_version }}
+          node-version: ${{ needs.is_npm.outputs.max_node_version || '22.x' }}
       - name: Docusaurus Builder
         if: |
           contains(needs.file_list.outputs.workdir, 'README.md') &&
