@@ -1952,7 +1952,7 @@ jobs:
       npm_docs: ${{ steps.package_json.outputs.docs }}
       npm_sbom: ${{ inputs.generate_sbom }} # default true
       npm_access: ${{ steps.package_json.outputs.access }}
-      node_versions: ${{ steps.node_versions.outputs.result }} # Default to 20.x if no versions were matched
+      node_versions: ${{ steps.node_versions.outputs.result }} # Defaults to ['22.x'] if no versions were matched
       max_node_version: ${{ steps.node_versions.outputs.max }}
 
     env:
@@ -2035,7 +2035,7 @@ jobs:
       - <<: *checkEngine
         id: check_engine_24
 
-      # Default to 20.x if no versions were matched
+      # Defaults to ['22.x'] if no versions were matched
       # https://github.com/actions/github-script
       - name: Set Node.js versions
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
@@ -2044,7 +2044,7 @@ jobs:
           # Tested that this will always return a JSON array.
           # If the engines in package.json are not satisified by any of the above
           # engine checks, the NODE_VERSIONS value will be [] and the script should
-          # instead return ["20.x"] so we always test something.
+          # instead return ["22.x"] so we always test something.
           NODE_VERSIONS: ${{ toJSON(steps.*.outputs.node_version) }}
         with:
           result-encoding: json
@@ -3885,8 +3885,7 @@ jobs:
     if: |
       !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
       inputs.cloudflare_website != '' &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
-      needs.is_npm.outputs.npm == 'true'
+      (github.event.action != 'closed' || github.event.pull_request.merged == true)
 
     permissions: {}
 
@@ -3909,7 +3908,9 @@ jobs:
 
       - <<: *setupNode
         with:
-          node-version: "${{ needs.is_npm.outputs.max_node_version }}"
+          # Not all projects that publish websites will have a package.json to
+          # run the npm setup jobs, but we still need a node version for packaging.
+          node-version: "${{ needs.is_npm.outputs.max_node_version || '22.x' }}"
 
       - name: Docusaurus Builder
         if: |
