@@ -1,4 +1,21 @@
 - commits:
+    - subject: Remove npm requirement from website publish
+      hash: 38029c8275c1e6d8706bdfa4688d822fd0637d5c
+      body: |
+        Not all projects that publish websites are node/npm
+        projects, and we don't actually require package.json files
+        to set the max node version output.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 20.5.3
+  title: ""
+  date: 2025-07-14T11:28:34.693Z
+- commits:
     - subject: Use only first occurrence of `name = *` in Cargo.toml
       hash: 1fe1b323d0d243af7b1ff95d103658cc11d6f3a2
       body: |
