@@ -2973,7 +2973,7 @@ jobs:
           targets: ${{ matrix.target }}
           set: |
             *.platform=${{ matrix.platform }}
-            *.cache-to=type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.platform }}
+            *.cache-to=type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.platform }},ignore-error=true
             *.cache-from=type=gha,scope=${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=${{join(fromJSON(steps.test_meta.outputs.json || '{}').tags || fromJSON('[]'),',')}}
           load: true
