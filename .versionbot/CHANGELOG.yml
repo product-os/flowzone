@@ -1,4 +1,21 @@
 - commits:
+    - subject: Ignore errors on upload of docker gha cache
+      hash: 2d57e0e5d5a98ba8f073df64db45b002d25757c7
+      body: |
+        As long as the build succeeds, we don't want to block
+        the pipeline on caching issues. Especially on projects with very
+        large image layers where cache failures are more common.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 20.5.7
+  title: ""
+  date: 2025-07-17T17:48:00.391Z
+- commits:
     - subject: Update dependency node-22 to v22.17.1
       hash: 12fce91ca2a63329fd5d1f8aba22b99a8ffc23a6
       body: |
