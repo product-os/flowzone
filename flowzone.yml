@@ -3327,9 +3327,12 @@ jobs:
             ${{ env.DOCKER_BAKE_FILE }}
             ${{ steps.test_meta.outputs.bake-file }}
           targets: ${{ matrix.target }}
+          # Ignore cache-to errors as long as the build succeeds
+          # https://github.com/docker/bake-action/issues/313#issuecomment-2827973726
+          # https://github.com/moby/buildkit/pull/3430
           set: |
             *.platform=${{ matrix.platform }}
-            *.cache-to=type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.platform }}
+            *.cache-to=type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.platform }},ignore-error=true
             *.cache-from=type=gha,scope=${{ matrix.target }}-${{ matrix.platform }}
             *.cache-from=${{join(fromJSON(steps.test_meta.outputs.json || '{}').tags || fromJSON('[]'),',')}}
           load: true
