@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.26.0
+      hash: e0f2aa0627a3474488a1c30c8a23dde90cf70d36
+      body: |
+        Update docker/buildx from 0.25.0 to 0.26.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 20.5.8
+  title: ""
+  date: 2025-07-21T16:08:09.403Z
+- commits:
     - subject: Ignore errors on upload of docker gha cache
       hash: 2d57e0e5d5a98ba8f073df64db45b002d25757c7
       body: |
