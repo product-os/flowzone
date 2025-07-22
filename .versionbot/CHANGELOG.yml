@@ -1,4 +1,31 @@
 - commits:
+    - subject: Disable buildx binary cache for Flowzone self-tests
+      hash: 81d24821eb1f9d261dd1d2a1c8f32c82055f7c28
+      body: |
+        This should avoid masking issues introduced by new
+        versions of the binary.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Revert "Update dependency docker/buildx to v0.26.0"
+      hash: 072c56a011ba704f7604ba6a5f6084a4b43b1d7e
+      body: |
+        This reverts commit e0f2aa0627a3474488a1c30c8a23dde90cf70d36.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 20.5.9
+  title: ""
+  date: 2025-07-22T14:10:04.424Z
+- commits:
     - subject: Update dependency docker/buildx to v0.26.0
       hash: e0f2aa0627a3474488a1c30c8a23dde90cf70d36
       body: |
