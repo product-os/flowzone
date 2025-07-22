@@ -1,4 +1,19 @@
 - commits:
+    - subject: Disable renovate bumps to buildx v0.26.0
+      hash: ca6be219889358c3c0befb1fbddd98673ba37ef6
+      body: |
+        See: https://github.com/docker/buildx/issues/3328
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 20.5.10
+  title: ""
+  date: 2025-07-22T15:31:13.743Z
+- commits:
     - subject: Disable buildx binary cache for Flowzone self-tests
       hash: 81d24821eb1f9d261dd1d2a1c8f32c82055f7c28
       body: |
