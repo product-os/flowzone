@@ -33,6 +33,10 @@
 		{
 			"matchPackageNames": ["node-22.x"],
 			"allowedVersions": "22"
+		},
+		{
+			"matchPackageNames": ["docker/buildx"],
+			"allowedVersions": "!/v0.26.0/"
 		}
 	],
 	"customManagers": [
