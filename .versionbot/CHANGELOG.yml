@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.26.1
+      hash: 7a49933239e35ab75b1017f9c70bb0c9801346e3
+      body: |
+        Update docker/buildx from 0.25.0 to 0.26.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 20.5.12
+  title: ""
+  date: 2025-07-22T17:11:31.153Z
+- commits:
     - subject: Migrate config .github/renovate.json
       hash: ba364411b0e06abc2d4a054ecd69aed121a85970
       body: ""
