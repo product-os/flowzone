@@ -559,6 +559,8 @@
       driver-opts: network=host
       install: true
       version: ${{ env.BUILDX_VERSION }}
+      # Disable cache-binary for Flowzone itself to avoid masking errors in new versions
+      cache-binary: ${{ github.repository != 'product-os/flowzone' }}
 
   - &setupQemuBinfmt # https://github.com/docker/setup-qemu-action
     name: Setup QEMU

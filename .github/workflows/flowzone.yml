@@ -1499,6 +1499,7 @@ jobs:
           driver-opts: network=host
           install: true
           version: ${{ env.BUILDX_VERSION }}
+          cache-binary: ${{ github.repository != 'product-os/flowzone' }}
       - name: Pre-process Docker bake files
         id: docker_bake
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
@@ -2840,6 +2841,7 @@ jobs:
           driver-opts: network=host
           install: true
           version: ${{ env.BUILDX_VERSION }}
+          cache-binary: ${{ github.repository != 'product-os/flowzone' }}
       - id: native_platforms
         name: Build JSON list from comma-separated input
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
@@ -3127,6 +3129,7 @@ jobs:
           driver-opts: network=host
           install: true
           version: ${{ env.BUILDX_VERSION }}
+          cache-binary: ${{ github.repository != 'product-os/flowzone' }}
       - name: Setup crane
         uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e
         with:
