@@ -2024,7 +2024,7 @@ jobs:
       - <<: *setupNode
         env:
           # renovate: datasource=node-version depName=node-22 packageName=node-22.x
-          NODE_VERSION: 22.17.1
+          NODE_VERSION: 22.18.0
 
       - <<: *checkEngine
         id: check_engine_22
