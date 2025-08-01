@@ -2940,7 +2940,7 @@ jobs:
           yq . "${COMPOSE_FILE}"
       - name: Generate docker metadata
         id: test_meta
-        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804
+        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f
         with:
           images: |
             sut
@@ -3106,7 +3106,7 @@ jobs:
             core.setOutput('repo', repoSlug)
       - name: Generate docker metadata
         id: draft_meta
-        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804
+        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f
         with:
           images: |
             ${{ matrix.image }}
@@ -3375,7 +3375,7 @@ jobs:
             core.setOutput('repo', repoSlug)
       - name: Generate docker metadata
         id: final_meta
-        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804
+        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f
         with:
           images: |
             ${{ matrix.image }}
