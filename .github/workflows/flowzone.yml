@@ -152,11 +152,6 @@ on:
           arm-unknown-linux-gnueabihf,
           x86_64-unknown-linux-gnu,
           i686-unknown-linux-gnu
-      rust_toolchain:
-        description: Version specifier (e.g. 1.65, stable, nigthly) for the toolchain to use when building Rust sources
-        type: string
-        required: false
-        default: stable
       rust_binaries:
         description: Set to true to publish Rust binary release artifacts to GitHub
         type: boolean
@@ -1840,6 +1835,7 @@ jobs:
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
       cargo_sbom: ${{ inputs.generate_sbom }}
       cargo_publish: ${{ steps.cargo_publish.outputs.value }}
+      rust_toolchain: ${{steps.rust_version.outputs.value || 'stable' }}
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
@@ -1903,6 +1899,14 @@ jobs:
         with:
           file: Cargo.toml
           field: package.publish
+          working-directory: ${{ inputs.working_directory }}
+      - name: Get MSRV
+        if: steps.cargo_yml.outputs.enabled == 'true'
+        uses: dangdennis/toml-action@ef528766b9af3dc473cb3f768a1646160ffb2645
+        id: rust_version
+        with:
+          file: Cargo.toml
+          field: package.rust-version
           working-directory: ${{ inputs.working_directory }}
   is_balena:
     name: Is balena
@@ -4361,7 +4365,7 @@ jobs:
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ inputs.rust_toolchain }}
+          toolchain: ${{ needs.is_cargo.outputs.rust_toolchain }}
           targets: ${{ matrix.target }}
           components: rustfmt
       - name: Check formatting
@@ -4531,7 +4535,7 @@ jobs:
       - name: Set up toolchain ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ inputs.rust_toolchain }}
+          toolchain: ${{ needs.is_cargo.outputs.rust_toolchain }}
           targets: ${{ matrix.target }}
       - name: Install cross
         run: cargo install cross --locked
