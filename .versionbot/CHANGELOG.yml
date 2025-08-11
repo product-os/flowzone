@@ -1,4 +1,20 @@
 - commits:
+    - subject: Dry-run cargo publish when applicable
+      hash: 34ddd26120d2c653d16a7ca2e9c09f9d8d4a4c6f
+      body: |
+        This prevents errors happening on the merge event when it's too late to
+        fix them. See
+        https://github.com/balena-io-modules/mahler-rs/actions/runs/16677452649/job/47207588810
+        as an example
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Felipe Lalanne
+      nested: []
+  version: 21.0.1
+  title: ""
+  date: 2025-08-11T16:17:12.784Z
+- commits:
     - subject: Read rust-version from Cargo.toml
       hash: 39e2e473fe2c62fa08a6692c3520fc7dc689c283
       body: |
