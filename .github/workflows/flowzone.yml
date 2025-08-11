@@ -4376,6 +4376,9 @@ jobs:
         run: cross -v clippy --all-targets --all-features --target ${{ matrix.target }} -- -D warnings
       - name: Run tests for toolchain ${{ matrix.target }}
         run: cross -v test --all-targets --all-features --locked --target ${{ matrix.target }}
+      - name: Dry-run crate publish
+        if: needs.is_cargo.outputs.cargo_publish != 'false'
+        run: cross -v publish --dry-run
       - name: Generate metadata
         id: meta
         run: |
