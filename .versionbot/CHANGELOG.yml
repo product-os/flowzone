@@ -1,4 +1,17 @@
 - commits:
+    - subject: Read rust-version from Cargo.toml
+      hash: 39e2e473fe2c62fa08a6692c3520fc7dc689c283
+      body: |
+        Default to "stable" otherwise. This removes the `rust_toolchain` input
+      footer:
+        Change-type: major
+        change-type: major
+      author: Felipe Lalanne
+      nested: []
+  version: 21.0.0
+  title: ""
+  date: 2025-08-11T15:45:36.467Z
+- commits:
     - subject: Update actions/checkout action to v4.3.0
       hash: 5bcc5e8ce22b0787dd7cb067ae9b4638ee88a32b
       body: |
