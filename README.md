@@ -243,12 +243,6 @@ jobs:
         x86_64-unknown-linux-gnu,
         i686-unknown-linux-gnu
 
-      # Version specifier (e.g. 1.65, stable, nigthly) for the toolchain to use when building Rust
-      # sources
-      # Type: string
-      # Required: false
-      rust_toolchain: stable
-
       # Set to true to publish Rust binary release artifacts to GitHub
       # Type: boolean
       # Required: false
