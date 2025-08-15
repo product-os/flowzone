@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-24 to v24.6.0
+      hash: 58f49ad5756ea2481a26f85a4b9a16c5a40507cb
+      body: |
+        Update node-24 from 24.5.0 to 24.6.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 21.0.4
+  title: ""
+  date: 2025-08-15T13:21:57.934Z
+- commits:
     - subject: Switch to nodejs 24 as the default for node steps
       hash: ac572b4b1a6b3f3ba77e3abfa1217afc7d41d3ce
       body: |
