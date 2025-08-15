@@ -1,4 +1,18 @@
 - commits:
+    - subject: Switch to nodejs 24 as the default for node steps
+      hash: ac572b4b1a6b3f3ba77e3abfa1217afc7d41d3ce
+      body: |
+        This also brings npm 11 for faster installs. Any steps that require an
+        older nodejs version should be explicit about that dependency
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 21.0.3
+  title: ""
+  date: 2025-08-15T13:08:52.787Z
+- commits:
     - subject: Update actions/checkout action to v5
       hash: a1e25e9a8f0e48f881afee53941a6f2c5b040422
       body: |
