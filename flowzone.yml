@@ -579,8 +579,8 @@
     name: Setup Node.js
     uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
     env:
-      # renovate: datasource=node-version depName=node packageName=node-20.x
-      NODE_VERSION: 20.19.4
+      # renovate: datasource=node-version depName=node packageName=node-24.x
+      NODE_VERSION: 24.6.0
     with:
       node-version: ${{ env.NODE_VERSION }}
 
