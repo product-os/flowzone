@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/checkout action to v5
+      hash: a1e25e9a8f0e48f881afee53941a6f2c5b040422
+      body: |
+        Update actions/checkout from 4.3.0 to 5.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 21.0.2
+  title: ""
+  date: 2025-08-15T12:19:32.766Z
+- commits:
     - subject: Dry-run cargo publish when applicable
       hash: 34ddd26120d2c653d16a7ca2e9c09f9d8d4a4c6f
       body: |
