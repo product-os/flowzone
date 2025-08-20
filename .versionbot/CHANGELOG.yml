@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/bake-action action to v6.9.0
+      hash: 6a4c2ae84ede2bc25607896befec3bc796e7d410
+      body: |
+        Update docker/bake-action from 6.8.0 to 6.9.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 21.0.7
+  title: ""
+  date: 2025-08-20T16:07:12.089Z
+- commits:
     - subject: Update dependency docker/buildx to v0.27.0
       hash: ff1135f6015232bb524e350842e4d61b7b691039
       body: |
