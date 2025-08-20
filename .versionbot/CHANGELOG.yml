@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.27.0
+      hash: ff1135f6015232bb524e350842e4d61b7b691039
+      body: |
+        Update docker/buildx from 0.26.1 to 0.27.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 21.0.6
+  title: ""
+  date: 2025-08-20T10:07:49.508Z
+- commits:
     - subject: Update pre-commit hook pre-commit/pre-commit-hooks to v6
       hash: b4948fa7343122e8dae8558f3bbb8cc8882cfc67
       body: |
