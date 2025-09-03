@@ -2011,7 +2011,7 @@ jobs:
       - <<: *setupNode
         env:
           # renovate: datasource=node-version depName=node packageName=node-20.x
-          NODE_VERSION: 20.19.4
+          NODE_VERSION: 20.19.5
 
       - <<: *checkEngine
         id: check_engine_20
