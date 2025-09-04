@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.28.0
+      hash: aae245a52f73204cca3d72ada266cb30d597e8d9
+      body: |
+        Update docker/buildx from 0.27.0 to 0.28.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 21.0.12
+  title: ""
+  date: 2025-09-04T01:24:36.802Z
+- commits:
     - subject: Update dependency node to v20.19.5
       hash: 0804cfed1a5c57aa029f58389cc2968ca9e43abf
       body: |
