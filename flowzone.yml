@@ -11,21 +11,15 @@
   - &ifPublicRepository
     if: github.event.repository.private != true
 
-  - &getGitHubAppToken # https://github.com/tibdex/github-app-token
+  - &getGitHubAppToken # https://github.com/actions/create-github-app-token
     name: Generate GitHub App installation token
-    uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+    uses: actions/create-github-app-token@v2.1.4
     if: inputs.app_id
     id: gh_app_token
     with: &getGitHubAppTokenWith
-      app_id: ${{ inputs.app_id }}
-      installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-      installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-      private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-      permissions: >-
-        {
-          "contents": "read",
-          "metadata": "read"
-        }
+      app-id: ${{ inputs.app_id }}
+      private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      permission-metadata: read # Always required
 
   # optionally attempt to get AWS login short-lived session credentials over OIDC
   - &configureAWSCredentials # https://github.com/aws-actions/configure-aws-credentials
@@ -131,9 +125,9 @@
         return ref;
 
   # Generate a token in order to checkout private submodules in the same namespace/org.
-  - &getCheckoutToken # https://github.com/tibdex/github-app-token
+  - &getCheckoutToken # https://github.com/actions/create-github-app-token
     name: Generate GitHub App installation token for checkout
-    uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+    uses: actions/create-github-app-token@v2.1.4
     # Only generate a token if the repository is private and the app_id is set.
     # This is to avoid generating a token for public repositories where the automatic github.token is sufficient.
     # Public repositories with private submodules are unsupported and will fail checkout.
@@ -141,15 +135,12 @@
     if: inputs.app_id && github.event.repository.private
     id: checkout_token
     with:
-      app_id: ${{ inputs.app_id }}
-      installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-      installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-      private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-      permissions: >-
-        {
-          "contents": "read",
-          "metadata": "read"
-        }
+      app-id: ${{ inputs.app_id }}
+      private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      permission-contents: read
+      permission-metadata: read
+      # Get org/namespace access for private submodule cloning
+      owner: ${{ github.repository_owner }}
 
   - &checkoutAuth
     token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
@@ -802,24 +793,6 @@ on:
         type: string
         required: false
         default: "${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}"
-      token_retrieval_mode:
-        description: >-
-          The mode used to retrieve the installation for which the token will be requested.
-
-          One of 'id', 'organization', 'repository', 'user'.
-
-          See https://github.com/tibdex/github-app-token for more info.
-        type: string
-        required: false
-        default: organization
-      token_retrieval_payload:
-        description: >-
-          The payload used to retrieve the installation token, based on the token retrieval mode.
-
-          See https://github.com/tibdex/github-app-token for more info.
-        type: string
-        required: false
-        default: ${{ github.repository_owner }}
       jobs_timeout_minutes:
         description: "Timeout for the job(s)."
         type: number
@@ -1038,12 +1011,10 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           # pull_requests: write is required to create or update pull request comments
-          permissions: >-
-            {
-              "metadata": "read",
-              "issues": "read",
-              "pull_requests": "write"
-            }
+          permission-contents: read
+          permission-metadata: read
+          permission-issues: read
+          permission-pull-requests: write
 
       # Combining pull_request_target workflow trigger with an explicit checkout of an
       # untrusted PR is a dangerous practice that may lead to repository compromise.
@@ -1104,13 +1075,10 @@ jobs:
           # This GitHub App should also be added to exceptions in branch rulesets in order to
           # bypass branch rules and push versioned commits directly to the main branch.
           # administration: read is required to check for legacy branch protection rules and can be removed eventually.
-          permissions: >-
-            {
-              "administration": "read",
-              "contents": "write",
-              "metadata": "read",
-              "pull_requests": "read"
-            }
+          permission-metadata: read
+          permission-administration: read
+          permission-contents: write
+          permission-pull-requests: read
 
       - *rejectNonLinearHead
       - *rejectNonLinearMerge
@@ -1403,12 +1371,9 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
-          permissions: >-
-            {
-              "contents": "read",
-              "metadata": "read",
-              "pull_requests": "read"
-            }
+          permission-contents: read
+          permission-metadata: read
+          permission-pull-requests: read
 
       # Get Renovate release notes from PR body, massage a little and draft a comment.
       - name: Format release notes
@@ -1591,13 +1556,10 @@ jobs:
           <<: *getGitHubAppTokenWith
           # contents: write is required to create or update pull request comments
           # pull_requests: write is required to create or update pull request comments
-          permissions: >-
-            {
-              "contents": "write",
-              "issues": "read",
-              "metadata": "read",
-              "pull_requests": "write"
-            }
+          permission-contents: write
+          permission-issues: read
+          permission-metadata: read
+          permission-pull-requests: write
 
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
         id: find_comment
@@ -1763,12 +1725,9 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           # security_events: write is required to upload SARIF files
-          permissions: >-
-            {
-              "contents": "read",
-              "metadata": "read",
-              "security_events": "write"
-            }
+          permission-contents: read
+          permission-metadata: read
+          permission-security_events: write
 
       # https://github.com/synacktiv/octoscan
       # https://github.com/synacktiv/action-octoscan
@@ -3105,7 +3064,11 @@ jobs:
     permissions: {}
 
     steps:
-      - *getGitHubAppToken
+      - <<: *getGitHubAppToken
+        with:
+          <<: *getGitHubAppTokenWith
+          permission-contents: read
+          permission-metadata: read
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
@@ -3156,12 +3119,9 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           # need permissions to push to docs branch and publish to github pages
-          permissions: >-
-            {
-              "pages": "write",
-              "contents": "write",
-              "metadata": "read"
-            }
+          permission-pages: write
+          permission-contents: write
+          permission-metadata: read
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
@@ -3908,13 +3868,10 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           # pull_requests: write is required to create or update pull request comments
-          permissions: >-
-            {
-              "metadata": "read",
-              "contents": "read",
-              "issues": "read",
-              "pull_requests": "write"
-            }
+          permission-metadata: read
+          permission-contents: read
+          permission-issues: read
+          permission-pull-requests: write
 
       - <<: *setupNode
         with:
@@ -4002,11 +3959,8 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           # contents:write permissions for managing releases
-          permissions: >-
-            {
-              "contents": "write",
-              "metadata": "read"
-            }
+          permission-contents: write
+          permission-metadata: read
 
       - *deleteDraftGitHubRelease
 
@@ -4043,11 +3997,8 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           # contents:write permissions for managing releases
-          permissions: >-
-            {
-              "contents": "write",
-              "metadata": "read"
-            }
+          permission-contents: write
+          permission-metadata: read
 
       - *deleteDraftGitHubRelease
 
@@ -4111,11 +4062,8 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           # contents:write permissions for managing releases
-          permissions: >-
-            {
-              "contents": "write",
-              "metadata": "read"
-            }
+          permission-contents: write
+          permission-metadata: read
 
       # https://github.com/actions/download-artifact
       - name: Download release notes
@@ -5020,12 +4968,9 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           # contents: write is required to enable automerge on a pull request
-          permissions: >-
-            {
-              "contents": "write",
-              "metadata": "read",
-              "pull_requests": "read"
-            }
+          permission-contents: write
+          permission-metadata: read
+          permission-pull-requests: read
 
       # Get the current state of the PR so we can check if it is in draft state
       - name: Get the PR state

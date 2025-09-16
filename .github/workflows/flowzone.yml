@@ -87,21 +87,6 @@ on:
         type: string
         required: false
         default: ${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}
-      token_retrieval_mode:
-        description: |-
-          The mode used to retrieve the installation for which the token will be requested.
-          One of 'id', 'organization', 'repository', 'user'.
-          See https://github.com/tibdex/github-app-token for more info.
-        type: string
-        required: false
-        default: organization
-      token_retrieval_payload:
-        description: |-
-          The payload used to retrieve the installation token, based on the token retrieval mode.
-          See https://github.com/tibdex/github-app-token for more info.
-        type: string
-        required: false
-        default: ${{ github.repository_owner }}
       jobs_timeout_minutes:
         description: Timeout for the job(s).
         type: number
@@ -309,20 +294,16 @@ jobs:
             false
           fi
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "metadata": "read",
-              "issues": "read",
-              "pull_requests": "write"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: read
+          permission-issues: read
+          permission-pull-requests: write
       - name: Wait for approval on pull_request_target events
         if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
         uses: product-os/review-commit-action@2e3ac2bf51758d00b7cd8f3bab0c35f65bf120b1
@@ -363,21 +344,16 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "administration": "read",
-              "contents": "write",
-              "metadata": "read",
-              "pull_requests": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-administration: read
+          permission-contents: write
+          permission-pull-requests: read
       - name: Reject HEAD branches containing merge commits
         if: github.event.pull_request.state == 'open'
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
@@ -437,19 +413,15 @@ jobs:
               "Switching to Rulesets is required to allow GitHub Apps to bypass branch rules.\n\n" +
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - if: github.event.pull_request.state == 'open'
         name: Checkout pull request head sha
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -704,20 +676,15 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read",
-              "pull_requests": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: read
+          permission-pull-requests: read
       - name: Format release notes
         id: format_release_notes
         continue-on-error: true
@@ -882,21 +849,16 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "write",
-              "issues": "read",
-              "metadata": "read",
-              "pull_requests": "write"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: write
+          permission-issues: read
+          permission-pull-requests: write
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
         id: find_comment
         if: needs.release_notes.outputs.comment != ''
@@ -1024,19 +986,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -1079,19 +1037,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -1111,20 +1065,15 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read",
-              "security_events": "write"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: read
+          permission-security_events: write
       - id: octoscan
         name: Run octoscan
         uses: synacktiv/action-octoscan@6b1cf2343893dfb9e5f75652388bd2dc83f456b0
@@ -1221,19 +1170,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -1290,19 +1235,15 @@ jobs:
       PACKAGE_JSON_PATH: ${{ inputs.working_directory }}/package.json
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -1454,19 +1395,15 @@ jobs:
       docker_publish_matrix: ${{ steps.docker_publish.outputs.result }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -1725,19 +1662,15 @@ jobs:
       python_sbom: ${{ inputs.generate_sbom }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -1838,19 +1771,15 @@ jobs:
       rust_toolchain: ${{steps.rust_version.outputs.value || 'stable' }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -1924,19 +1853,15 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -1991,19 +1916,15 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -2167,19 +2088,15 @@ jobs:
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -2376,19 +2293,15 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -2509,19 +2422,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -2642,19 +2551,14 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: read
       - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
@@ -2694,20 +2598,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "pages": "write",
-              "contents": "write",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-pages: write
+          permission-contents: write
       - name: Download npm docs artifact from last run
         uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
@@ -2751,19 +2650,15 @@ jobs:
       packages: read
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -3292,19 +3187,15 @@ jobs:
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -3534,19 +3425,15 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -3612,19 +3499,15 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -3712,19 +3595,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -3808,19 +3687,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -3890,19 +3765,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -3960,19 +3831,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -3992,21 +3859,16 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "metadata": "read",
-              "contents": "read",
-              "issues": "read",
-              "pull_requests": "write"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: read
+          permission-issues: read
+          permission-pull-requests: write
       - name: Setup Node.js
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         env:
@@ -4079,19 +3941,14 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "write",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: write
       - name: Delete draft GitHub release
         run: gh release delete --yes "${GITHUB_HEAD_REF}" || true
         env:
@@ -4125,19 +3982,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -4157,19 +4010,14 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "write",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: write
       - name: Delete draft GitHub release
         run: gh release delete --yes "${GITHUB_HEAD_REF}" || true
         env:
@@ -4225,19 +4073,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -4257,19 +4101,14 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "write",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: write
       - name: Download release notes
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -4331,19 +4170,15 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -4411,19 +4246,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -4504,19 +4335,15 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -4574,19 +4401,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -4641,19 +4464,15 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -4737,19 +4556,15 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -4827,19 +4642,15 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -4918,19 +4729,15 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -5004,19 +4811,15 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -5092,19 +4895,15 @@ jobs:
     environment: ${{ matrix.environment }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "read",
-              "metadata": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-metadata: read
+          owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
@@ -5642,20 +5441,15 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@v2.1.4
         if: inputs.app_id
         id: gh_app_token
         with:
-          app_id: ${{ inputs.app_id }}
-          installation_retrieval_mode: ${{ inputs.token_retrieval_mode }}
-          installation_retrieval_payload: ${{ inputs.token_retrieval_payload }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permissions: |-
-            {
-              "contents": "write",
-              "metadata": "read",
-              "pull_requests": "read"
-            }
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: write
+          permission-pull-requests: read
       - name: Get the PR state
         id: get-pr
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
