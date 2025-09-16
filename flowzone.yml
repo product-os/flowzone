@@ -1936,7 +1936,7 @@ jobs:
             }
 
             core.setOutput('private', json.private);
-            if (json.scripts.doc != null) {
+            if (json.scripts?.doc != null) {
               core.setOutput('docs', 'true');
             }
 
