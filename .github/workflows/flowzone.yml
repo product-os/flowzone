@@ -294,7 +294,7 @@ jobs:
             false
           fi
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -344,7 +344,7 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -413,7 +413,7 @@ jobs:
               "Switching to Rulesets is required to allow GitHub Apps to bypass branch rules.\n\n" +
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -676,7 +676,7 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -849,7 +849,7 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -986,7 +986,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -1037,7 +1037,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -1065,7 +1065,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -1170,7 +1170,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -1235,7 +1235,7 @@ jobs:
       PACKAGE_JSON_PATH: ${{ inputs.working_directory }}/package.json
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -1395,7 +1395,7 @@ jobs:
       docker_publish_matrix: ${{ steps.docker_publish.outputs.result }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -1662,7 +1662,7 @@ jobs:
       python_sbom: ${{ inputs.generate_sbom }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -1771,7 +1771,7 @@ jobs:
       rust_toolchain: ${{steps.rust_version.outputs.value || 'stable' }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -1853,7 +1853,7 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -1916,7 +1916,7 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -2088,7 +2088,7 @@ jobs:
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -2293,7 +2293,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -2422,7 +2422,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -2551,7 +2551,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -2598,7 +2598,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -2650,7 +2650,7 @@ jobs:
       packages: read
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -3187,7 +3187,7 @@ jobs:
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -3425,7 +3425,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -3499,7 +3499,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -3595,7 +3595,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -3687,7 +3687,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -3765,7 +3765,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -3831,7 +3831,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -3859,7 +3859,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -3941,7 +3941,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -3982,7 +3982,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4010,7 +4010,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -4073,7 +4073,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4101,7 +4101,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -4170,7 +4170,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4246,7 +4246,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4335,7 +4335,7 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4401,7 +4401,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4464,7 +4464,7 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4556,7 +4556,7 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4642,7 +4642,7 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4729,7 +4729,7 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4811,7 +4811,7 @@ jobs:
             Please contact a member of the organization for assistance."
           exit 1
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -4895,7 +4895,7 @@ jobs:
     environment: ${{ matrix.environment }}
     steps:
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id && github.event.repository.private
         id: checkout_token
         with:
@@ -5441,7 +5441,7 @@ jobs:
     permissions: {}
     steps:
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@v2.1.4
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
         if: inputs.app_id
         id: gh_app_token
         with:
