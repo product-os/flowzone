@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update aws-actions/configure-aws-credentials action to v5
+      hash: a8d3451843ab92c54ac2f2f0fa28019df82bdccf
+      body: |
+        Update aws-actions/configure-aws-credentials from 4.3.1 to 5.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.0.4
+  title: ""
+  date: 2025-09-16T17:10:13.232Z
+- commits:
     - subject: Allow package.jsons without a `scripts`
       hash: d79861ea3dd32918feb5d128df7f982c1165a132
       body: ""
