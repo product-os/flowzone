@@ -2559,6 +2559,7 @@ jobs:
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-metadata: read
           permission-contents: read
+          permission-actions: read
       - name: Download npm artifact from last run
         uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
         with:
