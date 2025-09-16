@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/setup-node action to v5
+      hash: e49329c06fc8d24415073abac1c0ceee4f74793e
+      body: |
+        Update actions/setup-node from 4.4.0 to 5.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 21.0.13
+  title: ""
+  date: 2025-09-16T13:09:01.911Z
+- commits:
     - subject: Update dependency docker/buildx to v0.28.0
       hash: aae245a52f73204cca3d72ada266cb30d597e8d9
       body: |
