@@ -3069,6 +3069,7 @@ jobs:
           <<: *getGitHubAppTokenWith
           permission-contents: read
           permission-metadata: read
+          permission-actions: read
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
