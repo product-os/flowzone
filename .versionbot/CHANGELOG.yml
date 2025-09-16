@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node to v24.8.0
+      hash: 5b3e935c36cb42515789fc3301be2a4abcd5c1a7
+      body: |
+        Update node from 24.7.0 to 24.8.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.0.2
+  title: ""
+  date: 2025-09-16T16:08:57.791Z
+- commits:
     - subject: Pin actions/create-github-app-token action to 6701853
       hash: d20c61f0abf31e1386708ee3355084c743d80d9c
       body: |
