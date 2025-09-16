@@ -179,19 +179,6 @@ jobs:
       # Required: false
       app_id: ${{ vars.FLOWZONE_APP_ID || vars.APP_ID }}
 
-      # The mode used to retrieve the installation for which the token will be requested.
-      # One of 'id', 'organization', 'repository', 'user'.
-      # See https://github.com/tibdex/github-app-token for more info.
-      # Type: string
-      # Required: false
-      token_retrieval_mode: organization
-
-      # The payload used to retrieve the installation token, based on the token retrieval mode.
-      # See https://github.com/tibdex/github-app-token for more info.
-      # Type: string
-      # Required: false
-      token_retrieval_payload: ${{ github.repository_owner }}
-
       # Timeout for the job(s).
       # Type: number
       # Required: false
