@@ -1,4 +1,23 @@
 - commits:
+    - subject: Switch to official actions/create-github-app-token
+      hash: 4f3bb3cc5e52c3707b8104d051053dfbf8a859b7
+      body: |
+        tibdex/github-app-token has been deprecated
+
+        This means we have to deprecate the following fields:
+        - token_retrieval_mode
+        - token_retrieval_payload
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.0.0
+  title: ""
+  date: 2025-09-16T14:56:27.245Z
+- commits:
     - subject: Update actions/github-script action to v7.1.0
       hash: e6c8405bb0b152c0573b4c78b6c8ae875ec73ba8
       body: |
