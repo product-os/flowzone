@@ -356,7 +356,7 @@ jobs:
           permission-pull-requests: read
       - name: Reject HEAD branches containing merge commits
         if: github.event.pull_request.state == 'open'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: json
@@ -371,7 +371,7 @@ jobs:
             }
       - name: Reject merge commits that do not include the HEAD commit as a parent
         if: github.event.pull_request.merged
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: json
@@ -390,7 +390,7 @@ jobs:
               throw new Error('Non-linear history detected - HEAD branch commit is not a parent of the merge commit');
             }
       - name: Check for legacy branch protection
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open'
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -481,7 +481,7 @@ jobs:
             "$(npm root -g)"/versionist/scripts/generate-changelog.sh .
           fi
       - name: Run balena-versionist
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         if: inputs.disable_versioning != true
         id: versionist
         env:
@@ -511,7 +511,7 @@ jobs:
         id: create_tree
         env:
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           script: |
@@ -572,7 +572,7 @@ jobs:
           MESSAGE: ${{ steps.versionist.outputs.tag }}
           TREE_SHA: ${{ steps.create_tree.outputs.sha }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: json
@@ -594,7 +594,7 @@ jobs:
           TAG: ${{ steps.versionist.outputs.tag }}
           MESSAGE: ${{ steps.versionist.outputs.tag }}
           SHA: ${{ steps.create_commit.outputs.sha }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: json
@@ -614,7 +614,7 @@ jobs:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: heads/${{ github.base_ref }}
           SHA: ${{ steps.create_commit.outputs.sha }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: json
@@ -634,7 +634,7 @@ jobs:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: refs/tags/${{ steps.versionist.outputs.tag }}
           SHA: ${{ steps.create_tag.outputs.sha }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: json
@@ -688,7 +688,7 @@ jobs:
       - name: Format release notes
         id: format_release_notes
         continue-on-error: true
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: string
@@ -752,7 +752,7 @@ jobs:
             }
       - name: Generate short release note
         id: short_release_notes
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           USER_DEFINED: ${{ steps.format_release_notes.outputs.body }}
           CURRENT_TAG: ${{ needs.versioned_source.outputs.tag }}
@@ -912,7 +912,7 @@ jobs:
           TAG: production-${{ steps.timestamp.outputs.datetime }}
           MESSAGE: production-${{ steps.timestamp.outputs.datetime }}
           SHA: ${{ needs.versioned_source.outputs.commit_sha }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: json
@@ -934,7 +934,7 @@ jobs:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: refs/tags/production-${{ steps.timestamp.outputs.datetime }}
           SHA: ${{ steps.create_tag.outputs.sha }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           result-encoding: json
@@ -1081,7 +1081,7 @@ jobs:
           filter_triggers: allnopr
           disable_rules: shellcheck,local-action,runner-label,dangerous-write,dangerous-checkout
       - name: Upload SARIF file to GitHub
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         continue-on-error: true
         env:
           sarif_file: ${{ steps.octoscan.outputs.sarif_output }}
@@ -1120,7 +1120,7 @@ jobs:
     steps:
       - name: List files in project root
         id: project-root
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           REF: ${{ github.event.pull_request.head.sha || github.sha }}
         with:
@@ -1142,7 +1142,7 @@ jobs:
         env:
           WORKING_DIRECTORY: ${{ inputs.working_directory }}
           REF: ${{ github.event.pull_request.head.sha || github.sha }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           github-token: ${{ github.token }}
           result-encoding: json
@@ -1263,7 +1263,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Process package.json
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         id: package_json
         with:
           result-encoding: json
@@ -1346,7 +1346,7 @@ jobs:
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Set Node.js versions
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         id: node_versions
         env:
           NODE_VERSIONS: ${{ toJSON(steps.*.outputs.node_version) }}
@@ -1434,7 +1434,7 @@ jobs:
           cache-binary: ${{ github.repository != 'product-os/flowzone' }}
       - name: Pre-process Docker bake files
         id: docker_bake
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           TEMP_BAKE_FILE: ${{ runner.temp }}/docker-bake.json
           BAKE_TARGETS: ${{ inputs.bake_targets }}
@@ -1498,7 +1498,7 @@ jobs:
       - name: Build docker test matrix
         id: docker_test
         if: steps.docker_bake.outputs.result != ''
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           PLATFORM_SLUG_MAP: |
             {
@@ -1565,7 +1565,7 @@ jobs:
           inputs.docker_images != '' &&
           join(fromJSON(steps.docker_bake.outputs.targets)) != '' &&
           steps.docker_bake.outputs.result != ''
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           PLATFORM_SLUG_MAP: |
             {
@@ -1800,7 +1800,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - id: cargo_targets
         name: Build JSON list from comma-separated input
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           result-encoding: json
           script: |
@@ -1882,7 +1882,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - id: balena_slugs
         name: Build JSON list from comma-separated input
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           result-encoding: json
           script: |
@@ -1945,7 +1945,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Create base64 encoded auth header
         id: auth_header
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
         with:
@@ -1966,7 +1966,7 @@ jobs:
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
         name: Build JSON list from comma-separated input
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           result-encoding: json
           script: |
@@ -1992,7 +1992,7 @@ jobs:
       - id: custom_publish_values
         if: contains(inputs.custom_publish_matrix, '{') != true
         name: Build JSON list from comma-separated input
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           result-encoding: json
           script: |
@@ -2018,7 +2018,7 @@ jobs:
       - id: custom_finalize_values
         if: contains(inputs.custom_finalize_matrix, '{') != true
         name: Build JSON list from comma-separated input
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           result-encoding: json
           script: |
@@ -2125,7 +2125,7 @@ jobs:
           contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yaml') ||
           contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yml') ||
           contains(needs.file_list.outputs.workdir, 'aws-cf-templates.json')
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           result-encoding: json
           script: |
@@ -2169,7 +2169,7 @@ jobs:
       - name: Validate CloudFormation input
         id: validate_input
         if: inputs.cloudformation_templates != '' && steps.validate_files.outputs.enabled != 'true'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           result-encoding: json
           script: |
@@ -2205,7 +2205,7 @@ jobs:
       - name: Generate stacks matrix
         id: cloudformation_stacks
         if: steps.validate_files.outputs.enabled == 'true' || steps.validate_input.outputs.enabled == 'true'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -2679,7 +2679,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Sanitize docker strings
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         id: strings
         env:
           TARGET: ${{ matrix.target }}
@@ -2744,7 +2744,7 @@ jobs:
           cache-binary: ${{ github.repository != 'product-os/flowzone' }}
       - id: native_platforms
         name: Build JSON list from comma-separated input
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           result-encoding: json
           script: |
@@ -2951,7 +2951,7 @@ jobs:
       LOCAL_TAG: localhost:5000/sut:latest
     steps:
       - name: Sanitize docker strings
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         id: strings
         env:
           TARGET: ${{ matrix.target }}
@@ -3216,7 +3216,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Sanitize docker strings
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         id: strings
         env:
           TARGET: ${{ matrix.target }}
@@ -4494,7 +4494,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Create base64 encoded auth header
         id: auth_header
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
         with:
@@ -4586,7 +4586,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Create base64 encoded auth header
         id: auth_header
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
         with:
@@ -4672,7 +4672,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Create base64 encoded auth header
         id: auth_header
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
         with:
@@ -4759,7 +4759,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Create base64 encoded auth header
         id: auth_header
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
         with:
@@ -4841,7 +4841,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Create base64 encoded auth header
         id: auth_header
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
         with:
@@ -5453,7 +5453,7 @@ jobs:
           permission-pull-requests: read
       - name: Get the PR state
         id: get-pr
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           result-encoding: json
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -5467,7 +5467,7 @@ jobs:
       - name: Check if branch has rules
         if: ${{ fromJSON(steps.get-pr.outputs.result).draft == false }}
         id: get-branch-rules
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           result-encoding: json
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
