@@ -2894,7 +2894,7 @@ jobs:
       - name: Export common env vars
         run: |
           echo "DOCKER_BAKE_FILE=${{ runner.temp }}/docker-bake.json" >> "${GITHUB_ENV}"
-          echo "DOCKER_TAR=${{ runner.temp }}/docker.tar" >> "${GITHUB_ENV}"
+          echo "DOCKER_TAR=${{ runner.temp }}/docker-${{ matrix.target_slug }}-${{ matrix.platform_slug }}.tar" >> "${GITHUB_ENV}"
 
           echo "COMPOSE_PROJECT_NAME=${{ github.run_id }}" >> "${GITHUB_ENV}"
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> "${GITHUB_ENV}"
@@ -3160,23 +3160,20 @@ jobs:
         with:
           path: ${{ runner.temp }}
           pattern: docker-${{ matrix.target_slug }}-*
+          merge-multiple: true
       - name: Decompress artifacts
-        env:
-          PATH_PREFIX: ${{ runner.temp }}/docker-${{ matrix.target_slug }}
         run: |
           # shellcheck disable=SC2043
           for platform in ${{ matrix.platform_slugs }}
           do
-            zstd -vd "${PATH_PREFIX}-${platform}/docker.tar.zst"
+            zstd -vd "${{ runner.temp }}/docker-${{ matrix.target_slug }}-${platform}.tar.zst"
           done
       - name: Create local manifest
-        env:
-          PATH_PREFIX: ${{ runner.temp }}/docker-${{ matrix.target_slug }}
         run: |
           # shellcheck disable=SC2043
           for platform in ${{ matrix.platform_slugs }}
           do
-            tar="${PATH_PREFIX}-${platform}/docker.tar"
+            tar="${{ runner.temp }}/docker-${{ matrix.target_slug }}-${platform}.tar"
             platform_tag="${LOCAL_TAG}-${platform}"
 
             skopeo copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
