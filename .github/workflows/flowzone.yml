@@ -336,7 +336,7 @@ jobs:
       author: ${{ steps.create_commit.outputs.author }}
       author_email: ${{ steps.create_commit.outputs.author_email }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
-      depth: ${{ steps.git_describe.outputs.depth || 0 }}
+      has_submodules: ${{ steps.git_describe.outputs.has_submodules || 'false' }}
     env:
       GH_DEBUG: "true"
       GH_PAGER: cat
@@ -452,9 +452,9 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
           if [[ "$(git submodule)" = "" ]]; then
-            echo "depth=1" >> "${GITHUB_OUTPUT}"
+            echo "has_submodules=false" >> "${GITHUB_OUTPUT}"
           else
-            echo "depth=0" >> "${GITHUB_OUTPUT}"
+            echo "has_submodules=true" >> "${GITHUB_OUTPUT}"
           fi
       - name: Setup Node.js
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
@@ -999,9 +999,9 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
@@ -1050,9 +1050,9 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
@@ -1183,12 +1183,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1248,12 +1261,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1408,12 +1434,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1675,12 +1714,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1784,12 +1836,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1866,12 +1931,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1929,12 +2007,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1943,26 +2034,20 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Create base64 encoded auth header
-        id: auth_header
+      - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
+          REF: ${{ github.ref }}
         with:
-          result-encoding: string
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
             const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            core.setSecret(authHeader);
-            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
-            return authHeader;
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
-          REF: ${{ github.ref }}
-        run: |
-          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
-          git checkout FETCH_HEAD -- .github
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
         name: Build JSON list from comma-separated input
@@ -2101,12 +2186,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2306,12 +2404,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2435,12 +2546,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2664,12 +2788,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3201,12 +3338,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3439,12 +3589,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3513,12 +3676,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3609,12 +3785,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3701,12 +3890,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3779,12 +3981,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3845,12 +4060,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3996,12 +4224,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4087,12 +4328,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4184,12 +4438,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4260,12 +4527,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4349,12 +4629,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4415,12 +4708,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4478,12 +4784,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4492,26 +4811,20 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Create base64 encoded auth header
-        id: auth_header
+      - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
+          REF: ${{ github.ref }}
         with:
-          result-encoding: string
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
             const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            core.setSecret(authHeader);
-            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
-            return authHeader;
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
-          REF: ${{ github.ref }}
-        run: |
-          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
-          git checkout FETCH_HEAD -- .github
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4570,12 +4883,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4584,26 +4910,20 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Create base64 encoded auth header
-        id: auth_header
+      - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
+          REF: ${{ github.ref }}
         with:
-          result-encoding: string
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
             const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            core.setSecret(authHeader);
-            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
-            return authHeader;
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
-          REF: ${{ github.ref }}
-        run: |
-          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
-          git checkout FETCH_HEAD -- .github
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4656,12 +4976,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4670,26 +5003,20 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Create base64 encoded auth header
-        id: auth_header
+      - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
+          REF: ${{ github.ref }}
         with:
-          result-encoding: string
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
             const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            core.setSecret(authHeader);
-            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
-            return authHeader;
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
-          REF: ${{ github.ref }}
-        run: |
-          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
-          git checkout FETCH_HEAD -- .github
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -4743,12 +5070,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4757,26 +5097,20 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Create base64 encoded auth header
-        id: auth_header
+      - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
+          REF: ${{ github.ref }}
         with:
-          result-encoding: string
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
             const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            core.setSecret(authHeader);
-            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
-            return authHeader;
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
-          REF: ${{ github.ref }}
-        run: |
-          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
-          git checkout FETCH_HEAD -- .github
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -4825,12 +5159,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4839,26 +5186,20 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Create base64 encoded auth header
-        id: auth_header
+      - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
+          REF: ${{ github.ref }}
         with:
-          result-encoding: string
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
             const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            core.setSecret(authHeader);
-            core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
-            return authHeader;
-      - name: Reset .github directory to ${{ github.ref }}
-        env:
-          AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
-          REF: ${{ github.ref }}
-        run: |
-          git -c "${AUTH_CONFIG}" fetch origin "${REF}"
-          git checkout FETCH_HEAD -- .github
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - uses: ./.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}
@@ -4909,12 +5250,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         if: needs.versioned_source.outputs.sha
         with:
-          fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
-          fetch-tags: true
-          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: needs.versioned_source.outputs.has_submodules == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { execSync } = require('child_process');
+            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}

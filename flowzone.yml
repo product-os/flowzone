@@ -152,12 +152,14 @@
     uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
     if: needs.versioned_source.outputs.sha
     with:
-      # Should be 0 (full depth) if submodules are present, otherwise 1
-      fetch-depth: ${{ needs.versioned_source.outputs.depth || 0 }}
+      # Fetch depth 1 for maximum speed, we only need the single commit.
+      fetch-depth: 1
       # Note that fetch-tags is not currently working as described if fetch depth != 0
       # https://github.com/actions/checkout/issues/1781
-      fetch-tags: true
-      submodules: "recursive"
+      fetch-tags: false
+      # Submodules will be cloned manually in a subsequent step if required.
+      submodules: false
+      # This ref was pushed by the versioned source job.
       ref: ${{ needs.versioned_source.outputs.sha }}
       <<: *checkoutAuth
 
@@ -174,42 +176,55 @@
     run: |
       git update-ref "refs/tags/${TAG}" "${SHA}"
 
-  # Create base64 encoded auth header for use in git CLI commands.
-  # Required github.token with contents: read
-  - &createAuthHeader
-    name: Create base64 encoded auth header
-    id: auth_header
-    uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
-    env:
-      GIT_AUTH_TOKEN: ${{ github.token }}
-    with:
-      result-encoding: string
-      script: |
-        const token = process.env.GIT_AUTH_TOKEN;
-        const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-        core.setSecret(authHeader);
-        core.setOutput('config', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`);
-        return authHeader;
-
   # Reset the .github directory to the GitHub ref.
   # For security, this is the tip of BASE if the event is pull_request_target
   # or the merge commit if the PR is internal.
-  # Depends on createAuthHeader.
   - &resetGithubDirectory
     name: Reset .github directory to ${{ github.ref }}
+    uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
     env:
-      AUTH_CONFIG: ${{ steps.auth_header.outputs.config }}
+      GIT_AUTH_TOKEN: ${{ github.token }}
       REF: ${{ github.ref }}
-    # Use git-c for non-persistent credential configuration
-    #
-    # The git -c option sets a configuration value for a single Git command invocation.
-    # It does not modify any configuration files or persist the setting beyond this specific command.
-    #
-    # This approach ensures that the authentication credentials are used securely for this
-    # specific operation without risk of unintended persistence or exposure in configuration files.
-    run: |
-      git -c "${AUTH_CONFIG}" fetch origin "${REF}"
-      git checkout FETCH_HEAD -- .github
+    with:
+      # Use git-c for non-persistent credential configuration
+      #
+      # The git -c option sets a configuration value for a single Git command invocation.
+      # It does not modify any configuration files or persist the setting beyond this specific command.
+      #
+      # This approach ensures that the authentication credentials are used securely for this
+      # specific operation without risk of unintended persistence or exposure in configuration files.
+      script: |
+        const token = process.env.GIT_AUTH_TOKEN;
+        const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+        const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+        const { execSync } = require('child_process');
+        execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+        execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
+
+  # Checkout submodules if required.
+  - &checkoutSubmodules
+    name: Checkout submodules
+    uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+    if: needs.versioned_source.outputs.has_submodules == 'true'
+    env:
+      # Here we must use the app token to account for private submodules.
+      GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+    with:
+      # Use git-c for non-persistent credential configuration
+      #
+      # The git -c option sets a configuration value for a single Git command invocation.
+      # It does not modify any configuration files or persist the setting beyond this specific command.
+      #
+      # This approach ensures that the authentication credentials are used securely for this
+      # specific operation without risk of unintended persistence or exposure in configuration files.
+      script: |
+        const token = process.env.GIT_AUTH_TOKEN;
+        const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+        const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+        const { execSync } = require('child_process');
+        execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
 
   - &loginWithDockerHub
     name: Login to Docker Hub
@@ -1061,8 +1076,7 @@ jobs:
       author: ${{ steps.create_commit.outputs.author }}
       author_email: ${{ steps.create_commit.outputs.author_email }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
-      # Should be 0 (full) if git submodules are present, otherwise for minimal fetch depth.
-      depth: ${{ steps.git_describe.outputs.depth || 0 }}
+      has_submodules: ${{ steps.git_describe.outputs.has_submodules || 'false' }}
 
     env:
       <<: *gitHubCliEnvironment
@@ -1165,9 +1179,9 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
           if [[ "$(git submodule)" = "" ]]; then
-            echo "depth=1" >> "${GITHUB_OUTPUT}"
+            echo "has_submodules=false" >> "${GITHUB_OUTPUT}"
           else
-            echo "depth=0" >> "${GITHUB_OUTPUT}"
+            echo "has_submodules=true" >> "${GITHUB_OUTPUT}"
           fi
 
       - *setupNode
@@ -1677,6 +1691,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      # - *checkoutSubmodules # actionlint does not need submodules
       - *updateVersionedTagRef
 
       # https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md
@@ -1719,6 +1734,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      # - *checkoutSubmodules # octoscan does not need submodules
       - *updateVersionedTagRef
 
       - <<: *getGitHubAppToken
@@ -1872,6 +1888,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       # https://github.com/actions/setup-python
@@ -1918,6 +1935,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - name: Process package.json
@@ -2057,6 +2075,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - <<: *setupBuildx
@@ -2357,6 +2376,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - name: Identify Poetry project
@@ -2445,6 +2465,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - id: cargo_targets
@@ -2500,6 +2521,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - id: balena_slugs
@@ -2534,12 +2556,12 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
       # or the merge commit if the PR is internal
-      - *createAuthHeader
       - *resetGithubDirectory
 
       # FIXME: remove this handling of deprecated comma-separated values
@@ -2651,6 +2673,7 @@ jobs:
 
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - name: Install yaml module
@@ -2844,6 +2867,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - <<: *setupNode
@@ -2964,6 +2988,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - <<: *setupNode
@@ -3181,6 +3206,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - *sanitizeDockerStrings
@@ -3516,6 +3542,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - *sanitizeDockerStrings
@@ -3590,6 +3617,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - uses: balena-io/deploy-to-balena-action@f7d434197ec7d57218da93bf9c720e4c14c6b197 # v2.0.131
@@ -3649,6 +3677,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - <<: *setupPython
@@ -3724,6 +3753,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - *setupPython
@@ -3780,6 +3810,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - *setupPython
@@ -3819,6 +3850,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - *setupPython
@@ -3863,6 +3895,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - <<: *getGitHubAppToken
@@ -3992,6 +4025,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - <<: *getGitHubAppToken
@@ -4057,6 +4091,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - <<: *getGitHubAppToken
@@ -4135,6 +4170,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - name: Set up toolchain ${{ matrix.target }}
@@ -4194,6 +4230,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - name: Set up toolchain
@@ -4254,6 +4291,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - name: Set up toolchain ${{ matrix.target }}
@@ -4303,6 +4341,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - name: Set up toolchain
@@ -4347,12 +4386,12 @@ jobs:
 
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
       # or the merge commit if the PR is internal
-      - *createAuthHeader
       - *resetGithubDirectory
 
       - name: Set the matrix value env var
@@ -4403,12 +4442,12 @@ jobs:
 
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
       # or the merge commit if the PR is internal
-      - *createAuthHeader
       - *resetGithubDirectory
 
       - name: Set the matrix value env var
@@ -4452,12 +4491,12 @@ jobs:
 
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
       # or the merge commit if the PR is internal
-      - *createAuthHeader
       - *resetGithubDirectory
 
       - name: Set the matrix value env var
@@ -4500,12 +4539,12 @@ jobs:
 
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
       # or the merge commit if the PR is internal
-      - *createAuthHeader
       - *resetGithubDirectory
 
       - uses: ./.github/actions/clean
@@ -4542,12 +4581,12 @@ jobs:
 
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
       # For security, this is the tip of BASE if the event is pull_request_target
       # or the merge commit if the PR is internal
-      - *createAuthHeader
       - *resetGithubDirectory
 
       - uses: ./.github/actions/always
@@ -4599,6 +4638,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
+      - *checkoutSubmodules
       - *updateVersionedTagRef
 
       - *setupAwsCli
