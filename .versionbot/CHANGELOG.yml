@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update tonistiigi/binfmt Docker tag to v10
+      hash: 833fc4a44778f82e486218303613cd3fe2603c59
+      body: |
+        Update tonistiigi/binfmt from qemu-9.2.2-52 to qemu-10.0.4-56
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.0.9
+  title: ""
+  date: 2025-09-18T22:08:44.956Z
+- commits:
     - subject: Update actions/github-script action to v8
       hash: 8860db7fd41c8cf415e2a6ef7d8df8377298a37c
       body: |
