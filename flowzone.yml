@@ -138,7 +138,6 @@
       app-id: ${{ inputs.app_id }}
       private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
       permission-contents: read
-      permission-metadata: read
       # Get org/namespace access for private submodule cloning
       owner: ${{ github.repository_owner }}
 
@@ -1027,7 +1026,6 @@ jobs:
           <<: *getGitHubAppTokenWith
           # pull_requests: write is required to create or update pull request comments
           permission-contents: read
-          permission-metadata: read
           permission-issues: read
           permission-pull-requests: write
 
@@ -1089,7 +1087,6 @@ jobs:
           # This GitHub App should also be added to exceptions in branch rulesets in order to
           # bypass branch rules and push versioned commits directly to the main branch.
           # administration: read is required to check for legacy branch protection rules and can be removed eventually.
-          permission-metadata: read
           permission-administration: read
           permission-contents: write
           permission-pull-requests: read
@@ -1386,7 +1383,6 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           permission-contents: read
-          permission-metadata: read
           permission-pull-requests: read
 
       # Get Renovate release notes from PR body, massage a little and draft a comment.
@@ -1572,7 +1568,6 @@ jobs:
           # pull_requests: write is required to create or update pull request comments
           permission-contents: write
           permission-issues: read
-          permission-metadata: read
           permission-pull-requests: write
 
       - uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
@@ -1742,7 +1737,6 @@ jobs:
           <<: *getGitHubAppTokenWith
           # security_events: write is required to upload SARIF files
           permission-contents: read
-          permission-metadata: read
           permission-security_events: write
 
       # https://github.com/synacktiv/octoscan
@@ -3093,7 +3087,6 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           permission-contents: read
-          permission-metadata: read
           permission-actions: read
 
       # https://github.com/dawidd6/action-download-artifact
@@ -3147,7 +3140,6 @@ jobs:
           # need permissions to push to docs branch and publish to github pages
           permission-pages: write
           permission-contents: write
-          permission-metadata: read
 
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
@@ -3902,7 +3894,6 @@ jobs:
         with:
           <<: *getGitHubAppTokenWith
           # pull_requests: write is required to create or update pull request comments
-          permission-metadata: read
           permission-contents: read
           permission-issues: read
           permission-pull-requests: write
@@ -3994,7 +3985,6 @@ jobs:
           <<: *getGitHubAppTokenWith
           # contents:write permissions for managing releases
           permission-contents: write
-          permission-metadata: read
 
       - *deleteDraftGitHubRelease
 
@@ -4033,7 +4023,6 @@ jobs:
           <<: *getGitHubAppTokenWith
           # contents:write permissions for managing releases
           permission-contents: write
-          permission-metadata: read
 
       - *deleteDraftGitHubRelease
 
@@ -4099,7 +4088,6 @@ jobs:
           <<: *getGitHubAppTokenWith
           # contents:write permissions for managing releases
           permission-contents: write
-          permission-metadata: read
 
       # https://github.com/actions/download-artifact
       - name: Download release notes
@@ -5010,7 +4998,6 @@ jobs:
           <<: *getGitHubAppTokenWith
           # contents: write is required to enable automerge on a pull request
           permission-contents: write
-          permission-metadata: read
           permission-pull-requests: read
 
       # Get the current state of the PR so we can check if it is in draft state

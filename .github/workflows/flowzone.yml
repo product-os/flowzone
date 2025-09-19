@@ -420,7 +420,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - if: github.event.pull_request.state == 'open'
         name: Checkout pull request head sha
@@ -993,7 +992,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -1044,7 +1042,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -1177,7 +1174,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -1255,7 +1251,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -1428,7 +1423,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -1708,7 +1702,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -1830,7 +1823,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -1925,7 +1917,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -2001,7 +1992,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -2180,7 +2170,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -2398,7 +2387,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -2540,7 +2528,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -2782,7 +2769,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -3332,7 +3318,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -3583,7 +3568,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -3670,7 +3654,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -3779,7 +3762,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -3884,7 +3866,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -3975,7 +3956,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -4054,7 +4034,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -4218,7 +4197,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -4322,7 +4300,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -4432,7 +4409,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -4521,7 +4497,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -4623,7 +4598,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -4702,7 +4676,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -4778,7 +4751,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -4877,7 +4849,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -4970,7 +4941,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -5064,7 +5034,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -5153,7 +5122,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -5244,7 +5212,6 @@ jobs:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-contents: read
-          permission-metadata: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
