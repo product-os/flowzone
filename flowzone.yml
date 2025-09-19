@@ -197,9 +197,9 @@
         const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
         const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
-        const { execSync } = require('child_process');
-        execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}" --no-recurse-submodules`, { stdio: 'inherit' });
-        execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
+        const { spawnSync } = require('child_process');
+        spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.REF, '--no-recurse-submodules'], { stdio: 'inherit' });
+        spawnSync('git', ['checkout', 'FETCH_HEAD', '--', '.github'], { stdio: 'inherit' });
 
   # Checkout submodules if required.
   - &checkoutSubmodules
@@ -222,8 +222,8 @@
         const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
         const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
-        const { execSync } = require('child_process');
-        execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
+        const { spawnSync } = require('child_process');
+        spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
 
   - &loginWithDockerHub
     name: Login to Docker Hub
