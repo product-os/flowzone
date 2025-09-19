@@ -1,4 +1,20 @@
 - commits:
+    - subject: Checkout submodules as a separate step
+      hash: 6ac443a80eb10d1a6ed98244666e65cc5c3ea304
+      body: |
+        This allows us to clone a depth of 1 by default for
+        all repos which vastly speeds up clone time.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.1.0
+  title: ""
+  date: 2025-09-19T20:14:28.345Z
+- commits:
     - subject: Update tonistiigi/binfmt Docker tag to v10
       hash: 833fc4a44778f82e486218303613cd3fe2603c59
       body: |
