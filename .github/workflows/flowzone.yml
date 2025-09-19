@@ -2603,7 +2603,7 @@ jobs:
     permissions: {}
     steps:
       - name: Download npm artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha }}
@@ -2894,7 +2894,7 @@ jobs:
       - name: Export common env vars
         run: |
           echo "DOCKER_BAKE_FILE=${{ runner.temp }}/docker-bake.json" >> "${GITHUB_ENV}"
-          echo "DOCKER_TAR=${{ runner.temp }}/docker.tar" >> "${GITHUB_ENV}"
+          echo "DOCKER_TAR=${{ runner.temp }}/docker-${{ matrix.target_slug }}-${{ matrix.platform_slug }}.tar" >> "${GITHUB_ENV}"
 
           echo "COMPOSE_PROJECT_NAME=${{ github.run_id }}" >> "${GITHUB_ENV}"
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> "${GITHUB_ENV}"
@@ -3156,27 +3156,24 @@ jobs:
         if: needs.is_docker.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
       - name: Download required artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           path: ${{ runner.temp }}
           pattern: docker-${{ matrix.target_slug }}-*
+          merge-multiple: true
       - name: Decompress artifacts
-        env:
-          PATH_PREFIX: ${{ runner.temp }}/docker-${{ matrix.target_slug }}
         run: |
           # shellcheck disable=SC2043
           for platform in ${{ matrix.platform_slugs }}
           do
-            zstd -vd "${PATH_PREFIX}-${platform}/docker.tar.zst"
+            zstd -vd "${{ runner.temp }}/docker-${{ matrix.target_slug }}-${platform}.tar.zst"
           done
       - name: Create local manifest
-        env:
-          PATH_PREFIX: ${{ runner.temp }}/docker-${{ matrix.target_slug }}
         run: |
           # shellcheck disable=SC2043
           for platform in ${{ matrix.platform_slugs }}
           do
-            tar="${PATH_PREFIX}-${platform}/docker.tar"
+            tar="${{ runner.temp }}/docker-${{ matrix.target_slug }}-${platform}.tar"
             platform_tag="${LOCAL_TAG}-${platform}"
 
             skopeo copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
@@ -4234,13 +4231,13 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Download release artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           path: ${{ runner.temp }}/artifacts
           pattern: gh-release-*
           merge-multiple: true
       - name: Download release notes
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           path: ${{ runner.temp }}
           name: release-notes
@@ -4329,7 +4326,7 @@ jobs:
           permission-metadata: read
           permission-contents: write
       - name: Download release notes
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           path: ${{ runner.temp }}
           name: release-notes
