@@ -2003,19 +2003,6 @@ jobs:
           ref: ${{ needs.versioned_source.outputs.sha }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
-      - name: Checkout submodules
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
-        if: needs.versioned_source.outputs.has_submodules == 'true'
-        env:
-          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
-        with:
-          script: |
-            const token = process.env.GIT_AUTH_TOKEN;
-            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
-
-            const { execSync } = require('child_process');
-            execSync(`git -c "${authConfig}" submodule update --init --recursive --remote`, { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2036,7 +2023,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { execSync } = require('child_process');
-            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}" --no-recurse-submodules`, { stdio: 'inherit' });
             execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
@@ -4795,7 +4782,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { execSync } = require('child_process');
-            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}" --no-recurse-submodules`, { stdio: 'inherit' });
             execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - name: Set the matrix value env var
         shell: bash
@@ -4893,7 +4880,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { execSync } = require('child_process');
-            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}" --no-recurse-submodules`, { stdio: 'inherit' });
             execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - name: Set the matrix value env var
         shell: bash
@@ -4985,7 +4972,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { execSync } = require('child_process');
-            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}" --no-recurse-submodules`, { stdio: 'inherit' });
             execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - name: Set the matrix value env var
         shell: bash
@@ -5078,7 +5065,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { execSync } = require('child_process');
-            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}" --no-recurse-submodules`, { stdio: 'inherit' });
             execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - uses: ./.github/actions/clean
         with:
@@ -5166,7 +5153,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { execSync } = require('child_process');
-            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+            execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}" --no-recurse-submodules`, { stdio: 'inherit' });
             execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
       - uses: ./.github/actions/always
         with:

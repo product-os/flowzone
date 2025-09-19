@@ -198,7 +198,7 @@
         const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
         const { execSync } = require('child_process');
-        execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}"`, { stdio: 'inherit' });
+        execSync(`git -c "${authConfig}" fetch origin "${process.env.REF}" --no-recurse-submodules`, { stdio: 'inherit' });
         execSync('git checkout FETCH_HEAD -- .github', { stdio: 'inherit' });
 
   # Checkout submodules if required.
@@ -2550,7 +2550,7 @@ jobs:
     steps:
       - *getCheckoutToken
       - *checkoutVersionedCommit
-      - *checkoutSubmodules
+      # - *checkoutSubmodules # Submodules are not supported for custom actions
       - *updateVersionedTagRef
 
       # Reset the .github directory to the GitHub ref
