@@ -1,4 +1,31 @@
 - commits:
+    - subject: Use unpacked docker tarball names for platform check
+      hash: 2219f684ea0c9a28280d526c61e5ec8cb373bb17
+      body: |
+        Starting in v5, download-artifact will not create subdirectories
+        when only one artifact matches the pattern. So here we are forcing
+        all artifacts to be downloaded into a single directory for consistency
+        and using the unpacked tarball names for platform checking.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Update actions/download-artifact action to v5
+      hash: 79ffbb437b91a49900720e5774a61a3ee6763585
+      body: |
+        Update actions/download-artifact from 4.3.0 to 5.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.1.1
+  title: ""
+  date: 2025-09-22T17:50:45.252Z
+- commits:
     - subject: Checkout submodules as a separate step
       hash: 6ac443a80eb10d1a6ed98244666e65cc5c3ea304
       body: |
