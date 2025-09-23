@@ -1,4 +1,30 @@
 - commits:
+    - subject: Fetch extra refs so we can list modified files
+      hash: bce521bd926012c70f565c76aa29085657ccef54
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Remove remote flag from submodule checkout
+      hash: 5b922e0cac898d0bcf275037fcdf6e81315acab1
+      body: |
+        We always want to use the pinned submodule,
+        not latest.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.1.2
+  title: ""
+  date: 2025-09-23T15:14:03.550Z
+- commits:
     - subject: Use unpacked docker tarball names for platform check
       hash: 2219f684ea0c9a28280d526c61e5ec8cb373bb17
       body: |
