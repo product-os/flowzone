@@ -225,6 +225,33 @@
         const { spawnSync } = require('child_process');
         spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
 
+  # Fetch base and head refs for local diffs, including submodules if required.
+  - &fetchExtraRefs
+    name: Fetch extra refs for local diffs
+    uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+    # if: needs.versioned_source.outputs.has_submodules == 'true'
+    env:
+      # Here we must use the app token to account for private submodules.
+      GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+      BASE_REF: ${{ github.event.pull_request.base.ref || github.ref }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref || github.event.head_commit.id }}
+    with:
+      # Use git-c for non-persistent credential configuration
+      #
+      # The git -c option sets a configuration value for a single Git command invocation.
+      # It does not modify any configuration files or persist the setting beyond this specific command.
+      #
+      # This approach ensures that the authentication credentials are used securely for this
+      # specific operation without risk of unintended persistence or exposure in configuration files.
+      script: |
+        const token = process.env.GIT_AUTH_TOKEN;
+        const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+        const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+        const { spawnSync } = require('child_process');
+        spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.BASE_REF], { stdio: 'inherit' });
+        spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.HEAD_REF], { stdio: 'inherit' });
+
   - &loginWithDockerHub
     name: Login to Docker Hub
     continue-on-error: true
@@ -2761,6 +2788,8 @@ jobs:
               core.warning(`Failed to parse CloudFormation templates: ${error.message}`);
               core.setOutput('enabled', 'false');
             }
+
+      - *fetchExtraRefs
 
       - name: Generate stacks matrix
         id: cloudformation_stacks
