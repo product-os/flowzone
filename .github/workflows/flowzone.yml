@@ -2272,21 +2272,6 @@ jobs:
               core.warning(`Failed to parse CloudFormation templates: ${error.message}`);
               core.setOutput('enabled', 'false');
             }
-      - name: Fetch extra refs for local diffs
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
-        env:
-          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
-          BASE_REF: ${{ github.event.pull_request.base.ref || github.ref }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref || github.event.head_commit.id }}
-        with:
-          script: |
-            const token = process.env.GIT_AUTH_TOKEN;
-            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
-
-            const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.BASE_REF], { stdio: 'inherit' });
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.HEAD_REF], { stdio: 'inherit' });
       - name: Generate stacks matrix
         id: cloudformation_stacks
         if: steps.validate_files.outputs.enabled == 'true' || steps.validate_input.outputs.enabled == 'true'
@@ -2295,10 +2280,18 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           TEMPLATES_JSON: ${{ steps.validate_files.outputs.result || steps.validate_input.outputs.result }}
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
         with:
           script: |
-            const { execSync } = require('child_process');
-            const { format } = require('util');
+            const { spawnSync } = require('child_process');
+
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            // Fetch the BASE and HEAD refs to ensure we can diff them
+            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.BASE_SHA], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.HEAD_SHA], { stdio: 'inherit' });
 
             // Parse the JSON input
             const stacks = JSON.parse(process.env.TEMPLATES_JSON);
@@ -2318,14 +2311,12 @@ jobs:
 
             // Get modified files between BASE and HEAD
             const getModifiedFiles = () => {
-              const diff = execSync(
-                format('sh -c "git diff --submodule=diff %s %s | sed -rn \'s|^--- a/(.*)$|\\1|p\'"',
-                  process.env.BASE_SHA,
-                  process.env.HEAD_SHA
-                ),
+              const diff = spawnSync(
+                'sh',
+                ['-c', `git diff --submodule=diff ${process.env.BASE_SHA} ${process.env.HEAD_SHA} | sed -rn \'s|^--- a/(.*)$|\\1|p\'`],
                 { encoding: 'utf8' }
               );
-              return diff.split('\n').filter(f => f != null && !!f.trim())
+              return diff.stdout.split('\n').filter(f => f != null && !!f.trim())
             };
 
             let modifiedFiles = getModifiedFiles();
