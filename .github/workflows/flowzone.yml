@@ -1197,7 +1197,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1274,7 +1274,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1446,7 +1446,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1725,7 +1725,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1846,7 +1846,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1940,7 +1940,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2180,7 +2180,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2276,6 +2276,21 @@ jobs:
               core.warning(`Failed to parse CloudFormation templates: ${error.message}`);
               core.setOutput('enabled', 'false');
             }
+      - name: Fetch extra refs for local diffs
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          BASE_REF: ${{ github.event.pull_request.base.ref || github.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref || github.event.head_commit.id }}
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { spawnSync } = require('child_process');
+            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.BASE_REF], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.HEAD_REF], { stdio: 'inherit' });
       - name: Generate stacks matrix
         id: cloudformation_stacks
         if: steps.validate_files.outputs.enabled == 'true' || steps.validate_input.outputs.enabled == 'true'
@@ -2397,7 +2412,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2538,7 +2553,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2779,7 +2794,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3325,7 +3340,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3575,7 +3590,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3661,7 +3676,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3769,7 +3784,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3873,7 +3888,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3963,7 +3978,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4041,7 +4056,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4204,7 +4219,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4307,7 +4322,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4416,7 +4431,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4504,7 +4519,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4605,7 +4620,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4683,7 +4698,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4758,7 +4773,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4856,7 +4871,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4948,7 +4963,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5041,7 +5056,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5129,7 +5144,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5219,7 +5234,7 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--remote'], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
