@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-22 to v22.20.0
+      hash: 6d6655a8a22287dd4d1d6649fe2d74f9dc5ab594
+      body: |
+        Update node-22 from 22.19.0 to 22.20.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.2.1
+  title: ""
+  date: 2025-09-24T14:12:06.743Z
+- commits:
     - subject: Add support for Cargo workspaces
       hash: 99ab9da13ebcef31164ebebb3783042d6e0322eb
       body: >
