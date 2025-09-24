@@ -2507,21 +2507,17 @@ jobs:
 
       - name: Check private
         if: steps.cargo_yml.outputs.enabled == 'true'
-        uses: dangdennis/toml-action@ef528766b9af3dc473cb3f768a1646160ffb2645 # v1.3.0
         id: cargo_publish
-        with:
-          file: "Cargo.toml"
-          field: "package.publish"
-          working-directory: ${{ inputs.working_directory }}
+        run: |
+          RESULT=$(yq -oj Cargo.toml | jq -r '(.package.publish == true) or (.workspace.package.publish == true)')
+          echo "value=$RESULT" >> "${GITHUB_OUTPUT}"
 
       - name: Get MSRV
         if: steps.cargo_yml.outputs.enabled == 'true'
-        uses: dangdennis/toml-action@ef528766b9af3dc473cb3f768a1646160ffb2645 # v1.3.0
         id: rust_version
-        with:
-          file: "Cargo.toml"
-          field: "package.rust-version"
-          working-directory: ${{ inputs.working_directory }}
+        run: |
+          RESULT=$(yq -oj Cargo.toml | jq -r '(.package."rust-version" // .workspace.package."rust-version") | select(. != null)')
+          echo "value=$RESULT" >> "${GITHUB_OUTPUT}"
 
   # check for balena.yml in source
   is_balena:
