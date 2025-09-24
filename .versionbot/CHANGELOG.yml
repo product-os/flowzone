@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update product-os/setup-awscli-action action to v0.0.15
+      hash: 1466ca9cdbbc7acd8869bb893552e94940452e1a
+      body: |
+        Update product-os/setup-awscli-action from 0.0.14 to 0.0.15
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.2.3
+  title: ""
+  date: 2025-09-24T15:10:07.558Z
+- commits:
     - subject: Use the SHAs when fetching extra refs for merge events
       hash: 9e4c802a8135d2067723f54cf845c40337aac928
       body: |
