@@ -1,4 +1,27 @@
 - commits:
+    - subject: Add support for Cargo workspaces
+      hash: 99ab9da13ebcef31164ebebb3783042d6e0322eb
+      body: >
+        This adds support for Cargo’s “Virtual Workspace”:
+        https://doc.rust-lang.org/cargo/reference/workspaces.html
+
+
+        If `Cargo.toml` defines a `[workspace]` section, Flowzone now looks for
+        the fields `publish`, `version` and `rust-version` in the
+        `[workspace.package]` section.
+
+
+        If a `[package]` section exists, it takes precedence over the workspace
+        and the project is assumed to be a regular Cargo crate.
+      footer:
+        Change-type: minor
+        change-type: minor
+      author: Akis Kesoglou
+      nested: []
+  version: 22.2.0
+  title: ""
+  date: 2025-09-24T13:11:20.249Z
+- commits:
     - subject: Fetch extra refs so we can list modified files
       hash: bce521bd926012c70f565c76aa29085657ccef54
       body: ""
