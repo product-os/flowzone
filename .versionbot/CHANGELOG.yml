@@ -1,4 +1,22 @@
 - commits:
+    - subject: Use the SHAs when fetching extra refs for merge events
+      hash: 9e4c802a8135d2067723f54cf845c40337aac928
+      body: |
+        This way it aligns with the same refs being used by the git diff
+        command in the subsequent git diff step.
+
+        Also, the refs may not exist on merge but the SHAs should.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.2.2
+  title: ""
+  date: 2025-09-24T14:36:22.251Z
+- commits:
     - subject: Update dependency node-22 to v22.20.0
       hash: 6d6655a8a22287dd4d1d6649fe2d74f9dc5ab594
       body: |
