@@ -1812,7 +1812,6 @@ jobs:
       cargo_targets: ${{ steps.cargo_targets.outputs.result }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
       cargo_sbom: ${{ inputs.generate_sbom }}
-      cargo_publish: ${{ steps.cargo_publish.outputs.value }}
       rust_toolchain: ${{steps.rust_version.outputs.value || 'stable' }}
     steps:
       - name: Generate GitHub App installation token for checkout
@@ -1878,12 +1877,6 @@ jobs:
           else
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
-      - name: Check private
-        if: steps.cargo_yml.outputs.enabled == 'true'
-        id: cargo_publish
-        run: |
-          RESULT=$(yq -oj Cargo.toml | jq -r '(.package.publish == true) or (.workspace.package.publish == true)')
-          echo "value=$RESULT" >> "${GITHUB_OUTPUT}"
       - name: Get MSRV
         if: steps.cargo_yml.outputs.enabled == 'true'
         id: rust_version
@@ -4441,9 +4434,10 @@ jobs:
         run: cross -v clippy --all-targets --all-features --target ${{ matrix.target }} -- -D warnings
       - name: Run tests for toolchain ${{ matrix.target }}
         run: cross -v test --all-targets --all-features --locked --target ${{ matrix.target }}
+      - name: Set up rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
       - name: Dry-run crate publish
-        if: needs.is_cargo.outputs.cargo_publish != 'false'
-        run: cross -v publish --dry-run
+        run: cargo publish --dry-run --workspace
       - name: Generate metadata
         id: meta
         run: |
@@ -4697,12 +4691,11 @@ jobs:
       - name: Set up toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Publish crate to cargo registry
-        if: needs.is_cargo.outputs.cargo_publish != 'false'
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
-            cargo publish
+            cargo publish --workspace
           fi
   custom_test:
     name: Test custom
