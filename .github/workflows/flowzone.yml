@@ -4374,7 +4374,7 @@ jobs:
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
     outputs:
-      package: ${{ steps.meta.outputs.package }}
+      packages: ${{ steps.meta.outputs.packages }}
       version: ${{ steps.meta.outputs.version }}
       branch_tag: ${{ steps.meta.outputs.branch_tag }}
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
@@ -4441,14 +4441,14 @@ jobs:
       - name: Generate metadata
         id: meta
         run: |
-          package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2; exit}')"
+          packages="$(cargo metadata --no-deps --format-version 1 | jq -c '[.packages[] | .targets[] | select(.kind[] == "bin") | .name]')"
           version="${{ needs.versioned_source.outputs.semver }}"
           branch_tag="$(echo "${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
           {
-            echo "package=${package}" ;
+            echo "packages=${packages}" ;
             echo "version=${version}" ;
             echo "branch_tag=${branch_tag}" ;
             echo "sha_tag=${sha_tag}" ;
@@ -4569,6 +4569,7 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
+        package: ${{ fromJSON(needs.cargo_test.outputs.packages) }}
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
@@ -4622,15 +4623,15 @@ jobs:
       - name: Install LLVM
         run: sudo apt-get install -y llvm
       - name: LLVM strip
-        run: llvm-strip target/${{ matrix.target }}/release/${{ needs.cargo_test.outputs.package }}
+        run: llvm-strip target/${{ matrix.target }}/release/${{ matrix.package }}
       - name: Compress
         run: |
-          tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
+          tar --auto-compress -cvf ${{ matrix.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ matrix.package }}
       - name: Upload artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: gh-release-${{ matrix.target }}
-          path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
+          path: ${{ matrix.package }}-${{ matrix.target }}.tar.gz
           retention-days: 1
   cargo_finalize:
     name: Finalize rust
