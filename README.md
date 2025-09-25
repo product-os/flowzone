@@ -449,7 +449,7 @@ If your `pyproject.toml` file contains a `packages` property under `[tool.poetry
 
 If a `Cargo.toml` file is found in the root of the repository, Flowzone will run tests on the code formatting (using `cargo fmt` and `cargo clippy`) and then run tests for a set of target architectures given in `cargo_targets`. In order to disable Rust testing, set the value of that variable to `""`.
 
-Flowzone fully supports [Cargo Workspaces](https://doc.rust-lang.org/cargo/reference/workspaces.html). Note though that Flowzone follows Cargo's default behavior so if your `Cargo.toml` specifies a workspace with a root package, Flowzone will test and publish that root package alone, ignoring other crates in your workspace. In the future, Flowzone may get support for publishing all workspace crates regardless of the existence of a root package.
+Flowzone fully supports [Cargo Workspaces](https://doc.rust-lang.org/cargo/reference/workspaces.html). Note that Flowzone uses [cargo publish --workspace](https://doc.rust-lang.org/cargo/commands/cargo-publish.html#package-selection) to decide what to publish. This means that all workspace member crates will be published by default unless the set `publish=false` in their respective `Cargo.toml` manifests.
 
 For cross building targets, flowzone uses [cross](https://github.com/cross-rs/cross). This also means that further build options (e.g. [pre-build hooks](https://github.com/cross-rs/cross#pre-build-hook)) can be defined by adding a `Cross.toml` file to the local repository.
 
