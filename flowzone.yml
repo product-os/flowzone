@@ -1188,7 +1188,7 @@ jobs:
         run: |
           npm install -g \
             balena-versionist@~0.15.0 \
-            versionist@^8.0.0
+            versionist@^8.1.0
 
           npm ls -g
           echo "NODE_PATH=$(npm root --quiet -g)" >>"${GITHUB_ENV}"
@@ -1453,7 +1453,6 @@ jobs:
 
               return releaseNotes;
             }
-
 
       # https://octokit.github.io/rest.js/v21/#repos-list-tags
       # https://docs.github.com/en/rest/git/refs
@@ -2453,7 +2452,6 @@ jobs:
       cargo_targets: ${{ steps.cargo_targets.outputs.result }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
       cargo_sbom: ${{ inputs.generate_sbom }}
-      cargo_publish: ${{ steps.cargo_publish.outputs.value }}
       rust_toolchain: ${{steps.rust_version.outputs.value || 'stable' }}
 
     steps:
@@ -2477,13 +2475,6 @@ jobs:
           else
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
           fi
-
-      - name: Check private
-        if: steps.cargo_yml.outputs.enabled == 'true'
-        id: cargo_publish
-        run: |
-          RESULT=$(yq -oj Cargo.toml | jq -r '(.package.publish == true) or (.workspace.package.publish == true)')
-          echo "value=$RESULT" >> "${GITHUB_OUTPUT}"
 
       - name: Get MSRV
         if: steps.cargo_yml.outputs.enabled == 'true'
@@ -2660,7 +2651,6 @@ jobs:
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
 
     steps:
-
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4156,7 +4146,7 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
 
     outputs:
-      package: ${{ steps.meta.outputs.package }}
+      packages: ${{ steps.meta.outputs.packages }}
       version: ${{ steps.meta.outputs.version }}
       branch_tag: ${{ steps.meta.outputs.branch_tag }}
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
@@ -4187,21 +4177,23 @@ jobs:
       - name: Run tests for toolchain ${{ matrix.target }}
         run: cross -v test --all-targets --all-features --locked --target ${{ matrix.target }}
 
+      - name: Set up rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Dry-run crate publish
-        if: needs.is_cargo.outputs.cargo_publish != 'false'
-        run: cross -v publish --dry-run
+        run: cargo publish --dry-run --workspace
 
       - name: Generate metadata
         id: meta
         run: |
-          package="$(grep '^name = \"' Cargo.toml | awk -F[\"\"] '{print $2; exit}')"
+          packages="$(cargo metadata --no-deps --format-version 1 | jq -c '[.packages[] | .targets[] | select(.kind[] == "bin") | .name]')"
           version="${{ needs.versioned_source.outputs.semver }}"
           branch_tag="$(echo "${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
           sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
           version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
 
           {
-            echo "package=${package}" ;
+            echo "packages=${packages}" ;
             echo "version=${version}" ;
             echo "branch_tag=${branch_tag}" ;
             echo "sha_tag=${sha_tag}" ;
@@ -4282,6 +4274,7 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
+        package: ${{ fromJSON(needs.cargo_test.outputs.packages) }}
 
     steps:
       - *getCheckoutToken
@@ -4305,17 +4298,17 @@ jobs:
         run: sudo apt-get install -y llvm
 
       - name: LLVM strip
-        run: llvm-strip target/${{ matrix.target }}/release/${{ needs.cargo_test.outputs.package }}
+        run: llvm-strip target/${{ matrix.target }}/release/${{ matrix.package }}
 
       - name: Compress
         run: |
-          tar --auto-compress -cvf ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ needs.cargo_test.outputs.package }}
+          tar --auto-compress -cvf ${{ matrix.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ matrix.package }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: gh-release-${{ matrix.target }}
-          path: ${{ needs.cargo_test.outputs.package }}-${{ matrix.target }}.tar.gz
+          path: ${{ matrix.package }}-${{ matrix.target }}.tar.gz
           retention-days: 1
 
   cargo_finalize:
@@ -4343,12 +4336,11 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Publish crate to cargo registry
-        if: needs.is_cargo.outputs.cargo_publish != 'false'
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
-            cargo publish
+            cargo publish --workspace
           fi
 
   ###################################################
