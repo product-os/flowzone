@@ -1434,7 +1434,7 @@ jobs:
                 .map(line => `* ${line.replace(/^> -|^-/, '')}`)
                 .join('\n');
 
-              const releaseNotesComment = `#release-notes ${pr.title}\n\nNotable changes\n* [only keep the important and rephrase, leaving this in place will avoid posting release notes]\n${notableChangesFormatted}\n\n${releaseNotesBody}`;
+              const releaseNotesComment = `#release-notes ${pr.title}\n\nNotable changes\n* [only keep the important and rephrase, leaving this in place will allow the comment to be clobbered]\n${notableChangesFormatted}\n\n${releaseNotesBody}`;
               core.setOutput('comment', releaseNotesComment);
 
               return releaseNotes;
@@ -1584,7 +1584,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "flowzone-app[bot]"
-          body-regex: '\* \[only keep the important and rephrase(, leaving this in place will avoid posting release notes)?\]'
+          body-regex: '\* \[only keep the important and rephrase(, leaving this in place will allow the comment to be clobbered)?\]'
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
       # to prevent clobbering edited comments, run only if no previous draft comment is
@@ -1646,8 +1646,8 @@ jobs:
           vars.ZULIP_TOPIC != '' &&
           vars.ZULIP_BOT_EMAIL != '' &&
           vars.ZULIP_API_URL != '' &&
-          steps.find_edited_comment.outcome == 'success' &&
-          steps.find_edited_comment.outputs.comment-id == ''
+          steps.find_comment.outputs.comment-body
+
         continue-on-error: true
         with:
           api-key: ${{ secrets.ZULIP_API_KEY }}
