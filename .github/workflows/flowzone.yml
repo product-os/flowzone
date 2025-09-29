@@ -703,7 +703,7 @@ jobs:
             }
 
             // Check if PR is from Renovate
-            const isRenovate = pr.user.type === 'Bot' && pr.user.login.includes('renovate');
+            const isRenovate = (pr.labels || []).some(label => ((typeof label === 'string' ? label : label.name) || '').toLowerCase() === 'renovate');
             const renovateReleaseNotesMatch = pr.body.match(/### Release Notes([\s\S]*?)---/);
 
             if (isRenovate && renovateReleaseNotesMatch != null && renovateReleaseNotesMatch[1]) {
