@@ -1,4 +1,18 @@
 - commits:
+    - subject: Remove insecure secret handling from examples
+      hash: 042530835b6f3f198713870b2788099c2490969d
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.4.1
+  title: ""
+  date: 2025-10-02T17:22:28.808Z
+- commits:
     - subject: Always post deploy notes even for unedited release notes
       hash: 41442bd97569adb3d74fa225e6bcaf77f192835d
       body: |
