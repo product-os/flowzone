@@ -20,12 +20,10 @@ runs:
       env:
         GITHUB: ${{ toJSON(github) }}
         INPUTS: ${{ inputs.json }}
-        SECRETS: ${{ inputs.secrets }}
         VARIABLES: ${{ toJSON(inputs.variables) }}
       run: |
         echo "${GITHUB}"
         echo "${INPUTS}"
-        echo "${SECRETS}"
         echo "${VARIABLES}"
 
     - name: Create artifact
