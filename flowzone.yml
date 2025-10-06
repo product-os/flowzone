@@ -1090,6 +1090,8 @@ jobs:
           permission-administration: read
           permission-contents: write
           permission-pull-requests: read
+          # Get permissions for all repos in this org for nested changelogs
+          owner: ${{ github.repository_owner }}
 
       - *rejectNonLinearHead
       - *rejectNonLinearMerge
