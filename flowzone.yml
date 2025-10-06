@@ -1964,27 +1964,19 @@ jobs:
 
       - <<: *setupNode
         env:
-          # renovate: datasource=node-version depName=node packageName=node-18.x
-          NODE_VERSION: 18.20.8
+          # renovate: datasource=node-version depName=node packageName=node-20.x
+          NODE_VERSION: 20.19.5
 
       # https://www.npmjs.com/package/check-engine
       - &checkEngine
         name: Check engine
-        id: check_engine_18
+        id: check_engine_20
         run: |
           node_version="$(node --version)"
           if npx -q -y -- check-engine
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
-
-      - <<: *setupNode
-        env:
-          # renovate: datasource=node-version depName=node packageName=node-20.x
-          NODE_VERSION: 20.19.5
-
-      - <<: *checkEngine
-        id: check_engine_20
 
       - <<: *setupNode
         env:
