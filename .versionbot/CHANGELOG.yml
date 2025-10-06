@@ -1,4 +1,16 @@
 - commits:
+    - subject: Remove node18 from the test matrix as it has been EOL for 6 months now
+      hash: a194b94fbba0ebfdadea1495fa2b842a883dbc26
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 22.4.3
+  title: ""
+  date: 2025-10-06T13:45:12.943Z
+- commits:
     - subject: Update peter-evans/dockerhub-description action to v5
       hash: cc70426574bfe281c2c362708d63352e03ccffdf
       body: |
