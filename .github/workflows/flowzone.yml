@@ -354,6 +354,7 @@ jobs:
           permission-administration: read
           permission-contents: write
           permission-pull-requests: read
+          owner: ${{ github.repository_owner }}
       - name: Reject HEAD branches containing merge commits
         if: github.event.pull_request.state == 'open'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
