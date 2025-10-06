@@ -1312,20 +1312,6 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         env:
-          NODE_VERSION: 18.20.8
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Check engine
-        id: check_engine_18
-        run: |
-          node_version="$(node --version)"
-          if npx -q -y -- check-engine
-          then
-            echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
-          fi
-      - name: Setup Node.js
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
-        env:
           NODE_VERSION: 20.19.5
         with:
           node-version: ${{ env.NODE_VERSION }}
