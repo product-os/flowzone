@@ -1,4 +1,20 @@
 - commits:
+    - subject: Update versionist token to include all repos in org
+      hash: 0c4d116258aa831cd5c4288a0e7daa4a51e90d86
+      body: |
+        This is required for nested changelogs and was broken
+        when we moved to the new token action.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.4.4
+  title: ""
+  date: 2025-10-06T14:56:18.641Z
+- commits:
     - subject: Remove node18 from the test matrix as it has been EOL for 6 months now
       hash: a194b94fbba0ebfdadea1495fa2b842a883dbc26
       body: ""
