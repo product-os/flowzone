@@ -1,4 +1,24 @@
 - commits:
+    - subject: Remove superfluous KVM check from docker tests
+      hash: c2bf06a454e6d43a64b12d1472364450d5457014
+      body: |
+        This test was never required and only for debugging.
+        Now it only serves to slow down the build as we know
+        which runners have KVM and which do not.
+
+        Custom workflows that require KVM can perform
+        their own checks.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.4.5
+  title: ""
+  date: 2025-10-08T23:34:31.302Z
+- commits:
     - subject: Update versionist token to include all repos in org
       hash: 0c4d116258aa831cd5c4288a0e7daa4a51e90d86
       body: |
