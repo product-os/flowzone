@@ -1,4 +1,18 @@
 - commits:
+    - subject: Handle empty PR body when formatting release notes
+      hash: 93b572e90c3b0fcfa96551c1eb35ba2eb4f80777
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.4.6
+  title: ""
+  date: 2025-10-09T16:00:22.069Z
+- commits:
     - subject: Remove superfluous KVM check from docker tests
       hash: c2bf06a454e6d43a64b12d1472364450d5457014
       body: |
