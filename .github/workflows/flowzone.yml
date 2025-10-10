@@ -1025,7 +1025,7 @@ jobs:
           args: -color -ignore="custom label for self-hosted runner" -ignore=":info:" -ignore=":style:"
   octoscan:
     name: octoscan
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     if: |
       github.event_name != 'pull_request_target' &&
