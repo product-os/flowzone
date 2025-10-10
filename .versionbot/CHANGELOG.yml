@@ -1,4 +1,20 @@
 - commits:
+    - subject: Run octoscan on GitHub hosted runners
+      hash: 84b5b865963e6e64b3a854d98bf27fa73dadae63
+      body: |
+        The octoscan docker image is not multiarch so
+        it can't run on self-hosted ARM.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.4.7
+  title: ""
+  date: 2025-10-10T15:32:25.590Z
+- commits:
     - subject: Handle empty PR body when formatting release notes
       hash: 93b572e90c3b0fcfa96551c1eb35ba2eb4f80777
       body: ""
