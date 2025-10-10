@@ -1713,7 +1713,8 @@ jobs:
   # https://github.com/synacktiv/action-octoscan
   octoscan:
     name: octoscan
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    # The octoscan image is not multiarch, so force hosted runners for now
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     # Pull request target events will have the wrong ref and sha for SARIF uploads so skip it for now.
     # Do not run on PR close events.
