@@ -1741,9 +1741,9 @@ jobs:
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
-          # security_events: write is required to upload SARIF files
+          # security-events: write is required to upload SARIF files
           permission-contents: read
-          permission-security_events: write
+          permission-security-events: write
 
       # https://github.com/synacktiv/octoscan
       # https://github.com/synacktiv/action-octoscan

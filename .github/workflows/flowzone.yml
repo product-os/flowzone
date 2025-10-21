@@ -1074,7 +1074,7 @@ jobs:
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           permission-metadata: read
           permission-contents: read
-          permission-security_events: write
+          permission-security-events: write
       - id: octoscan
         name: Run octoscan
         uses: synacktiv/action-octoscan@6b1cf2343893dfb9e5f75652388bd2dc83f456b0
