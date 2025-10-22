@@ -1,4 +1,19 @@
 - commits:
+    - subject: "Fix: Correct invalid permission name on get token"
+      hash: e78939c60d436144fe55f5c15c514fd088ff5555
+      body: |
+        Resolves Unexpected input(s) 'permission-security_events'
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.4.8
+  title: ""
+  date: 2025-10-22T00:15:30.821Z
+- commits:
     - subject: Run octoscan on GitHub hosted runners
       hash: 84b5b865963e6e64b3a854d98bf27fa73dadae63
       body: |
