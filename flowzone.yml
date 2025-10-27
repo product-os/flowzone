@@ -1703,7 +1703,7 @@ jobs:
       # https://github.com/rhysd/actionlint/blob/main/docs/usage.md
       - name: Check workflow files
         # https://github.com/rhysd/actionlint/releases
-        uses: docker://rhysd/actionlint:1.7.7
+        uses: docker://rhysd/actionlint:1.7.8
         with:
           # Ignore errors on unknown runner custom runner labels
           # Ignore shellcheck info and style messages for now
@@ -3582,7 +3582,7 @@ jobs:
       - *checkoutSubmodules
       - *updateVersionedTagRef
 
-      - uses: balena-io/deploy-to-balena-action@f7d434197ec7d57218da93bf9c720e4c14c6b197 # v2.0.131
+      - uses: balena-io/deploy-to-balena-action@63a685c4b9c898c38e66776284a78c4e50ec8c97 # v2.0.136
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
@@ -3878,7 +3878,7 @@ jobs:
         if: |
           contains(needs.file_list.outputs.workdir, 'README.md') &&
           inputs.docusaurus_website != false
-        uses: product-os/docusaurus-builder@e5eb6419809d16faf3d622159b4e6da5f6ee688c # v2.1.40
+        uses: product-os/docusaurus-builder@1dc1d508e848614b94b0e1b45c6836d659c1bcc6 # v2.1.43
         with:
           repo: ${{ github.event.repository.name }}
           org: ${{ github.repository_owner }}
@@ -4013,7 +4013,7 @@ jobs:
 
       # https://github.com/softprops/action-gh-release
       - name: Publish draft release
-        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
+        uses: softprops/action-gh-release@62c96d0c4e8a889135c1f3a25910db8dbe0e85f7 # v2.3.4
         with:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
