@@ -37,6 +37,12 @@
 		{
 			"matchPackageNames": ["docker/buildx"],
 			"allowedVersions": "!/v0.26.0/"
+		},
+		{
+			"description": "Disable grouping for GitHub Actions updates",
+			"matchManagers": ["github-actions"],
+			"matchUpdateTypes": ["minor", "patch", "digest"],
+			"groupName": null
 		}
 	],
 	"customManagers": [
