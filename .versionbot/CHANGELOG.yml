@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency python to 3.14
+      hash: 79c42fb3e4d07229252015b8dff025f325d0f2bb
+      body: |
+        Update python from 3.13.9 to 3.14.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.4.19
+  title: ""
+  date: 2025-10-27T23:05:39.148Z
+- commits:
     - subject: Update aws-actions/configure-aws-credentials action to v5.1.0
       hash: ec71fc6553f6aaffdaa422fa92621d046cccdf62
       body: |
