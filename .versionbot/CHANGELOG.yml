@@ -1,4 +1,21 @@
 - commits:
+    - subject: Disable grouping of GitHub Actions updates
+      hash: 82310f991365f592fb1cc25e5c4cddfd9a7aae52
+      body: |
+        These update types are grouped by default in this org,
+        but since Flowzone is a GitHub Actions shared workflow, we want
+        them separated.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.4.11
+  title: ""
+  date: 2025-10-27T15:40:01.422Z
+- commits:
     - subject: Update dependency docker/buildx to v0.29.1
       hash: cb4308b1323077e82041af2ea8988f2ea827b47d
       body: |
