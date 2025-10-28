@@ -3025,7 +3025,7 @@ jobs:
     steps:
       # https://github.com/actions/download-artifact
       - name: Download npm artifact
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha }}
@@ -3393,7 +3393,7 @@ jobs:
 
       # https://github.com/actions/download-artifact
       - name: Download required artifacts
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: ${{ runner.temp }}
           pattern: docker-${{ matrix.target_slug }}-*
@@ -3998,7 +3998,7 @@ jobs:
 
       # https://github.com/actions/download-artifact
       - name: Download release artifacts
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: ${{ runner.temp }}/artifacts
           pattern: gh-release-*
@@ -4006,7 +4006,7 @@ jobs:
 
       # https://github.com/actions/download-artifact
       - name: Download release notes
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: ${{ runner.temp }}
           name: release-notes
@@ -4061,7 +4061,7 @@ jobs:
 
       # https://github.com/actions/download-artifact
       - name: Download release notes
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: ${{ runner.temp }}
           name: release-notes
