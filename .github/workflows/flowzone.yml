@@ -823,7 +823,7 @@ jobs:
 
             return releaseNotes;
       - name: Upload release notes file
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-notes
           path: ${{ runner.temp }}/release-notes.txt
@@ -2458,7 +2458,7 @@ jobs:
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: npm-${{ github.event.pull_request.head.sha }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
@@ -2472,7 +2472,7 @@ jobs:
         run: tar --auto-compress -cvf ${{ runner.temp }}/docs.tar.zst ./docs
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_docs == 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: docs-${{ github.event.pull_request.head.sha }}
           path: ${{ runner.temp }}/docs.tar.zst
@@ -2543,7 +2543,7 @@ jobs:
         run: |
           npx @cyclonedx/cyclonedx-npm --output-file=${{ runner.temp }}/npm-sbom.json
       - name: Publish SBOM artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: gh-release-sbom-npm
           path: ${{ runner.temp }}/npm-sbom.json
@@ -2987,7 +2987,7 @@ jobs:
           docker compose logs
       - name: Upload artifacts
         if: needs.is_docker.outputs.docker_publish_matrix != ''
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: docker-${{ matrix.target_slug }}-${{ matrix.platform_slug }}
           path: ${{ env.DOCKER_TAR }}.zst
@@ -3760,7 +3760,7 @@ jobs:
       - name: Generate SBOM
         run: cyclonedx-py -r -i ./poetry.lock --format xml -o ${{ runner.temp }}/python-sbom.xml
       - name: Publish SBOM artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: gh-release-sbom-python
           path: ${{ runner.temp }}/python-sbom.xml
@@ -4489,7 +4489,7 @@ jobs:
           cargo cyclonedx --override-filename bom
           mv bom.xml ${{ runner.temp }}/cargo-sbom.xml
       - name: Publish SBOM artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: gh-release-sbom-cargo
           path: ${{ runner.temp }}/cargo-sbom.xml
@@ -4597,7 +4597,7 @@ jobs:
         run: |
           tar --auto-compress -cvf ${{ matrix.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ matrix.package }}
       - name: Upload artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: gh-release-${{ matrix.target }}
           path: ${{ matrix.package }}-${{ matrix.target }}.tar.gz
