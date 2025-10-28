@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update GitHub Artifact Actions to v5
+      hash: 4aaae4aa9386a842fec9cb020ed034a01193e836
+      body: |
+        Update actions/upload-artifact from 4.6.2 to 5.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.4.26
+  title: ""
+  date: 2025-10-28T06:07:45.122Z
+- commits:
     - subject: Update pre-commit hook renovatebot/pre-commit-hooks to v41.163.1
       hash: 470b033b38cc0b5f8286f4510d69b5f1328964c3
       body: |
