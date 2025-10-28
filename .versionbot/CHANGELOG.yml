@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/setup-node action to v6
+      hash: 65fa5a2126a4fa4ca32c9875682087f297f4024e
+      body: |
+        Update actions/setup-node from 5.0.0 to 6.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.4.22
+  title: ""
+  date: 2025-10-28T02:37:56.538Z
+- commits:
     - subject: Update pre-commit hook renovatebot/pre-commit-hooks to v41.124.1
       hash: 6180dd6488b4e8b08c0d0fbcb13966b0ff644118
       body: |
