@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/metadata-action action to v5.9.0
+      hash: 96dc3114f05f0acd1ce231c763a9b21138edfa34
+      body: |
+        Update docker/metadata-action from 5.8.0 to 5.9.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.4.31
+  title: ""
+  date: 2025-11-04T16:07:18.882Z
+- commits:
     - subject: "patch: fix sbom generator for sbom"
       hash: d363c4719109bb6350da118a0847a13f007694ad
       body: ""
