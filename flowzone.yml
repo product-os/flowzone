@@ -423,7 +423,7 @@
       flavor: |
         latest=false
 
-  - &dockerDraftMetadata  # https://github.com/docker/metadata-action
+  - &dockerDraftMetadata # https://github.com/docker/metadata-action
     <<: *dockerTestMetadata
     id: draft_meta
     with:
@@ -438,7 +438,7 @@
         prefix=${{ steps.strings.outputs.prefix }}
         suffix=${{ steps.strings.outputs.suffix }}
 
-  - &dockerFinalMetadata  # https://github.com/docker/metadata-action
+  - &dockerFinalMetadata # https://github.com/docker/metadata-action
     <<: *dockerTestMetadata
     id: final_meta
     with:
@@ -1361,11 +1361,11 @@ jobs:
     # Only generate release notes on pull_request events, and only if versioning is enabled.
     # Skip pull_request closed events, but allow pull_request merged events.
     if: |
-        inputs.disable_versioning != true &&
-        (
-          github.event.pull_request.state == 'open' ||
-          github.event.pull_request.merged == true
-        )
+      inputs.disable_versioning != true &&
+      (
+        github.event.pull_request.state == 'open' ||
+        github.event.pull_request.merged == true
+      )
 
     <<: *rootWorkingDirectory
 
@@ -2985,7 +2985,7 @@ jobs:
 
       - name: Generate SBOM
         run: |
-          npx @cyclonedx/cyclonedx-npm --output-file=${{ runner.temp }}/npm-sbom.json
+          npm sbom --sbom-format cyclonedx > ${{ runner.temp }}/npm-sbom.json
 
       - <<: *publishSBOMArtifacts
         with:
