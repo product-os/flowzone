@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-qemu-action action to v3.7.0
+      hash: 2e7bc3521d075a4de0105b4cfea001a0c4961f3e
+      body: |
+        Update docker/setup-qemu-action from 3.6.0 to 3.7.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.4.32
+  title: ""
+  date: 2025-11-05T16:12:37.050Z
+- commits:
     - subject: Update docker/metadata-action action to v5.9.0
       hash: 96dc3114f05f0acd1ce231c763a9b21138edfa34
       body: |
