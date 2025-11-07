@@ -1,4 +1,33 @@
 - commits:
+    - subject: Skip reset of .github directory for internal branches
+      hash: 93437d6e4e881be8f801fb3ffa24598d0a8c365f
+      body: |
+        This security measure is only required for pull_request_target
+        to ensure that any custom actions are run from the BASE branch and
+        not the HEAD branch.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Skip tags on fetch for .github directory reset
+      hash: 82a4c1fa884ba4c3bcd00358e1e166e5e4b1f2f2
+      body: |
+        Fetching tags is slow and we don't need tags to reset
+        the .github directory.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.5.0
+  title: ""
+  date: 2025-11-07T15:10:33.732Z
+- commits:
     - subject: Update docker/setup-qemu-action action to v3.7.0
       hash: 2e7bc3521d075a4de0105b4cfea001a0c4961f3e
       body: |
