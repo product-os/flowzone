@@ -1992,6 +1992,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: github.event_name == 'pull_request_target'
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
           REF: ${{ github.ref }}
@@ -4734,6 +4735,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: github.event_name == 'pull_request_target'
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
           REF: ${{ github.ref }}
@@ -4832,6 +4834,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: github.event_name == 'pull_request_target'
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
           REF: ${{ github.ref }}
@@ -4924,6 +4927,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: github.event_name == 'pull_request_target'
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
           REF: ${{ github.ref }}
@@ -5017,6 +5021,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: github.event_name == 'pull_request_target'
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
           REF: ${{ github.ref }}
@@ -5105,6 +5110,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Reset .github directory to ${{ github.ref }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        if: github.event_name == 'pull_request_target'
         env:
           GIT_AUTH_TOKEN: ${{ github.token }}
           REF: ${{ github.ref }}
