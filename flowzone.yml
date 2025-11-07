@@ -177,10 +177,10 @@
 
   # Reset the .github directory to the GitHub ref.
   # For security, this is the tip of BASE if the event is pull_request_target
-  # or the merge commit if the PR is internal.
   - &resetGithubDirectory
     name: Reset .github directory to ${{ github.ref }}
     uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+    if: github.event_name == 'pull_request_target'
     env:
       GIT_AUTH_TOKEN: ${{ github.token }}
       REF: ${{ github.ref }}
@@ -198,7 +198,7 @@
         const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
         const { spawnSync } = require('child_process');
-        spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.REF, '--no-recurse-submodules'], { stdio: 'inherit' });
+        spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.REF, '--no-recurse-submodules', '--no-tags'], { stdio: 'inherit' });
         spawnSync('git', ['checkout', 'FETCH_HEAD', '--', '.github'], { stdio: 'inherit' });
 
   # Checkout submodules if required.
