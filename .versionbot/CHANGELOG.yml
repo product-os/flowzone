@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update softprops/action-gh-release action to v2.4.2
+      hash: 55ff2c1c619997c98de106419644be752ea311b2
+      body: |
+        Update softprops/action-gh-release from 2.4.1 to 2.4.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.5.1
+  title: ""
+  date: 2025-11-08T20:06:56.119Z
+- commits:
     - subject: Skip reset of .github directory for internal branches
       hash: 93437d6e4e881be8f801fb3ffa24598d0a8c365f
       body: |
