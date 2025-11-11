@@ -459,7 +459,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         env:
-          NODE_VERSION: 24.11.0
+          NODE_VERSION: 24.11.1
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install versioning tools
@@ -2395,7 +2395,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         env:
-          NODE_VERSION: 24.11.0
+          NODE_VERSION: 24.11.1
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2404,7 +2404,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         env:
-          NODE_VERSION: 24.11.0
+          NODE_VERSION: 24.11.1
         with:
           node-version: ${{ matrix.node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2536,7 +2536,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         env:
-          NODE_VERSION: 24.11.0
+          NODE_VERSION: 24.11.1
         with:
           node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
       - run: npm install
@@ -2596,7 +2596,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         env:
-          NODE_VERSION: 24.11.0
+          NODE_VERSION: 24.11.1
         with:
           node-version: ${{ needs.is_npm.outputs.max_node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -2656,7 +2656,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         env:
-          NODE_VERSION: 24.11.0
+          NODE_VERSION: 24.11.1
         with:
           node-version: ${{ needs.is_npm.outputs.max_node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -4029,7 +4029,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         env:
-          NODE_VERSION: 24.11.0
+          NODE_VERSION: 24.11.1
         with:
           node-version: ${{ needs.is_npm.outputs.max_node_version || '22.x' }}
       - name: Docusaurus Builder
