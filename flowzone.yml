@@ -1996,7 +1996,7 @@ jobs:
       - <<: *setupNode
         env:
           # renovate: datasource=node-version depName=node-24 packageName=node-24.x
-          NODE_VERSION: 24.11.0
+          NODE_VERSION: 24.11.1
 
       - <<: *checkEngine
         id: check_engine_24
