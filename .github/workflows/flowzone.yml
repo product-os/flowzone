@@ -3831,6 +3831,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      TRUFFLEHOG_VERSION: 3.91.0
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
@@ -3898,14 +3900,22 @@ jobs:
       - name: Run poetry install
         run: |
           poetry install
-      - name: Publish draft release
+      - name: Build package
+        run: |
+          poetry version ${{ steps.python_meta.outputs.version_tag }}
+          poetry build
+      - name: Scan package with TruffleHog
+        run: |
+          docker run --rm -v "$(pwd)/dist:/scan-target" \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
+      - name: Publish package
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TEST_TOKEN }}
         run: |
-          poetry version ${{ steps.python_meta.outputs.version_tag }}
           poetry config repositories.test-pypi https://test.pypi.org/legacy/
           poetry config pypi-token.test-pypi $PYPI_TOKEN
-          poetry publish --build -r test-pypi
+          poetry publish -r test-pypi
   python_finalize:
     name: Finalize python
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3921,6 +3931,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      TRUFFLEHOG_VERSION: 3.91.0
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
@@ -3973,12 +3985,20 @@ jobs:
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
         with:
           poetry-version: 1.5.1
+      - name: Build package
+        run: |
+          poetry build
+      - name: Scan package with TruffleHog
+        run: |
+          docker run --rm -v "$(pwd)/dist:/scan-target" \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
       - name: Publish release
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
           poetry config pypi-token.pypi $PYPI_TOKEN
-          poetry publish --build
+          poetry publish
   website_publish:
     name: Publish website
     runs-on: ${{fromJSON(inputs.runs_on)}}
