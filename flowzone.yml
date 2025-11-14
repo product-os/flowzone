@@ -2843,6 +2843,10 @@ jobs:
       matrix:
         node_version: ${{ fromJSON(needs.is_npm.outputs.node_versions) }}
 
+    env:
+      # renovate: datasource=github-releases depName=trufflesecurity/trufflehog
+      TRUFFLEHOG_VERSION: "3.91.0"
+
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -2929,6 +2933,13 @@ jobs:
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
+
+      - name: Scan npm package with trufflehog
+        if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
+        run: |
+          docker run --rm -v ${{ runner.temp }}/npm-pack:/scan-target \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifact
@@ -3073,7 +3084,9 @@ jobs:
     <<: *rootWorkingDirectory
 
     permissions: {}
-
+    env:
+      # renovate: datasource=github-releases depName=trufflesecurity/trufflehog
+      TRUFFLEHOG_VERSION: 3.91.0
     steps:
       - <<: *getGitHubAppToken
         with:
@@ -3101,6 +3114,13 @@ jobs:
           # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
           node-version: "${{ needs.is_npm.outputs.max_node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
+
+      - name: Scan final npm package release with trufflehog
+        run: |
+          pack="$(ls ${{ runner.temp }}/*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          docker run --rm -v "${pack}":/scan-target \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
 
       - name: Publish final release
         env:
@@ -3183,6 +3203,8 @@ jobs:
 
     env:
       DOCKER_BUILDKIT: "1"
+      # renovate: datasource=github-releases depName=trufflesecurity/trufflehog
+      TRUFFLEHOG_VERSION: "3.91.0"
 
     permissions:
       packages: read # pull private base images from ghcr.io
@@ -3321,6 +3343,17 @@ jobs:
         if: needs.is_docker.outputs.docker_publish_matrix != ''
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
+
+      - name: Scan image tar with trufflehog
+        if: needs.is_docker.outputs.docker_publish_matrix != ''
+        run: |
+          docker run --rm -v ${DOCKER_TAR}:/tmp/image.tar \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            docker --image file:///tmp/image.tar --results=verified --fail
+
+      - name: Compress image tar
+        if: needs.is_docker.outputs.docker_publish_matrix != ''
+        run: |
           zstd -v ${DOCKER_TAR}
 
       # run docker compose tests and print the logs from all services
@@ -3767,6 +3800,10 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    env:
+      # renovate: datasource=github-releases depName=trufflesecurity/trufflehog
+      TRUFFLEHOG_VERSION: "3.91.0"
+
     permissions: {}
 
     steps:
@@ -3784,14 +3821,24 @@ jobs:
         run: |
           poetry install
 
-      - name: Publish draft release
+      - name: Build package
+        run: |
+          poetry version ${{ steps.python_meta.outputs.version_tag }}
+          poetry build
+
+      - name: Scan package with TruffleHog
+        run: |
+          docker run --rm -v "$(pwd)/dist:/scan-target" \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
+
+      - name: Publish package
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TEST_TOKEN }}
         run: |
-          poetry version ${{ steps.python_meta.outputs.version_tag }}
           poetry config repositories.test-pypi https://test.pypi.org/legacy/
           poetry config pypi-token.test-pypi $PYPI_TOKEN
-          poetry publish --build -r test-pypi
+          poetry publish -r test-pypi
 
   python_finalize:
     name: Finalize python
@@ -3807,6 +3854,10 @@ jobs:
 
     <<: *customWorkingDirectory
 
+    env:
+      # renovate: datasource=github-releases depName=trufflesecurity/trufflehog
+      TRUFFLEHOG_VERSION: "3.91.0"
+
     permissions: {}
 
     steps:
@@ -3818,12 +3869,22 @@ jobs:
       - *setupPython
       - *setupPoetry
 
+      - name: Build package
+        run: |
+          poetry build
+
+      - name: Scan package with TruffleHog
+        run: |
+          docker run --rm -v "$(pwd)/dist:/scan-target" \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
+
       - name: Publish release
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
           poetry config pypi-token.pypi $PYPI_TOKEN
-          poetry publish --build
+          poetry publish
 
   ###################################################
   # Website
