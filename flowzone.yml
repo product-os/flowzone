@@ -2843,6 +2843,10 @@ jobs:
       matrix:
         node_version: ${{ fromJSON(needs.is_npm.outputs.node_versions) }}
 
+    env:
+      # renovate: datasource=github-releases depName=trufflesecurity/trufflehog
+      TRUFFLEHOG_VERSION: "3.91.0"
+
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -2929,6 +2933,13 @@ jobs:
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
+
+      - name: Scan npm package with trufflehog
+        if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
+        run: |
+          docker run --rm -v ${{ runner.temp }}/npm-pack:/scan-target \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifact
@@ -3073,7 +3084,9 @@ jobs:
     <<: *rootWorkingDirectory
 
     permissions: {}
-
+    env:
+      # renovate: datasource=github-releases depName=trufflesecurity/trufflehog
+      TRUFFLEHOG_VERSION: 3.91.0
     steps:
       - <<: *getGitHubAppToken
         with:
@@ -3101,6 +3114,13 @@ jobs:
           # https://docs.npmjs.com/cli/v9/commands/npm-publish?access
           node-version: "${{ needs.is_npm.outputs.max_node_version }}"
           registry-url: "${{ env.NPM_REGISTRY }}"
+
+      - name: Scan final npm package release with trufflehog
+        run: |
+          pack="$(ls ${{ runner.temp }}/*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          docker run --rm -v "${pack}":/scan-target \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
 
       - name: Publish final release
         env:
