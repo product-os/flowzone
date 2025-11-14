@@ -3183,6 +3183,8 @@ jobs:
 
     env:
       DOCKER_BUILDKIT: "1"
+      # renovate: datasource=github-releases depName=trufflesecurity/trufflehog
+      TRUFFLEHOG_VERSION: "3.91.0"
 
     permissions:
       packages: read # pull private base images from ghcr.io
