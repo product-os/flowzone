@@ -2345,6 +2345,8 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         node_version: ${{ fromJSON(needs.is_npm.outputs.node_versions) }}
+    env:
+      TRUFFLEHOG_VERSION: 3.91.0
     outputs:
       package: ${{ steps.meta.outputs.package }}
       version: ${{ steps.meta.outputs.version }}
@@ -2457,6 +2459,12 @@ jobs:
 
           # FIXME: workaround when `npm pack` for npm 6.x dumps tarball into the current directory because it has no `--pack-destination` flag
           [[ "$(npm --version)" =~ ^6\..* ]] && find . -maxdepth 1 -name '*.tgz' -exec mv {} ${{ runner.temp }}/npm-pack \; || true
+      - name: Scan npm package with trufflehog
+        if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
+        run: |
+          docker run --rm -v ${{ runner.temp }}/npm-pack:/scan-target \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
@@ -2633,6 +2641,8 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
+    env:
+      TRUFFLEHOG_VERSION: 3.91.0
     steps:
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
@@ -2660,6 +2670,12 @@ jobs:
         with:
           node-version: ${{ needs.is_npm.outputs.max_node_version }}
           registry-url: ${{ env.NPM_REGISTRY }}
+      - name: Scan final npm package release with trufflehog
+        run: |
+          pack="$(ls ${{ runner.temp }}/*/*.tgz | sort -t- -n -k3 | tail -n1)"
+          docker run --rm -v "${pack}":/scan-target \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
       - name: Publish final release
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -2731,6 +2747,7 @@ jobs:
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_test_matrix) }}
     env:
       DOCKER_BUILDKIT: "1"
+      TRUFFLEHOG_VERSION: 3.91.0
     permissions:
       packages: read
     steps:
@@ -2980,6 +2997,15 @@ jobs:
         if: needs.is_docker.outputs.docker_publish_matrix != ''
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
+      - name: Scan image tar with trufflehog
+        if: needs.is_docker.outputs.docker_publish_matrix != ''
+        run: |
+          docker run --rm -v ${DOCKER_TAR}:/tmp/image.tar \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            docker --image file:///tmp/image.tar --results=verified --fail
+      - name: Compress image tar
+        if: needs.is_docker.outputs.docker_publish_matrix != ''
+        run: |
           zstd -v ${DOCKER_TAR}
       - name: Run docker compose tests
         if: needs.is_docker.outputs.docker_compose_tests == 'true'
@@ -3805,6 +3831,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      TRUFFLEHOG_VERSION: 3.91.0
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
@@ -3872,14 +3900,22 @@ jobs:
       - name: Run poetry install
         run: |
           poetry install
-      - name: Publish draft release
+      - name: Build package
+        run: |
+          poetry version ${{ steps.python_meta.outputs.version_tag }}
+          poetry build
+      - name: Scan package with TruffleHog
+        run: |
+          docker run --rm -v "$(pwd)/dist:/scan-target" \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
+      - name: Publish package
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TEST_TOKEN }}
         run: |
-          poetry version ${{ steps.python_meta.outputs.version_tag }}
           poetry config repositories.test-pypi https://test.pypi.org/legacy/
           poetry config pypi-token.test-pypi $PYPI_TOKEN
-          poetry publish --build -r test-pypi
+          poetry publish -r test-pypi
   python_finalize:
     name: Finalize python
     runs-on: ${{ fromJSON(inputs.runs_on) }}
@@ -3895,6 +3931,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
+    env:
+      TRUFFLEHOG_VERSION: 3.91.0
     permissions: {}
     steps:
       - name: Generate GitHub App installation token for checkout
@@ -3947,12 +3985,20 @@ jobs:
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
         with:
           poetry-version: 1.5.1
+      - name: Build package
+        run: |
+          poetry build
+      - name: Scan package with TruffleHog
+        run: |
+          docker run --rm -v "$(pwd)/dist:/scan-target" \
+            trufflesecurity/trufflehog:${TRUFFLEHOG_VERSION} \
+            filesystem /scan-target --results=verified --fail
       - name: Publish release
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
           poetry config pypi-token.pypi $PYPI_TOKEN
-          poetry publish --build
+          poetry publish
   website_publish:
     name: Publish website
     runs-on: ${{fromJSON(inputs.runs_on)}}
