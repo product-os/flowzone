@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.30.1
+      hash: cf1f33e9e38a5f03b5b946413f42a477e1cd86ef
+      body: |
+        Update docker/buildx from 0.30.0 to 0.30.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.6.1
+  title: ""
+  date: 2025-11-19T21:06:34.526Z
+- commits:
     - subject: Use trufflehog secret scanner before publish docker image
       hash: 4204eb2c8f7d61a9507c59a35cdbe67c50a181f2
       body: |
