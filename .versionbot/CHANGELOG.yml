@@ -1,4 +1,19 @@
 - commits:
+    - subject: Use trufflehog secret scanner before publish docker image
+      hash: 4204eb2c8f7d61a9507c59a35cdbe67c50a181f2
+      body: |
+        https://balena.fibery.io/Work/Project/Scan-flowzone-build-artefacts-for-leaked-secrets-1856
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: fisehara <harald@balena.io>
+        signed-off-by: fisehara <harald@balena.io>
+      author: fisehara
+      nested: []
+  version: 22.6.0
+  title: ""
+  date: 2025-11-19T20:13:21.658Z
+- commits:
     - subject: Update actions/checkout action to v5.0.1
       hash: a8f295758edc3dd3b24960f924c557180b22a0ea
       body: |
