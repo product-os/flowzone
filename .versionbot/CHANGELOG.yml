@@ -1,4 +1,20 @@
 - commits:
+    - subject: Use the same install method for `npm_test` and `npm_sbom` to avoid sbom
+        issues
+      hash: 0068b04ad258243e43ad3388fa11a4a2b9519cad
+      body: |
+        This means the `npm_sbom` step will now use `npm ci` when appropriate
+        and be more likely to match the output that would actually be used in
+        the generated package/output artifacts
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 22.6.3
+  title: ""
+  date: 2025-11-20T18:45:19.323Z
+- commits:
     - subject: "Hotfix: Disable trufflehog until false-positive handling is
         implemented. Unblocking github checks"
       hash: 6dff275f8d66e59c4b149e92a9add26c6d5a423c
