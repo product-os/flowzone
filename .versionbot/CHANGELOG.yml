@@ -1,4 +1,19 @@
 - commits:
+    - subject: "Hotfix: Disable trufflehog until false-positive handling is
+        implemented. Unblocking github checks"
+      hash: 6dff275f8d66e59c4b149e92a9add26c6d5a423c
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: fisehara <harald@balena.io>
+        signed-off-by: fisehara <harald@balena.io>
+      author: fisehara
+      nested: []
+  version: 22.6.2
+  title: ""
+  date: 2025-11-20T14:40:58.437Z
+- commits:
     - subject: Update dependency docker/buildx to v0.30.1
       hash: cf1f33e9e38a5f03b5b946413f42a477e1cd86ef
       body: |
