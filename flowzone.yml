@@ -2888,7 +2888,8 @@ jobs:
         run: |
           npm run flowzone-preinstall --if-present
 
-      - name: Install dependencies
+      - &installNpmDependencies
+        name: Install dependencies
         # private npm dependencies will fail to install unless NODE_AUTH_TOKEN is set in the environment
         # but to avoid leaking secrets we would also have to disable all scripts, like preinstall and postinstall
         # so only public npm dependencies supported for now
@@ -2981,7 +2982,7 @@ jobs:
         with:
           node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
 
-      - run: npm install
+      - *installNpmDependencies
 
       - name: Generate SBOM
         run: |

@@ -2539,7 +2539,21 @@ jobs:
           NODE_VERSION: 24.11.1
         with:
           node-version: ${{ fromJSON(needs.is_npm.outputs.node_versions)[0] }}
-      - run: npm install
+      - name: Install dependencies
+        run: |
+          runner_os="$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')"
+          os_count="$(jq '.os | length' package.json)"
+          index="$(jq --arg os "${runner_os}" '.os | index($os) | select( . != null )' package.json)"
+
+          if [[ -n "$index" ]] || [[ "$os_count" -lt 1 ]]; then
+              if [ ${{ needs.is_npm.outputs.has_npm_lockfile }} == 'true' ]; then
+                npm ci
+              else
+                npm i
+              fi
+          else
+              echo "${runner_os} is not supported in package.json"
+          fi
       - name: Generate SBOM
         run: |
           npm sbom --sbom-format cyclonedx > ${{ runner.temp }}/npm-sbom.json
