@@ -1,4 +1,23 @@
 - commits:
+    - subject: Cache agent tools with python setup
+      hash: 1e03d66f88d6c81a445f401f2cf0a3dabce38489
+      body: |
+        Self-hosted runners don't have a populated tool cache so we should cache anything that
+        is successfully downloaded so it can be used by the next job/run.
+        Caches can be restored from the default branch or the current branch.
+
+        See: https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.6.4
+  title: ""
+  date: 2025-11-27T18:04:12.786Z
+- commits:
     - subject: Use the same install method for `npm_test` and `npm_sbom` to avoid sbom
         issues
       hash: 0068b04ad258243e43ad3388fa11a4a2b9519cad
