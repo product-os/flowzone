@@ -4702,15 +4702,9 @@ jobs:
 
           echo "caps=${caps}" >> "${GITHUB_OUTPUT}"
 
-      - <<: *setupPython
-        with:
-          cache: "pip" # caching pip dependencies
-          python-version: 3.11
-
       - name: Install cfn-lint
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install cfn-lint==1.35.3
+          pip3 install cfn-lint==1.35.3
 
       - name: Lint template
         run: |
