@@ -622,6 +622,21 @@
     with:
       version: "2.15.43"
 
+  # Self-hosted runners don't have a populated tool cache so we should cache anything that
+  # is successfully downloaded so it can be used by the next job/run.
+  # Caches can be restored from the default branch or the current branch.
+  # https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
+  - &cacheAgentTools # https://github.com/actions/cache
+    name: Cache agent tools
+    id: cache-agent-tools
+    if: runner.environment == 'self-hosted'
+    uses: actions/cache@v4.3.0
+    with:
+      path: ${{ runner.tool_cache }}/*
+      key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+      restore-keys: |
+        ${{ runner.os }}-${{ runner.arch }}-agent-tools-
+
   - &waitForCloudFormation
     name: Wait for resources
     run: |
@@ -1890,8 +1905,7 @@ jobs:
       - *checkoutVersionedCommit
       - *checkoutSubmodules
       - *updateVersionedTagRef
-
-      # https://github.com/actions/setup-python
+      - *cacheAgentTools
       - *setupPython
 
       # https://github.com/pre-commit/action
@@ -2400,6 +2414,7 @@ jobs:
             echo "pypi_publish=false" >> "${GITHUB_OUTPUT}"
           fi
 
+      - *cacheAgentTools
       - <<: *setupPython
         if: steps.python_poetry.outputs.enabled == 'true'
         with:
@@ -3657,6 +3672,7 @@ jobs:
       - *checkoutSubmodules
       - *updateVersionedTagRef
 
+      - *cacheAgentTools
       - <<: *setupPython
         with:
           python-version: ${{ matrix.python-version }}
@@ -3733,6 +3749,7 @@ jobs:
       - *checkoutSubmodules
       - *updateVersionedTagRef
 
+      - *cacheAgentTools
       - *setupPython
 
       - *setupPoetry
@@ -3790,6 +3807,7 @@ jobs:
       - *checkoutSubmodules
       - *updateVersionedTagRef
 
+      - *cacheAgentTools
       - *setupPython
       - *setupPoetry
 
@@ -3830,6 +3848,7 @@ jobs:
       - *checkoutSubmodules
       - *updateVersionedTagRef
 
+      - *cacheAgentTools
       - *setupPython
       - *setupPoetry
 
@@ -4702,6 +4721,7 @@ jobs:
 
           echo "caps=${caps}" >> "${GITHUB_OUTPUT}"
 
+      - *cacheAgentTools
       - <<: *setupPython
         with:
           cache: "pip" # caching pip dependencies

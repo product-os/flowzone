@@ -1210,6 +1210,15 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
+      - name: Cache agent tools
+        id: cache-agent-tools
+        if: runner.environment == 'self-hosted'
+        uses: actions/cache@v4.3.0
+        with:
+          path: ${{ runner.tool_cache }}/*
+          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
@@ -1752,6 +1761,15 @@ jobs:
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
             echo "pypi_publish=false" >> "${GITHUB_OUTPUT}"
           fi
+      - name: Cache agent tools
+        id: cache-agent-tools
+        if: runner.environment == 'self-hosted'
+        uses: actions/cache@v4.3.0
+        with:
+          path: ${{ runner.tool_cache }}/*
+          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
@@ -3652,6 +3670,15 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
+      - name: Cache agent tools
+        id: cache-agent-tools
+        if: runner.environment == 'self-hosted'
+        uses: actions/cache@v4.3.0
+        with:
+          path: ${{ runner.tool_cache }}/*
+          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
@@ -3760,6 +3787,15 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
+      - name: Cache agent tools
+        id: cache-agent-tools
+        if: runner.environment == 'self-hosted'
+        uses: actions/cache@v4.3.0
+        with:
+          path: ${{ runner.tool_cache }}/*
+          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
@@ -3864,6 +3900,15 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
+      - name: Cache agent tools
+        id: cache-agent-tools
+        if: runner.environment == 'self-hosted'
+        uses: actions/cache@v4.3.0
+        with:
+          path: ${{ runner.tool_cache }}/*
+          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
@@ -3954,6 +3999,15 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
+      - name: Cache agent tools
+        id: cache-agent-tools
+        if: runner.environment == 'self-hosted'
+        uses: actions/cache@v4.3.0
+        with:
+          path: ${{ runner.tool_cache }}/*
+          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
@@ -5370,6 +5424,15 @@ jobs:
           fi
 
           echo "caps=${caps}" >> "${GITHUB_OUTPUT}"
+      - name: Cache agent tools
+        id: cache-agent-tools
+        if: runner.environment == 'self-hosted'
+        uses: actions/cache@v4.3.0
+        with:
+          path: ${{ runner.tool_cache }}/*
+          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
