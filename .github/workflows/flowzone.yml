@@ -3584,7 +3584,7 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - uses: balena-io/deploy-to-balena-action@63a685c4b9c898c38e66776284a78c4e50ec8c97
+      - uses: balena-io/deploy-to-balena-action@a18a601d3dca56e1a2d1b6e9d9786e83b8ff1c39
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
