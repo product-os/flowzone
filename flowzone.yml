@@ -630,7 +630,7 @@
     name: Cache agent tools
     id: cache-agent-tools
     if: runner.environment == 'self-hosted'
-    uses: actions/cache@v4.3.0
+    uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
     with:
       path: ${{ runner.tool_cache }}/*
       key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
