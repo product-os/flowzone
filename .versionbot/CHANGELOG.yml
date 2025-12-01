@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node to v20.19.6
+      hash: a063d476cb2e267b0d34a8901fa9ba5e0263539c
+      body: |
+        Update node from 20.19.5 to 20.19.6
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.6.10
+  title: ""
+  date: 2025-12-01T23:08:26.271Z
+- commits:
     - subject: Pin actions/cache action to 0057852
       hash: be36af4773b0ecd87fc3b60bd983599dff41e3b2
       body: |
