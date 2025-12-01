@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/checkout action to v6
+      hash: f149b058fff1bec058c7a96a7e359e504be7e0fe
+      body: |
+        Update actions/checkout from 5.0.1 to 6.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.6.5
+  title: ""
+  date: 2025-12-01T19:00:22.631Z
+- commits:
     - subject: Cache agent tools with python setup
       hash: 1e03d66f88d6c81a445f401f2cf0a3dabce38489
       body: |
