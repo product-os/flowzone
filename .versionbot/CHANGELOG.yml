@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/bake-action action to v6.10.0
+      hash: 88f86f97338f3b130fe519dbbf7273670d1a59f5
+      body: |
+        Update docker/bake-action from 6.9.0 to 6.10.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.6.13
+  title: ""
+  date: 2025-12-02T02:44:01.192Z
+- commits:
     - subject: Update actions/create-github-app-token action to v2.2.0
       hash: fa5834b7afb83cfd9d6da52bf9346d2c728c2337
       body: |
