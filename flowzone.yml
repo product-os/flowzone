@@ -1906,7 +1906,10 @@ jobs:
       - *checkoutSubmodules
       - *updateVersionedTagRef
       - *cacheAgentTools
-      - *setupPython
+      - <<: *setupPython
+        with:
+          # python: /lib/x86_64-linux-gnu/libm.so.6: version GLIBC_2.38 not found is encountered when running aws-cloudformation/cfn-lint ~v1.40.4
+          python-version: 3.13
 
       # https://github.com/pre-commit/action
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
