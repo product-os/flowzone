@@ -1,4 +1,16 @@
 - commits:
+    - subject: "patch: Pin pre-commit Python to avoid conflicts"
+      hash: 715689ff50c1e63dd2b68e9847b9716152df9896
+      body: |-
+        * Document GLIBC version issue in flowzone.yml
+        * Added comment about GLIBC version issue when running cfn-lint.
+      footer: {}
+      author: Anton Belodedenko
+      nested: []
+  version: 22.6.19
+  title: ""
+  date: 2025-12-04T21:55:57.897Z
+- commits:
     - subject: Update actions/setup-node action to v6.1.0
       hash: 7a549f6468aacd96e4c9827173991fb4a57b9335
       body: |
