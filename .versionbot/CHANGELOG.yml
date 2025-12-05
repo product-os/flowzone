@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update actions/create-github-app-token action to v2.2.1
+      hash: 54da04f4d554999a488bb139a01cf579c65abc8f
+      body: |
+        Update actions/create-github-app-token from 2.2.0 to 2.2.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.6.20
+  title: ""
+  date: 2025-12-05T23:07:04.523Z
+- commits:
     - subject: "patch: Pin pre-commit Python to avoid conflicts"
       hash: 715689ff50c1e63dd2b68e9847b9716152df9896
       body: |-
