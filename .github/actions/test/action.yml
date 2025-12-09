@@ -50,6 +50,32 @@ runs:
         git submodule
         git --no-pager tag --list --sort=-version:refname "v*.*.*" --merged
 
+    - name: Get runner OS release
+      shell: bash
+      run: |
+        set -ex
+        case "${{ runner.OS }}" in
+          Linux)
+            RUNNER_RELEASE=$(lsb_release --release --short)
+            ;;
+          macOS)
+            RUNNER_RELEASE=$(sw_vers --productVersion)
+            ;;
+          Windows)
+            RUNNER_RELEASE=$(pwsh.exe -Command "(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion")
+            ;;
+          *)
+            echo ":error:Unsupported OS: ${{ runner.OS }}"
+            ;;
+        esac
+
+        if [[ -z "${RUNNER_RELEASE:-}" ]]; then
+          echo ":error:Failed to get runner OS release"
+          exit 1
+        fi
+
+        echo "RUNNER_RELEASE=${RUNNER_RELEASE}" >>${GITHUB_ENV}
+
     # https://github.com/actions/runner-images/discussions/7191#discussioncomment-8351370
     # https://github.com/reactivecircus/android-emulator-runner?tab=readme-ov-file#running-hardware-accelerated-emulators-on-linux-runners
     # https://github.com/ankidroid/Anki-Android/commit/3a5ecaa9837691817022d11b0dbe383b8e82d9fe

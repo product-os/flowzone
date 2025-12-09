@@ -622,10 +622,40 @@
     with:
       version: "2.15.43"
 
+  # Export runner OS release version for use by cache actions
+  - &getRunnerRelease
+    name: Get runner OS release
+    if: runner.environment == 'self-hosted'
+    run: |
+      case "${{ runner.OS }}" in
+        Linux)
+          RUNNER_RELEASE=$(lsb_release --release --short)
+          ;;
+        macOS)
+          RUNNER_RELEASE=$(sw_vers --productVersion)
+          ;;
+        Windows)
+          RUNNER_RELEASE=$(pwsh.exe -Command "(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion")
+          ;;
+        *)
+          echo ":error:Unsupported OS: ${{ runner.OS }}"
+          ;;
+      esac
+
+      if [[ -z "${RUNNER_RELEASE:-}" ]]; then
+        echo ":error:Failed to get runner OS release"
+        exit 1
+      fi
+
+      echo "RUNNER_RELEASE=${RUNNER_RELEASE}" >>${GITHUB_ENV}
+
   # Self-hosted runners don't have a populated tool cache so we should cache anything that
   # is successfully downloaded so it can be used by the next job/run.
   # Caches can be restored from the default branch or the current branch.
   # https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
+  # Use the runner OS release version to prevent runners of the same OS and Arch from sharing a runner tools cache
+  # if their distro release differs.
+  # For example, setup-python binaries are specific to Ubuntu 22.04 vs 24.04.
   - &cacheAgentTools # https://github.com/actions/cache
     name: Cache agent tools
     id: cache-agent-tools
@@ -633,9 +663,9 @@
     uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
     with:
       path: ${{ runner.tool_cache }}/*
-      key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+      key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
       restore-keys: |
-        ${{ runner.os }}-${{ runner.arch }}-agent-tools-
+        ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
 
   - &waitForCloudFormation
     name: Wait for resources
@@ -1905,6 +1935,7 @@ jobs:
       - *checkoutVersionedCommit
       - *checkoutSubmodules
       - *updateVersionedTagRef
+      - *getRunnerRelease
       - *cacheAgentTools
       - <<: *setupPython
         with:
@@ -2417,6 +2448,7 @@ jobs:
             echo "pypi_publish=false" >> "${GITHUB_OUTPUT}"
           fi
 
+      - *getRunnerRelease
       - *cacheAgentTools
       - <<: *setupPython
         if: steps.python_poetry.outputs.enabled == 'true'
@@ -3674,7 +3706,7 @@ jobs:
       - *checkoutVersionedCommit
       - *checkoutSubmodules
       - *updateVersionedTagRef
-
+      - *getRunnerRelease
       - *cacheAgentTools
       - <<: *setupPython
         with:
@@ -3751,7 +3783,7 @@ jobs:
       - *checkoutVersionedCommit
       - *checkoutSubmodules
       - *updateVersionedTagRef
-
+      - *getRunnerRelease
       - *cacheAgentTools
       - *setupPython
 
@@ -3809,7 +3841,7 @@ jobs:
       - *checkoutVersionedCommit
       - *checkoutSubmodules
       - *updateVersionedTagRef
-
+      - *getRunnerRelease
       - *cacheAgentTools
       - *setupPython
       - *setupPoetry
@@ -3850,7 +3882,7 @@ jobs:
       - *checkoutVersionedCommit
       - *checkoutSubmodules
       - *updateVersionedTagRef
-
+      - *getRunnerRelease
       - *cacheAgentTools
       - *setupPython
       - *setupPoetry
@@ -4724,6 +4756,7 @@ jobs:
 
           echo "caps=${caps}" >> "${GITHUB_OUTPUT}"
 
+      - *getRunnerRelease
       - *cacheAgentTools
       - <<: *setupPython
         with:

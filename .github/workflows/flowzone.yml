@@ -1210,15 +1210,39 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
+      - name: Get runner OS release
+        if: runner.environment == 'self-hosted'
+        run: |
+          case "${{ runner.OS }}" in
+            Linux)
+              RUNNER_RELEASE=$(lsb_release --release --short)
+              ;;
+            macOS)
+              RUNNER_RELEASE=$(sw_vers --productVersion)
+              ;;
+            Windows)
+              RUNNER_RELEASE=$(pwsh.exe -Command "(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion")
+              ;;
+            *)
+              echo ":error:Unsupported OS: ${{ runner.OS }}"
+              ;;
+          esac
+
+          if [[ -z "${RUNNER_RELEASE:-}" ]]; then
+            echo ":error:Failed to get runner OS release"
+            exit 1
+          fi
+
+          echo "RUNNER_RELEASE=${RUNNER_RELEASE}" >>${GITHUB_ENV}
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ${{ runner.tool_cache }}/*
-          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
+            ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
@@ -1761,15 +1785,39 @@ jobs:
             echo "enabled=false" >> "${GITHUB_OUTPUT}"
             echo "pypi_publish=false" >> "${GITHUB_OUTPUT}"
           fi
+      - name: Get runner OS release
+        if: runner.environment == 'self-hosted'
+        run: |
+          case "${{ runner.OS }}" in
+            Linux)
+              RUNNER_RELEASE=$(lsb_release --release --short)
+              ;;
+            macOS)
+              RUNNER_RELEASE=$(sw_vers --productVersion)
+              ;;
+            Windows)
+              RUNNER_RELEASE=$(pwsh.exe -Command "(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion")
+              ;;
+            *)
+              echo ":error:Unsupported OS: ${{ runner.OS }}"
+              ;;
+          esac
+
+          if [[ -z "${RUNNER_RELEASE:-}" ]]; then
+            echo ":error:Failed to get runner OS release"
+            exit 1
+          fi
+
+          echo "RUNNER_RELEASE=${RUNNER_RELEASE}" >>${GITHUB_ENV}
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ${{ runner.tool_cache }}/*
-          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
+            ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
@@ -3670,15 +3718,39 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
+      - name: Get runner OS release
+        if: runner.environment == 'self-hosted'
+        run: |
+          case "${{ runner.OS }}" in
+            Linux)
+              RUNNER_RELEASE=$(lsb_release --release --short)
+              ;;
+            macOS)
+              RUNNER_RELEASE=$(sw_vers --productVersion)
+              ;;
+            Windows)
+              RUNNER_RELEASE=$(pwsh.exe -Command "(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion")
+              ;;
+            *)
+              echo ":error:Unsupported OS: ${{ runner.OS }}"
+              ;;
+          esac
+
+          if [[ -z "${RUNNER_RELEASE:-}" ]]; then
+            echo ":error:Failed to get runner OS release"
+            exit 1
+          fi
+
+          echo "RUNNER_RELEASE=${RUNNER_RELEASE}" >>${GITHUB_ENV}
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ${{ runner.tool_cache }}/*
-          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
+            ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
@@ -3787,15 +3859,39 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
+      - name: Get runner OS release
+        if: runner.environment == 'self-hosted'
+        run: |
+          case "${{ runner.OS }}" in
+            Linux)
+              RUNNER_RELEASE=$(lsb_release --release --short)
+              ;;
+            macOS)
+              RUNNER_RELEASE=$(sw_vers --productVersion)
+              ;;
+            Windows)
+              RUNNER_RELEASE=$(pwsh.exe -Command "(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion")
+              ;;
+            *)
+              echo ":error:Unsupported OS: ${{ runner.OS }}"
+              ;;
+          esac
+
+          if [[ -z "${RUNNER_RELEASE:-}" ]]; then
+            echo ":error:Failed to get runner OS release"
+            exit 1
+          fi
+
+          echo "RUNNER_RELEASE=${RUNNER_RELEASE}" >>${GITHUB_ENV}
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ${{ runner.tool_cache }}/*
-          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
+            ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
@@ -3900,15 +3996,39 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
+      - name: Get runner OS release
+        if: runner.environment == 'self-hosted'
+        run: |
+          case "${{ runner.OS }}" in
+            Linux)
+              RUNNER_RELEASE=$(lsb_release --release --short)
+              ;;
+            macOS)
+              RUNNER_RELEASE=$(sw_vers --productVersion)
+              ;;
+            Windows)
+              RUNNER_RELEASE=$(pwsh.exe -Command "(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion")
+              ;;
+            *)
+              echo ":error:Unsupported OS: ${{ runner.OS }}"
+              ;;
+          esac
+
+          if [[ -z "${RUNNER_RELEASE:-}" ]]; then
+            echo ":error:Failed to get runner OS release"
+            exit 1
+          fi
+
+          echo "RUNNER_RELEASE=${RUNNER_RELEASE}" >>${GITHUB_ENV}
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ${{ runner.tool_cache }}/*
-          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
+            ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
@@ -3999,15 +4119,39 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
+      - name: Get runner OS release
+        if: runner.environment == 'self-hosted'
+        run: |
+          case "${{ runner.OS }}" in
+            Linux)
+              RUNNER_RELEASE=$(lsb_release --release --short)
+              ;;
+            macOS)
+              RUNNER_RELEASE=$(sw_vers --productVersion)
+              ;;
+            Windows)
+              RUNNER_RELEASE=$(pwsh.exe -Command "(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion")
+              ;;
+            *)
+              echo ":error:Unsupported OS: ${{ runner.OS }}"
+              ;;
+          esac
+
+          if [[ -z "${RUNNER_RELEASE:-}" ]]; then
+            echo ":error:Failed to get runner OS release"
+            exit 1
+          fi
+
+          echo "RUNNER_RELEASE=${RUNNER_RELEASE}" >>${GITHUB_ENV}
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ${{ runner.tool_cache }}/*
-          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
+            ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
@@ -5424,15 +5568,39 @@ jobs:
           fi
 
           echo "caps=${caps}" >> "${GITHUB_OUTPUT}"
+      - name: Get runner OS release
+        if: runner.environment == 'self-hosted'
+        run: |
+          case "${{ runner.OS }}" in
+            Linux)
+              RUNNER_RELEASE=$(lsb_release --release --short)
+              ;;
+            macOS)
+              RUNNER_RELEASE=$(sw_vers --productVersion)
+              ;;
+            Windows)
+              RUNNER_RELEASE=$(pwsh.exe -Command "(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion")
+              ;;
+            *)
+              echo ":error:Unsupported OS: ${{ runner.OS }}"
+              ;;
+          esac
+
+          if [[ -z "${RUNNER_RELEASE:-}" ]]; then
+            echo ":error:Failed to get runner OS release"
+            exit 1
+          fi
+
+          echo "RUNNER_RELEASE=${RUNNER_RELEASE}" >>${GITHUB_ENV}
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ${{ runner.tool_cache }}/*
-          key: ${{ runner.os }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
+          key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-agent-tools-
+            ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
