@@ -1,4 +1,25 @@
 - commits:
+    - subject: Use the runner OS release version in agent tools cache key
+      hash: 58250f2e51fc7943d1ba28c6f8dfe4dbd4bccb37
+      body: >
+        This prevents runners of the same OS and Arch but different major
+
+        releases from sharing a cache.
+
+
+        For example, setup-python binaries are specific to Ubuntu 22.04 vs
+        24.04.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.6.21
+  title: ""
+  date: 2025-12-09T18:36:37.480Z
+- commits:
     - subject: Update actions/create-github-app-token action to v2.2.1
       hash: 54da04f4d554999a488bb139a01cf579c65abc8f
       body: |
