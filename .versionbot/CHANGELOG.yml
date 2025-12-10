@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node to v24.12.0
+      hash: 62f91d75961f8c961a083e39a5c7f1240c40b1bb
+      body: |
+        Update node from 24.11.1 to 24.12.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.6.22
+  title: ""
+  date: 2025-12-10T17:14:49.317Z
+- commits:
     - subject: Use the runner OS release version in agent tools cache key
       hash: 58250f2e51fc7943d1ba28c6f8dfe4dbd4bccb37
       body: >
