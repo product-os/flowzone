@@ -182,7 +182,7 @@ jobs:
       # Timeout for the job(s).
       # Type: number
       # Required: false
-      jobs_timeout_minutes: 360
+      jobs_timeout_minutes: 120
 
       # GitHub actions working directory
       # Type: string

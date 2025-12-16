@@ -91,7 +91,7 @@ on:
         description: Timeout for the job(s).
         type: number
         required: false
-        default: 360
+        default: 120
       working_directory:
         description: GitHub actions working directory
         type: string
