@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v3.12.0
+      hash: 14ef9f9ed59f7283de2f6d4e8b8fce01a2526066
+      body: |
+        Update docker/setup-buildx-action from 3.11.1 to 3.12.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.7.2
+  title: ""
+  date: 2025-12-22T02:47:38.790Z
+- commits:
     - subject: Lock file maintenance
       hash: 29e3b9404d73c1b0590b954e0be0c41fa03d25e3
       body: |
