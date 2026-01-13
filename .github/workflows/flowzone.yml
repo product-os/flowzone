@@ -1237,7 +1237,7 @@ jobs:
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         with:
           path: ${{ runner.tool_cache }}/*
           key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
@@ -1812,7 +1812,7 @@ jobs:
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         with:
           path: ${{ runner.tool_cache }}/*
           key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
@@ -3745,7 +3745,7 @@ jobs:
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         with:
           path: ${{ runner.tool_cache }}/*
           key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
@@ -3886,7 +3886,7 @@ jobs:
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         with:
           path: ${{ runner.tool_cache }}/*
           key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
@@ -4023,7 +4023,7 @@ jobs:
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         with:
           path: ${{ runner.tool_cache }}/*
           key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
@@ -4146,7 +4146,7 @@ jobs:
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         with:
           path: ${{ runner.tool_cache }}/*
           key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
@@ -5595,7 +5595,7 @@ jobs:
       - name: Cache agent tools
         id: cache-agent-tools
         if: runner.environment == 'self-hosted'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         with:
           path: ${{ runner.tool_cache }}/*
           key: ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-${{ github.ref_name }}
