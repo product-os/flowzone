@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update rhysd/actionlint Docker tag to v1.7.10
+      hash: 234cd566e3cecba73a8622372d8cd6e988f97343
+      body: |
+        Update rhysd/actionlint from 1.7.9 to 1.7.10
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.7.5
+  title: ""
+  date: 2026-01-13T17:12:21.330Z
+- commits:
     - subject: Update actions/download-artifact action to v7
       hash: fe86cfe6c752d8660bd2672277e6d961fa558ac8
       body: |
