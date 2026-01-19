@@ -773,8 +773,8 @@ on:
         description: ".. or Personal Access Token (PAT) with admin/owner permissions in the org."
         required: false
       NPM_TOKEN:
-        description: "The npm auth token to use for publishing"
-        required: false
+        description: "The NPM auth. token to use for publishing"
+        required: false  # try OIDC auth. if unset or fail
       DOCKERHUB_USER:
         description: "Username to publish to the Docker Hub container registry"
         required: false
@@ -3071,7 +3071,9 @@ jobs:
 
     <<: *rootWorkingDirectory
 
-    permissions: {}
+    # The calling workflow must set these permissions to use these optional features.
+    # permissions:
+    #   id-token: write # https://docs.npmjs.com/trusted-publishers
 
     steps:
       # https://github.com/actions/download-artifact
@@ -3093,22 +3095,26 @@ jobs:
       - name: Publish draft release
         env:
           # make sure to 'npm config set ignore-scripts true' to avoid leaking secrets
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || '' }}
+          ACCESS: ${{ needs.is_npm.outputs.npm_access }}
+          PACKAGE: ${{ needs.npm_test.outputs.package }}
+          VERSION_TAG: ${{ needs.npm_test.outputs.version_tag }}
+          TAG: ${{ needs.npm_test.outputs.branch_tag }}
         run: |
           npm config set ignore-scripts true
 
           pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar xvf "${pack}"
           (cd package
-            npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${{ needs.npm_test.outputs.version_tag }}-${{ github.run_attempt }} --allow-same-version
+            npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${VERSION_TAG}-${{ github.run_attempt }} --allow-same-version
           )
           tar czvf "${pack}" package
 
           # shellcheck disable=SC2170
           if [ ${{ github.run_attempt }} -gt 1 ]; then
-            npm --loglevel=verbose --logs-max=0 unpublish ${{ needs.npm_test.outputs.package }}@${{ needs.npm_test.outputs.version_tag }}-$((${{ github.run_attempt }} - 1)) || true
+            npm --loglevel=verbose --logs-max=0 unpublish ${PACKAGE}@${VERSION_TAG}-$((${{ github.run_attempt }} - 1)) || true
           fi
-          npm --loglevel=verbose --logs-max=0 publish --tag=${{ needs.npm_test.outputs.branch_tag }} "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
+          npm --loglevel=verbose --logs-max=0 publish --tag=${TAG} "${pack}" --access="${ACCESS}"
 
   npm_finalize:
     name: Finalize npm
@@ -3123,7 +3129,9 @@ jobs:
 
     <<: *rootWorkingDirectory
 
-    permissions: {}
+    # The calling workflow must set these permissions to use these optional features.
+    # permissions:
+    #   id-token: write # https://docs.npmjs.com/trusted-publishers
 
     steps:
       - <<: *getGitHubAppToken
@@ -3156,11 +3164,12 @@ jobs:
       - name: Publish final release
         env:
           # make sure to 'npm config set ignore-scripts true' to avoid leaking secrets
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || '' }}
+          ACCESS: ${{ needs.is_npm.outputs.npm_access }}
         run: |
           npm config set ignore-scripts true
           pack="$(ls ${{ runner.temp }}/*/*.tgz | sort -t- -n -k3 | tail -n1)"
-          npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${{ needs.is_npm.outputs.npm_access }}"
+          npm --loglevel=verbose --logs-max=0 publish --tag "latest" "${pack}" --access="${ACCESS}"
 
   npm_docs_finalize:
     name: Finalize npm docs
