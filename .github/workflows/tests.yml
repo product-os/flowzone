@@ -22,7 +22,7 @@ permissions:
   checks: none
   contents: read
   deployments: none
-  id-token: none # AWS GitHub OIDC provider
+  id-token: write # AWS and NPMjs GitHub OIDC providers
   issues: none
   discussions: none
   # packages: read

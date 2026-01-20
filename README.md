@@ -84,7 +84,7 @@ jobs:
       # Required: false
       FLOWZONE_TOKEN:
 
-      # The npm auth token to use for publishing
+      # The NPM auth. token to use for publishing
       # Required: false
       NPM_TOKEN:
 
