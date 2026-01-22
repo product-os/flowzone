@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.31.0
+      hash: fd3fbd0d1ee0a0a5da75efa463ea4adcb80729d6
+      body: |
+        Update docker/buildx from 0.30.1 to 0.31.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.7.15
+  title: ""
+  date: 2026-01-22T01:26:09.655Z
+- commits:
     - subject: "patch: Allow NPMjs OIDC auth. handling"
       hash: 0930762caca6b81b309c7939cc3b8a38bf139d1e
       body: ""
