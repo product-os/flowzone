@@ -148,7 +148,7 @@
   # Checkout the versioned commit we created in the previous steps.
   - &checkoutVersionedCommit
     name: Checkout versioned commit
-    uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
     if: needs.versioned_source.outputs.sha
     with:
       # Fetch depth 1 for maximum speed, we only need the single commit.
@@ -1177,7 +1177,7 @@ jobs:
         # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
         # https://github.com/actions/checkout
         name: Checkout pull request head sha
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           # Recursively fetch submodules for yocto-based versioning
@@ -1193,7 +1193,7 @@ jobs:
         # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
         # https://github.com/actions/checkout
         name: Checkout ${{ github.sha }}
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           # Recursively fetch submodules for yocto-based versioning
