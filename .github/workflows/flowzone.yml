@@ -1245,7 +1245,7 @@ jobs:
             ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: 3.13
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd
@@ -1820,7 +1820,7 @@ jobs:
             ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: ${{ env.SUPPORTED_VERSIONS }}
         if: steps.python_poetry.outputs.enabled == 'true'
@@ -3756,7 +3756,7 @@ jobs:
             ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: ${{ matrix.python-version }}
       - name: Setup poetry
@@ -3897,7 +3897,7 @@ jobs:
             ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: "3.14"
       - name: Setup poetry
@@ -4034,7 +4034,7 @@ jobs:
             ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: "3.14"
       - name: Setup poetry
@@ -4157,7 +4157,7 @@ jobs:
             ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: "3.14"
       - name: Setup poetry
@@ -5606,7 +5606,7 @@ jobs:
             ${{ runner.os }}-${{ env.RUNNER_RELEASE }}-${{ runner.arch }}-agent-tools-
       - name: Setup python
         id: setup-python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           cache: pip
           python-version: 3.11
