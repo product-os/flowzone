@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/login-action action to v3.7.0
+      hash: b011458bf5ce6f19d17f6ecb3d5e604661b03b4a
+      body: |
+        Update docker/login-action from 3.6.0 to 3.7.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.7.18
+  title: ""
+  date: 2026-01-28T13:17:58.376Z
+- commits:
     - subject: Update actions/checkout action to v6.0.2
       hash: cc2f2bc57487d997dcdd0f8af78a1a9ed293af57
       body: |
