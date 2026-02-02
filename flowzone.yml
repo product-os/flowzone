@@ -2864,9 +2864,12 @@ jobs:
               );
             });
 
+            // Filter includes to only contain stacks that passed the modified files filter
+            const filteredIncludes = includes.filter(inc => stackNames.includes(inc.stack));
+
             // Set outputs
             core.setOutput('matrix', stackNames);
-            core.setOutput('includes', includes);
+            core.setOutput('includes', filteredIncludes);
 
   ###################################################
   ## npm
