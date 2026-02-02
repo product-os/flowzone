@@ -760,6 +760,12 @@
       echo "sleeping for ${random}s"
       sleep "${random}s"
 
+  - &deploymentEnvironment
+    name: Deployment environment
+    if: ${{ matrix.environment != '' }}
+    run: |
+      echo "::info::Context set to '${{ matrix.environment }}'"
+
 name: Flowzone
 
 on:
@@ -4425,6 +4431,7 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *deploymentEnvironment
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4481,6 +4488,7 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *deploymentEnvironment
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4530,6 +4538,7 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *deploymentEnvironment
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4677,6 +4686,7 @@ jobs:
     #   id-token: write # AWS GitHub OIDC provider
 
     steps:
+      - *deploymentEnvironment
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4933,6 +4943,7 @@ jobs:
     #   id-token: write # AWS GitHub OIDC provider
 
     steps:
+      - *deploymentEnvironment
       - *setupAwsCli
       - *randomDelay
       - *configureAWSCredentials
