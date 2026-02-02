@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.31.1
+      hash: 64b739a39bf9e0768cc4086c17168ac467015bbf
+      body: |
+        Update docker/buildx from 0.31.0 to 0.31.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.7.20
+  title: ""
+  date: 2026-02-02T18:14:47.951Z
+- commits:
     - subject: Fix CloudFormation stacks matrix includes filtering
       hash: d626a815f12845ae6bf0e327730ae9c8cc0e0119
       body: |
