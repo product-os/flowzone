@@ -1,4 +1,21 @@
 - commits:
+    - subject: Fix CloudFormation stacks matrix includes filtering
+      hash: d626a815f12845ae6bf0e327730ae9c8cc0e0119
+      body: |
+        Filter the includes array to match the filtered stackNames array,
+        ensuring GitHub Actions matrix include matching works correctly
+        when only some CloudFormation templates are modified.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.7.19
+  title: ""
+  date: 2026-02-02T17:16:44.719Z
+- commits:
     - subject: Update docker/login-action action to v3.7.0
       hash: b011458bf5ce6f19d17f6ecb3d5e604661b03b4a
       body: |
