@@ -574,7 +574,7 @@
     env:
       LOG_LEVEL: debug
       # renovate: datasource=docker depName=tonistiigi/binfmt versioning=regex:^(?<compatibility>.*)-v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)-(?<build>\d+)$
-      BINFMT_VERSION: qemu-v10.0.4-56
+      BINFMT_VERSION: qemu-v10.0.4-59
     with:
       platforms: ${{ matrix.platform }}
       # https://hub.docker.com/r/tonistiigi/binfmt
