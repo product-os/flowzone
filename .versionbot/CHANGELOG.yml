@@ -1,4 +1,26 @@
 - commits:
+    - subject: Always use App Tokens when submodules are detected
+      hash: bddb73c6fee03946febd7b4877e2dbd998552454
+      body: >
+        We have encountered cases of public repos using private submodules
+
+        unable to use Flowzone. This change addresses that by using App Tokens
+
+        for checkout whenever submodules are detected in the repo source,
+        regardless of
+
+        whether the repo is private or public.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.8.0
+  title: ""
+  date: 2026-02-03T22:18:33.199Z
+- commits:
     - subject: Update tonistiigi/binfmt Docker tag to qemu-v10.0.4-59
       hash: a9941d19fac675ab419b91c3a4013049d3a013d5
       body: |
