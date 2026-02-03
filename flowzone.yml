@@ -128,11 +128,10 @@
   - &getCheckoutToken # https://github.com/actions/create-github-app-token
     name: Generate GitHub App installation token for checkout
     uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
-    # Only generate a token if the repository is private and the app_id is set.
-    # This is to avoid generating a token for public repositories where the automatic github.token is sufficient.
-    # Public repositories with private submodules are unsupported and will fail checkout.
-    # Also, even with an app token, private submodules must be in the same namespace/org as the repo.
-    if: inputs.app_id && github.event.repository.private
+    # Only generate a token if the repository has submodules (that may be private) and the app_id is set.
+    # This is to avoid generating a token for repositories where the automatic github.token is sufficient.
+    # Even with an app token, private submodules must be in the same namespace/org as the repo.
+    if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
     id: checkout_token
     with:
       app-id: ${{ inputs.app_id }}
@@ -1125,7 +1124,7 @@ jobs:
       author: ${{ steps.create_commit.outputs.author }}
       author_email: ${{ steps.create_commit.outputs.author_email }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
-      has_submodules: ${{ steps.git_describe.outputs.has_submodules || 'false' }}
+      has_submodules: ${{ steps.has_submodules.outputs.result || 'false' }}
 
     env:
       <<: *gitHubCliEnvironment
@@ -1146,6 +1145,21 @@ jobs:
 
       - *rejectNonLinearHead
       - *rejectNonLinearMerge
+
+      - name: Check for submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        id: has_submodules
+        with:
+          github-token: ${{ github.token }}
+          result-encoding: string
+          script: |
+            const hasSubmodules = await github.rest.repos.getContent({
+              ...context.repo,
+              path: '.gitmodules',
+              ref: context.sha
+            }).then(() => true).catch(() => false);
+            console.log({hasSubmodules});
+            return hasSubmodules;
 
       - name: Check for legacy branch protection
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
@@ -1171,7 +1185,8 @@ jobs:
               "Switching to Rulesets is required to allow GitHub Apps to bypass branch rules.\n\n" +
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
 
-      - *getCheckoutToken
+      - <<: *getCheckoutToken
+        if: inputs.app_id && steps.has_submodules.outputs.result == 'true'
 
       # Checkout the tip of the pull request branch for open PRs.
       # The default behaviour for GitHub Actions is to checkout the merge commit but we
@@ -1227,12 +1242,6 @@ jobs:
             echo "describe=$(git describe --tags --always --dirty | cat)" ;
             echo "sha=$(git rev-parse HEAD)" ;
           } >> "${GITHUB_OUTPUT}"
-
-          if [[ "$(git submodule)" = "" ]]; then
-            echo "has_submodules=false" >> "${GITHUB_OUTPUT}"
-          else
-            echo "has_submodules=true" >> "${GITHUB_OUTPUT}"
-          fi
 
       - *setupNode
 
