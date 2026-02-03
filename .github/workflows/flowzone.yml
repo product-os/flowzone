@@ -336,7 +336,7 @@ jobs:
       author: ${{ steps.create_commit.outputs.author }}
       author_email: ${{ steps.create_commit.outputs.author_email }}
       tag_sha: ${{ steps.create_tag.outputs.sha }}
-      has_submodules: ${{ steps.git_describe.outputs.has_submodules || 'false' }}
+      has_submodules: ${{ steps.has_submodules.outputs.result || 'false' }}
     env:
       GH_DEBUG: "true"
       GH_PAGER: cat
@@ -390,6 +390,20 @@ jobs:
             if (!commit.parents.some(({ sha }) => sha === context.payload.pull_request.head.sha)) {
               throw new Error('Non-linear history detected - HEAD branch commit is not a parent of the merge commit');
             }
+      - name: Check for submodules
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        id: has_submodules
+        with:
+          github-token: ${{ github.token }}
+          result-encoding: string
+          script: |
+            const hasSubmodules = await github.rest.repos.getContent({
+              ...context.repo,
+              path: '.gitmodules',
+              ref: context.sha
+            }).then(() => true).catch(() => false);
+            console.log({hasSubmodules});
+            return hasSubmodules;
       - name: Check for legacy branch protection
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open'
@@ -415,7 +429,7 @@ jobs:
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && steps.has_submodules.outputs.result == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -450,12 +464,6 @@ jobs:
             echo "describe=$(git describe --tags --always --dirty | cat)" ;
             echo "sha=$(git rev-parse HEAD)" ;
           } >> "${GITHUB_OUTPUT}"
-
-          if [[ "$(git submodule)" = "" ]]; then
-            echo "has_submodules=false" >> "${GITHUB_OUTPUT}"
-          else
-            echo "has_submodules=true" >> "${GITHUB_OUTPUT}"
-          fi
       - name: Setup Node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         env:
@@ -990,7 +998,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -1040,7 +1048,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -1172,7 +1180,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -1282,7 +1290,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -1440,7 +1448,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -1719,7 +1727,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -1872,7 +1880,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -1956,7 +1964,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -2031,7 +2039,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -2197,7 +2205,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -2423,7 +2431,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -2564,7 +2572,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -2822,7 +2830,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -3350,7 +3358,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -3600,7 +3608,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -3686,7 +3694,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -3827,7 +3835,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -3964,7 +3972,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -4087,7 +4095,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -4198,7 +4206,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -4361,7 +4369,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -4464,7 +4472,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -4573,7 +4581,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -4662,7 +4670,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -4764,7 +4772,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -4842,7 +4850,7 @@ jobs:
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -4920,7 +4928,7 @@ jobs:
           echo "::info::Context set to '${{ matrix.environment }}'"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -5023,7 +5031,7 @@ jobs:
           echo "::info::Context set to '${{ matrix.environment }}'"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -5120,7 +5128,7 @@ jobs:
           echo "::info::Context set to '${{ matrix.environment }}'"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -5214,7 +5222,7 @@ jobs:
           exit 1
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -5303,7 +5311,7 @@ jobs:
           exit 1
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
@@ -5398,7 +5406,7 @@ jobs:
           echo "::info::Context set to '${{ matrix.environment }}'"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
-        if: inputs.app_id && github.event.repository.private
+        if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
