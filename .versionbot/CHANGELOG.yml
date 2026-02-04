@@ -1,4 +1,34 @@
 - commits:
+    - subject: Remove deprecated 'install' input from setup-buildx action
+      hash: cf3f18900b40e39801549ec96e2fffd5112112d3
+      body: >
+        We don't call 'docker build' directly anyway, so we had no
+
+        need for this deprecated command.
+
+
+        > install input is deprecated and will be removed in a future release.
+
+        > This input is not necessary when building with our actions like
+
+        > docker/build-push-action or docker/bake-action. If you are still
+        building
+
+        > with the docker build command then you can set the BUILDX_BUILDER
+        environment variable,
+
+        > or you can just directly invoke the docker buildx build command
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.8.2
+  title: ""
+  date: 2026-02-04T15:19:42.635Z
+- commits:
     - subject: "Add content: read permissions where required for private repos"
       hash: 74a417822ee56f344ec1e858a1bf6c6c1ff67c3f
       body: >
