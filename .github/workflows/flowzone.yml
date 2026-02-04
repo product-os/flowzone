@@ -994,7 +994,8 @@ jobs:
     needs:
       - event_types
       - versioned_source
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -1044,7 +1045,8 @@ jobs:
     needs:
       - event_types
       - versioned_source
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -1176,7 +1178,8 @@ jobs:
     if: |
       contains(needs.file_list.outputs.root, '.pre-commit-config.yaml') &&
       github.event.action != 'closed'
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -1274,7 +1277,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       npm: "true"
       has_npm_lockfile: ${{ contains(needs.file_list.outputs.workdir, 'package-lock.json') || contains(needs.file_list.outputs.workdir, 'npm-shrinkwrap.json') }}
@@ -1437,7 +1441,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       docker_images: ${{ steps.docker_publish.outputs.images }}
       docker_images_crlf: ${{ steps.docker_publish.outputs.images_crlf }}
@@ -1718,7 +1723,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
       python_versions: ${{ steps.python_versions.outputs.json }}
@@ -1871,7 +1877,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       cargo_targets: ${{ steps.cargo_targets.outputs.result }}
       cargo: ${{ steps.cargo_yml.outputs.enabled }}
@@ -1958,7 +1965,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
     steps:
@@ -2196,7 +2204,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       cloudformation: ${{ steps.validate_files.outputs.enabled || steps.validate_input.outputs.enabled }}
       templates_json: ${{ steps.validate_files.outputs.result || steps.validate_input.outputs.result }}
@@ -2416,7 +2425,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -2568,7 +2578,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -2826,6 +2837,7 @@ jobs:
     env:
       DOCKER_BUILDKIT: "1"
     permissions:
+      contents: read
       packages: read
     steps:
       - name: Generate GitHub App installation token for checkout
@@ -3600,6 +3612,7 @@ jobs:
       matrix:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
     permissions:
+      contents: read
       packages: read
     defaults:
       run:
@@ -3679,7 +3692,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -3831,7 +3845,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -3968,7 +3983,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -4091,7 +4107,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -4202,7 +4219,8 @@ jobs:
       !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
       inputs.cloudflare_website != '' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -4365,7 +4383,8 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -4468,7 +4487,8 @@ jobs:
       run:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -4566,7 +4586,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -4666,7 +4687,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
@@ -4762,7 +4784,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -4846,7 +4869,8 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
-    permissions: {}
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
