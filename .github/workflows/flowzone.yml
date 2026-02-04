@@ -1498,7 +1498,6 @@ jobs:
           BUILDX_VERSION: v0.31.1
         with:
           driver-opts: network=host
-          install: true
           version: ${{ env.BUILDX_VERSION }}
           cache-binary: ${{ github.repository != 'product-os/flowzone' }}
       - name: Pre-process Docker bake files
@@ -2941,7 +2940,6 @@ jobs:
           BUILDX_VERSION: v0.31.1
         with:
           driver-opts: network=host
-          install: true
           version: ${{ env.BUILDX_VERSION }}
           cache-binary: ${{ github.repository != 'product-os/flowzone' }}
       - id: native_platforms
@@ -3211,7 +3209,6 @@ jobs:
           BUILDX_VERSION: v0.31.1
         with:
           driver-opts: network=host
-          install: true
           version: ${{ env.BUILDX_VERSION }}
           cache-binary: ${{ github.repository != 'product-os/flowzone' }}
       - name: Setup crane
