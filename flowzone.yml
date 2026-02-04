@@ -589,7 +589,7 @@
 
   - &setupCrane # https://github.com/imjasonh/setup-crane
     name: Setup crane
-    uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e # v0.4
+    uses: imjasonh/setup-crane@6da1ae018866400525525ce74ff892880c099987 # v0.5
     with:
       version: v0.14.0
 
