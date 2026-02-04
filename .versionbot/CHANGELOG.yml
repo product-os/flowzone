@@ -1,4 +1,22 @@
 - commits:
+    - subject: "Add content: read permissions where required for private repos"
+      hash: 74a417822ee56f344ec1e858a1bf6c6c1ff67c3f
+      body: >
+        This permission was implied for some jobs but was unset for many
+
+        others, leading to checkout failures on private repos after merging
+        bddb73c.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.8.1
+  title: ""
+  date: 2026-02-04T14:40:05.234Z
+- commits:
     - subject: Always use App Tokens when submodules are detected
       hash: bddb73c6fee03946febd7b4877e2dbd998552454
       body: >
