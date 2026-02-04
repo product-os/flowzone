@@ -1745,8 +1745,8 @@ jobs:
       - event_types
       - versioned_source
 
-    # No permissions needed for this job.
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -1789,8 +1789,8 @@ jobs:
       - event_types
       - versioned_source
 
-    # No permissions needed for this job.
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -1942,8 +1942,8 @@ jobs:
       contains(needs.file_list.outputs.root, '.pre-commit-config.yaml') &&
       github.event.action != 'closed'
 
-    # No permissions needed for this job.
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -1978,8 +1978,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    # No permissions needed for this job.
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     outputs:
       npm: "true"
@@ -2116,8 +2116,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    # No permissions needed for this job.
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     outputs:
       docker_images: ${{ steps.docker_publish.outputs.images }}
@@ -2420,7 +2420,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     outputs:
       python_poetry: ${{ steps.python_poetry.outputs.enabled }}
@@ -2510,7 +2511,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     outputs:
       cargo_targets: ${{ steps.cargo_targets.outputs.result }}
@@ -2558,7 +2560,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
@@ -2585,7 +2588,7 @@ jobs:
     <<: *rootWorkingDirectory
 
     permissions:
-      contents: read # Required to read and reset the .github directory
+      contents: read # Checkout versioned source and reset .github directory
 
     outputs:
       custom_test: ${{ steps.custom.outputs.test }}
@@ -2706,7 +2709,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     outputs:
       cloudformation: ${{ steps.validate_files.outputs.enabled || steps.validate_input.outputs.enabled }}
@@ -2903,7 +2907,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     strategy:
       fail-fast: false
@@ -3038,7 +3043,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -3263,6 +3269,7 @@ jobs:
       DOCKER_BUILDKIT: "1"
 
     permissions:
+      contents: read # Checkout versioned source
       packages: read # pull private base images from ghcr.io
 
     steps:
@@ -3588,10 +3595,11 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
 
-    # The calling workflow must set these permissions to use these optional features.
+    # These features must be enabled by the calling workflow to be inherited
     # permissions:
-    #   id-token: write # AWS GitHub OIDC provider
-    #   packages: write # push manifests to ghcr.io
+    #   contents: read # Checkout versioned source
+    #   id-token: write # AWS GitHub OIDC provider (optional)
+    #   packages: write # push manifests to ghcr.io (optional)
 
     steps:
       - *getCheckoutToken
@@ -3664,6 +3672,7 @@ jobs:
         slug: ${{ fromJSON(needs.is_balena.outputs.balena_slugs) }}
 
     permissions:
+      contents: read # Checkout versioned source
       packages: read # pull private base images from ghcr.io
 
     <<: *customWorkingDirectory
@@ -3713,7 +3722,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     strategy:
       fail-fast: false
@@ -3803,7 +3813,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -3861,7 +3872,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -3902,7 +3914,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -3948,7 +3961,8 @@ jobs:
       inputs.cloudflare_website != '' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -4076,7 +4090,8 @@ jobs:
 
     <<: *rootWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -4141,7 +4156,8 @@ jobs:
 
     <<: *rootWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -4206,7 +4222,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     strategy:
       fail-fast: false
@@ -4281,7 +4298,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -4336,7 +4354,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     strategy:
       fail-fast: false
@@ -4393,7 +4412,8 @@ jobs:
 
     <<: *customWorkingDirectory
 
-    permissions: {}
+    permissions:
+      contents: read # Checkout versioned source
 
     steps:
       - *getCheckoutToken
@@ -4690,9 +4710,10 @@ jobs:
     # sets the GH environment context for secrets and variables
     environment: ${{ matrix.environment }}
 
-    # The calling workflow must set these permissions to use these optional features.
+    # These permissions must be enabled by the calling workflow to be inherited.
     # permissions:
-    #   id-token: write # AWS GitHub OIDC provider
+    #   contents: read # Checkout versioned source
+    #   id-token: write # AWS GitHub OIDC provider (optional)
 
     steps:
       - *deploymentEnvironment
