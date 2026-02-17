@@ -1029,7 +1029,7 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/.github/actionlint-matcher.json > ${{ runner.temp }}/actionlint-matcher.json
           echo ::add-matcher::${{ runner.temp }}/actionlint-matcher.json
       - name: Check workflow files
-        uses: docker://rhysd/actionlint:1.7.10
+        uses: docker://rhysd/actionlint:1.7.11
         with:
           args: -color -ignore="custom label for self-hosted runner" -ignore=":info:" -ignore=":style:"
   octoscan:
