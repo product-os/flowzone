@@ -1,4 +1,26 @@
 - commits:
+    - subject: Revert "Update product-os/docusaurus-builder action to v2.1.43"
+      hash: 7873e1fcae6d00cecaed06aa778e9c006aad6fc5
+      body: >
+        This reverts commit c2ec0df8c051fec27dac059769e7c0c66837eb97.
+
+
+        We revert the docusaurus update because it is broken and all meta-balena
+        builds
+
+        fail because of it.
+
+
+        It was somehow merged with failing tests anyway.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Florin Sarbu
+      nested: []
+  version: 22.8.10
+  title: ""
+  date: 2026-02-17T12:39:56.441Z
+- commits:
     - subject: Update product-os/docusaurus-builder action to v2.1.43
       hash: c2ec0df8c051fec27dac059769e7c0c66837eb97
       body: |
