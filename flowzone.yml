@@ -5029,6 +5029,7 @@ jobs:
     permissions: {}
     needs:
       - event_types
+      - file_list
       - versioned_source
       - is_npm
       - is_docker
@@ -5036,6 +5037,7 @@ jobs:
       - is_cargo
       - is_balena
       - is_custom
+      - is_cloudformation
       - all_tests
       - npm_sbom
       - python_sbom
