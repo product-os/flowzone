@@ -1369,7 +1369,8 @@ jobs:
         id: check_engine_20
         run: |
           node_version="$(node --version)"
-          if npx -q -y -- check-engine
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
+          if npx -q -y -- check-engine || ! npx -q -y -- check-engine --ignore
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
@@ -1383,7 +1384,8 @@ jobs:
         id: check_engine_22
         run: |
           node_version="$(node --version)"
-          if npx -q -y -- check-engine
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
+          if npx -q -y -- check-engine || ! npx -q -y -- check-engine --ignore
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
@@ -1397,7 +1399,8 @@ jobs:
         id: check_engine_24
         run: |
           node_version="$(node --version)"
-          if npx -q -y -- check-engine
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
+          if npx -q -y -- check-engine || ! npx -q -y -- check-engine --ignore
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
