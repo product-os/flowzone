@@ -1416,7 +1416,8 @@ jobs:
             const versions = JSON.parse(process.env.NODE_VERSIONS);
 
             if (versions.length < 1) {
-              versions.push('22.x')
+              core.setFailed('No matching nodejs versions found, please check your engine requirements');
+              return;
             }
 
             const sorted = [...versions].sort(compareVersions);
