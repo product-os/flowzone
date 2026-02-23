@@ -1,4 +1,25 @@
 - commits:
+    - subject: "Nodejs: switch to failing if nodejs versions are specified but can't
+        be matched"
+      hash: 1e807be4bb6296f2d11242377ea08e0844531d1f
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+    - subject: "Nodejs: treat missing engines in package.json as allowing any nodejs"
+      hash: 67084595e49cf93b7ed40ca91d1b1efaa15419f6
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 22.8.18
+  title: ""
+  date: 2026-02-23T21:16:19.205Z
+- commits:
     - subject: Update tonistiigi/binfmt Docker tag to qemu-v10.2.1-65
       hash: de3ad5be8f20fdd7f957ea4bce345213ad4c1983
       body: |
