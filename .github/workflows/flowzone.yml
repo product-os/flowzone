@@ -1369,7 +1369,8 @@ jobs:
         id: check_engine_20
         run: |
           node_version="$(node --version)"
-          if npx -q -y -- check-engine
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
+          if npx -q -y -- check-engine@1 || ! npx -q -y -- check-engine@1 --ignore
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
@@ -1383,7 +1384,8 @@ jobs:
         id: check_engine_22
         run: |
           node_version="$(node --version)"
-          if npx -q -y -- check-engine
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
+          if npx -q -y -- check-engine@1 || ! npx -q -y -- check-engine@1 --ignore
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
@@ -1397,7 +1399,8 @@ jobs:
         id: check_engine_24
         run: |
           node_version="$(node --version)"
-          if npx -q -y -- check-engine
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
+          if npx -q -y -- check-engine@1 || ! npx -q -y -- check-engine@1 --ignore
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
@@ -1413,7 +1416,8 @@ jobs:
             const versions = JSON.parse(process.env.NODE_VERSIONS);
 
             if (versions.length < 1) {
-              versions.push('22.x')
+              core.setFailed('No matching nodejs versions found, please check your engine requirements');
+              return;
             }
 
             const sorted = [...versions].sort(compareVersions);

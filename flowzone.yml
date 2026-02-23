@@ -1987,7 +1987,7 @@ jobs:
       npm_docs: ${{ steps.package_json.outputs.docs }}
       npm_sbom: ${{ inputs.generate_sbom }} # default true
       npm_access: ${{ steps.package_json.outputs.access }}
-      node_versions: ${{ steps.node_versions.outputs.result }} # Defaults to ['22.x'] if no versions were matched
+      node_versions: ${{ steps.node_versions.outputs.result }} # Fails if no versions were matched
       max_node_version: ${{ steps.node_versions.outputs.max }}
 
     env:
@@ -2042,7 +2042,8 @@ jobs:
         id: check_engine_20
         run: |
           node_version="$(node --version)"
-          if npx -q -y -- check-engine
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
+          if npx -q -y -- check-engine@1 || ! npx -q -y -- check-engine@1 --ignore
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
@@ -2063,7 +2064,7 @@ jobs:
       - <<: *checkEngine
         id: check_engine_24
 
-      # Defaults to ['22.x'] if no versions were matched
+      # Fails if no versions were matched
       # https://github.com/actions/github-script
       - name: Set Node.js versions
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
@@ -2072,7 +2073,7 @@ jobs:
           # Tested that this will always return a JSON array.
           # If the engines in package.json are not satisified by any of the above
           # engine checks, the NODE_VERSIONS value will be [] and the script should
-          # instead return ["22.x"] so we always test something.
+          # fail.
           NODE_VERSIONS: ${{ toJSON(steps.*.outputs.node_version) }}
         with:
           result-encoding: json
@@ -2081,7 +2082,8 @@ jobs:
             const versions = JSON.parse(process.env.NODE_VERSIONS);
 
             if (versions.length < 1) {
-              versions.push('22.x')
+              core.setFailed('No matching nodejs versions found, please check your engine requirements');
+              return;
             }
 
             const sorted = [...versions].sort(compareVersions);
