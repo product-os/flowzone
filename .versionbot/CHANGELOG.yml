@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node to v24.14.0
+      hash: a4b0310c53d27dbee732c684183b2f5cbd64c3a9
+      body: |
+        Update node from 24.13.1 to 24.14.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.8.19
+  title: ""
+  date: 2026-02-24T16:03:33.620Z
+- commits:
     - subject: "Nodejs: switch to failing if nodejs versions are specified but can't
         be matched"
       hash: 1e807be4bb6296f2d11242377ea08e0844531d1f
