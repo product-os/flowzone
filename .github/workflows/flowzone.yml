@@ -4654,7 +4654,12 @@ jobs:
       - name: Lint with clippy
         run: cross -v clippy --all-targets --all-features --target ${{ matrix.target }} -- -D warnings
       - name: Run tests for toolchain ${{ matrix.target }}
-        run: cross -v test --all-targets --all-features --locked --target ${{ matrix.target }}
+        run: cross -v test --all-features --locked --target ${{ matrix.target }}
+      - name: Run example and benchmark tests for toolchain ${{ matrix.target }}
+        run: cross -v test --examples --benches --locked --target ${{ matrix.target }}
+      - name: Test build for toolchain ${{ matrix.target }}
+        if: inputs.rust_binaries != true
+        run: cross -v build --locked --release --target ${{ matrix.target }}
       - name: Set up rust stable toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Dry-run crate publish
