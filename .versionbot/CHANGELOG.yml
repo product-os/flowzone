@@ -1,4 +1,26 @@
 - commits:
+    - subject: Add tests for documentation and release build for cargo targets
+      hash: 81f19bb6a7e718dff3b771f7b3f4c482db725109
+      body: >
+        Modifies the test command removing `--all-targets` that skips docs tests
+
+        and adds two more steps to the `cargo_test` job.
+
+        - Test examples and benches if any to make up for the removal of
+        `--all-targets`.
+
+        - Checks that `cargo build --release` works if `cargo_publish` is false.
+          The `cargo_publish` job already builds the binary so no need to test
+          this twice.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: felipe
+      nested: []
+  version: 22.8.25
+  title: ""
+  date: 2026-03-05T14:48:11.405Z
+- commits:
     - subject: Update dependency docker/buildx to v0.32.0
       hash: b356b5869ea6d5c57c536805e59c56bd851a025d
       body: |
