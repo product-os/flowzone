@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-qemu-action action to v4
+      hash: 3aea7260518ecb7a1f7e37b85e03099e5981a21c
+      body: |
+        Update docker/setup-qemu-action from 3.7.0 to 4.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.8.26
+  title: ""
+  date: 2026-03-12T14:24:49.864Z
+- commits:
     - subject: Add tests for documentation and release build for cargo targets
       hash: 81f19bb6a7e718dff3b771f7b3f4c482db725109
       body: >
