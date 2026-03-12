@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v4
+      hash: 0fa573489c07f950822c3602d1d421ad0f06af7d
+      body: |
+        Update docker/setup-buildx-action from 3.12.0 to 4.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.8.34
+  title: ""
+  date: 2026-03-12T21:38:11.548Z
+- commits:
     - subject: Update docker/metadata-action action to v6
       hash: b890eff35f021e707dc90f0b5667e29fade4b01d
       body: |
