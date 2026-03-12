@@ -2034,7 +2034,7 @@ jobs:
       - <<: *setupNode
         env:
           # renovate: datasource=node-version depName=node packageName=node-20.x
-          NODE_VERSION: 20.20.0
+          NODE_VERSION: 20.20.1
 
       # https://www.npmjs.com/package/check-engine
       - &checkEngine
