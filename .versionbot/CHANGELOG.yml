@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/metadata-action action to v6
+      hash: b890eff35f021e707dc90f0b5667e29fade4b01d
+      body: |
+        Update docker/metadata-action from 5.10.0 to 6.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.8.33
+  title: ""
+  date: 2026-03-12T20:40:10.305Z
+- commits:
     - subject: Update docker/login-action action to v4
       hash: ed23b8ecd8cf4396716ffc223c78c4cd54be6863
       body: |
