@@ -314,7 +314,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -384,7 +384,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -468,7 +468,7 @@ jobs:
               "Switching to Rulesets is required to allow GitHub Apps to bypass branch rules.\n\n" +
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && steps.has_submodules.outputs.result == 'true'
         id: checkout_token
         with:
@@ -744,7 +744,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -941,7 +941,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -1098,7 +1098,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -1169,7 +1169,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -1196,7 +1196,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -1322,7 +1322,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -1453,7 +1453,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -1636,7 +1636,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -1935,7 +1935,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2109,7 +2109,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2214,7 +2214,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2309,7 +2309,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2496,7 +2496,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2743,7 +2743,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2905,7 +2905,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -3082,7 +3082,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -3151,7 +3151,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -3224,7 +3224,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -3769,7 +3769,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4040,7 +4040,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4147,7 +4147,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4309,7 +4309,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4467,7 +4467,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4611,7 +4611,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4743,7 +4743,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4783,7 +4783,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -4885,7 +4885,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -4947,7 +4947,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4987,7 +4987,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -5071,7 +5071,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5111,7 +5111,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -5201,7 +5201,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5316,7 +5316,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5439,7 +5439,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5538,7 +5538,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5636,7 +5636,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5759,7 +5759,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5876,7 +5876,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5990,7 +5990,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -6099,7 +6099,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -6214,7 +6214,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -6831,7 +6831,7 @@ jobs:
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         if: inputs.app_id
         id: gh_app_token
         with:
