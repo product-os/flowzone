@@ -3451,8 +3451,7 @@ jobs:
         id: docker_bake
         uses: docker/bake-action@82490499d2e5613fcead7e128237ef0b0ea210f7
         with:
-          source: .
-          workdir: ${{ inputs.working_directory }}
+          source: ${{ inputs.working_directory }}
           files: |
             ${{ env.DOCKER_BAKE_FILE }}
             ${{ steps.test_meta.outputs.bake-file }}
