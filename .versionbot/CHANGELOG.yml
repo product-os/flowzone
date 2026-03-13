@@ -1,4 +1,27 @@
 - commits:
+    - subject: "docker-bake: Remove deprecated workdir input for v8"
+      hash: 8518c6d111f37949e27f6d1130623d2466db25d4
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Update docker/bake-action action to v7
+      hash: 8c6847fb872047dc21097c33f9bff6acd3d12cc4
+      body: |
+        Update docker/bake-action from 6.10.0 to 7.0.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.9.1
+  title: ""
+  date: 2026-03-13T20:21:36.380Z
+- commits:
     - subject: Decode GH_APP_PRIVATE_KEY from base64 and mask value
       hash: ac6eb7e6ef54e434b9c5954a668bdd0a7f4967fc
       body: >
