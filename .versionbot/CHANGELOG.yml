@@ -1,4 +1,19 @@
 - commits:
+    - subject: Decode GH_APP_PRIVATE_KEY from base64 and mask value
+      hash: ac6eb7e6ef54e434b9c5954a668bdd0a7f4967fc
+      body: >
+        Skip decode if PEM key format is detected and just use the raw key value.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.9.0
+  title: ""
+  date: 2026-03-13T17:59:40.839Z
+- commits:
     - subject: Update pre-commit hook renovatebot/pre-commit-hooks to v43
       hash: 317bb9ccee91031fc9f7b1b3d88630c0c1dd69e5
       body: |
