@@ -76,7 +76,8 @@ jobs:
 
     # Otherwise you must manually specify which secrets to pass
     secrets:
-      # GitHub App to generate ephemeral access tokens
+      # GitHub App private key to generate ephemeral access tokens. Supports base64 encoded or raw
+      # PEM formats. If set, takes precedence over FLOWZONE_TOKEN.
       # Required: false
       GH_APP_PRIVATE_KEY:
 

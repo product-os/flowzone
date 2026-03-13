@@ -11,6 +11,32 @@
   - &ifPublicRepository
     if: github.event.repository.private != true
 
+  - &decodePrivateKey # https://github.com/actions/create-github-app-token
+    name: Decode the GitHub App Private Key
+    if: inputs.app_id
+    id: decode
+    shell: bash
+    working-directory: ${{ runner.temp }}
+    # Skip decode if -----BEGIN is detected in the body of the private key, which indicates that the key is not base64 encoded.
+    # This allows users to use either raw or base64 encoded keys without needing to specify which format they are using.
+    # Mask the decoded private key to prevent it from being printed in logs, but only if it was not already masked as a secret.
+    # (i.e. if it was provided as a raw value rather than a base64 encoded value, since secrets are automatically masked by GitHub).
+    run: |
+      secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+      if [[ "$secret" == *"-----BEGIN"* ]]; then
+        echo "Detected unencoded private key, skipping base64 decode"
+        private_key="$secret"
+      else
+        private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+        echo "::add-mask::$private_key"
+      fi
+      delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+      {
+        echo "private-key<<${delimiter}"
+        echo "$private_key"
+        echo "${delimiter}"
+      } >> "$GITHUB_OUTPUT"
+
   - &getGitHubAppToken # https://github.com/actions/create-github-app-token
     name: Generate GitHub App installation token
     uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
@@ -18,7 +44,7 @@
     id: gh_app_token
     with: &getGitHubAppTokenWith
       app-id: ${{ inputs.app_id }}
-      private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      private-key: ${{ steps.decode.outputs.private-key }}
       permission-metadata: read # Always required
 
   # optionally attempt to get AWS login short-lived session credentials over OIDC
@@ -135,7 +161,7 @@
     id: checkout_token
     with:
       app-id: ${{ inputs.app_id }}
-      private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      private-key: ${{ steps.decode.outputs.private-key }}
       permission-contents: read
       # Get org/namespace access for private submodule cloning
       owner: ${{ github.repository_owner }}
@@ -769,9 +795,8 @@ name: Flowzone
 on:
   workflow_call:
     secrets:
-      # https://github.com/organizations/product-os/settings/secrets/actions/GH_APP_PRIVATE_KEY
       GH_APP_PRIVATE_KEY:
-        description: "GitHub App to generate ephemeral access tokens"
+        description: "GitHub App private key to generate ephemeral access tokens. Supports base64 encoded or raw PEM formats. If set, takes precedence over FLOWZONE_TOKEN."
         required: false
       FLOWZONE_TOKEN:
         description: ".. or Personal Access Token (PAT) with admin/owner permissions in the org."
@@ -1070,6 +1095,7 @@ jobs:
       - *rejectInternalPullRequestTarget
       - *rejectMissingSecrets
 
+      - *decodePrivateKey
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1129,6 +1155,7 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
+      - *decodePrivateKey
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1440,6 +1467,7 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
+      - *decodePrivateKey
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1625,6 +1653,7 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
+      - *decodePrivateKey
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -1748,6 +1777,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       # - *checkoutSubmodules # actionlint does not need submodules
@@ -1792,6 +1822,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       # - *checkoutSubmodules # octoscan does not need submodules
@@ -1945,6 +1976,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -1995,6 +2027,7 @@ jobs:
       PACKAGE_JSON_PATH: "${{ inputs.working_directory }}/package.json"
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -2129,6 +2162,7 @@ jobs:
       docker_publish_matrix: ${{ steps.docker_publish.outputs.result }}
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -2431,6 +2465,7 @@ jobs:
       python_sbom: ${{ inputs.generate_sbom }}
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -2522,6 +2557,7 @@ jobs:
       rust_toolchain: ${{steps.rust_version.outputs.value || 'stable' }}
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -2568,6 +2604,7 @@ jobs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -2603,6 +2640,7 @@ jobs:
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       # - *checkoutSubmodules # Submodules are not supported for custom actions
@@ -2720,6 +2758,7 @@ jobs:
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -2925,6 +2964,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -3048,6 +3088,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -3159,6 +3200,7 @@ jobs:
     #   id-token: write # https://docs.npmjs.com/trusted-publishers
 
     steps:
+      - *decodePrivateKey
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -3211,6 +3253,7 @@ jobs:
     permissions: {}
 
     steps:
+      - *decodePrivateKey
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -3274,6 +3317,7 @@ jobs:
       packages: read # pull private base images from ghcr.io
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -3603,6 +3647,7 @@ jobs:
     #   packages: write # push manifests to ghcr.io (optional)
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -3679,6 +3724,7 @@ jobs:
     <<: *customWorkingDirectory
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -3740,6 +3786,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -3818,6 +3865,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -3877,6 +3925,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -3919,6 +3968,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -3966,6 +4016,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4061,6 +4112,7 @@ jobs:
     permissions: {}
 
     steps:
+      - *decodePrivateKey
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
@@ -4095,6 +4147,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4161,6 +4214,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4240,6 +4294,7 @@ jobs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4310,6 +4365,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4373,6 +4429,7 @@ jobs:
         package: ${{ fromJSON(needs.cargo_test.outputs.packages) }}
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4424,6 +4481,7 @@ jobs:
       contents: read # Checkout versioned source
 
     steps:
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4469,6 +4527,7 @@ jobs:
       - *rejectExternalCustomActions
 
       - *deploymentEnvironment
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4526,6 +4585,7 @@ jobs:
       - *rejectExternalCustomActions
 
       - *deploymentEnvironment
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4576,6 +4636,7 @@ jobs:
       - *rejectExternalCustomActions
 
       - *deploymentEnvironment
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4624,6 +4685,7 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4666,6 +4728,7 @@ jobs:
     steps:
       - *rejectExternalCustomActions
 
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -4725,6 +4788,7 @@ jobs:
 
     steps:
       - *deploymentEnvironment
+      - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
       - *checkoutSubmodules
@@ -5099,6 +5163,7 @@ jobs:
     permissions: {}
 
     steps:
+      - *decodePrivateKey
       - <<: *getGitHubAppToken
         with:
           <<: *getGitHubAppTokenWith
