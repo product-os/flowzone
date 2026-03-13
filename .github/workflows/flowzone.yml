@@ -4,7 +4,7 @@ on:
   workflow_call:
     secrets:
       GH_APP_PRIVATE_KEY:
-        description: GitHub App to generate ephemeral access tokens
+        description: GitHub App private key to generate ephemeral access tokens. Supports base64 encoded or raw PEM formats. If set, takes precedence over FLOWZONE_TOKEN.
         required: false
       FLOWZONE_TOKEN:
         description: .. or Personal Access Token (PAT) with admin/owner permissions in the org.
@@ -293,13 +293,33 @@ jobs:
             echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
             false
           fi
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: read
           permission-issues: read
@@ -343,13 +363,33 @@ jobs:
       GH_PROMPT_DISABLED: "true"
       GH_REPO: ${{ github.repository }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-administration: read
           permission-contents: write
@@ -433,7 +473,7 @@ jobs:
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - if: github.event.pull_request.state == 'open'
@@ -683,13 +723,33 @@ jobs:
       GH_PROMPT_DISABLED: "true"
       GH_REPO: ${{ github.repository }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: read
           permission-pull-requests: read
@@ -860,13 +920,33 @@ jobs:
       GH_PROMPT_DISABLED: "true"
       GH_REPO: ${{ github.repository }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
           permission-issues: read
@@ -997,13 +1077,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -1048,13 +1148,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -1081,7 +1201,7 @@ jobs:
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: read
           permission-security-events: write
@@ -1181,13 +1301,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -1292,13 +1432,33 @@ jobs:
       NODE_VERSIONS: "[]"
       PACKAGE_JSON_PATH: ${{ inputs.working_directory }}/package.json
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -1455,13 +1615,33 @@ jobs:
       docker_test_matrix: ${{ steps.docker_test.outputs.result }}
       docker_publish_matrix: ${{ steps.docker_publish.outputs.result }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -1734,13 +1914,33 @@ jobs:
       pypi_publish: ${{ steps.python_poetry.outputs.pypi_publish }}
       python_sbom: ${{ inputs.generate_sbom }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -1888,13 +2088,33 @@ jobs:
       cargo_sbom: ${{ inputs.generate_sbom }}
       rust_toolchain: ${{steps.rust_version.outputs.value || 'stable' }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -1973,13 +2193,33 @@ jobs:
     outputs:
       balena_slugs: ${{ steps.balena_slugs.outputs.result }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -2048,13 +2288,33 @@ jobs:
       custom_publish_matrix: ${{ steps.custom_publish_matrix.outputs.json || inputs.custom_publish_matrix }}
       custom_finalize_matrix: ${{ steps.custom_finalize_matrix.outputs.json || inputs.custom_finalize_matrix }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -2215,13 +2475,33 @@ jobs:
       stacks: ${{ steps.cloudformation_stacks.outputs.matrix }}
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -2442,13 +2722,33 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -2584,13 +2884,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -2741,13 +3061,33 @@ jobs:
         working-directory: .
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: read
           permission-actions: read
@@ -2790,13 +3130,33 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-pages: write
           permission-contents: write
@@ -2843,13 +3203,33 @@ jobs:
       contents: read
       packages: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -3369,13 +3749,33 @@ jobs:
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.is_docker.outputs.docker_publish_matrix) }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -3620,13 +4020,33 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -3707,13 +4127,33 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -3849,13 +4289,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -3987,13 +4447,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -4111,13 +4591,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -4223,13 +4723,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -4269,7 +4789,7 @@ jobs:
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: read
           permission-issues: read
@@ -4345,13 +4865,33 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     permissions: {}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
       - name: Delete draft GitHub release
@@ -4387,13 +4927,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -4433,7 +4993,7 @@ jobs:
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
       - name: Delete draft GitHub release
@@ -4491,13 +5051,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -4537,7 +5117,7 @@ jobs:
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
       - name: Download release notes
@@ -4601,13 +5181,33 @@ jobs:
       sha_tag: ${{ steps.meta.outputs.sha_tag }}
       version_tag: ${{ steps.meta.outputs.version_tag }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -4696,13 +5296,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -4799,13 +5419,33 @@ jobs:
         target: ${{ fromJSON(needs.is_cargo.outputs.cargo_targets) }}
         package: ${{ fromJSON(needs.cargo_test.outputs.packages) }}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -4878,13 +5518,33 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -4956,13 +5616,33 @@ jobs:
         if: ${{ matrix.environment != '' }}
         run: |
           echo "::info::Context set to '${{ matrix.environment }}'"
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -5059,13 +5739,33 @@ jobs:
         if: ${{ matrix.environment != '' }}
         run: |
           echo "::info::Context set to '${{ matrix.environment }}'"
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -5156,13 +5856,33 @@ jobs:
         if: ${{ matrix.environment != '' }}
         run: |
           echo "::info::Context set to '${{ matrix.environment }}'"
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -5250,13 +5970,33 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -5339,13 +6079,33 @@ jobs:
           echo "::error::Custom actions are disabled for external contributors and will be skipped. \
             Please contact a member of the organization for assistance."
           exit 1
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -5434,13 +6194,33 @@ jobs:
         if: ${{ matrix.environment != '' }}
         run: |
           echo "::info::Context set to '${{ matrix.environment }}'"
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
       - name: Checkout versioned commit
@@ -6031,13 +6811,33 @@ jobs:
       github.event.pull_request.user.type != 'Bot'
     permissions: {}
     steps:
+      - name: Decode the GitHub App Private Key
+        if: inputs.app_id
+        id: decode
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          if [[ "$secret" == *"-----BEGIN"* ]]; then
+            echo "Detected unencoded private key, skipping base64 decode"
+            private_key="$secret"
+          else
+            private_key=$(echo "$secret" | base64 -d) 2>/dev/null
+            echo "::add-mask::$private_key"
+          fi
+          delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
+          {
+            echo "private-key<<${delimiter}"
+            echo "$private_key"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
         if: inputs.app_id
         id: gh_app_token
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
           permission-pull-requests: read
