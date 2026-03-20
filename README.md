@@ -524,3 +524,4 @@ submit an issue or post on the [forums](https://forums.balena.io).
 ## Contributing
 
 Please open an issue or submit a pull request with any features, fixes, or changes.
+
