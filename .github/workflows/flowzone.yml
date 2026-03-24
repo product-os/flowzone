@@ -5015,7 +5015,7 @@ jobs:
           path: ${{ runner.temp }}
           name: release-notes
       - name: Publish draft release
-        uses: softprops/action-gh-release@71d29a04ae7c63895f38299d7a5e05d238f7f445
+        uses: softprops/action-gh-release@1853d73993c8ca1b2c9c1a7fede39682d0ab5c2a
         with:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
