@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency yaml to v2.8.3 [SECURITY]
+      hash: 8dbc121314d2e7ddcc31012e835349353725e16b
+      body: |
+        Update yaml from 2.8.2 to 2.8.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.9.9
+  title: ""
+  date: 2026-03-25T22:00:29.122Z
+- commits:
     - subject: Pin dependencies
       hash: 8d4c5f682450c1e49ac932898688d320c28780eb
       body: |
