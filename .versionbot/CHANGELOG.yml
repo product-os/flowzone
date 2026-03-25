@@ -1,4 +1,17 @@
 - commits:
+    - subject: Pin dependencies
+      hash: 8d4c5f682450c1e49ac932898688d320c28780eb
+      body: |
+        Update dtolnay/rust-toolchain
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.9.8
+  title: ""
+  date: 2026-03-25T20:40:13.197Z
+- commits:
     - subject: Update pre-commit hook renovatebot/pre-commit-hooks to v43.91.2
       hash: 8104df63793c6c284fd25d3541bd528abf0ffb02
       body: |
