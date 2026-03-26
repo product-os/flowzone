@@ -3603,7 +3603,7 @@ jobs:
         with:
           version: v1.15.0
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@37c27c5fbf303c44f63119ba05c0c75a30f7eb7a
+        uses: product-os/setup-awscli-action@01afc7c55594ab8aead090e1faae42af7aecbd8e
         with:
           version: 2.15.43
       - name: Warn if tests skipped
@@ -3884,7 +3884,7 @@ jobs:
         with:
           version: v0.14.0
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@37c27c5fbf303c44f63119ba05c0c75a30f7eb7a
+        uses: product-os/setup-awscli-action@01afc7c55594ab8aead090e1faae42af7aecbd8e
         with:
           version: 2.15.43
       - name: Login to GitHub Container Registry
@@ -6254,7 +6254,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@37c27c5fbf303c44f63119ba05c0c75a30f7eb7a
+        uses: product-os/setup-awscli-action@01afc7c55594ab8aead090e1faae42af7aecbd8e
         with:
           version: 2.15.43
       - name: Random delay
@@ -6590,7 +6590,7 @@ jobs:
         run: |
           echo "::info::Context set to '${{ matrix.environment }}'"
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@37c27c5fbf303c44f63119ba05c0c75a30f7eb7a
+        uses: product-os/setup-awscli-action@01afc7c55594ab8aead090e1faae42af7aecbd8e
         with:
           version: 2.15.43
       - name: Random delay

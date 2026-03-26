@@ -642,7 +642,7 @@
 
   - &setupAwsCli
     name: Setup AWS CLI
-    uses: product-os/setup-awscli-action@37c27c5fbf303c44f63119ba05c0c75a30f7eb7a # v0.0.28
+    uses: product-os/setup-awscli-action@01afc7c55594ab8aead090e1faae42af7aecbd8e # v0.0.29
     with:
       version: "2.15.43"
 
