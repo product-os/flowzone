@@ -1,4 +1,20 @@
 - commits:
+    - subject: Add FLOWZONE_APP_PRIVATE_KEY as new secret for ephemeral app tokens
+      hash: be9ce43ac904fca2cd41c99612d4fb1b953dba99
+      body: |
+        This key is easier to identify when in bulk with many other secrets,
+        especially at an org level.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.10.0
+  title: ""
+  date: 2026-03-27T15:34:57.122Z
+- commits:
     - subject: Update product-os/setup-awscli-action action to v0.0.34
       hash: 4c3108d07bd52c238c08b7f826ea9b4d331a11b7
       body: |
