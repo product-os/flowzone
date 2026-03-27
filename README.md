@@ -79,6 +79,10 @@ jobs:
       # GitHub App private key to generate ephemeral access tokens. Supports base64 encoded or raw
       # PEM formats. If set, takes precedence over FLOWZONE_TOKEN.
       # Required: false
+      FLOWZONE_APP_PRIVATE_KEY:
+
+      # Deprecated, use FLOWZONE_APP_PRIVATE_KEY instead
+      # Required: false
       GH_APP_PRIVATE_KEY:
 
       # .. or Personal Access Token (PAT) with admin/owner permissions in the org.
