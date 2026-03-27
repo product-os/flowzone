@@ -39,7 +39,7 @@
 
   - &getGitHubAppToken # https://github.com/actions/create-github-app-token
     name: Generate GitHub App installation token
-    uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+    uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
     if: inputs.app_id
     id: gh_app_token
     with: &getGitHubAppTokenWith
@@ -153,7 +153,7 @@
   # Generate a token in order to checkout private submodules in the same namespace/org.
   - &getCheckoutToken # https://github.com/actions/create-github-app-token
     name: Generate GitHub App installation token for checkout
-    uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+    uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
     # Only generate a token if the repository has submodules (that may be private) and the app_id is set.
     # This is to avoid generating a token for repositories where the automatic github.token is sufficient.
     # Even with an app token, private submodules must be in the same namespace/org as the repo.
