@@ -22,7 +22,7 @@
     # Mask the decoded private key to prevent it from being printed in logs, but only if it was not already masked as a secret.
     # (i.e. if it was provided as a raw value rather than a base64 encoded value, since secrets are automatically masked by GitHub).
     run: |
-      secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+      secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
       if [[ "$secret" == *"-----BEGIN"* ]]; then
         echo "Detected unencoded private key, skipping base64 decode"
         private_key="$secret"
@@ -484,9 +484,9 @@
   - &rejectMissingSecrets
     name: Reject missing secrets
     run: |
-      if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+      if [ -z '${{ secrets.FLOWZONE_TOKEN || secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}' ]
       then
-        echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+        echo '::error::Must specify either FLOWZONE_APP_PRIVATE_KEY, GH_APP_PRIVATE_KEY, or FLOWZONE_TOKEN.'
         false
       fi
 
@@ -795,8 +795,11 @@ name: Flowzone
 on:
   workflow_call:
     secrets:
-      GH_APP_PRIVATE_KEY:
+      FLOWZONE_APP_PRIVATE_KEY:
         description: "GitHub App private key to generate ephemeral access tokens. Supports base64 encoded or raw PEM formats. If set, takes precedence over FLOWZONE_TOKEN."
+        required: false
+      GH_APP_PRIVATE_KEY:
+        description: "Deprecated, use FLOWZONE_APP_PRIVATE_KEY instead"
         required: false
       FLOWZONE_TOKEN:
         description: ".. or Personal Access Token (PAT) with admin/owner permissions in the org."

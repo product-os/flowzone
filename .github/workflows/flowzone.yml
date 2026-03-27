@@ -3,8 +3,11 @@ name: Flowzone
 on:
   workflow_call:
     secrets:
-      GH_APP_PRIVATE_KEY:
+      FLOWZONE_APP_PRIVATE_KEY:
         description: GitHub App private key to generate ephemeral access tokens. Supports base64 encoded or raw PEM formats. If set, takes precedence over FLOWZONE_TOKEN.
+        required: false
+      GH_APP_PRIVATE_KEY:
+        description: Deprecated, use FLOWZONE_APP_PRIVATE_KEY instead
         required: false
       FLOWZONE_TOKEN:
         description: .. or Personal Access Token (PAT) with admin/owner permissions in the org.
@@ -288,9 +291,9 @@ jobs:
           exit 1
       - name: Reject missing secrets
         run: |
-          if [ -z '${{ secrets.FLOWZONE_TOKEN }}${{ secrets.GH_APP_PRIVATE_KEY }}' ]
+          if [ -z '${{ secrets.FLOWZONE_TOKEN || secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}' ]
           then
-            echo '::error::Must specify either GH_APP_PRIVATE_KEY or FLOWZONE_TOKEN.'
+            echo '::error::Must specify either FLOWZONE_APP_PRIVATE_KEY, GH_APP_PRIVATE_KEY, or FLOWZONE_TOKEN.'
             false
           fi
       - name: Decode the GitHub App Private Key
@@ -299,7 +302,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -369,7 +372,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -729,7 +732,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -926,7 +929,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -1083,7 +1086,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -1154,7 +1157,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -1307,7 +1310,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -1438,7 +1441,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -1621,7 +1624,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -1920,7 +1923,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -2094,7 +2097,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -2199,7 +2202,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -2294,7 +2297,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -2481,7 +2484,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -2728,7 +2731,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -2890,7 +2893,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -3067,7 +3070,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -3136,7 +3139,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -3209,7 +3212,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -3754,7 +3757,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -4025,7 +4028,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -4132,7 +4135,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -4294,7 +4297,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -4452,7 +4455,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -4596,7 +4599,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -4728,7 +4731,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -4870,7 +4873,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -4932,7 +4935,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -5056,7 +5059,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -5186,7 +5189,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -5301,7 +5304,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -5424,7 +5427,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -5523,7 +5526,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -5621,7 +5624,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -5744,7 +5747,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -5861,7 +5864,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -5975,7 +5978,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -6084,7 +6087,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -6199,7 +6202,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
@@ -6816,7 +6819,7 @@ jobs:
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
-          secret="${{ secrets.GH_APP_PRIVATE_KEY }}"
+          secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
           if [[ "$secret" == *"-----BEGIN"* ]]; then
             echo "Detected unencoded private key, skipping base64 decode"
             private_key="$secret"
