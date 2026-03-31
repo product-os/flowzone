@@ -2100,6 +2100,14 @@ jobs:
       - <<: *checkEngine
         id: check_engine_24
 
+      - <<: *setupNode
+        env:
+          # renovate: datasource=node-version depName=node-25 packageName=node-25.x
+          NODE_VERSION: 25.8.2
+
+      - <<: *checkEngine
+        id: check_engine_25
+
       # Fails if no versions were matched
       # https://github.com/actions/github-script
       - name: Set Node.js versions
