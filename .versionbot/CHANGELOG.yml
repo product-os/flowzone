@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.33.0
+      hash: 137ff875accecc9eabd30552472df740dc54c308
+      body: |
+        Update docker/buildx from 0.32.1 to 0.33.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.11.3
+  title: ""
+  date: 2026-04-01T16:55:18.101Z
+- commits:
     - subject: Update rhysd/actionlint Docker tag to v1.7.12
       hash: 982846a3dc908dfec9b6fffd18c9f0f184d9bc55
       body: |
