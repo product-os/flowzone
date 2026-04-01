@@ -2103,7 +2103,7 @@ jobs:
       - <<: *setupNode
         env:
           # renovate: datasource=node-version depName=node-25 packageName=node-25.x
-          NODE_VERSION: 25.8.2
+          NODE_VERSION: 25.9.0
 
       - <<: *checkEngine
         id: check_engine_25
