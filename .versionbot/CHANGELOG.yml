@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update registry Docker tag to v3.1.0
+      hash: 7efc3c28ad0690e3d4df8d0ff2fc07e2c1ccfc1f
+      body: |
+        Update registry from 3.0.0 to 3.1.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.11.6
+  title: ""
+  date: 2026-04-06T21:44:49.025Z
+- commits:
     - subject: Update docker/login-action action to v4.1.0
       hash: e9a7cd5cf373a00aba8800dcb164c2315bc911c8
       body: |
