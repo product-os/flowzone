@@ -3512,7 +3512,7 @@ jobs:
 
     services:
       registry:
-        image: registry:3.0.0
+        image: registry:3.1.0
         ports:
           - 5000:5000
 
