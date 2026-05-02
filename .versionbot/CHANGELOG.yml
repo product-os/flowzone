@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node to v24.15.0
+      hash: 2c0c6a7db7835e7ca33452f760783828e9fa0b9c
+      body: |
+        Update node from 24.14.1 to 24.15.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.11.18
+  title: ""
+  date: 2026-05-02T05:32:42.050Z
+- commits:
     - subject: Update cloudflare/wrangler-action action to v3.15
       hash: 8f8f308f827c2e25861b72b96102dabd4b11272c
       body: |
