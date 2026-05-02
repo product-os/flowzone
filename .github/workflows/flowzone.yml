@@ -508,7 +508,7 @@ jobs:
             echo "sha=$(git rev-parse HEAD)" ;
           } >> "${GITHUB_OUTPUT}"
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 24.14.1
         with:
@@ -1523,7 +1523,7 @@ jobs:
 
             return json;
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 20.20.2
         with:
@@ -1538,7 +1538,7 @@ jobs:
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 22.22.2
         with:
@@ -1553,7 +1553,7 @@ jobs:
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 24.14.1
         with:
@@ -1568,7 +1568,7 @@ jobs:
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 25.9.0
         with:
@@ -2801,7 +2801,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 24.14.1
         with:
@@ -2810,7 +2810,7 @@ jobs:
           cache: npm
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 24.14.1
         with:
@@ -2963,7 +2963,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 24.14.1
         with:
@@ -3036,7 +3036,7 @@ jobs:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha }}
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 24.14.1
         with:
@@ -3119,7 +3119,7 @@ jobs:
           name: npm-${{ github.event.pull_request.head.sha }}(-v[0-9]+\.[0-9]+\.[0-9]+|-[0-9][0-9]\.x)?
           name_is_regexp: true
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 24.14.1
         with:
@@ -4812,7 +4812,7 @@ jobs:
           permission-issues: read
           permission-pull-requests: write
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         env:
           NODE_VERSION: 24.14.1
         with:
