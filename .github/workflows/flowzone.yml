@@ -4413,14 +4413,14 @@ jobs:
         run: poetry install
       - name: Install CycloneDX for Python
         run: |
-          pip3 install 'cyclonedx-bom>=1.4.0,<4'
+          pip3 install 'cyclonedx-bom==7.3.0'
       - name: Generate SBOM
-        run: cyclonedx-py -r -i ./poetry.lock --format xml -o ${{ runner.temp }}/python-sbom.xml
+        run: cyclonedx-py poetry --of json -o ${{ runner.temp }}/python-sbom.json
       - name: Publish SBOM artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: gh-release-sbom-python
-          path: ${{ runner.temp }}/python-sbom.xml
+          path: ${{ runner.temp }}/python-sbom.json
           retention-days: 90
       - name: Publish SBOM To Dependency Track
         if: ${{ env.SERVER_HOSTNAME != '' }}
@@ -4438,7 +4438,7 @@ jobs:
           SERVER_HOSTNAME: ${{ vars.DTRACK_API }}
           API_KEY: ${{ secrets.DTRACK_TOKEN }}
           PROJECT_NAME: ${{ github.event.repository.name }}
-          BOM_FILE: ${{ runner.temp }}/python-sbom.xml
+          BOM_FILE: ${{ runner.temp }}/python-sbom.json
           PROJECT_VERSION: ${{ needs.python_test.outputs.version_tag }}
   python_publish:
     name: Publish to test PyPI
