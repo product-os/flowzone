@@ -1592,8 +1592,8 @@ jobs:
         id: check_engine_26
         run: |
           node_version="$(node --version)"
-          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
-          if npx -q -y -- check-engine@1 || ! npx -q -y -- check-engine@1 --ignore
+          range="$(node -p 'require("./package.json").engines?.node || ""')"
+          if [ -z "$range" ] || npx -q -y -- semver -r "$range" "$node_version" >/dev/null
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           fi

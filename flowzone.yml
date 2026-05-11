@@ -2113,8 +2113,16 @@ jobs:
           # renovate: datasource=node-version depName=node-26 packageName=node-26.x
           NODE_VERSION: 26.1.0
 
+      # check-engine@1 does not work with Node 26 due to ESM/CommonJS issues
       - <<: *checkEngine
         id: check_engine_26
+        run: |
+          node_version="$(node --version)"
+          range="$(node -p 'require("./package.json").engines?.node || ""')"
+          if [ -z "$range" ] || npx -q -y -- semver -r "$range" "$node_version" >/dev/null
+          then
+            echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
+          fi
 
       # Fails if no versions were matched
       # https://github.com/actions/github-script
