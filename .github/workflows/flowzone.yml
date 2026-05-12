@@ -321,7 +321,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: read
@@ -391,7 +391,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-administration: read
@@ -475,7 +475,7 @@ jobs:
         if: inputs.app_id && steps.has_submodules.outputs.result == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -751,7 +751,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: read
@@ -948,7 +948,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
@@ -1105,7 +1105,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -1176,7 +1176,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -1203,7 +1203,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: read
@@ -1329,7 +1329,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -1460,7 +1460,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -1673,7 +1673,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -1972,7 +1972,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -2146,7 +2146,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -2251,7 +2251,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -2346,7 +2346,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -2533,7 +2533,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -2780,7 +2780,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -2942,7 +2942,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -3119,7 +3119,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: read
@@ -3188,7 +3188,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-pages: write
@@ -3261,7 +3261,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -3806,7 +3806,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -4077,7 +4077,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -4184,7 +4184,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -4346,7 +4346,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -4504,7 +4504,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -4648,7 +4648,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -4780,7 +4780,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -4820,7 +4820,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: read
@@ -4922,7 +4922,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
@@ -4984,7 +4984,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -5024,7 +5024,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
@@ -5108,7 +5108,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -5148,7 +5148,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
@@ -5238,7 +5238,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -5353,7 +5353,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -5476,7 +5476,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -5575,7 +5575,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -5673,7 +5673,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -5796,7 +5796,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -5913,7 +5913,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -6027,7 +6027,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -6136,7 +6136,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -6251,7 +6251,7 @@ jobs:
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-contents: read
           owner: ${{ github.repository_owner }}
@@ -6868,7 +6868,7 @@ jobs:
         if: inputs.app_id
         id: gh_app_token
         with:
-          app-id: ${{ inputs.app_id }}
+          client-id: ${{ inputs.app_id }}
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
