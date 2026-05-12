@@ -43,7 +43,7 @@
     if: inputs.app_id
     id: gh_app_token
     with: &getGitHubAppTokenWith
-      app-id: ${{ inputs.app_id }}
+      client-id: ${{ inputs.app_id }}
       private-key: ${{ steps.decode.outputs.private-key }}
       permission-metadata: read # Always required
 
@@ -160,7 +160,7 @@
     if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
     id: checkout_token
     with:
-      app-id: ${{ inputs.app_id }}
+      client-id: ${{ inputs.app_id }}
       private-key: ${{ steps.decode.outputs.private-key }}
       permission-contents: read
       # Get org/namespace access for private submodule cloning
