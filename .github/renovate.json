@@ -43,6 +43,13 @@
 			"matchManagers": ["github-actions"],
 			"matchUpdateTypes": ["minor", "patch", "digest"],
 			"groupName": null
+		},
+		{
+			"description": "Disable separation of majors for dawidd6/action-download-artifact action (only ships majors)",
+			"matchManagers": ["github-actions"],
+			"matchPackageNames": ["dawidd6/action-download-artifact"],
+			"separateMultipleMajor": false,
+			"automerge": true
 		}
 	],
 	"customManagers": [
