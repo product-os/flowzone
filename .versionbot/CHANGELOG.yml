@@ -1,4 +1,21 @@
 - commits:
+    - subject: Disable separation of majors for for dawidd6/action-download-artifact
+        action
+      hash: 658a25e31338bf5f6e8fa766c6f3269444dc0866
+      body: |
+        This action now only ships majors, and it takes up our
+        entire pipeline to separate them.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.12.5
+  title: ""
+  date: 2026-05-12T21:34:36.130Z
+- commits:
     - subject: Update peaceiris/actions-gh-pages action to v4.1.0
       hash: 86836a5ce7f169131e4c44d715afb453c1d0af0c
       body: |
