@@ -3538,7 +3538,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     services:
       registry:
-        image: registry:3.1.0
+        image: registry:3.1.1
         ports:
           - 5000:5000
     strategy:
