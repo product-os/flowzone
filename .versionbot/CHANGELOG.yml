@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update registry Docker tag to v3.1.1
+      hash: d42c0a037cce826b63e3bf3e264af59b7357b64c
+      body: |
+        Update registry from 3.1.0 to 3.1.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.2
+  title: ""
+  date: 2026-05-12T14:19:20.387Z
+- commits:
     - subject: Update dawidd6/action-download-artifact action to v5
       hash: 5a0649d43492847ba393347adccc46046bc59651
       body: |
