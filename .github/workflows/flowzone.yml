@@ -3125,7 +3125,7 @@ jobs:
           permission-contents: read
           permission-actions: read
       - name: Download npm artifact from last run
-        uses: dawidd6/action-download-artifact@deb3bb83256a78589fef6a7b942e5f2573ad7c13
+        uses: dawidd6/action-download-artifact@80620a5d27ce0ae443b965134db88467fc607b43
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -3194,7 +3194,7 @@ jobs:
           permission-pages: write
           permission-contents: write
       - name: Download npm docs artifact from last run
-        uses: dawidd6/action-download-artifact@deb3bb83256a78589fef6a7b942e5f2573ad7c13
+        uses: dawidd6/action-download-artifact@80620a5d27ce0ae443b965134db88467fc607b43
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
