@@ -1,4 +1,19 @@
 - commits:
+    - subject: "create-github-app-token: Replace deprecated app-id with client-id"
+      hash: 89588d922f09641d24b242eb2050e250a058848b
+      body: |
+        Resolves the deprecated input warning in the logs.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.12.6
+  title: ""
+  date: 2026-05-12T21:44:11.491Z
+- commits:
     - subject: Disable separation of majors for for dawidd6/action-download-artifact
         action
       hash: 658a25e31338bf5f6e8fa766c6f3269444dc0866
