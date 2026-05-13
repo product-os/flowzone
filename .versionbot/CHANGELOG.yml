@@ -1,4 +1,20 @@
 - commits:
+    - subject: Force commonjs for check-engine
+      hash: 51df9b00c40e6284ca3169dcdafe34197310d26c
+      body: |
+        Required for node 26 since check-engine ships with
+        a legacy yargs version.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.12.11
+  title: ""
+  date: 2026-05-13T13:40:00.235Z
+- commits:
     - subject: Update softprops/action-gh-release action to v3
       hash: b08816c029f363cc33296675e7c3b7d29ad7692c
       body: |
