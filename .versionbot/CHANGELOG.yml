@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.34.0
+      hash: 3090d09a6f280bfc0e1b91665f413598ecedf7cf
+      body: |
+        Update docker/buildx from 0.33.0 to 0.34.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.13
+  title: ""
+  date: 2026-05-13T15:44:53.760Z
+- commits:
     - subject: "check-engine: Do not throw on unsupported engine"
       hash: d070cac04119384b6a8ce973c33b01569def2977
       body: ""
