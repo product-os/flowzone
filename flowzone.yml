@@ -2092,7 +2092,8 @@ jobs:
           if check-engine || (check-engine --ignore || true) | grep -q "No engines found"
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
-          else
+          elif ! check-engine --ignore
+          then
             echo "::error::check-engine failed"
             exit 1
           fi
