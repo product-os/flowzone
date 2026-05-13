@@ -1,4 +1,18 @@
 - commits:
+    - subject: "check-engine: Do not throw on unsupported engine"
+      hash: d070cac04119384b6a8ce973c33b01569def2977
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.12.12
+  title: ""
+  date: 2026-05-13T14:27:15.322Z
+- commits:
     - subject: Force commonjs for check-engine
       hash: 51df9b00c40e6284ca3169dcdafe34197310d26c
       body: |
