@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-22 to v22.22.3
+      hash: 8f42c141e9fd1ab3bf2fa311801781d92188a952
+      body: |
+        Update node-22 from 22.22.2 to 22.22.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.14
+  title: ""
+  date: 2026-05-13T19:20:12.650Z
+- commits:
     - subject: Update dependency docker/buildx to v0.34.0
       hash: 3090d09a6f280bfc0e1b91665f413598ecedf7cf
       body: |
