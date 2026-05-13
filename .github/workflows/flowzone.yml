@@ -1528,14 +1528,26 @@ jobs:
           NODE_VERSION: 20.20.2
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Install check-engine
+        run: |
+          npm install -g check-engine@1.14.0
+          # check-engine bundles yargs with "type": "module"; its extensionless
+          # entrypoint then loads as ESM and breaks on its internal require().
+          yargs_pkg="$(npm root -g)/check-engine/node_modules/yargs/package.json"
+          [ -f "$yargs_pkg" ] || yargs_pkg="$(npm root -g)/yargs/package.json"
+          jq '(.type) = "commonjs"' "$yargs_pkg" > "$yargs_pkg.tmp" && mv "$yargs_pkg.tmp" "$yargs_pkg"
       - name: Check engine
         id: check_engine_20
         run: |
           node_version="$(node --version)"
-          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
-          if npx -q -y -- check-engine@1 || ! npx -q -y -- check-engine@1 --ignore
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version.
+          # Even with the --ignore flag, check-engine will still return non-zero if engines are not specified.
+          if check-engine || (check-engine --ignore || true) | grep -q "No engines found"
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::error::check-engine failed"
+            exit 1
           fi
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -1547,10 +1559,14 @@ jobs:
         id: check_engine_22
         run: |
           node_version="$(node --version)"
-          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
-          if npx -q -y -- check-engine@1 || ! npx -q -y -- check-engine@1 --ignore
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version.
+          # Even with the --ignore flag, check-engine will still return non-zero if engines are not specified.
+          if check-engine || (check-engine --ignore || true) | grep -q "No engines found"
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::error::check-engine failed"
+            exit 1
           fi
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -1562,10 +1578,14 @@ jobs:
         id: check_engine_24
         run: |
           node_version="$(node --version)"
-          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
-          if npx -q -y -- check-engine@1 || ! npx -q -y -- check-engine@1 --ignore
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version.
+          # Even with the --ignore flag, check-engine will still return non-zero if engines are not specified.
+          if check-engine || (check-engine --ignore || true) | grep -q "No engines found"
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::error::check-engine failed"
+            exit 1
           fi
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -1577,10 +1597,14 @@ jobs:
         id: check_engine_25
         run: |
           node_version="$(node --version)"
-          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
-          if npx -q -y -- check-engine@1 || ! npx -q -y -- check-engine@1 --ignore
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version.
+          # Even with the --ignore flag, check-engine will still return non-zero if engines are not specified.
+          if check-engine || (check-engine --ignore || true) | grep -q "No engines found"
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::error::check-engine failed"
+            exit 1
           fi
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -1592,10 +1616,14 @@ jobs:
         id: check_engine_26
         run: |
           node_version="$(node --version)"
-          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version
-          if npx -q -y -- check-engine@1 || ! npx -q -y -- check-engine@1 --ignore
+          # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version.
+          # Even with the --ignore flag, check-engine will still return non-zero if engines are not specified.
+          if check-engine || (check-engine --ignore || true) | grep -q "No engines found"
           then
             echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::error::check-engine failed"
+            exit 1
           fi
       - name: Set Node.js versions
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
