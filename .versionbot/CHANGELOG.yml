@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.34.1
+      hash: e74c8c77382f2fb9393d7aa0f3f48661b2d8fb11
+      body: |
+        Update docker/buildx from 0.34.0 to 0.34.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.16
+  title: ""
+  date: 2026-05-19T19:15:49.403Z
+- commits:
     - subject: Lock file maintenance
       hash: 1ca1a44363372d21037a7adedc1b4e2edf071b09
       body: |
