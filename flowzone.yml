@@ -51,7 +51,7 @@
   - &configureAWSCredentials # https://github.com/aws-actions/configure-aws-credentials
     name: Configure AWS credentials
     id: aws_credentials
-    uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
+    uses: aws-actions/configure-aws-credentials@acca2b1b2070338fb9fd1ca27ecee81d687e58e5 # v6.1.2
     # skip if the PR is from a fork or aws region is unset
     if: |
       ( matrix.region != '' || inputs.aws_region != '' ) &&
