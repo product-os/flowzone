@@ -4885,7 +4885,7 @@ jobs:
           echo "CF_BRANCH=${{ github.event.repository.default_branch }}" >> "${GITHUB_ENV}"
       - name: Deploy to Cloudflare Pages
         id: deploy_cf_pages
-        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
