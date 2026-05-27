@@ -1043,7 +1043,7 @@ jobs:
         if: |
           github.event.pull_request.merged &&
           steps.create_tag.outputs.sha
-      - uses: zulip/github-actions-zulip/send-message@e4c8f27c732ba9bd98ac6be0583096dea82feea5
+      - uses: zulip/github-actions-zulip/send-message@bd8ec52de371d139ae8313661b7d8318c19266aa
         id: zulip_send
         if: |
           github.event.pull_request.merged == true &&
