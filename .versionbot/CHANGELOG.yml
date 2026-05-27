@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-qemu-action action to v4.1.0
+      hash: e0f240214132e671e28a9d804e0b744598ea49b7
+      body: |
+        Update docker/setup-qemu-action from 4.0.0 to 4.1.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.29
+  title: ""
+  date: 2026-05-27T17:44:05.972Z
+- commits:
     - subject: Update zulip/github-actions-zulip action to v2
       hash: 153045eb426b52ea088ea33d19f5186081ccd01c
       body: |
