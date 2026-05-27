@@ -3407,7 +3407,7 @@ jobs:
           INPUT: ${{ steps.setup_buildx.outputs.platforms }}
       - name: Setup QEMU
         id: qemu_binfmt
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3
         env:
           LOG_LEVEL: debug
           BINFMT_VERSION: qemu-v10.2.1-65
