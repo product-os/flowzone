@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-26 to v26.3.0
+      hash: 09e096bfa2278ee7615e54b5abe8cf6e266135af
+      body: |
+        Update node-26 from 26.2.0 to 26.3.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.35
+  title: ""
+  date: 2026-06-01T14:42:19.777Z
+- commits:
     - subject: Update balena-io/deploy-to-balena-action action to v2.2.12
       hash: 8a0194e6993ad5e848eec6ff1c9feeb2a8ae9815
       body: |
