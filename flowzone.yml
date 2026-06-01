@@ -2125,7 +2125,7 @@ jobs:
       - <<: *setupNode
         env:
           # renovate: datasource=node-version depName=node-26 packageName=node-26.x
-          NODE_VERSION: 26.2.0
+          NODE_VERSION: 26.3.0
 
       - <<: *checkEngine
         id: check_engine_26
