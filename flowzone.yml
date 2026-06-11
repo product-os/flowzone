@@ -3610,7 +3610,7 @@ jobs:
 
       # https://github.com/akhilerm/tag-push-action
       - name: Publish manifest to remote(s)
-        uses: akhilerm/tag-push-action@f35ff2cb99d407368b5c727adbcc14a2ed81d509 # v2.2.0
+        uses: akhilerm/tag-push-action@eadeefebd39db8a47e146115649adae1fce576a6 # v2.3.0
         with:
           src: ${{ env.LOCAL_TAG }}
           dst: |
@@ -3694,7 +3694,7 @@ jobs:
 
       # https://github.com/akhilerm/tag-push-action
       - name: Publish final tags
-        uses: akhilerm/tag-push-action@f35ff2cb99d407368b5c727adbcc14a2ed81d509 # v2.2.0
+        uses: akhilerm/tag-push-action@eadeefebd39db8a47e146115649adae1fce576a6 # v2.3.0
         with:
           src: ${{ matrix.image }}:${{ steps.strings.outputs.prefix }}build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}${{ steps.strings.outputs.suffix }}
           dst: |
