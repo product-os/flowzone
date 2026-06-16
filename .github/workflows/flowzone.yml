@@ -1402,6 +1402,16 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: 3.13
+      - uses: azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d
+        with:
+          version: ${{ env.KUBERNETES_VERSION }}
+        env:
+          KUBERNETES_VERSION: v1.36.2
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2
+        with:
+          version: ${{ env.HELM_VERSION }}
+        env:
+          HELM_VERSION: v4.2.1
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd
   is_npm:
     name: Check NodeJS versions
