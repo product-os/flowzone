@@ -646,6 +646,12 @@
     with:
       version: "2.15.43"
 
+  - &setupKubectl
+    uses: azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d # v5.1.0
+
+  - &setupHelm
+    uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
+
   # Export runner OS release version for use by cache actions
   - &getRunnerRelease
     name: Get runner OS release
@@ -1990,6 +1996,20 @@ jobs:
         with:
           # python: /lib/x86_64-linux-gnu/libm.so.6: version GLIBC_2.38 not found is encountered when running aws-cloudformation/cfn-lint ~v1.40.4
           python-version: 3.13
+
+      - <<: *setupKubectl
+        with:
+          version: ${{ env.KUBERNETES_VERSION }}
+        env:
+          # renovate: datasource=github-releases depName=kubernetes/kubernetes
+          KUBERNETES_VERSION: v1.36.2
+
+      - <<: *setupHelm
+        with:
+          version: ${{ env.HELM_VERSION }}
+        env:
+          # renovate: datasource=github-releases depName=helm/helm
+          HELM_VERSION: v4.2.1
 
       # https://github.com/pre-commit/action
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
