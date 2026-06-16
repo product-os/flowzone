@@ -3758,7 +3758,7 @@ jobs:
       - *checkoutSubmodules
       - *updateVersionedTagRef
 
-      - uses: balena-io/deploy-to-balena-action@61a347b1b9fa00afbc8e117f0f280e989d02d7cb # v2.3.0
+      - uses: balena-io/deploy-to-balena-action@3653c472f0bb6a9885110328b28c3a80470b3b63 # v2.3.1
         id: balena_deploy
         with:
           balena_token: ${{ secrets.BALENA_API_KEY || secrets.BALENA_API_KEY_PUSH }}
