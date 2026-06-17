@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency helm/helm to v4.2.2
+      hash: 7027efd1206f53956ecdf7e0b221779fa26fcb87
+      body: |
+        Update helm/helm from 4.2.1 to 4.2.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.47
+  title: ""
+  date: 2026-06-17T21:17:02.512Z
+- commits:
     - subject: Update zulip/github-actions-zulip digest to f675f2b
       hash: 28dc7454e032bc09e3ff8fade87250410a009f05
       body: |
