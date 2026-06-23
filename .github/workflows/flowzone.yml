@@ -4897,7 +4897,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+        uses: dtolnay/rust-toolchain@67ef31d5b988238dd797d409d6f9574278e20537
         with:
           toolchain: ${{ needs.is_cargo.outputs.rust_toolchain }}
           targets: ${{ matrix.target }}
@@ -4998,7 +4998,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Set up toolchain
-        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+        uses: dtolnay/rust-toolchain@67ef31d5b988238dd797d409d6f9574278e20537
         with:
           toolchain: stable
       - name: Install CycloneDX for Cargo
@@ -5107,7 +5107,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+        uses: dtolnay/rust-toolchain@67ef31d5b988238dd797d409d6f9574278e20537
         with:
           toolchain: ${{ needs.is_cargo.outputs.rust_toolchain }}
           targets: ${{ matrix.target }}
