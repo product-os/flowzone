@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-24 to v24.17.0
+      hash: 95269d953f2ca87dd4a471005d970b55b2297355
+      body: |
+        Update node-24 from 24.16.0 to 24.17.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.55
+  title: ""
+  date: 2026-06-23T21:16:11.151Z
+- commits:
     - subject: Update dtolnay/rust-toolchain digest to 67ef31d
       hash: 81b40352d1aa908a861bd9d6f999bdc6d4624e38
       body: |
