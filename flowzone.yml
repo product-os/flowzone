@@ -11,31 +11,13 @@
   - &ifPublicRepository
     if: github.event.repository.private != true
 
-  - &decodePrivateKey # https://github.com/actions/create-github-app-token
-    name: Decode the GitHub App Private Key
+  - &decodePrivateKey # https://github.com/product-os/decode-private-key
+    name: Decode private key
     if: inputs.app_id
     id: decode
-    shell: bash
-    working-directory: ${{ runner.temp }}
-    # Skip decode if -----BEGIN is detected in the body of the private key, which indicates that the key is not base64 encoded.
-    # This allows users to use either raw or base64 encoded keys without needing to specify which format they are using.
-    # Mask the decoded private key to prevent it from being printed in logs, but only if it was not already masked as a secret.
-    # (i.e. if it was provided as a raw value rather than a base64 encoded value, since secrets are automatically masked by GitHub).
-    run: |
-      secret="${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}"
-      if [[ "$secret" == *"-----BEGIN"* ]]; then
-        echo "Detected unencoded private key, skipping base64 decode"
-        private_key="$secret"
-      else
-        private_key=$(echo "$secret" | base64 -d) 2>/dev/null
-        echo "::add-mask::$private_key"
-      fi
-      delimiter="pk_$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')"
-      {
-        echo "private-key<<${delimiter}"
-        echo "$private_key"
-        echo "${delimiter}"
-      } >> "$GITHUB_OUTPUT"
+    uses: product-os/decode-private-key@v0.0.2
+    with:
+      secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
 
   - &getGitHubAppToken # https://github.com/actions/create-github-app-token
     name: Generate GitHub App installation token
