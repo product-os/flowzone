@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-22 to v22.23.1
+      hash: 60022ee8bc73202fdd68e61accf8663929b7c519
+      body: |
+        Update node-22 from 22.22.3 to 22.23.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.53
+  title: ""
+  date: 2026-06-23T19:14:45.554Z
+- commits:
     - subject: Update softprops/action-gh-release action to v3.0.1
       hash: 3446b63915959471833103ce152b0edf0039827e
       body: |
