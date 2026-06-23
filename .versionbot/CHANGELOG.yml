@@ -1,4 +1,20 @@
 - commits:
+    - subject: Use a composite action for private key decode
+      hash: 57a7a97dfa3a7df2db91ac12444ad8b45b034c01
+      body: |
+        This consolidates the common steps, and fixes and
+        issue with leaking multiline strings.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.12.50
+  title: ""
+  date: 2026-06-23T16:39:12.753Z
+- commits:
     - subject: Update dependency node-26 to v26.3.1
       hash: 4d039b19903e8725f8676f5fd87fa8c0c47dd7ea
       body: |
