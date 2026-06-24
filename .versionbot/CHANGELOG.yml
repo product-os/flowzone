@@ -1,4 +1,17 @@
 - commits:
+    - subject: Pin dependencies
+      hash: d4f8c67302aeb5f2d1185bb0204ab08f613408c2
+      body: |
+        Update husky
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.63
+  title: ""
+  date: 2026-06-24T16:20:52.095Z
+- commits:
     - subject: Support digest pinning for binfmt version
       hash: 876330ec88d49932ea5a003143b7d77676171bc2
       body: >
