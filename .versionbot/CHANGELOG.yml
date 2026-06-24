@@ -1,4 +1,23 @@
 - commits:
+    - subject: Support digest pinning for binfmt version
+      hash: 876330ec88d49932ea5a003143b7d77676171bc2
+      body: >
+        Add an optional currentDigest capture group to the custom regex manager
+        so Renovate can pin and maintain the SHA256 digest alongside the binfmt
+        tag. The tag and digest are captured separately, so the inline
+        versioning regex only ever parses the bare tag. Seed the current index
+        digest.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 22.12.62
+  title: ""
+  date: 2026-06-24T14:38:01.436Z
+- commits:
     - subject: Update actions/checkout action to v7
       hash: c434e42626e08788a30f9bb2040aacde4415303c
       body: |
