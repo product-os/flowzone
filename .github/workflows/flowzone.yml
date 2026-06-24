@@ -299,7 +299,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
@@ -355,7 +355,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
@@ -701,7 +701,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
@@ -884,7 +884,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
@@ -1027,7 +1027,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -1062,7 +1062,7 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/.github/actionlint-matcher.json > ${{ runner.temp }}/actionlint-matcher.json
           echo ::add-matcher::${{ runner.temp }}/actionlint-matcher.json
       - name: Check workflow files
-        uses: docker://rhysd/actionlint:1.7.12
+        uses: docker://rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
         with:
           args: -color -ignore="custom label for self-hosted runner" -ignore=":info:" -ignore=":style:"
   octoscan:
@@ -1084,7 +1084,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -1223,7 +1223,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -1350,7 +1350,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -1582,7 +1582,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -1867,7 +1867,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -2027,7 +2027,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -2118,7 +2118,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -2199,7 +2199,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -2372,7 +2372,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -2605,7 +2605,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -2753,7 +2753,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -2916,7 +2916,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
@@ -2971,7 +2971,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
@@ -3030,7 +3030,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -3315,7 +3315,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     services:
       registry:
-        image: registry:3.1.1
+        image: registry:3.1.1@sha256:1be55279f18a2fe1a74edf2664cac61c1bea305b7b4642dab412e7affdcb3e33
         ports:
           - 5000:5000
     strategy:
@@ -3561,7 +3561,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -3818,7 +3818,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -3911,7 +3911,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -4059,7 +4059,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -4203,7 +4203,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -4333,7 +4333,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -4451,7 +4451,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -4579,7 +4579,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
@@ -4627,7 +4627,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -4737,7 +4737,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -4853,7 +4853,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -4954,7 +4954,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -5063,7 +5063,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -5148,7 +5148,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -5232,7 +5232,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -5341,7 +5341,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -5444,7 +5444,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -5544,7 +5544,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -5639,7 +5639,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -5740,7 +5740,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
@@ -6343,7 +6343,7 @@ jobs:
       - name: Decode private key
         if: inputs.app_id
         id: decode
-        uses: product-os/decode-private-key@v0.0.2
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
