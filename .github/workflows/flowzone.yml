@@ -3405,7 +3405,7 @@ jobs:
           version: ${{ env.BUILDX_VERSION }}
           cache-binary: ${{ github.repository != 'product-os/flowzone' }}
       - name: Setup crane
-        uses: imjasonh/setup-crane@59c71e96a00b28651f10369ba3359a6d730740a0
+        uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b
         with:
           version: v0.14.0
       - name: Setup skopeo
@@ -3676,7 +3676,7 @@ jobs:
             prefix=${{ steps.strings.outputs.prefix }},onlatest=true
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
       - name: Setup crane
-        uses: imjasonh/setup-crane@59c71e96a00b28651f10369ba3359a6d730740a0
+        uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b
         with:
           version: v0.14.0
       - name: Setup AWS CLI
