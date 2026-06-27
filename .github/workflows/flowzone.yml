@@ -315,7 +315,7 @@ jobs:
           permission-pull-requests: write
       - name: Wait for approval on pull_request_target events
         if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
-        uses: product-os/review-commit-action@ce46fb0d0be4f9d669a6c72769ac6d39cab1823d
+        uses: product-os/review-commit-action@3caab52f4a41ad395c033ac667d1ba4d23d57f6e
         with:
           allow-authors: false
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
