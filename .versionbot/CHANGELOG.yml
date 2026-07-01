@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-qemu-action action to v4.2.0
+      hash: bd2461ea3180364374bcaa5c8836933d8b19f82a
+      body: |
+        Update docker/setup-qemu-action from 4.1.0 to 4.2.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.72
+  title: ""
+  date: 2026-07-01T13:31:15.189Z
+- commits:
     - subject: Update dtolnay/rust-toolchain digest
       hash: a80b483c7c6ee120edc0094a39227a674a9fd07b
       body: |
