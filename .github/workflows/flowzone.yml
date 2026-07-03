@@ -3161,7 +3161,7 @@ jobs:
         if: contains(steps.native_platforms.outputs.result, matrix.platform) != true
       - name: Login to GitHub Container Registry
         continue-on-error: true
-        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -3169,7 +3169,7 @@ jobs:
         if: github.event.repository.private
       - name: Login to Docker Hub
         continue-on-error: true
-        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
@@ -3448,14 +3448,14 @@ jobs:
           done
       - name: Login to GitHub Container Registry
         continue-on-error: true
-        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Login to Docker Hub
         continue-on-error: true
-        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
@@ -3479,13 +3479,13 @@ jobs:
       - name: Login to AWS/ECR (public)
         if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
-        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: public.ecr.aws
       - name: Login to AWS/ECR (private)
         if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
-        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: ${{ matrix.image }}
       - name: Publish manifest to remote(s)
@@ -3685,14 +3685,14 @@ jobs:
           version: 2.15.43
       - name: Login to GitHub Container Registry
         continue-on-error: true
-        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Login to Docker Hub
         continue-on-error: true
-        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
@@ -3716,13 +3716,13 @@ jobs:
       - name: Login to AWS/ECR (public)
         if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
-        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: public.ecr.aws
       - name: Login to AWS/ECR (private)
         if: steps.aws_credentials.outcome == 'success'
         continue-on-error: true
-        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: ${{ matrix.image }}
       - name: Publish final tags
