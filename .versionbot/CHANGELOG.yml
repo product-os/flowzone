@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/login-action action to v4.4.0
+      hash: e6dda21ce5f66c758e78afa8950f328546c069b6
+      body: |
+        Update docker/login-action from 4.3.0 to 4.4.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.77
+  title: ""
+  date: 2026-07-03T14:15:01.442Z
+- commits:
     - subject: Update docker/setup-buildx-action action to v4.2.0
       hash: 449eaf3ca27247ba7345971e3d87b002f9e5723d
       body: |
