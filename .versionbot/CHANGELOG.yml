@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency helm/helm to v4.2.3
+      hash: 1e791c1f82513b77b4d1c5d19b6f0ab66a13805d
+      body: |
+        Update helm/helm from 4.2.2 to 4.2.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.82
+  title: ""
+  date: 2026-07-14T06:19:10.931Z
+- commits:
     - subject: Update softprops/action-gh-release action to v3.0.2
       hash: 605355dd2aedbdc27ed52b399d29546248359add
       body: |
