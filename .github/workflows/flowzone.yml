@@ -1313,7 +1313,7 @@ jobs:
         with:
           version: ${{ env.HELM_VERSION }}
         env:
-          HELM_VERSION: v4.2.2
+          HELM_VERSION: v4.2.3
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd
   is_npm:
     name: Check NodeJS versions
