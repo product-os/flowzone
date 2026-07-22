@@ -167,6 +167,8 @@
       submodules: false
       # This ref was pushed by the versioned source job.
       ref: ${{ needs.versioned_source.outputs.sha }}
+      # FIXME(#1855): running fork PR code in the pull_request_target trusted context.
+      allow-unsafe-pr-checkout: true
       <<: *checkoutAuth
 
   # Update the local tag ref so that it may be consumed by build steps that need to know the version of the source.
@@ -1222,6 +1224,8 @@ jobs:
           submodules: "recursive"
           # fallback to an invalid ref if the checkout ref is undefined
           ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
+          # FIXME(#1855): running fork PR code in the pull_request_target trusted context.
+          allow-unsafe-pr-checkout: true
           <<: *checkoutAuth
 
       # Checkout the event sha for closed/merged PRs.
@@ -1238,6 +1242,8 @@ jobs:
           submodules: "recursive"
           # fallback to an invalid ref if the checkout ref is undefined
           ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
+          # FIXME(#1855): running fork PR code in the pull_request_target trusted context.
+          allow-unsafe-pr-checkout: true
           <<: *checkoutAuth
 
       # The current commit sha is needed as the parent sha for the versioned commit
