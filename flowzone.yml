@@ -1057,9 +1057,7 @@ jobs:
   event_types:
     name: Event Types
     runs-on: ubuntu-24.04
-    # Wait up to 60 min for workflow approvals on forks.
-    # App Installation tokens expire in 1h either way.
-    timeout-minutes: 60
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
         (
@@ -1088,27 +1086,6 @@ jobs:
       - *rejectExternalPullRequest
       - *rejectPullRequestTarget
       - *rejectMissingSecrets
-
-      - *decodePrivateKey
-      - <<: *getGitHubAppToken
-        with:
-          <<: *getGitHubAppTokenWith
-          # pull_requests: write is required to create or update pull request comments
-          permission-contents: read
-          permission-issues: read
-          permission-pull-requests: write
-
-      # Combining pull_request_target workflow trigger with an explicit checkout of an
-      # untrusted PR is a dangerous practice that may lead to repository compromise.
-      # https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/
-      # This action requires approvals via reactions for each workflow run.
-      # https://github.com/product-os/review-commit-action
-      - name: Wait for approval on pull_request_target events
-        if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
-        uses: product-os/review-commit-action@3caab52f4a41ad395c033ac667d1ba4d23d57f6e # v0.3.2
-        with:
-          allow-authors: false
-          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
       - *logGitHubContext
 
