@@ -250,7 +250,7 @@ jobs:
   event_types:
     name: Event Types
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     if: |
       (
         (
@@ -295,29 +295,6 @@ jobs:
             echo '::error::Must specify either FLOWZONE_APP_PRIVATE_KEY, GH_APP_PRIVATE_KEY, or FLOWZONE_TOKEN.'
             false
           fi
-      - name: Decode private key
-        if: inputs.app_id
-        id: decode
-        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
-        with:
-          secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
-      - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          client-id: ${{ inputs.app_id }}
-          private-key: ${{ steps.decode.outputs.private-key }}
-          permission-metadata: read
-          permission-contents: read
-          permission-issues: read
-          permission-pull-requests: write
-      - name: Wait for approval on pull_request_target events
-        if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
-        uses: product-os/review-commit-action@3caab52f4a41ad395c033ac667d1ba4d23d57f6e
-        with:
-          allow-authors: false
-          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
