@@ -251,6 +251,8 @@ jobs:
     name: Event Types
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    outputs:
+      trusted: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     if: |
       (
         (
@@ -273,14 +275,6 @@ jobs:
             event_action: ${{ github.event.action }}
     permissions: {}
     steps:
-      - name: Reject external pull_request events on pull_request
-        if: |
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name != github.repository
-        run: |
-          echo "::error::External workflows can not be used with 'pull_request' events. \
-            Please contact a member of the organization for assistance."
-          exit 1
       - name: Reject pull_request_target events
         if: github.event_name == 'pull_request_target'
         run: |
@@ -295,6 +289,7 @@ jobs:
             echo '::error::Must specify either FLOWZONE_APP_PRIVATE_KEY, GH_APP_PRIVATE_KEY, or FLOWZONE_TOKEN.'
             false
           fi
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}

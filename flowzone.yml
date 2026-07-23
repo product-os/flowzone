@@ -490,16 +490,6 @@
         exit 1
       fi
 
-  - &rejectExternalPullRequest
-    name: Reject external pull_request events on pull_request
-    if: |
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name != github.repository
-    run: |
-      echo "::error::External workflows can not be used with 'pull_request' events. \
-        Please contact a member of the organization for assistance."
-      exit 1
-
   - &rejectPullRequestTarget
     name: Reject pull_request_target events
     # Flowzone no longer runs on pull_request_target. Fork code must never execute in the
@@ -1058,6 +1048,11 @@ jobs:
     name: Event Types
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    outputs:
+      # Trusted (secret-bearing) contexts: internal PRs and pushes to the base repo.
+      # A fork pull_request receives no secrets from GitHub, so it is untrusted and
+      # secret-consuming jobs must skip on it (see downstream `needs.event_types.outputs.trusted`).
+      trusted: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     if: |
       (
         (
@@ -1083,9 +1078,13 @@ jobs:
     permissions: {}
 
     steps:
-      - *rejectExternalPullRequest
       - *rejectPullRequestTarget
-      - *rejectMissingSecrets
+      # Fork pull_request runs receive no secrets by design, so only require them on
+      # trusted lanes (internal PRs and pushes). This mirrors event_types.outputs.trusted.
+      - <<: *rejectMissingSecrets
+        if: >-
+          github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository
 
       - *logGitHubContext
 
