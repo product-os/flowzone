@@ -500,14 +500,17 @@
         Please contact a member of the organization for assistance."
       exit 1
 
-  - &rejectInternalPullRequestTarget
-    name: Reject internal pull_request events on pull_request_target
-    if: |
-      github.event_name == 'pull_request_target' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+  - &rejectPullRequestTarget
+    name: Reject pull_request_target events
+    # Flowzone no longer runs on pull_request_target. Fork code must never execute in the
+    # base repo's trusted (secret-bearing) context, so we refuse the event outright at the
+    # gate, before any job checks out a ref. External contributions are moving to a
+    # pull_request (no secrets) + push (trusted merge) flow.
+    if: github.event_name == 'pull_request_target'
     run: |
-      echo "::error::Internal workflows should not be used with 'pull_request_target' events. \
-        Please consult the documentation for more information."
+      echo "::error::Flowzone no longer runs on 'pull_request_target' events. External (fork) \
+        contributions are being migrated to a 'pull_request' + 'push' flow that never exposes \
+        secrets to untrusted code. See the Flowzone trust-boundary documentation."
       exit 1
 
   - &rejectNonLinearHead
@@ -1083,7 +1086,7 @@ jobs:
 
     steps:
       - *rejectExternalPullRequest
-      - *rejectInternalPullRequestTarget
+      - *rejectPullRequestTarget
       - *rejectMissingSecrets
 
       - *decodePrivateKey
