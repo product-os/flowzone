@@ -5107,7 +5107,13 @@ jobs:
       - *rejectCancelledJobs
 
   all_jobs:
-    name: All jobs
+    # Keep the required check context "All jobs" on the pull_request (and push) lanes so
+    # existing branch-protection rulesets keep matching. On pull_request_target emit a
+    # different, non-required context: defense-in-depth so that even if a caller misconfigures
+    # its routing and fires flowzone on both events for one PR, the (rejected) p_r_t run can
+    # neither block a valid PR nor satisfy the gate. The trusted pull_request lane is the sole
+    # producer of "All jobs".
+    name: All jobs${{ github.event_name == 'pull_request_target' && ' (pull_request_target)' || '' }}
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     permissions: {}
