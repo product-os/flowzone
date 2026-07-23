@@ -281,13 +281,12 @@ jobs:
           echo "::error::External workflows can not be used with 'pull_request' events. \
             Please contact a member of the organization for assistance."
           exit 1
-      - name: Reject internal pull_request events on pull_request_target
-        if: |
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name == github.repository
+      - name: Reject pull_request_target events
+        if: github.event_name == 'pull_request_target'
         run: |
-          echo "::error::Internal workflows should not be used with 'pull_request_target' events. \
-            Please consult the documentation for more information."
+          echo "::error::Flowzone no longer runs on 'pull_request_target' events. External (fork) \
+            contributions are being migrated to a 'pull_request' + 'push' flow that never exposes \
+            secrets to untrusted code. See the Flowzone trust-boundary documentation."
           exit 1
       - name: Reject missing secrets
         run: |
