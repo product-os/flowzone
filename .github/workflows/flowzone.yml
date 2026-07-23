@@ -6241,7 +6241,7 @@ jobs:
             exit 1
           fi
   all_jobs:
-    name: All jobs
+    name: All jobs${{ github.event_name == 'pull_request_target' && ' (pull_request_target)' || '' }}
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     permissions: {}
