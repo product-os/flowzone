@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/login-action action to v4.5.0
+      hash: eba6db66ef2ac893d067a6c43438b938d27080eb
+      body: |
+        Update docker/login-action from 4.4.0 to 4.5.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.89
+  title: ""
+  date: 2026-07-23T16:10:40.926Z
+- commits:
     - subject: Update dependency kubernetes/kubernetes to v1.36.3
       hash: 516596187ca1903b857a21d0b37cf3515cb1923c
       body: |
