@@ -253,6 +253,9 @@ jobs:
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     outputs:
       trusted: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      merged_pr: ${{ steps.push_class.outputs.merged_pr }}
+      fork_merge: ${{ steps.push_class.outputs.fork_merge == 'true' }}
+      push_finalize: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || steps.push_class.outputs.fork_merge == 'true' }}
     if: |
       (
         (
@@ -264,8 +267,10 @@ jobs:
           github.event.action == 'closed'
         )
       ) || (
-        github.event_name == 'push' &&
-        startsWith(github.ref, 'refs/tags/')
+        github.event_name == 'push' && (
+          startsWith(github.ref, 'refs/tags/') ||
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        )
       )
     strategy:
       fail-fast: true
@@ -273,7 +278,8 @@ jobs:
         include:
           - event_name: ${{ github.event_name }}
             event_action: ${{ github.event.action }}
-    permissions: {}
+    permissions:
+      pull-requests: read
     steps:
       - name: Reject pull_request_target events
         if: github.event_name == 'pull_request_target'
@@ -290,6 +296,22 @@ jobs:
             false
           fi
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+      - name: Classify push merge
+        id: push_class
+        if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          script: |
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              ...context.repo,
+              commit_sha: context.sha,
+            });
+            const merged = prs.find((pr) => pr.merged_at != null);
+            if (!merged) return;
+            core.setOutput("merged_pr", merged.number);
+            if (merged.head.repo.full_name !== context.payload.repository.full_name) {
+              core.setOutput("fork_merge", "true");
+            }
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
