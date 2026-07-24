@@ -49,27 +49,20 @@ DO NOT EDIT MANUALLY - This section is auto-generated from flowzone.yml
 name: Flowzone
 
 on:
+  # Internal and fork PRs both run here; forks run with no secrets.
   pull_request:
     types: [opened, synchronize, closed]
     branches: [main, master]
-  # allow external contributions to use secrets within trusted code
-  pull_request_target:
-    types: [opened, synchronize, closed]
+  # Fork contributions publish on the push to the default branch after merge, rebuilt from the
+  # merged commit (see "External Contributions" in the README). Drop this trigger to keep fork
+  # support test-only. Internal PRs do not need it.
+  push:
     branches: [main, master]
 
 jobs:
   flowzone:
     name: Flowzone
     uses: product-os/flowzone/.github/workflows/flowzone.yml@master
-    # prevent duplicate workflow executions for pull_request and pull_request_target
-    if: |
-      (
-        github.event.pull_request.head.repo.full_name == github.repository &&
-        github.event_name == 'pull_request'
-      ) || (
-        github.event.pull_request.head.repo.full_name != github.repository &&
-        github.event_name == 'pull_request_target'
-      )
 
     # Workflows in the same org or enterprise can use the inherit keyword to implicitly pass secrets
     secrets: inherit
@@ -357,15 +350,20 @@ You can read more about the available merge methods [here](https://docs.github.c
 
 ### External Contributions
 
-Flowzone supports external contributions (ie. PRs from forks) to your repository by using [`pull_request_target`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) events in addition to `pull_request`. This allows access to secrets normally available to members of the organization or the repository.
+Flowzone runs external contributions (PRs from forks) **without secrets**. A fork `pull_request` builds and tests in an untrusted lane: GitHub [withholds secrets and issues a read-only token](https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#permissions-for-the-github_token) for workflows triggered by a fork PR, so no registry, cloud, or deploy credentials are ever exposed to fork-authored code. There is no approval gate and no [`pull_request_target`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target) — untrusted code never runs in the base repository's trusted context.
 
-To mitigate the risk of secrets being exposed by malicious pull requests, we have taken the following steps in the Flowzone workflow.
+Because forks have no secrets, they cannot publish during the PR. **Fork contributions publish on the `push` to the default branch after merge**, rebuilt from the merged (trusted) commit — never from bytes uploaded by the fork. Internal PRs are unchanged — they run on `pull_request` with full secrets and finalize on merge.
 
-- Trusted code includes the Flowzone workflow itself and cannot be modified by pull requests.
-- Untrusted or arbitrary code can be called by Flowzone (eg. npm scripts) but does not expose any secrets in the environment at these points.
-- Custom actions are disabled for external contributors by default and can be enabled via `restrict_custom_actions` after the custom action has been vetted to not leak secrets to untrusted code.
+Consequences and limits:
 
-See the [usage examples](#usage) to get started and allow external contributions to your repo.
+- **Breaking change — callers must update to support forks.** The old caller snippet routed fork PRs to `pull_request_target` with an `if:` condition. Flowzone no longer runs on `pull_request_target`, so that routing now rejects fork PRs (and on the pre-migration Flowzone it fails to check out the fork). Adopt the new [usage](#usage) snippet: removing the `pull_request_target` trigger and its routing `if:` sends fork PRs to the no-secrets `pull_request` lane (enables fork **testing**), and adding the `push` trigger enables fork **publishing**. Until a caller updates, its fork PRs do not run through Flowzone.
+- **No secrets during a fork PR.** Fork PRs that rely on private submodules or `COMPOSE_VARS`-backed compose tests cannot fully run those steps during review; the trusted merge lane rebuilds them with credentials. This is inherent to a no-secrets model.
+- **Publish-path failures surface at merge, not during review**, since forks cannot draft-publish while the PR is open.
+- **Custom actions** stay disabled for forks by default; enable via `restrict_custom_actions` only after vetting that the action does not leak secrets to untrusted code.
+- **Auto-merge is internal-only** (it needs an app token). For fork auto-merge, install [bulldozer](https://github.com/palantir/bulldozer) and configure a per-repo `.bulldozer.yml`.
+- **Self-hosted runners and forks.** `runs_on`/`docker_runs_on` are caller inputs and Flowzone does not override them. A fork job may use self-hosted runners **only if they are ephemeral and isolated** — provisioned just-in-time, torn down per job, with no persistent tool-cache or disk and no reachable internal network or IAM. The risk is persistent runner state bridging an untrusted fork job into a later trusted one; Flowzone cannot enforce this, so it is org runner-group policy (see [#534](https://github.com/product-os/flowzone/issues/534)). Also enable "Require approval for all outside collaborators".
+
+See the [usage examples](#usage) to get started, and [docs/trust-boundary.md](docs/trust-boundary.md) for the full design and rationale.
 
 ### Commit Message
 
