@@ -3577,8 +3577,10 @@ jobs:
       - event_types
       - is_docker
       - versioned_source
+      - docker_publish
     if: |
       needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
       (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_docker.outputs.docker_publish_matrix != ''
       )
@@ -6203,8 +6205,10 @@ jobs:
     needs:
       - event_types
       - is_cloudformation
+      - cloudformation_test
     if: |
       needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
       (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&

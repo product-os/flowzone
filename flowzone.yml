@@ -3721,8 +3721,14 @@ jobs:
       - event_types
       - is_docker
       - versioned_source
+      - docker_publish
+    # docker_finalize retags the build-<sha> images docker_publish pushes, so on the fork-merge
+    # push (same run) it must wait for docker_publish. On internal merges and tag pushes
+    # docker_publish is skipped (the images were pushed in the open-PR run), so tolerate
+    # skipped (but not failed) needs.
     if: |
       needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
       (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_docker.outputs.docker_publish_matrix != ''
       )
@@ -5203,8 +5209,14 @@ jobs:
     needs:
       - event_types
       - is_cloudformation
+      - cloudformation_test
+    # cloudformation_finalize executes the change sets cloudformation_test creates, so on the
+    # fork-merge push (same run) it must wait for cloudformation_test. On internal merges the
+    # change sets were created in the open-PR run and cloudformation_test is skipped, so
+    # tolerate skipped (but not failed) needs.
     if: |
       needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
       (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
