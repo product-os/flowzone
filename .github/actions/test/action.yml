@@ -53,7 +53,11 @@ runs:
         set -x
         tag="$(git tag --points-at HEAD | tail -n1)"
 
-        npx -q -y -- semver -c -l "${tag}"
+        # Fork runs are unversioned, so there is no tag at HEAD; only coerce a semver when a tag
+        # exists. This step is diagnostic and must not fail the job.
+        if [ -n "${tag}" ]; then
+          npx -q -y -- semver -c -l "${tag}"
+        fi
         git describe --tags --always --dirty | cat
         git rev-parse HEAD
         git submodule
