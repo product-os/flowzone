@@ -324,14 +324,14 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Decode private key
-        if: inputs.app_id
+        if: inputs.app_id && needs.event_types.outputs.trusted == 'true'
         id: decode
         uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
-        if: inputs.app_id
+        if: inputs.app_id && needs.event_types.outputs.trusted == 'true'
         id: gh_app_token
         with:
           client-id: ${{ inputs.app_id }}
@@ -392,7 +392,7 @@ jobs:
             return hasSubmodules;
       - name: Check for legacy branch protection
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
-        if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open'
+        if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open' && needs.event_types.outputs.trusted == 'true'
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           script: |
@@ -415,7 +415,7 @@ jobs:
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
-        if: inputs.app_id && steps.has_submodules.outputs.result == 'true'
+        if: inputs.app_id && steps.has_submodules.outputs.result == 'true' && needs.event_types.outputs.trusted == 'true'
         id: checkout_token
         with:
           client-id: ${{ inputs.app_id }}
@@ -457,7 +457,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install versioning tools
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         run: |
           npm install -g \
             balena-versionist@~0.15.0 \
@@ -466,7 +466,7 @@ jobs:
           npm ls -g
           echo "NODE_PATH=$(npm root --quiet -g)" >>"${GITHUB_ENV}"
       - name: Generate changelog
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
@@ -476,7 +476,7 @@ jobs:
           fi
       - name: Run balena-versionist
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: versionist
         env:
           GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -501,7 +501,7 @@ jobs:
             core.setOutput('tag', `v${version}`);
             return version;
       - name: Create blobs and tree objects
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_tree
         env:
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
@@ -560,7 +560,7 @@ jobs:
             core.setOutput('sha', tree.sha);
             return tree;
       - name: Create commit object
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_commit
         env:
           MESSAGE: ${{ steps.versionist.outputs.tag }}
@@ -602,7 +602,7 @@ jobs:
             });
             core.setOutput('sha', tag.sha);
             return tag;
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
       - name: Update git reference (force)
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -622,7 +622,8 @@ jobs:
             return ref;
         if: |
           github.event.pull_request.merged &&
-          steps.create_commit.outputs.sha
+          steps.create_commit.outputs.sha &&
+          needs.event_types.outputs.trusted == 'true'
       - name: Create git reference
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -641,18 +642,22 @@ jobs:
             return ref;
         if: |
           github.event.pull_request.merged &&
-          steps.create_tag.outputs.sha
+          steps.create_tag.outputs.sha &&
+          needs.event_types.outputs.trusted == 'true'
   release_notes:
     name: Generate release notes
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       inputs.disable_versioning != true &&
       (
         github.event.pull_request.state == 'open' ||
         github.event.pull_request.merged == true
+      )
       )
     defaults:
       run:
@@ -833,13 +838,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       inputs.release_notes == true &&
       (
         github.event.action != 'closed' ||
         github.event.pull_request.merged == true
+      )
       )
     defaults:
       run:
@@ -1103,6 +1111,7 @@ jobs:
           disable_rules: shellcheck,local-action,runner-label,dangerous-write,dangerous-checkout
       - name: Upload SARIF file to GitHub
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        if: needs.event_types.outputs.trusted == 'true'
         continue-on-error: true
         env:
           sarif_file: ${{ steps.octoscan.outputs.sarif_output }}
@@ -2710,10 +2719,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_npm
       - npm_test
       - versioned_source
-    if: ${{ needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' }}
+    if: ${{ needs.event_types.outputs.trusted == 'true' && ( needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' ) }}
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2820,6 +2830,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
       - npm_test
       - custom_test
@@ -2827,9 +2838,11 @@ jobs:
       - cargo_test
       - python_test
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
       needs.is_npm.outputs.npm_private != 'true'
+      )
     defaults:
       run:
         working-directory: .
@@ -2874,11 +2887,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_npm.outputs.npm == 'true' &&
       needs.is_npm.outputs.npm_private != 'true'
+      )
     defaults:
       run:
         working-directory: .
@@ -2929,10 +2945,13 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_npm.outputs.npm_docs == 'true'
+      )
     defaults:
       run:
         working-directory: .
@@ -3269,6 +3288,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - is_docker
       - npm_test
@@ -3277,9 +3297,11 @@ jobs:
       - cargo_test
       - python_test
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
       needs.is_docker.outputs.docker_publish_matrix != ''
+      )
     defaults:
       run:
         working-directory: .
@@ -3515,11 +3537,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_docker
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_docker.outputs.docker_publish_matrix != ''
+      )
     defaults:
       run:
         working-directory: .
@@ -3761,6 +3786,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_balena
       - npm_test
       - custom_test
@@ -3770,9 +3796,11 @@ jobs:
       - versioned_source
       - release_notes
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      )
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -4016,10 +4044,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_python
       - python_test
       - versioned_source
-    if: needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true'
+    if: needs.event_types.outputs.trusted == 'true' && ( needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true' )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -4152,6 +4181,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_python
       - npm_test
       - custom_test
@@ -4160,10 +4190,12 @@ jobs:
       - python_test
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.python_test.result == 'success' &&
       needs.is_python.outputs.python_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
+      )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -4288,12 +4320,15 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_python
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_python.outputs.python_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
+      )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -4404,6 +4439,7 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
+      - event_types
       - file_list
       - is_npm
       - npm_test
@@ -4413,9 +4449,11 @@ jobs:
       - python_test
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
       inputs.cloudflare_website != '' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      )
     permissions:
       contents: read
     steps:
@@ -4539,8 +4577,10 @@ jobs:
     needs:
       - event_types
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       github.event.action == 'closed' &&
       github.event.pull_request.merged == false
+      )
     defaults:
       run:
         working-directory: .
@@ -4575,6 +4615,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
       - npm_publish
@@ -4585,9 +4626,11 @@ jobs:
       - python_sbom
       - cargo_sbom
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open' &&
       needs.versioned_source.outputs.tag != ''
+      )
     defaults:
       run:
         working-directory: .
@@ -4686,9 +4729,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (
         (
           github.event.pull_request.merged == true &&
@@ -4697,6 +4742,7 @@ jobs:
           github.event_name == 'push' &&
           inputs.disable_versioning == true
         )
+      )
       )
     defaults:
       run:
@@ -4911,10 +4957,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_cargo
       - cargo_test
       - versioned_source
-    if: needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true'
+    if: needs.event_types.outputs.trusted == 'true' && ( needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true' )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -5104,11 +5151,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cargo
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_cargo.outputs.cargo == 'true'
+      )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -5279,6 +5329,7 @@ jobs:
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - npm_test
       - custom_test
@@ -5287,9 +5338,11 @@ jobs:
       - python_test
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open' &&
       needs.is_custom.outputs.custom_publish == 'true'
+      )
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -5388,11 +5441,14 @@ jobs:
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_custom.outputs.custom_finalize == 'true'
+      )
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -5496,12 +5552,15 @@ jobs:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       github.event.action == 'closed' &&
       github.event.pull_request.merged == false &&
       needs.is_custom.outputs.custom_clean == 'true'
+      )
     steps:
       - name: Reject external custom actions
         if: |
@@ -5684,13 +5743,16 @@ jobs:
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cloudformation
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       github.event.pull_request.state == 'open' &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
       needs.is_cloudformation.outputs.stacks != '[]'
+      )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -6071,12 +6133,15 @@ jobs:
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cloudformation
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
       needs.is_cloudformation.outputs.stacks != '[]'
+      )
     env:
       AWS_RETRY_MODE: adaptive
       AWS_MAX_ATTEMPTS: 10
@@ -6302,13 +6367,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - all_jobs
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.all_jobs.result == 'success' &&
       github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
+      )
     permissions: {}
     steps:
       - name: Decode private key
