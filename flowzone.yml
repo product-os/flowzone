@@ -1425,20 +1425,30 @@ jobs:
           SHA: ${{ steps.create_commit.outputs.sha }}
 
       # update the existing branch(head) name reference(pointer) to the new commit object sha
+      # A merged internal PR fires this on its pull_request closed event; a merged fork PR has
+      # no secrets on its pull_request lane, so its versioned commit is created and pushed here
+      # on the fork-merge push instead. On push github.base_ref is empty, so fall back to the
+      # default branch that the push landed on.
       - <<: *updateGitReference
         if: |
-          github.event.pull_request.merged &&
+          (
+            github.event.pull_request.merged ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          ) &&
           steps.create_commit.outputs.sha &&
           needs.event_types.outputs.trusted == 'true'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          REF: "heads/${{ github.base_ref }}"
+          REF: "heads/${{ github.base_ref || github.event.repository.default_branch }}"
           SHA: ${{ steps.create_commit.outputs.sha }}
 
       # create a new tag name reference(pointer) to the new tag object sha
       - <<: *createGitReference
         if: |
-          github.event.pull_request.merged &&
+          (
+            github.event.pull_request.merged ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          ) &&
           steps.create_tag.outputs.sha &&
           needs.event_types.outputs.trusted == 'true'
         env:
