@@ -1,7 +1,4 @@
 .flowzone:
-  - &ifInternalPullRequest # check if the PR is from a fork by comparing the repository name
-    if: github.event.pull_request.head.repo.full_name == github.repository
-
   - &ifExternalPullRequest # check if the PR is from a fork by comparing the repository name
     if: github.event.pull_request.head.repo.full_name != github.repository
 
@@ -34,10 +31,14 @@
     name: Configure AWS credentials
     id: aws_credentials
     uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
-    # skip if the PR is from a fork or aws region is unset
+    # Only on trusted lanes (internal PR or fork-merge push) and when an aws region is set;
+    # a fork's pull_request gets no credentials. Every consumer has event_types in its needs.
     if: |
       ( matrix.region != '' || inputs.aws_region != '' ) &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      (
+        github.event.pull_request.head.repo.full_name == github.repository ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      )
     continue-on-error: true
     with:
       role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -3478,9 +3479,12 @@ jobs:
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> "${GITHUB_ENV}"
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> "${GITHUB_ENV}"
 
-      # these secrets are being used in untrusted user code so only allow for internal PRs
+      # These secrets run inside user code, so only expose them on trusted lanes: internal PRs
+      # and the fork-merge push (where the code is already merged), never a fork's own PR.
       - name: Add COMPOSE_VARS to compose env file
-        <<: *ifInternalPullRequest
+        if: |
+          github.event.pull_request.head.repo.full_name == github.repository ||
+          (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         # do not use shell tracing to avoid leaking secrets

@@ -3229,7 +3229,9 @@ jobs:
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> "${GITHUB_ENV}"
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> "${GITHUB_ENV}"
       - name: Add COMPOSE_VARS to compose env file
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: |
+          github.event.pull_request.head.repo.full_name == github.repository ||
+          (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         shell: bash
@@ -3513,7 +3515,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
-          github.event.pull_request.head.repo.full_name == github.repository
+          (
+            github.event.pull_request.head.repo.full_name == github.repository ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          )
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -3755,7 +3760,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
-          github.event.pull_request.head.repo.full_name == github.repository
+          (
+            github.event.pull_request.head.repo.full_name == github.repository ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          )
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -5919,7 +5927,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
-          github.event.pull_request.head.repo.full_name == github.repository
+          (
+            github.event.pull_request.head.repo.full_name == github.repository ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          )
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -6260,7 +6271,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
-          github.event.pull_request.head.repo.full_name == github.repository
+          (
+            github.event.pull_request.head.repo.full_name == github.repository ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          )
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
