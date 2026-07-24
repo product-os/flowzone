@@ -4312,17 +4312,17 @@ jobs:
       - event_types
       - versioned_source
       - release_notes
+    # release_notes is skipped on the push lane, so tolerate skipped (but not failed) needs
+    # the same way github_publish does, otherwise the skip would propagate and skip this job.
     if: |
+      !failure() && !cancelled() &&
       needs.event_types.outputs.trusted == 'true' && (
       (
-        (
-          github.event.pull_request.merged == true &&
-          inputs.disable_versioning == false
-        ) || (
-          github.event_name == 'push' &&
-          needs.event_types.outputs.push_finalize == 'true' &&
-          inputs.disable_versioning == true
-        )
+        github.event.pull_request.merged == true &&
+        inputs.disable_versioning == false
+      ) || (
+        github.event_name == 'push' &&
+        needs.event_types.outputs.push_finalize == 'true'
       )
       )
 
@@ -4344,15 +4344,30 @@ jobs:
           # contents:write permissions for managing releases
           permission-contents: write
 
+      # A merged fork PR has no draft release to promote (its pull_request lane had no secrets
+      # to publish one), so download the release artifacts to attach when the release is
+      # created below.
+      - name: Download release artifacts
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: ${{ runner.temp }}/artifacts
+          pattern: gh-release-*
+          merge-multiple: true
+
+      # release_notes does not run on the push lane, so tolerate a missing artifact there.
       # https://github.com/actions/download-artifact
       - name: Download release notes
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: ${{ runner.temp }}
           name: release-notes
 
+      # Promote the draft release created during an internal PR to a full release.
       # https://docs.github.com/en/rest/releases
       - name: Finalize GitHub release (if any)
+        if: github.event_name != 'push'
         env:
           <<: *gitHubCliEnvironment
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4377,6 +4392,28 @@ jobs:
           else
             echo "No release found for the current PR"
           fi
+
+      # On the fork-merge push there is no draft to promote, so create the release for the
+      # versioned tag directly (versioned_source pushed the tag on this lane). Rich release
+      # notes reconstructed from the merged PR are tracked separately; use auto-generated
+      # notes here.
+      # https://github.com/softprops/action-gh-release
+      - name: Create GitHub release
+        if: |
+          github.event_name == 'push' &&
+          needs.event_types.outputs.fork_merge == 'true' &&
+          needs.versioned_source.outputs.tag != ''
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        with:
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          name: ${{ needs.versioned_source.outputs.tag }}
+          tag_name: ${{ needs.versioned_source.outputs.tag }}
+          draft: false
+          prerelease: ${{ inputs.github_prerelease }}
+          make_latest: ${{ inputs.github_prerelease == false }}
+          generate_release_notes: true
+          files: ${{ runner.temp }}/artifacts/*
+          fail_on_unmatched_files: false
 
   ###################################################
   # rust
