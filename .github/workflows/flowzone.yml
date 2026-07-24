@@ -2922,8 +2922,10 @@ jobs:
     needs:
       - event_types
       - is_npm
+      - npm_test
     if: |
       needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
       (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_npm.outputs.npm == 'true' &&
       needs.is_npm.outputs.npm_private != 'true'
@@ -2949,7 +2951,14 @@ jobs:
           permission-metadata: read
           permission-contents: read
           permission-actions: read
+      - name: Download npm artifact (same run)
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          path: ${{ runner.temp }}/npm
+          name: npm-${{ github.event.head_commit.id }}
       - name: Download npm artifact from last run
+        if: github.event_name != 'push' || needs.event_types.outputs.fork_merge != 'true'
         uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -2980,8 +2989,10 @@ jobs:
     needs:
       - event_types
       - is_npm
+      - npm_test
     if: |
       needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
       (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_npm.outputs.npm_docs == 'true'
       )
@@ -3007,7 +3018,14 @@ jobs:
           permission-metadata: read
           permission-pages: write
           permission-contents: write
+      - name: Download npm docs artifact (same run)
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          path: ${{ runner.temp }}/docs
+          name: docs-${{ github.event.head_commit.id }}
       - name: Download npm docs artifact from last run
+        if: github.event_name != 'push' || needs.event_types.outputs.fork_merge != 'true'
         uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
