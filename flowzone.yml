@@ -1397,7 +1397,12 @@ jobs:
         if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_commit
         env:
-          MESSAGE: ${{ steps.versionist.outputs.tag }}
+          # [skip ci] avoids recursion: this versioned commit becomes the default-branch HEAD
+          # when updateGitReference pushes it, and that push is made with the app token, which
+          # (unlike github.token) does re-trigger workflows. GitHub skips a push run whose HEAD
+          # commit message contains a skip directive, so the redundant run never starts. This
+          # does not affect the current run's publish/finalize (those run from the merge commit).
+          MESSAGE: ${{ steps.versionist.outputs.tag }} [skip ci]
           TREE_SHA: ${{ steps.create_tree.outputs.sha }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9

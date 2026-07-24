@@ -585,7 +585,7 @@ jobs:
         if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_commit
         env:
-          MESSAGE: ${{ steps.versionist.outputs.tag }}
+          MESSAGE: ${{ steps.versionist.outputs.tag }} [skip ci]
           TREE_SHA: ${{ steps.create_tree.outputs.sha }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
