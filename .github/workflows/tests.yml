@@ -1,11 +1,12 @@
 name: Tests
 
 on:
+  # Internal and fork PRs both run here with no secrets on forks; fork publishing happens on
+  # the push to the default branch after merge. pull_request_target is intentionally gone.
   pull_request:
     types: [opened, synchronize, closed]
     branches: [main, master]
-  pull_request_target:
-    types: [opened, synchronize, closed]
+  push:
     branches: [main, master]
 
 # Simulate a "restricted" org/enterprise policy of read-only GITHUB_TOKEN access.
@@ -28,7 +29,10 @@ permissions:
   # packages: read
   packages: write # Allow Flowzone to publish to ghcr.io
   pages: none
-  pull-requests: none
+  # Flowzone's event_types classifies the PR a push merged ("Classify push merge"); the
+  # reusable workflow declares pull-requests: read, so the caller must grant it or the call
+  # fails at startup.
+  pull-requests: read
   repository-projects: none
   security-events: none
   statuses: none
@@ -37,15 +41,6 @@ jobs:
   flowzone:
     name: Flowzone
     uses: ./.github/workflows/flowzone.yml
-    # prevent duplicate workflow executions for pull_request and pull_request_target
-    if: |
-      (
-        github.event.pull_request.head.repo.full_name == github.repository &&
-        github.event_name == 'pull_request'
-      ) || (
-        github.event.pull_request.head.repo.full_name != github.repository &&
-        github.event_name == 'pull_request_target'
-      )
     secrets: inherit
     with:
       working_directory: ./tests

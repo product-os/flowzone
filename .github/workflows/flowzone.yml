@@ -250,7 +250,12 @@ jobs:
   event_types:
     name: Event Types
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    outputs:
+      trusted: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      merged_pr: ${{ steps.push_class.outputs.merged_pr }}
+      fork_merge: ${{ steps.push_class.outputs.fork_merge == 'true' }}
+      push_finalize: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || steps.push_class.outputs.fork_merge == 'true' }}
     if: |
       (
         (
@@ -262,8 +267,10 @@ jobs:
           github.event.action == 'closed'
         )
       ) || (
-        github.event_name == 'push' &&
-        startsWith(github.ref, 'refs/tags/')
+        github.event_name == 'push' && (
+          startsWith(github.ref, 'refs/tags/') ||
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        )
       )
     strategy:
       fail-fast: true
@@ -271,23 +278,15 @@ jobs:
         include:
           - event_name: ${{ github.event_name }}
             event_action: ${{ github.event.action }}
-    permissions: {}
+    permissions:
+      pull-requests: read
     steps:
-      - name: Reject external pull_request events on pull_request
-        if: |
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name != github.repository
+      - name: Reject pull_request_target events
+        if: github.event_name == 'pull_request_target'
         run: |
-          echo "::error::External workflows can not be used with 'pull_request' events. \
-            Please contact a member of the organization for assistance."
-          exit 1
-      - name: Reject internal pull_request events on pull_request_target
-        if: |
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          echo "::error::Internal workflows should not be used with 'pull_request_target' events. \
-            Please consult the documentation for more information."
+          echo "::error::Flowzone no longer runs on 'pull_request_target' events. External (fork) \
+            contributions are being migrated to a 'pull_request' + 'push' flow that never exposes \
+            secrets to untrusted code. See the Flowzone trust-boundary documentation."
           exit 1
       - name: Reject missing secrets
         run: |
@@ -296,29 +295,23 @@ jobs:
             echo '::error::Must specify either FLOWZONE_APP_PRIVATE_KEY, GH_APP_PRIVATE_KEY, or FLOWZONE_TOKEN.'
             false
           fi
-      - name: Decode private key
-        if: inputs.app_id
-        id: decode
-        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+      - name: Classify push merge
+        id: push_class
+        if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
-          secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
-      - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
-        if: inputs.app_id
-        id: gh_app_token
-        with:
-          client-id: ${{ inputs.app_id }}
-          private-key: ${{ steps.decode.outputs.private-key }}
-          permission-metadata: read
-          permission-contents: read
-          permission-issues: read
-          permission-pull-requests: write
-      - name: Wait for approval on pull_request_target events
-        if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
-        uses: product-os/review-commit-action@3caab52f4a41ad395c033ac667d1ba4d23d57f6e
-        with:
-          allow-authors: false
-          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          script: |
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              ...context.repo,
+              commit_sha: context.sha,
+            });
+            const merged = prs.find((pr) => pr.merged_at != null);
+            if (!merged) return;
+            core.setOutput("merged_pr", merged.number);
+            if (merged.head.repo.full_name !== context.payload.repository.full_name) {
+              core.setOutput("fork_merge", "true");
+            }
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
@@ -353,14 +346,14 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Decode private key
-        if: inputs.app_id
+        if: inputs.app_id && needs.event_types.outputs.trusted == 'true'
         id: decode
         uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
-        if: inputs.app_id
+        if: inputs.app_id && needs.event_types.outputs.trusted == 'true'
         id: gh_app_token
         with:
           client-id: ${{ inputs.app_id }}
@@ -374,7 +367,7 @@ jobs:
         if: github.event.pull_request.state == 'open'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
-          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           result-encoding: json
           script: |
             const { data: commits } = await github.rest.pulls.listCommits({
@@ -389,7 +382,7 @@ jobs:
         if: github.event.pull_request.merged
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
-          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           result-encoding: json
           script: |
             console.debug(`Merge commit SHA: ${context.sha}`)
@@ -421,7 +414,7 @@ jobs:
             return hasSubmodules;
       - name: Check for legacy branch protection
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
-        if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open'
+        if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open' && needs.event_types.outputs.trusted == 'true'
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           script: |
@@ -444,7 +437,7 @@ jobs:
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
       - name: Generate GitHub App installation token for checkout
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
-        if: inputs.app_id && steps.has_submodules.outputs.result == 'true'
+        if: inputs.app_id && steps.has_submodules.outputs.result == 'true' && needs.event_types.outputs.trusted == 'true'
         id: checkout_token
         with:
           client-id: ${{ inputs.app_id }}
@@ -486,7 +479,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install versioning tools
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         run: |
           npm install -g \
             balena-versionist@~0.15.0 \
@@ -495,7 +488,7 @@ jobs:
           npm ls -g
           echo "NODE_PATH=$(npm root --quiet -g)" >>"${GITHUB_ENV}"
       - name: Generate changelog
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
@@ -505,7 +498,7 @@ jobs:
           fi
       - name: Run balena-versionist
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: versionist
         env:
           GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -530,7 +523,7 @@ jobs:
             core.setOutput('tag', `v${version}`);
             return version;
       - name: Create blobs and tree objects
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_tree
         env:
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
@@ -589,10 +582,10 @@ jobs:
             core.setOutput('sha', tree.sha);
             return tree;
       - name: Create commit object
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_commit
         env:
-          MESSAGE: ${{ steps.versionist.outputs.tag }}
+          MESSAGE: ${{ steps.versionist.outputs.tag }} [skip ci]
           TREE_SHA: ${{ steps.create_tree.outputs.sha }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -631,11 +624,11 @@ jobs:
             });
             core.setOutput('sha', tag.sha);
             return tag;
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
       - name: Update git reference (force)
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          REF: heads/${{ github.base_ref }}
+          REF: heads/${{ github.base_ref || github.event.repository.default_branch }}
           SHA: ${{ steps.create_commit.outputs.sha }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
@@ -650,8 +643,12 @@ jobs:
             });
             return ref;
         if: |
-          github.event.pull_request.merged &&
-          steps.create_commit.outputs.sha
+          (
+            github.event.pull_request.merged ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          ) &&
+          steps.create_commit.outputs.sha &&
+          needs.event_types.outputs.trusted == 'true'
       - name: Create git reference
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -669,19 +666,26 @@ jobs:
             });
             return ref;
         if: |
-          github.event.pull_request.merged &&
-          steps.create_tag.outputs.sha
+          (
+            github.event.pull_request.merged ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          ) &&
+          steps.create_tag.outputs.sha &&
+          needs.event_types.outputs.trusted == 'true'
   release_notes:
     name: Generate release notes
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       inputs.disable_versioning != true &&
       (
         github.event.pull_request.state == 'open' ||
         github.event.pull_request.merged == true
+      )
       )
     defaults:
       run:
@@ -862,13 +866,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       inputs.release_notes == true &&
       (
         github.event.action != 'closed' ||
         github.event.pull_request.merged == true
+      )
       )
     defaults:
       run:
@@ -1132,6 +1139,7 @@ jobs:
           disable_rules: shellcheck,local-action,runner-label,dangerous-write,dangerous-checkout
       - name: Upload SARIF file to GitHub
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        if: needs.event_types.outputs.trusted == 'true'
         continue-on-error: true
         env:
           sarif_file: ${{ steps.octoscan.outputs.sarif_output }}
@@ -2579,10 +2587,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_npm.outputs.npm == 'true'
     defaults:
       run:
@@ -2671,8 +2683,8 @@ jobs:
           package="$(jq -r '.name' package.json)"
           version="$(jq -r '.version' package.json)"
           branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
 
           echo "package=${package}" >> "${GITHUB_OUTPUT}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
@@ -2717,7 +2729,7 @@ jobs:
         if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: npm-${{ github.event.pull_request.head.sha }}
+          name: npm-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
           retention-days: 90
       - name: Generate docs (if present)
@@ -2731,7 +2743,7 @@ jobs:
         if: needs.is_npm.outputs.npm_docs == 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: docs-${{ github.event.pull_request.head.sha }}
+          name: docs-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/docs.tar.zst
           retention-days: 90
   npm_sbom:
@@ -2739,10 +2751,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_npm
       - npm_test
       - versioned_source
-    if: ${{ needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' }}
+    if: ${{ needs.event_types.outputs.trusted == 'true' && ( needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' ) }}
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -2849,6 +2862,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
       - npm_test
       - custom_test
@@ -2856,9 +2870,12 @@ jobs:
       - cargo_test
       - python_test
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
+      github.event.pull_request.state == 'open' &&
       needs.npm_test.result == 'success' &&
       needs.is_npm.outputs.npm_private != 'true'
+      )
     defaults:
       run:
         working-directory: .
@@ -2868,7 +2885,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}
+          name: npm-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
       - name: Setup Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         env:
@@ -2903,11 +2920,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
+      - npm_test
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_npm.outputs.npm == 'true' &&
       needs.is_npm.outputs.npm_private != 'true'
+      )
     defaults:
       run:
         working-directory: .
@@ -2929,7 +2951,14 @@ jobs:
           permission-metadata: read
           permission-contents: read
           permission-actions: read
+      - name: Download npm artifact (same run)
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          path: ${{ runner.temp }}/npm
+          name: npm-${{ github.event.head_commit.id }}
       - name: Download npm artifact from last run
+        if: github.event_name != 'push' || needs.event_types.outputs.fork_merge != 'true'
         uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -2958,10 +2987,15 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
+      - npm_test
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_npm.outputs.npm_docs == 'true'
+      )
     defaults:
       run:
         working-directory: .
@@ -2984,7 +3018,14 @@ jobs:
           permission-metadata: read
           permission-pages: write
           permission-contents: write
+      - name: Download npm docs artifact (same run)
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          path: ${{ runner.temp }}/docs
+          name: docs-${{ github.event.head_commit.id }}
       - name: Download npm docs artifact from last run
+        if: github.event_name != 'push' || needs.event_types.outputs.fork_merge != 'true'
         uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3008,10 +3049,14 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_docker
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_docker.outputs.docker_bake_json != ''
     defaults:
       run:
@@ -3184,7 +3229,9 @@ jobs:
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> "${GITHUB_ENV}"
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> "${GITHUB_ENV}"
       - name: Add COMPOSE_VARS to compose env file
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: |
+          github.event.pull_request.head.repo.full_name == github.repository ||
+          (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         shell: bash
@@ -3247,9 +3294,9 @@ jobs:
             type=raw,value=latest
             type=raw,value=latest,prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
             type=raw,value=${{ github.base_ref || github.ref_name }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
-            type=raw,value=${{ github.event.pull_request.head.sha }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
-            type=raw,value=build-${{ github.event.pull_request.head.sha }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
-            type=raw,value=build-${{ github.event.pull_request.head.ref }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+            type=raw,value=${{ github.event.pull_request.head.sha || github.event.head_commit.id }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+            type=raw,value=build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+            type=raw,value=build-${{ github.event.pull_request.head.ref || github.ref_name }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
           flavor: |
             latest=false
       - name: Enable hardware execution
@@ -3298,6 +3345,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - is_docker
       - npm_test
@@ -3306,9 +3354,11 @@ jobs:
       - cargo_test
       - python_test
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
       needs.is_docker.outputs.docker_publish_matrix != ''
+      )
     defaults:
       run:
         working-directory: .
@@ -3389,8 +3439,8 @@ jobs:
             org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
-            type=raw,value=build-${{ github.event.pull_request.head.sha }}
-            type=raw,value=build-${{ github.event.pull_request.head.ref }}
+            type=raw,value=build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+            type=raw,value=build-${{ github.event.pull_request.head.ref || github.ref_name }}
           flavor: |
             latest=false
             prefix=${{ steps.strings.outputs.prefix }}
@@ -3465,7 +3515,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
-          github.event.pull_request.head.repo.full_name == github.repository
+          (
+            github.event.pull_request.head.repo.full_name == github.repository ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          )
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -3544,11 +3597,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_docker
       - versioned_source
+      - docker_publish
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_docker.outputs.docker_publish_matrix != ''
+      )
     defaults:
       run:
         working-directory: .
@@ -3702,7 +3760,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
-          github.event.pull_request.head.repo.full_name == github.repository
+          (
+            github.event.pull_request.head.repo.full_name == github.repository ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          )
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -3790,6 +3851,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_balena
       - npm_test
       - custom_test
@@ -3799,9 +3861,11 @@ jobs:
       - versioned_source
       - release_notes
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      )
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -4017,8 +4081,8 @@ jobs:
           package=$(grep '^name =' pyproject.toml | sed 's/name = "\(.*\)"/\1/')
           version=$(grep '^version =' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
           branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
 
           echo "package=${package}" >> "${GITHUB_OUTPUT}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
@@ -4045,10 +4109,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_python
       - python_test
       - versioned_source
-    if: needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true'
+    if: needs.event_types.outputs.trusted == 'true' && ( needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true' )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -4181,6 +4246,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_python
       - npm_test
       - custom_test
@@ -4189,10 +4255,12 @@ jobs:
       - python_test
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.python_test.result == 'success' &&
       needs.is_python.outputs.python_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
+      )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -4294,7 +4362,7 @@ jobs:
         run: |
           package="$(poetry version --no-ansi | awk '{print $1}')"
           version="$(poetry version --no-ansi | awk '{print $2}')"
-          commit_sha="$(echo ${{ github.event.pull_request.head.sha }} | tr "a-z" "A-Z")"
+          commit_sha="$(echo ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | tr "a-z" "A-Z")"
           decimal_sha="$(echo "ibase=16; $commit_sha" | bc)"
           version_tag="${version}-dev${decimal_sha}"
 
@@ -4317,12 +4385,15 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_python
       - versioned_source
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_python.outputs.python_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
+      )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -4433,6 +4504,7 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
+      - event_types
       - file_list
       - is_npm
       - npm_test
@@ -4442,9 +4514,11 @@ jobs:
       - python_test
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
       inputs.cloudflare_website != '' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      )
     permissions:
       contents: read
     steps:
@@ -4568,8 +4642,10 @@ jobs:
     needs:
       - event_types
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       github.event.action == 'closed' &&
       github.event.pull_request.merged == false
+      )
     defaults:
       run:
         working-directory: .
@@ -4604,6 +4680,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
       - npm_publish
@@ -4614,9 +4691,11 @@ jobs:
       - python_sbom
       - cargo_sbom
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open' &&
       needs.versioned_source.outputs.tag != ''
+      )
     defaults:
       run:
         working-directory: .
@@ -4715,17 +4794,19 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
     if: |
+      !failure() && !cancelled() &&
+      needs.event_types.outputs.trusted == 'true' && (
       (
-        (
-          github.event.pull_request.merged == true &&
-          inputs.disable_versioning == false
-        ) || (
-          github.event_name == 'push' &&
-          inputs.disable_versioning == true
-        )
+        github.event.pull_request.merged == true &&
+        inputs.disable_versioning == false
+      ) || (
+        github.event_name == 'push' &&
+        needs.event_types.outputs.push_finalize == 'true'
+      )
       )
     defaults:
       run:
@@ -4789,12 +4870,21 @@ jobs:
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
+      - name: Download release artifacts
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          path: ${{ runner.temp }}/artifacts
+          pattern: gh-release-*
+          merge-multiple: true
       - name: Download release notes
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           path: ${{ runner.temp }}
           name: release-notes
       - name: Finalize GitHub release (if any)
+        if: github.event_name != 'push'
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
@@ -4822,15 +4912,35 @@ jobs:
           else
             echo "No release found for the current PR"
           fi
+      - name: Create GitHub release
+        if: |
+          github.event_name == 'push' &&
+          needs.event_types.outputs.fork_merge == 'true' &&
+          needs.versioned_source.outputs.tag != ''
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
+        with:
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          name: ${{ needs.versioned_source.outputs.tag }}
+          tag_name: ${{ needs.versioned_source.outputs.tag }}
+          draft: false
+          prerelease: ${{ inputs.github_prerelease }}
+          make_latest: ${{ inputs.github_prerelease == false }}
+          generate_release_notes: true
+          files: ${{ runner.temp }}/artifacts/*
+          fail_on_unmatched_files: false
   cargo_test:
     name: Test rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cargo
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_cargo.outputs.cargo == 'true'
     defaults:
       run:
@@ -4925,8 +5035,8 @@ jobs:
           packages="$(cargo metadata --no-deps --format-version 1 | jq -c '[.packages[] | .targets[] | select(.kind[] == "bin") | .name]')"
           version="${{ needs.versioned_source.outputs.semver }}"
           branch_tag="$(echo "${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
 
           {
             echo "packages=${packages}" ;
@@ -4940,10 +5050,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_cargo
       - cargo_test
       - versioned_source
-    if: needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true'
+    if: needs.event_types.outputs.trusted == 'true' && ( needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true' )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -5133,11 +5244,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cargo
       - versioned_source
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_cargo.outputs.cargo == 'true'
+      )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -5308,6 +5422,7 @@ jobs:
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - npm_test
       - custom_test
@@ -5316,9 +5431,11 @@ jobs:
       - python_test
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open' &&
       needs.is_custom.outputs.custom_publish == 'true'
+      )
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -5417,11 +5534,14 @@ jobs:
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - versioned_source
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_custom.outputs.custom_finalize == 'true'
+      )
     strategy:
       fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
@@ -5525,12 +5645,15 @@ jobs:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       github.event.action == 'closed' &&
       github.event.pull_request.merged == false &&
       needs.is_custom.outputs.custom_clean == 'true'
+      )
     steps:
       - name: Reject external custom actions
         if: |
@@ -5713,13 +5836,19 @@ jobs:
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cloudformation
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
+      needs.event_types.outputs.trusted == 'true' && (
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
       needs.is_cloudformation.outputs.stacks != '[]'
+      )
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
@@ -5798,7 +5927,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
-          github.event.pull_request.head.repo.full_name == github.repository
+          (
+            github.event.pull_request.head.repo.full_name == github.repository ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          )
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -6100,12 +6232,17 @@ jobs:
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cloudformation
+      - cloudformation_test
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
       needs.is_cloudformation.outputs.stacks != '[]'
+      )
     env:
       AWS_RETRY_MODE: adaptive
       AWS_MAX_ATTEMPTS: 10
@@ -6134,7 +6271,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
-          github.event.pull_request.head.repo.full_name == github.repository
+          (
+            github.event.pull_request.head.repo.full_name == github.repository ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          )
         continue-on-error: true
         with:
           role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -6270,7 +6410,7 @@ jobs:
             exit 1
           fi
   all_jobs:
-    name: All jobs
+    name: All jobs${{ github.event_name == 'pull_request_target' && ' (pull_request_target)' || '' }}
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     permissions: {}
@@ -6331,13 +6471,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - all_jobs
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.all_jobs.result == 'success' &&
       github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
+      )
     permissions: {}
     steps:
       - name: Decode private key

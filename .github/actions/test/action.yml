@@ -30,11 +30,20 @@ runs:
 
     - name: Check vars from environment
       shell: bash
+      env:
+        FLOWZONE_TEST_VAR: ${{ fromJSON(inputs.variables).FLOWZONE_TEST_VAR }}
+        FLOWZONE_TEST_SECRET: ${{ fromJSON(inputs.secrets).FLOWZONE_TEST_SECRET }}
       run: |
         echo "environment=${environment}"
-        echo "FLOWZONE_TEST_VAR=${{ fromJSON(inputs.variables).FLOWZONE_TEST_VAR }}"
-        echo "FLOWZONE_TEST_SECRET=${{ fromJSON(inputs.secrets).FLOWZONE_TEST_SECRET }}"
-        test "${{ fromJSON(inputs.variables).FLOWZONE_TEST_VAR }}" = "Flowzone says hi!"
+        echo "FLOWZONE_TEST_VAR=${FLOWZONE_TEST_VAR}"
+        echo "FLOWZONE_TEST_SECRET=${FLOWZONE_TEST_SECRET}"
+        # Fork PRs run with no secrets or variables, so only assert passthrough when the value
+        # is present (i.e. the trusted internal lane); skip the assertion on forks.
+        if [ -n "${FLOWZONE_TEST_VAR}" ]; then
+          test "${FLOWZONE_TEST_VAR}" = "Flowzone says hi!"
+        else
+          echo "::notice::no variables/secrets provided (fork PR); skipping passthrough assertion"
+        fi
 
     # Resolve tag, semver, sha, and description of current git working copy.
     - name: Describe git state

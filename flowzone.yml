@@ -1,7 +1,4 @@
 .flowzone:
-  - &ifInternalPullRequest # check if the PR is from a fork by comparing the repository name
-    if: github.event.pull_request.head.repo.full_name == github.repository
-
   - &ifExternalPullRequest # check if the PR is from a fork by comparing the repository name
     if: github.event.pull_request.head.repo.full_name != github.repository
 
@@ -34,10 +31,14 @@
     name: Configure AWS credentials
     id: aws_credentials
     uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
-    # skip if the PR is from a fork or aws region is unset
+    # Only on trusted lanes (internal PR or fork-merge push) and when an aws region is set;
+    # a fork's pull_request gets no credentials. Every consumer has event_types in its needs.
     if: |
       ( matrix.region != '' || inputs.aws_region != '' ) &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      (
+        github.event.pull_request.head.repo.full_name == github.repository ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      )
     continue-on-error: true
     with:
       role-to-assume: ${{ matrix.role || inputs.aws_iam_role }}
@@ -52,7 +53,7 @@
     run: |
       package="$(poetry version --no-ansi | awk '{print $1}')"
       version="$(poetry version --no-ansi | awk '{print $2}')"
-      commit_sha="$(echo ${{ github.event.pull_request.head.sha }} | tr "a-z" "A-Z")"
+      commit_sha="$(echo ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | tr "a-z" "A-Z")"
       decimal_sha="$(echo "ibase=16; $commit_sha" | bc)"
       version_tag="${version}-dev${decimal_sha}"
 
@@ -424,9 +425,9 @@
         type=raw,value=latest
         type=raw,value=latest,prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
         type=raw,value=${{ github.base_ref || github.ref_name }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
-        type=raw,value=${{ github.event.pull_request.head.sha }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
-        type=raw,value=build-${{ github.event.pull_request.head.sha }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
-        type=raw,value=build-${{ github.event.pull_request.head.ref }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+        type=raw,value=${{ github.event.pull_request.head.sha || github.event.head_commit.id }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+        type=raw,value=build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+        type=raw,value=build-${{ github.event.pull_request.head.ref || github.ref_name }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
       flavor: |
         latest=false
 
@@ -438,8 +439,8 @@
         ${{ matrix.image }}
       labels: *dockerMetaLabels
       tags: |
-        type=raw,value=build-${{ github.event.pull_request.head.sha }}
-        type=raw,value=build-${{ github.event.pull_request.head.ref }}
+        type=raw,value=build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+        type=raw,value=build-${{ github.event.pull_request.head.ref || github.ref_name }}
       flavor: |
         latest=false
         prefix=${{ steps.strings.outputs.prefix }}
@@ -490,24 +491,17 @@
         exit 1
       fi
 
-  - &rejectExternalPullRequest
-    name: Reject external pull_request events on pull_request
-    if: |
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name != github.repository
+  - &rejectPullRequestTarget
+    name: Reject pull_request_target events
+    # Flowzone no longer runs on pull_request_target. Fork code must never execute in the
+    # base repo's trusted (secret-bearing) context, so we refuse the event outright at the
+    # gate, before any job checks out a ref. External contributions are moving to a
+    # pull_request (no secrets) + push (trusted merge) flow.
+    if: github.event_name == 'pull_request_target'
     run: |
-      echo "::error::External workflows can not be used with 'pull_request' events. \
-        Please contact a member of the organization for assistance."
-      exit 1
-
-  - &rejectInternalPullRequestTarget
-    name: Reject internal pull_request events on pull_request_target
-    if: |
-      github.event_name == 'pull_request_target' &&
-      github.event.pull_request.head.repo.full_name == github.repository
-    run: |
-      echo "::error::Internal workflows should not be used with 'pull_request_target' events. \
-        Please consult the documentation for more information."
+      echo "::error::Flowzone no longer runs on 'pull_request_target' events. External (fork) \
+        contributions are being migrated to a 'pull_request' + 'push' flow that never exposes \
+        secrets to untrusted code. See the Flowzone trust-boundary documentation."
       exit 1
 
   - &rejectNonLinearHead
@@ -519,7 +513,9 @@
     if: github.event.pull_request.state == 'open'
     uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
     with:
-      github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      # Fall back to github.token on the fork lane: forks have no app token or secrets, and
+      # listing PR commits only needs read access, which the read-only fork token has.
+      github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
       result-encoding: json
       script: |
         const { data: commits } = await github.rest.pulls.listCommits({
@@ -543,7 +539,8 @@
     if: github.event.pull_request.merged
     uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
     with:
-      github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      # Fall back to github.token on the fork lane (read-only is enough to read the commit).
+      github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
       result-encoding: json
       script: |
         console.debug(`Merge commit SHA: ${context.sha}`)
@@ -1054,9 +1051,19 @@ jobs:
   event_types:
     name: Event Types
     runs-on: ubuntu-24.04
-    # Wait up to 60 min for workflow approvals on forks.
-    # App Installation tokens expire in 1h either way.
-    timeout-minutes: 60
+    timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
+    outputs:
+      # Trusted (secret-bearing) contexts: internal PRs and pushes to the base repo.
+      # A fork pull_request receives no secrets from GitHub, so it is untrusted and
+      # secret-consuming jobs must skip on it (see downstream `needs.event_types.outputs.trusted`).
+      trusted: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      # On a push to the default branch, `Classify push merge` (below) looks up the PR this
+      # commit merged. fork_merge is true iff that PR came from a fork. push_finalize gates the
+      # publish/finalize path on push: true for tag pushes and fork merges; false for internal
+      # merges (already finalized on their pull_request lane) and direct pushes.
+      merged_pr: ${{ steps.push_class.outputs.merged_pr }}
+      fork_merge: ${{ steps.push_class.outputs.fork_merge == 'true' }}
+      push_finalize: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || steps.push_class.outputs.fork_merge == 'true' }}
     if: |
       (
         (
@@ -1068,8 +1075,10 @@ jobs:
           github.event.action == 'closed'
         )
       ) || (
-        github.event_name == 'push' &&
-        startsWith(github.ref, 'refs/tags/')
+        github.event_name == 'push' && (
+          startsWith(github.ref, 'refs/tags/') ||
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        )
       )
 
     strategy:
@@ -1079,33 +1088,38 @@ jobs:
           - event_name: ${{ github.event_name }}
             event_action: ${{ github.event.action }}
 
-    permissions: {}
+    permissions:
+      # Read-only PR lookup for `Classify push merge` below (uses github.token on the push lane).
+      pull-requests: read
 
     steps:
-      - *rejectExternalPullRequest
-      - *rejectInternalPullRequestTarget
-      - *rejectMissingSecrets
+      - *rejectPullRequestTarget
+      # Fork pull_request runs receive no secrets by design, so only require them on
+      # trusted lanes (internal PRs and pushes). This mirrors event_types.outputs.trusted.
+      - <<: *rejectMissingSecrets
+        if: >-
+          github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository
 
-      - *decodePrivateKey
-      - <<: *getGitHubAppToken
+      # On a push to the default branch, find the PR (if any) this commit merged so downstream
+      # jobs can distinguish a fork merge (publish here) from an internal merge (already
+      # finalized on its pull_request lane) or a direct push (no PR -> skip).
+      - name: Classify push merge
+        id: push_class
+        if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
-          <<: *getGitHubAppTokenWith
-          # pull_requests: write is required to create or update pull request comments
-          permission-contents: read
-          permission-issues: read
-          permission-pull-requests: write
-
-      # Combining pull_request_target workflow trigger with an explicit checkout of an
-      # untrusted PR is a dangerous practice that may lead to repository compromise.
-      # https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/
-      # This action requires approvals via reactions for each workflow run.
-      # https://github.com/product-os/review-commit-action
-      - name: Wait for approval on pull_request_target events
-        if: github.event_name == 'pull_request_target' && github.event.pull_request.merged != true
-        uses: product-os/review-commit-action@3caab52f4a41ad395c033ac667d1ba4d23d57f6e # v0.3.2
-        with:
-          allow-authors: false
-          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          script: |
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              ...context.repo,
+              commit_sha: context.sha,
+            });
+            const merged = prs.find((pr) => pr.merged_at != null);
+            if (!merged) return;
+            core.setOutput("merged_pr", merged.number);
+            if (merged.head.repo.full_name !== context.payload.repository.full_name) {
+              core.setOutput("fork_merge", "true");
+            }
 
       - *logGitHubContext
 
@@ -1146,8 +1160,13 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
-      - *decodePrivateKey
+      # The app token is only generated on trusted lanes. A fork pull_request has no app key,
+      # so these steps skip and versioned_source falls back to github.token for checkout and
+      # skips versioning/ref-writes (git_describe still supplies the output SHA).
+      - <<: *decodePrivateKey
+        if: inputs.app_id && needs.event_types.outputs.trusted == 'true'
       - <<: *getGitHubAppToken
+        if: inputs.app_id && needs.event_types.outputs.trusted == 'true'
         with:
           <<: *getGitHubAppTokenWith
           # contents: write is required to push git commit and tag references
@@ -1180,7 +1199,7 @@ jobs:
 
       - name: Check for legacy branch protection
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open'
+        if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open' && needs.event_types.outputs.trusted == 'true'
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           script: |
@@ -1203,7 +1222,7 @@ jobs:
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
 
       - <<: *getCheckoutToken
-        if: inputs.app_id && steps.has_submodules.outputs.result == 'true'
+        if: inputs.app_id && steps.has_submodules.outputs.result == 'true' && needs.event_types.outputs.trusted == 'true'
 
       # Checkout the tip of the pull request branch for open PRs.
       # The default behaviour for GitHub Actions is to checkout the merge commit but we
@@ -1263,7 +1282,7 @@ jobs:
       - *setupNode
 
       - name: Install versioning tools
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         run: |
           npm install -g \
             balena-versionist@~0.15.0 \
@@ -1273,7 +1292,7 @@ jobs:
           echo "NODE_PATH=$(npm root --quiet -g)" >>"${GITHUB_ENV}"
 
       - name: Generate changelog
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
         run: |
@@ -1285,7 +1304,7 @@ jobs:
       # https://github.com/actions/github-script
       - name: Run balena-versionist
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: versionist
         env:
           # Use to authenticate with GitHub for private nested changelogs
@@ -1316,7 +1335,7 @@ jobs:
       # https://octokit.github.io/rest.js/v21/#git-create-blob
       # https://octokit.github.io/rest.js/v21/#git-create-tree
       - name: Create blobs and tree objects
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_tree
         env:
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
@@ -1378,10 +1397,15 @@ jobs:
       # https://octokit.github.io/rest.js/v21/#git-create-commit
       # https://docs.github.com/en/rest/git/commits#create-a-commit
       - name: Create commit object
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_commit
         env:
-          MESSAGE: ${{ steps.versionist.outputs.tag }}
+          # [skip ci] avoids recursion: this versioned commit becomes the default-branch HEAD
+          # when updateGitReference pushes it, and that push is made with the app token, which
+          # (unlike github.token) does re-trigger workflows. GitHub skips a push run whose HEAD
+          # commit message contains a skip directive, so the redundant run never starts. This
+          # does not affect the current run's publish/finalize (those run from the merge commit).
+          MESSAGE: ${{ steps.versionist.outputs.tag }} [skip ci]
           TREE_SHA: ${{ steps.create_tree.outputs.sha }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
@@ -1402,7 +1426,7 @@ jobs:
 
       # create a new tag object
       - <<: *createTagObject
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           TAG: ${{ steps.versionist.outputs.tag }}
@@ -1410,20 +1434,32 @@ jobs:
           SHA: ${{ steps.create_commit.outputs.sha }}
 
       # update the existing branch(head) name reference(pointer) to the new commit object sha
+      # A merged internal PR fires this on its pull_request closed event; a merged fork PR has
+      # no secrets on its pull_request lane, so its versioned commit is created and pushed here
+      # on the fork-merge push instead. On push github.base_ref is empty, so fall back to the
+      # default branch that the push landed on.
       - <<: *updateGitReference
         if: |
-          github.event.pull_request.merged &&
-          steps.create_commit.outputs.sha
+          (
+            github.event.pull_request.merged ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          ) &&
+          steps.create_commit.outputs.sha &&
+          needs.event_types.outputs.trusted == 'true'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
-          REF: "heads/${{ github.base_ref }}"
+          REF: "heads/${{ github.base_ref || github.event.repository.default_branch }}"
           SHA: ${{ steps.create_commit.outputs.sha }}
 
       # create a new tag name reference(pointer) to the new tag object sha
       - <<: *createGitReference
         if: |
-          github.event.pull_request.merged &&
-          steps.create_tag.outputs.sha
+          (
+            github.event.pull_request.merged ||
+            (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+          ) &&
+          steps.create_tag.outputs.sha &&
+          needs.event_types.outputs.trusted == 'true'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: "refs/tags/${{ steps.versionist.outputs.tag }}"
@@ -1434,14 +1470,17 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
     # Only generate release notes on pull_request events, and only if versioning is enabled.
     # Skip pull_request closed events, but allow pull_request merged events.
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       inputs.disable_versioning != true &&
       (
         github.event.pull_request.state == 'open' ||
         github.event.pull_request.merged == true
+      )
       )
 
     <<: *rootWorkingDirectory
@@ -1627,13 +1666,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       inputs.release_notes == true &&
       (
         github.event.action != 'closed' ||
         github.event.pull_request.merged == true
+      )
       )
 
     <<: *rootWorkingDirectory
@@ -1846,6 +1888,9 @@ jobs:
       # https://github.com/github/codeql-action/issues/2654
       - name: Upload SARIF file to GitHub
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        # Only trusted lanes have a token with security-events: write; forks still scan
+        # (Run octoscan above) but skip the upload.
+        if: needs.event_types.outputs.trusted == 'true'
         # For now let's just continue on error as this is not a critical path
         continue-on-error: true
         env:
@@ -2974,10 +3019,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
       - versioned_source
+    # Runs on open PRs (build/test) and on the fork-merge push (rebuild from the merged
+    # commit, since the fork's no-secrets PR run produced no trusted artifact to promote).
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_npm.outputs.npm == 'true'
 
     <<: *customWorkingDirectory
@@ -3024,8 +3075,8 @@ jobs:
           package="$(jq -r '.name' package.json)"
           version="$(jq -r '.version' package.json)"
           branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
 
           echo "package=${package}" >> "${GITHUB_OUTPUT}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
@@ -3085,7 +3136,7 @@ jobs:
         if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: npm-${{ github.event.pull_request.head.sha }}
+          name: npm-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
           retention-days: 90
 
@@ -3103,7 +3154,7 @@ jobs:
         if: needs.is_npm.outputs.npm_docs == 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: docs-${{ github.event.pull_request.head.sha }}
+          name: docs-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/docs.tar.zst
           retention-days: 90
 
@@ -3112,10 +3163,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_npm
       - npm_test
       - versioned_source
-    if: ${{ needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' }}
+    if: ${{ needs.event_types.outputs.trusted == 'true' && ( needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' ) }}
 
     <<: *customWorkingDirectory
 
@@ -3158,6 +3210,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
       - npm_test
       - custom_test
@@ -3166,9 +3219,12 @@ jobs:
       - python_test
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
+      github.event.pull_request.state == 'open' &&
       needs.npm_test.result == 'success' &&
       needs.is_npm.outputs.npm_private != 'true'
+      )
 
     <<: *rootWorkingDirectory
 
@@ -3182,7 +3238,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}
+          name: npm-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
 
       - <<: *setupNode
         with:
@@ -3222,11 +3278,19 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
+      - npm_test
+    # npm_test rebuilds and uploads the artifact on the fork-merge push, so wait for it there.
+    # On internal merges and tag pushes npm_test is skipped (the artifact is fetched cross-run
+    # below), so tolerate skipped (but not failed) needs.
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_npm.outputs.npm == 'true' &&
       needs.is_npm.outputs.npm_private != 'true'
+      )
 
     <<: *rootWorkingDirectory
 
@@ -3242,9 +3306,21 @@ jobs:
           permission-contents: read
           permission-actions: read
 
+      # On the fork-merge push the artifact was rebuilt in this same run (a fork PR's own
+      # artifact is never reused), so download it directly instead of the cross-run lookup.
+      - name: Download npm artifact (same run)
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: ${{ runner.temp }}/npm
+          name: npm-${{ github.event.head_commit.id }}
+
+      # Internal merges and tag pushes promote the artifact built in the open-PR (or tag) run,
+      # so look it up cross-run by commit sha.
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm artifact from last run
+        if: github.event_name != 'push' || needs.event_types.outputs.fork_merge != 'true'
         uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3278,10 +3354,17 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
+      - npm_test
+    # See npm_finalize: npm_test rebuilds the docs artifact on the fork-merge push; tolerate it
+    # being skipped on internal merges and tag pushes (fetched cross-run below).
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_npm.outputs.npm_docs == 'true'
+      )
 
     <<: *rootWorkingDirectory
 
@@ -3296,9 +3379,20 @@ jobs:
           permission-pages: write
           permission-contents: write
 
+      # On the fork-merge push the docs artifact was rebuilt in this same run, so download it
+      # directly instead of the cross-run lookup.
+      - name: Download npm docs artifact (same run)
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: ${{ runner.temp }}/docs
+          name: docs-${{ github.event.head_commit.id }}
+
+      # Internal merges and tag pushes promote the artifact built in the open-PR (or tag) run.
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm docs artifact from last run
+        if: github.event_name != 'push' || needs.event_types.outputs.fork_merge != 'true'
         uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3331,10 +3425,15 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_docker
       - versioned_source
+    # Runs on open PRs and on the fork-merge push (rebuild from the merged commit).
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_docker.outputs.docker_bake_json != ''
 
     <<: *customWorkingDirectory
@@ -3388,9 +3487,12 @@ jobs:
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> "${GITHUB_ENV}"
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> "${GITHUB_ENV}"
 
-      # these secrets are being used in untrusted user code so only allow for internal PRs
+      # These secrets run inside user code, so only expose them on trusted lanes: internal PRs
+      # and the fork-merge push (where the code is already merged), never a fork's own PR.
       - name: Add COMPOSE_VARS to compose env file
-        <<: *ifInternalPullRequest
+        if: |
+          github.event.pull_request.head.repo.full_name == github.repository ||
+          (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         # do not use shell tracing to avoid leaking secrets
@@ -3519,6 +3621,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - is_docker
       - npm_test
@@ -3528,9 +3631,11 @@ jobs:
       - python_test
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
       needs.is_docker.outputs.docker_publish_matrix != ''
+      )
 
     <<: *rootWorkingDirectory
 
@@ -3657,11 +3762,20 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_docker
       - versioned_source
+      - docker_publish
+    # docker_finalize retags the build-<sha> images docker_publish pushes, so on the fork-merge
+    # push (same run) it must wait for docker_publish. On internal merges and tag pushes
+    # docker_publish is skipped (the images were pushed in the open-PR run), so tolerate
+    # skipped (but not failed) needs.
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_docker.outputs.docker_publish_matrix != ''
+      )
 
     <<: *rootWorkingDirectory
 
@@ -3727,6 +3841,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_balena
       - npm_test
       - custom_test
@@ -3737,9 +3852,11 @@ jobs:
       - release_notes
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      )
 
     strategy:
       fail-fast: false
@@ -3851,8 +3968,8 @@ jobs:
           package=$(grep '^name =' pyproject.toml | sed 's/name = "\(.*\)"/\1/')
           version=$(grep '^version =' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
           branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
 
           echo "package=${package}" >> "${GITHUB_OUTPUT}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
@@ -3884,10 +4001,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_python
       - python_test
       - versioned_source
-    if: needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true'
+    if: needs.event_types.outputs.trusted == 'true' && ( needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true' )
 
     <<: *customWorkingDirectory
 
@@ -3937,6 +4055,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_python
       - npm_test
       - custom_test
@@ -3946,10 +4065,12 @@ jobs:
       - versioned_source
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.python_test.result == 'success' &&
       needs.is_python.outputs.python_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
+      )
 
     <<: *customWorkingDirectory
 
@@ -3987,12 +4108,15 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_python
       - versioned_source
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_python.outputs.python_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
+      )
 
     <<: *customWorkingDirectory
 
@@ -4029,6 +4153,7 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
+      - event_types
       - file_list
       - is_npm
       - npm_test
@@ -4040,9 +4165,11 @@ jobs:
     # allow some dependencies to be skipped
     # skip unmerged closed PRs, allow all other events
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
       inputs.cloudflare_website != '' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      )
 
     permissions:
       contents: read # Checkout versioned source
@@ -4136,8 +4263,10 @@ jobs:
     needs:
       - event_types
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       github.event.action == 'closed' &&
       github.event.pull_request.merged == false
+      )
 
     <<: *rootWorkingDirectory
 
@@ -4158,6 +4287,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
       - npm_publish
@@ -4169,9 +4299,11 @@ jobs:
       - cargo_sbom
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open' &&
       needs.versioned_source.outputs.tag != ''
+      )
 
     <<: *rootWorkingDirectory
 
@@ -4227,17 +4359,21 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
+    # release_notes is skipped on the push lane, so tolerate skipped (but not failed) needs
+    # the same way github_publish does, otherwise the skip would propagate and skip this job.
     if: |
+      !failure() && !cancelled() &&
+      needs.event_types.outputs.trusted == 'true' && (
       (
-        (
-          github.event.pull_request.merged == true &&
-          inputs.disable_versioning == false
-        ) || (
-          github.event_name == 'push' &&
-          inputs.disable_versioning == true
-        )
+        github.event.pull_request.merged == true &&
+        inputs.disable_versioning == false
+      ) || (
+        github.event_name == 'push' &&
+        needs.event_types.outputs.push_finalize == 'true'
+      )
       )
 
     <<: *rootWorkingDirectory
@@ -4258,15 +4394,30 @@ jobs:
           # contents:write permissions for managing releases
           permission-contents: write
 
+      # A merged fork PR has no draft release to promote (its pull_request lane had no secrets
+      # to publish one), so download the release artifacts to attach when the release is
+      # created below.
+      - name: Download release artifacts
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: ${{ runner.temp }}/artifacts
+          pattern: gh-release-*
+          merge-multiple: true
+
+      # release_notes does not run on the push lane, so tolerate a missing artifact there.
       # https://github.com/actions/download-artifact
       - name: Download release notes
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: ${{ runner.temp }}
           name: release-notes
 
+      # Promote the draft release created during an internal PR to a full release.
       # https://docs.github.com/en/rest/releases
       - name: Finalize GitHub release (if any)
+        if: github.event_name != 'push'
         env:
           <<: *gitHubCliEnvironment
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -4292,6 +4443,28 @@ jobs:
             echo "No release found for the current PR"
           fi
 
+      # On the fork-merge push there is no draft to promote, so create the release for the
+      # versioned tag directly (versioned_source pushed the tag on this lane). Rich release
+      # notes reconstructed from the merged PR are tracked separately; use auto-generated
+      # notes here.
+      # https://github.com/softprops/action-gh-release
+      - name: Create GitHub release
+        if: |
+          github.event_name == 'push' &&
+          needs.event_types.outputs.fork_merge == 'true' &&
+          needs.versioned_source.outputs.tag != ''
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        with:
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          name: ${{ needs.versioned_source.outputs.tag }}
+          tag_name: ${{ needs.versioned_source.outputs.tag }}
+          draft: false
+          prerelease: ${{ inputs.github_prerelease }}
+          make_latest: ${{ inputs.github_prerelease == false }}
+          generate_release_notes: true
+          files: ${{ runner.temp }}/artifacts/*
+          fail_on_unmatched_files: false
+
   ###################################################
   # rust
   ###################################################
@@ -4301,10 +4474,15 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cargo
       - versioned_source
+    # Runs on open PRs and on the fork-merge push (rebuild from the merged commit).
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_cargo.outputs.cargo == 'true'
 
     <<: *customWorkingDirectory
@@ -4370,8 +4548,8 @@ jobs:
           packages="$(cargo metadata --no-deps --format-version 1 | jq -c '[.packages[] | .targets[] | select(.kind[] == "bin") | .name]')"
           version="${{ needs.versioned_source.outputs.semver }}"
           branch_tag="$(echo "${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
 
           {
             echo "packages=${packages}" ;
@@ -4386,10 +4564,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_cargo
       - cargo_test
       - versioned_source
-    if: needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true'
+    if: needs.event_types.outputs.trusted == 'true' && ( needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true' )
 
     <<: *customWorkingDirectory
 
@@ -4501,11 +4680,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cargo
       - versioned_source
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_cargo.outputs.cargo == 'true'
+      )
 
     <<: *customWorkingDirectory
 
@@ -4590,6 +4772,7 @@ jobs:
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - npm_test
       - custom_test
@@ -4599,9 +4782,11 @@ jobs:
       - versioned_source
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open' &&
       needs.is_custom.outputs.custom_publish == 'true'
+      )
 
     # The permissions for custom actions are set by the calling workflow
     # and should not be overridden by Flowzone.
@@ -4648,11 +4833,14 @@ jobs:
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - versioned_source
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_custom.outputs.custom_finalize == 'true'
+      )
 
     # The permissions for custom actions are set by the calling workflow
     # and should not be overridden by Flowzone.
@@ -4704,12 +4892,15 @@ jobs:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       github.event.action == 'closed' &&
       github.event.pull_request.merged == false &&
       needs.is_custom.outputs.custom_clean == 'true'
+      )
 
     # The permissions for custom actions are set by the calling workflow
     # and should not be overridden by Flowzone.
@@ -4792,13 +4983,19 @@ jobs:
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cloudformation
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
+      needs.event_types.outputs.trusted == 'true' && (
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
       needs.is_cloudformation.outputs.stacks != '[]'
+      )
 
     <<: *customWorkingDirectory
 
@@ -5054,12 +5251,21 @@ jobs:
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cloudformation
+      - cloudformation_test
+    # cloudformation_finalize executes the change sets cloudformation_test creates, so on the
+    # fork-merge push (same run) it must wait for cloudformation_test. On internal merges the
+    # change sets were created in the open-PR run and cloudformation_test is skipped, so
+    # tolerate skipped (but not failed) needs.
     if: |
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
       needs.is_cloudformation.outputs.stacks != '[]'
+      )
 
     env:
       # https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-retries.html#cli-usage-retries-modes-adaptive
@@ -5128,7 +5334,13 @@ jobs:
       - *rejectCancelledJobs
 
   all_jobs:
-    name: All jobs
+    # Keep the required check context "All jobs" on the pull_request (and push) lanes so
+    # existing branch-protection rulesets keep matching. On pull_request_target emit a
+    # different, non-required context: defense-in-depth so that even if a caller misconfigures
+    # its routing and fires flowzone on both events for one PR, the (rejected) p_r_t run can
+    # neither block a valid PR nor satisfy the gate. The trusted pull_request lane is the sole
+    # producer of "All jobs".
+    name: All jobs${{ github.event_name == 'pull_request_target' && ' (pull_request_target)' || '' }}
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     permissions: {}
@@ -5184,13 +5396,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - all_jobs
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.all_jobs.result == 'success' &&
       github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
+      )
 
     permissions: {}
 
