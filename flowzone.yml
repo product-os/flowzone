@@ -3271,8 +3271,13 @@ jobs:
     needs:
       - event_types
       - is_npm
+      - npm_test
+    # npm_test rebuilds and uploads the artifact on the fork-merge push, so wait for it there.
+    # On internal merges and tag pushes npm_test is skipped (the artifact is fetched cross-run
+    # below), so tolerate skipped (but not failed) needs.
     if: |
       needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
       (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_npm.outputs.npm == 'true' &&
       needs.is_npm.outputs.npm_private != 'true'
@@ -3292,9 +3297,21 @@ jobs:
           permission-contents: read
           permission-actions: read
 
+      # On the fork-merge push the artifact was rebuilt in this same run (a fork PR's own
+      # artifact is never reused), so download it directly instead of the cross-run lookup.
+      - name: Download npm artifact (same run)
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: ${{ runner.temp }}/npm
+          name: npm-${{ github.event.head_commit.id }}
+
+      # Internal merges and tag pushes promote the artifact built in the open-PR (or tag) run,
+      # so look it up cross-run by commit sha.
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm artifact from last run
+        if: github.event_name != 'push' || needs.event_types.outputs.fork_merge != 'true'
         uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
@@ -3330,8 +3347,12 @@ jobs:
     needs:
       - event_types
       - is_npm
+      - npm_test
+    # See npm_finalize: npm_test rebuilds the docs artifact on the fork-merge push; tolerate it
+    # being skipped on internal merges and tag pushes (fetched cross-run below).
     if: |
       needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
       (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_npm.outputs.npm_docs == 'true'
       )
@@ -3349,9 +3370,20 @@ jobs:
           permission-pages: write
           permission-contents: write
 
+      # On the fork-merge push the docs artifact was rebuilt in this same run, so download it
+      # directly instead of the cross-run lookup.
+      - name: Download npm docs artifact (same run)
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: ${{ runner.temp }}/docs
+          name: docs-${{ github.event.head_commit.id }}
+
+      # Internal merges and tag pushes promote the artifact built in the open-PR (or tag) run.
       # https://github.com/dawidd6/action-download-artifact
       # TODO: what if this is a tag event and PR artifacts do not exist?
       - name: Download npm docs artifact from last run
+        if: github.event_name != 'push' || needs.event_types.outputs.fork_merge != 'true'
         uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
