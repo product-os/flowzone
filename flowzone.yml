@@ -1128,8 +1128,13 @@ jobs:
       <<: *gitHubCliEnvironment
 
     steps:
-      - *decodePrivateKey
+      # The app token is only generated on trusted lanes. A fork pull_request has no app key,
+      # so these steps skip and versioned_source falls back to github.token for checkout and
+      # skips versioning/ref-writes (git_describe still supplies the output SHA).
+      - <<: *decodePrivateKey
+        if: inputs.app_id && needs.event_types.outputs.trusted == 'true'
       - <<: *getGitHubAppToken
+        if: inputs.app_id && needs.event_types.outputs.trusted == 'true'
         with:
           <<: *getGitHubAppTokenWith
           # contents: write is required to push git commit and tag references
@@ -1162,7 +1167,7 @@ jobs:
 
       - name: Check for legacy branch protection
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open'
+        if: inputs.app_id && inputs.disable_versioning != true && github.event.pull_request.state == 'open' && needs.event_types.outputs.trusted == 'true'
         with:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           script: |
@@ -1185,7 +1190,7 @@ jobs:
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
 
       - <<: *getCheckoutToken
-        if: inputs.app_id && steps.has_submodules.outputs.result == 'true'
+        if: inputs.app_id && steps.has_submodules.outputs.result == 'true' && needs.event_types.outputs.trusted == 'true'
 
       # Checkout the tip of the pull request branch for open PRs.
       # The default behaviour for GitHub Actions is to checkout the merge commit but we
@@ -1245,6 +1250,8 @@ jobs:
       - *setupNode
 
       - name: Install versioning tools
+        # Runs on fork PRs too (no trusted gate) so versionist can validate commit footers
+        # on the untrusted lane; the blob/tree/commit/tag writes below stay trusted-only.
         if: inputs.disable_versioning != true
         run: |
           npm install -g \
@@ -1257,7 +1264,8 @@ jobs:
       - name: Generate changelog
         if: inputs.disable_versioning != true
         env:
-          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          # Fork PRs have no app token; fall back to the read-only github.token to read history.
+          GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
         run: |
           if [ ! -f .versionbot/CHANGELOG.yml ]
           then
@@ -1267,11 +1275,15 @@ jobs:
       # https://github.com/actions/github-script
       - name: Run balena-versionist
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        # Runs on fork PRs too so a missing or invalid Change-type footer fails the PR check
+        # before merge (matching internal PRs), instead of only surfacing on the post-merge
+        # push lane. The blob/tree/commit/tag writes below stay trusted-only.
         if: inputs.disable_versioning != true
         id: versionist
         env:
-          # Use to authenticate with GitHub for private nested changelogs
-          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          # Authenticates for private nested changelogs. Fork PRs fall back to the read-only
+          # github.token (no app token on the untrusted lane).
+          GITHUB_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
         with:
           result-encoding: json
           script: |
@@ -1298,7 +1310,7 @@ jobs:
       # https://octokit.github.io/rest.js/v21/#git-create-blob
       # https://octokit.github.io/rest.js/v21/#git-create-tree
       - name: Create blobs and tree objects
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_tree
         env:
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
@@ -1360,7 +1372,7 @@ jobs:
       # https://octokit.github.io/rest.js/v21/#git-create-commit
       # https://docs.github.com/en/rest/git/commits#create-a-commit
       - name: Create commit object
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_commit
         env:
           MESSAGE: ${{ steps.versionist.outputs.tag }}
@@ -1384,7 +1396,7 @@ jobs:
 
       # create a new tag object
       - <<: *createTagObject
-        if: inputs.disable_versioning != true
+        if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           TAG: ${{ steps.versionist.outputs.tag }}
@@ -1395,7 +1407,8 @@ jobs:
       - <<: *updateGitReference
         if: |
           github.event.pull_request.merged &&
-          steps.create_commit.outputs.sha
+          steps.create_commit.outputs.sha &&
+          needs.event_types.outputs.trusted == 'true'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: "heads/${{ github.base_ref }}"
@@ -1405,7 +1418,8 @@ jobs:
       - <<: *createGitReference
         if: |
           github.event.pull_request.merged &&
-          steps.create_tag.outputs.sha
+          steps.create_tag.outputs.sha &&
+          needs.event_types.outputs.trusted == 'true'
         env:
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           REF: "refs/tags/${{ steps.versionist.outputs.tag }}"
@@ -1416,14 +1430,17 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
     # Only generate release notes on pull_request events, and only if versioning is enabled.
     # Skip pull_request closed events, but allow pull_request merged events.
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       inputs.disable_versioning != true &&
       (
         github.event.pull_request.state == 'open' ||
         github.event.pull_request.merged == true
+      )
       )
 
     <<: *rootWorkingDirectory
@@ -1609,13 +1626,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       inputs.release_notes == true &&
       (
         github.event.action != 'closed' ||
         github.event.pull_request.merged == true
+      )
       )
 
     <<: *rootWorkingDirectory
@@ -1828,6 +1848,9 @@ jobs:
       # https://github.com/github/codeql-action/issues/2654
       - name: Upload SARIF file to GitHub
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        # Only trusted lanes have a token with security-events: write; forks still scan
+        # (Run octoscan above) but skip the upload.
+        if: needs.event_types.outputs.trusted == 'true'
         # For now let's just continue on error as this is not a critical path
         continue-on-error: true
         env:
@@ -3094,10 +3117,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_npm
       - npm_test
       - versioned_source
-    if: ${{ needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' }}
+    if: ${{ needs.event_types.outputs.trusted == 'true' && ( needs.is_npm.outputs.npm == 'true' && needs.is_npm.outputs.npm_sbom == 'true' ) }}
 
     <<: *customWorkingDirectory
 
@@ -3140,6 +3164,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
       - npm_test
       - custom_test
@@ -3148,9 +3173,11 @@ jobs:
       - python_test
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.npm_test.result == 'success' &&
       needs.is_npm.outputs.npm_private != 'true'
+      )
 
     <<: *rootWorkingDirectory
 
@@ -3204,11 +3231,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_npm.outputs.npm == 'true' &&
       needs.is_npm.outputs.npm_private != 'true'
+      )
 
     <<: *rootWorkingDirectory
 
@@ -3260,10 +3290,13 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_npm.outputs.npm_docs == 'true'
+      )
 
     <<: *rootWorkingDirectory
 
@@ -3501,6 +3534,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - is_docker
       - npm_test
@@ -3510,9 +3544,11 @@ jobs:
       - python_test
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
       needs.is_docker.outputs.docker_publish_matrix != ''
+      )
 
     <<: *rootWorkingDirectory
 
@@ -3639,11 +3675,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_docker
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_docker.outputs.docker_publish_matrix != ''
+      )
 
     <<: *rootWorkingDirectory
 
@@ -3709,6 +3748,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_balena
       - npm_test
       - custom_test
@@ -3719,9 +3759,11 @@ jobs:
       - release_notes
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      )
 
     strategy:
       fail-fast: false
@@ -3866,10 +3908,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_python
       - python_test
       - versioned_source
-    if: needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true'
+    if: needs.event_types.outputs.trusted == 'true' && ( needs.is_python.outputs.python_poetry == 'true' && needs.is_python.outputs.python_sbom == 'true' )
 
     <<: *customWorkingDirectory
 
@@ -3919,6 +3962,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_python
       - npm_test
       - custom_test
@@ -3928,10 +3972,12 @@ jobs:
       - versioned_source
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.python_test.result == 'success' &&
       needs.is_python.outputs.python_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
+      )
 
     <<: *customWorkingDirectory
 
@@ -3969,12 +4015,15 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_python
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_python.outputs.python_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
+      )
 
     <<: *customWorkingDirectory
 
@@ -4011,6 +4060,7 @@ jobs:
     env:
       CF_BRANCH: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
     needs:
+      - event_types
       - file_list
       - is_npm
       - npm_test
@@ -4022,9 +4072,11 @@ jobs:
     # allow some dependencies to be skipped
     # skip unmerged closed PRs, allow all other events
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
       inputs.cloudflare_website != '' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      )
 
     permissions:
       contents: read # Checkout versioned source
@@ -4118,8 +4170,10 @@ jobs:
     needs:
       - event_types
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       github.event.action == 'closed' &&
       github.event.pull_request.merged == false
+      )
 
     <<: *rootWorkingDirectory
 
@@ -4140,6 +4194,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
       - npm_publish
@@ -4151,9 +4206,11 @@ jobs:
       - cargo_sbom
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open' &&
       needs.versioned_source.outputs.tag != ''
+      )
 
     <<: *rootWorkingDirectory
 
@@ -4209,9 +4266,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - versioned_source
       - release_notes
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (
         (
           github.event.pull_request.merged == true &&
@@ -4220,6 +4279,7 @@ jobs:
           github.event_name == 'push' &&
           inputs.disable_versioning == true
         )
+      )
       )
 
     <<: *rootWorkingDirectory
@@ -4368,10 +4428,11 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     continue-on-error: true
     needs:
+      - event_types
       - is_cargo
       - cargo_test
       - versioned_source
-    if: needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true'
+    if: needs.event_types.outputs.trusted == 'true' && ( needs.is_cargo.outputs.cargo == 'true' && needs.is_cargo.outputs.cargo_sbom == 'true' )
 
     <<: *customWorkingDirectory
 
@@ -4483,11 +4544,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cargo
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_cargo.outputs.cargo == 'true'
+      )
 
     <<: *customWorkingDirectory
 
@@ -4572,6 +4636,7 @@ jobs:
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - npm_test
       - custom_test
@@ -4581,9 +4646,11 @@ jobs:
       - versioned_source
     # allow some dependencies to be skipped
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       github.event.pull_request.state == 'open' &&
       needs.is_custom.outputs.custom_publish == 'true'
+      )
 
     # The permissions for custom actions are set by the calling workflow
     # and should not be overridden by Flowzone.
@@ -4630,11 +4697,14 @@ jobs:
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_custom.outputs.custom_finalize == 'true'
+      )
 
     # The permissions for custom actions are set by the calling workflow
     # and should not be overridden by Flowzone.
@@ -4686,12 +4756,15 @@ jobs:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       github.event.action == 'closed' &&
       github.event.pull_request.merged == false &&
       needs.is_custom.outputs.custom_clean == 'true'
+      )
 
     # The permissions for custom actions are set by the calling workflow
     # and should not be overridden by Flowzone.
@@ -4774,13 +4847,16 @@ jobs:
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cloudformation
       - versioned_source
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       github.event.pull_request.state == 'open' &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
       needs.is_cloudformation.outputs.stacks != '[]'
+      )
 
     <<: *customWorkingDirectory
 
@@ -5036,12 +5112,15 @@ jobs:
         include: ${{ fromJSON(needs.is_cloudformation.outputs.includes) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cloudformation
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       (github.event.pull_request.merged == true || github.event_name == 'push') &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
       needs.is_cloudformation.outputs.stacks != '[]'
+      )
 
     env:
       # https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-retries.html#cli-usage-retries-modes-adaptive
@@ -5172,13 +5251,16 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - all_jobs
     if: |
+      needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.all_jobs.result == 'success' &&
       github.event.pull_request.state == 'open' &&
       inputs.toggle_auto_merge == true &&
       github.event.pull_request.user.type != 'Bot'
+      )
 
     permissions: {}
 
