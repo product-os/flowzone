@@ -2587,10 +2587,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_npm
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_npm.outputs.npm == 'true'
     defaults:
       run:
@@ -2868,6 +2872,7 @@ jobs:
     if: |
       needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
+      github.event.pull_request.state == 'open' &&
       needs.npm_test.result == 'success' &&
       needs.is_npm.outputs.npm_private != 'true'
       )
@@ -3026,10 +3031,14 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_docker
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_docker.outputs.docker_bake_json != ''
     defaults:
       run:
@@ -3267,7 +3276,7 @@ jobs:
             type=raw,value=${{ github.base_ref || github.ref_name }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
             type=raw,value=${{ github.event.pull_request.head.sha || github.event.head_commit.id }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
             type=raw,value=build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
-            type=raw,value=build-${{ github.event.pull_request.head.ref }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+            type=raw,value=build-${{ github.event.pull_request.head.ref || github.ref_name }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
           flavor: |
             latest=false
       - name: Enable hardware execution
@@ -3411,7 +3420,7 @@ jobs:
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
             type=raw,value=build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-            type=raw,value=build-${{ github.event.pull_request.head.ref }}
+            type=raw,value=build-${{ github.event.pull_request.head.ref || github.ref_name }}
           flavor: |
             latest=false
             prefix=${{ steps.strings.outputs.prefix }}
@@ -4873,10 +4882,14 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_cargo
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_cargo.outputs.cargo == 'true'
     defaults:
       run:
@@ -5777,7 +5790,10 @@ jobs:
       - versioned_source
     if: |
       needs.event_types.outputs.trusted == 'true' && (
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
       needs.is_cloudformation.outputs.stacks != '[]'
