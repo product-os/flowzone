@@ -37,27 +37,20 @@ function injectYamlIntoMarkdown(startTag, endTag) {
 name: Flowzone
 
 on:
+  # Internal and fork PRs both run here; forks run with no secrets.
   pull_request:
     types: [opened, synchronize, closed]
     branches: [main, master]
-  # allow external contributions to use secrets within trusted code
-  pull_request_target:
-    types: [opened, synchronize, closed]
+  # Fork contributions publish on the push to the default branch after merge, rebuilt from the
+  # merged commit (see "External Contributions" in the README). Drop this trigger to keep fork
+  # support test-only. Internal PRs do not need it.
+  push:
     branches: [main, master]
 
 jobs:
   flowzone:
     name: Flowzone
     uses: product-os/flowzone/.github/workflows/flowzone.yml@master
-    # prevent duplicate workflow executions for pull_request and pull_request_target
-    if: |
-      (
-        github.event.pull_request.head.repo.full_name == github.repository &&
-        github.event_name == 'pull_request'
-      ) || (
-        github.event.pull_request.head.repo.full_name != github.repository &&
-        github.event_name == 'pull_request_target'
-      )
 
     # Workflows in the same org or enterprise can use the inherit keyword to implicitly pass secrets
     secrets: inherit
