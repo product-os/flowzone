@@ -2913,7 +2913,7 @@ jobs:
       - is_npm
     if: |
       needs.event_types.outputs.trusted == 'true' && (
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_npm.outputs.npm == 'true' &&
       needs.is_npm.outputs.npm_private != 'true'
       )
@@ -2971,7 +2971,7 @@ jobs:
       - is_npm
     if: |
       needs.event_types.outputs.trusted == 'true' && (
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_npm.outputs.npm_docs == 'true'
       )
     defaults:
@@ -3564,7 +3564,7 @@ jobs:
       - versioned_source
     if: |
       needs.event_types.outputs.trusted == 'true' && (
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_docker.outputs.docker_publish_matrix != ''
       )
     defaults:
@@ -4347,7 +4347,7 @@ jobs:
       - versioned_source
     if: |
       needs.event_types.outputs.trusted == 'true' && (
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_python.outputs.python_poetry == 'true' &&
       needs.is_python.outputs.pypi_publish == 'true'
       )
@@ -4762,6 +4762,7 @@ jobs:
           inputs.disable_versioning == false
         ) || (
           github.event_name == 'push' &&
+          needs.event_types.outputs.push_finalize == 'true' &&
           inputs.disable_versioning == true
         )
       )
@@ -5178,7 +5179,7 @@ jobs:
       - versioned_source
     if: |
       needs.event_types.outputs.trusted == 'true' && (
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_cargo.outputs.cargo == 'true'
       )
     defaults:
@@ -5468,7 +5469,7 @@ jobs:
       - versioned_source
     if: |
       needs.event_types.outputs.trusted == 'true' && (
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_custom.outputs.custom_finalize == 'true'
       )
     strategy:
@@ -6159,7 +6160,7 @@ jobs:
       - is_cloudformation
     if: |
       needs.event_types.outputs.trusted == 'true' && (
-      (github.event.pull_request.merged == true || github.event_name == 'push') &&
+      (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_cloudformation.outputs.cloudformation == 'true' &&
       needs.is_cloudformation.outputs.stacks != '' &&
       needs.is_cloudformation.outputs.stacks != '[]'
