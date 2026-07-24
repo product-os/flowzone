@@ -513,7 +513,9 @@
     if: github.event.pull_request.state == 'open'
     uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
     with:
-      github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      # Fall back to github.token on the fork lane: forks have no app token or secrets, and
+      # listing PR commits only needs read access, which the read-only fork token has.
+      github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
       result-encoding: json
       script: |
         const { data: commits } = await github.rest.pulls.listCommits({
@@ -537,7 +539,8 @@
     if: github.event.pull_request.merged
     uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
     with:
-      github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+      # Fall back to github.token on the fork lane (read-only is enough to read the commit).
+      github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
       result-encoding: json
       script: |
         console.debug(`Merge commit SHA: ${context.sha}`)

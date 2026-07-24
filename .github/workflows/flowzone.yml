@@ -367,7 +367,7 @@ jobs:
         if: github.event.pull_request.state == 'open'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
-          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           result-encoding: json
           script: |
             const { data: commits } = await github.rest.pulls.listCommits({
@@ -382,7 +382,7 @@ jobs:
         if: github.event.pull_request.merged
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
-          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           result-encoding: json
           script: |
             console.debug(`Merge commit SHA: ${context.sha}`)
