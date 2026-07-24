@@ -2679,8 +2679,8 @@ jobs:
           package="$(jq -r '.name' package.json)"
           version="$(jq -r '.version' package.json)"
           branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
 
           echo "package=${package}" >> "${GITHUB_OUTPUT}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
@@ -2725,7 +2725,7 @@ jobs:
         if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: npm-${{ github.event.pull_request.head.sha }}
+          name: npm-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
           retention-days: 90
       - name: Generate docs (if present)
@@ -2739,7 +2739,7 @@ jobs:
         if: needs.is_npm.outputs.npm_docs == 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: docs-${{ github.event.pull_request.head.sha }}
+          name: docs-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/docs.tar.zst
           retention-days: 90
   npm_sbom:
@@ -2880,7 +2880,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           path: ${{ runner.temp }}
-          name: npm-${{ github.event.pull_request.head.sha }}
+          name: npm-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
       - name: Setup Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         env:
@@ -3265,8 +3265,8 @@ jobs:
             type=raw,value=latest
             type=raw,value=latest,prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
             type=raw,value=${{ github.base_ref || github.ref_name }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
-            type=raw,value=${{ github.event.pull_request.head.sha }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
-            type=raw,value=build-${{ github.event.pull_request.head.sha }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+            type=raw,value=${{ github.event.pull_request.head.sha || github.event.head_commit.id }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
+            type=raw,value=build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
             type=raw,value=build-${{ github.event.pull_request.head.ref }},prefix=${{ steps.strings.outputs.prefix }},suffix=${{ steps.strings.outputs.suffix }}
           flavor: |
             latest=false
@@ -3410,7 +3410,7 @@ jobs:
             org.opencontainers.image.version=${{ needs.versioned_source.outputs.semver }}
             org.opencontainers.image.ref.name=${{ matrix.target }}
           tags: |
-            type=raw,value=build-${{ github.event.pull_request.head.sha }}
+            type=raw,value=build-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
             type=raw,value=build-${{ github.event.pull_request.head.ref }}
           flavor: |
             latest=false
@@ -4044,8 +4044,8 @@ jobs:
           package=$(grep '^name =' pyproject.toml | sed 's/name = "\(.*\)"/\1/')
           version=$(grep '^version =' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
           branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
 
           echo "package=${package}" >> "${GITHUB_OUTPUT}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
@@ -4325,7 +4325,7 @@ jobs:
         run: |
           package="$(poetry version --no-ansi | awk '{print $1}')"
           version="$(poetry version --no-ansi | awk '{print $2}')"
-          commit_sha="$(echo ${{ github.event.pull_request.head.sha }} | tr "a-z" "A-Z")"
+          commit_sha="$(echo ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | tr "a-z" "A-Z")"
           decimal_sha="$(echo "ibase=16; $commit_sha" | bc)"
           version_tag="${version}-dev${decimal_sha}"
 
@@ -4971,8 +4971,8 @@ jobs:
           packages="$(cargo metadata --no-deps --format-version 1 | jq -c '[.packages[] | .targets[] | select(.kind[] == "bin") | .name]')"
           version="${{ needs.versioned_source.outputs.semver }}"
           branch_tag="$(echo "${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha }}"
+          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
 
           {
             echo "packages=${packages}" ;
