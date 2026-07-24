@@ -4770,16 +4770,14 @@ jobs:
       - versioned_source
       - release_notes
     if: |
+      !failure() && !cancelled() &&
       needs.event_types.outputs.trusted == 'true' && (
       (
-        (
-          github.event.pull_request.merged == true &&
-          inputs.disable_versioning == false
-        ) || (
-          github.event_name == 'push' &&
-          needs.event_types.outputs.push_finalize == 'true' &&
-          inputs.disable_versioning == true
-        )
+        github.event.pull_request.merged == true &&
+        inputs.disable_versioning == false
+      ) || (
+        github.event_name == 'push' &&
+        needs.event_types.outputs.push_finalize == 'true'
       )
       )
     defaults:
@@ -4844,12 +4842,21 @@ jobs:
           private-key: ${{ steps.decode.outputs.private-key }}
           permission-metadata: read
           permission-contents: write
+      - name: Download release artifacts
+        if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          path: ${{ runner.temp }}/artifacts
+          pattern: gh-release-*
+          merge-multiple: true
       - name: Download release notes
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           path: ${{ runner.temp }}
           name: release-notes
       - name: Finalize GitHub release (if any)
+        if: github.event_name != 'push'
         env:
           GH_DEBUG: "true"
           GH_PAGER: cat
@@ -4877,6 +4884,22 @@ jobs:
           else
             echo "No release found for the current PR"
           fi
+      - name: Create GitHub release
+        if: |
+          github.event_name == 'push' &&
+          needs.event_types.outputs.fork_merge == 'true' &&
+          needs.versioned_source.outputs.tag != ''
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
+        with:
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          name: ${{ needs.versioned_source.outputs.tag }}
+          tag_name: ${{ needs.versioned_source.outputs.tag }}
+          draft: false
+          prerelease: ${{ inputs.github_prerelease }}
+          make_latest: ${{ inputs.github_prerelease == false }}
+          generate_release_notes: true
+          files: ${{ runner.temp }}/artifacts/*
+          fail_on_unmatched_files: false
   cargo_test:
     name: Test rust
     runs-on: ${{ fromJSON(inputs.runs_on) }}
