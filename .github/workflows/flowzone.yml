@@ -2237,21 +2237,6 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Reset .github directory to ${{ github.ref }}
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
-        if: github.event_name == 'pull_request_target'
-        env:
-          GIT_AUTH_TOKEN: ${{ github.token }}
-          REF: ${{ github.ref }}
-        with:
-          script: |
-            const token = process.env.GIT_AUTH_TOKEN;
-            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
-
-            const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.REF, '--no-recurse-submodules', '--no-tags'], { stdio: 'inherit' });
-            spawnSync('git', ['checkout', 'FETCH_HEAD', '--', '.github'], { stdio: 'inherit' });
       - id: custom_test_values
         if: contains(inputs.custom_test_matrix, '{') != true
         name: Build JSON list from comma-separated input
@@ -5389,21 +5374,6 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Reset .github directory to ${{ github.ref }}
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
-        if: github.event_name == 'pull_request_target'
-        env:
-          GIT_AUTH_TOKEN: ${{ github.token }}
-          REF: ${{ github.ref }}
-        with:
-          script: |
-            const token = process.env.GIT_AUTH_TOKEN;
-            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
-
-            const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.REF, '--no-recurse-submodules', '--no-tags'], { stdio: 'inherit' });
-            spawnSync('git', ['checkout', 'FETCH_HEAD', '--', '.github'], { stdio: 'inherit' });
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -5501,21 +5471,6 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Reset .github directory to ${{ github.ref }}
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
-        if: github.event_name == 'pull_request_target'
-        env:
-          GIT_AUTH_TOKEN: ${{ github.token }}
-          REF: ${{ github.ref }}
-        with:
-          script: |
-            const token = process.env.GIT_AUTH_TOKEN;
-            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
-
-            const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.REF, '--no-recurse-submodules', '--no-tags'], { stdio: 'inherit' });
-            spawnSync('git', ['checkout', 'FETCH_HEAD', '--', '.github'], { stdio: 'inherit' });
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -5607,21 +5562,6 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Reset .github directory to ${{ github.ref }}
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
-        if: github.event_name == 'pull_request_target'
-        env:
-          GIT_AUTH_TOKEN: ${{ github.token }}
-          REF: ${{ github.ref }}
-        with:
-          script: |
-            const token = process.env.GIT_AUTH_TOKEN;
-            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
-
-            const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.REF, '--no-recurse-submodules', '--no-tags'], { stdio: 'inherit' });
-            spawnSync('git', ['checkout', 'FETCH_HEAD', '--', '.github'], { stdio: 'inherit' });
       - name: Set the matrix value env var
         shell: bash
         run: |
@@ -5710,21 +5650,6 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Reset .github directory to ${{ github.ref }}
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
-        if: github.event_name == 'pull_request_target'
-        env:
-          GIT_AUTH_TOKEN: ${{ github.token }}
-          REF: ${{ github.ref }}
-        with:
-          script: |
-            const token = process.env.GIT_AUTH_TOKEN;
-            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
-
-            const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.REF, '--no-recurse-submodules', '--no-tags'], { stdio: 'inherit' });
-            spawnSync('git', ['checkout', 'FETCH_HEAD', '--', '.github'], { stdio: 'inherit' });
       - uses: ./.github/actions/clean
         with:
           json: ${{ toJSON(inputs) }}
@@ -5805,21 +5730,6 @@ jobs:
           SHA: ${{ needs.versioned_source.outputs.tag_sha }}
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
-      - name: Reset .github directory to ${{ github.ref }}
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
-        if: github.event_name == 'pull_request_target'
-        env:
-          GIT_AUTH_TOKEN: ${{ github.token }}
-          REF: ${{ github.ref }}
-        with:
-          script: |
-            const token = process.env.GIT_AUTH_TOKEN;
-            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
-            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
-
-            const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.REF, '--no-recurse-submodules', '--no-tags'], { stdio: 'inherit' });
-            spawnSync('git', ['checkout', 'FETCH_HEAD', '--', '.github'], { stdio: 'inherit' });
       - uses: ./.github/actions/always
         with:
           json: ${{ toJSON(inputs) }}
