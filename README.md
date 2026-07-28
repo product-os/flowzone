@@ -285,8 +285,10 @@ jobs:
       # Required: false
       github_prerelease: false
 
-      # Do not execute custom actions for external contributors. Only remove this restriction if
-      # custom actions have been vetted as secure.
+      # Deprecated and ignored. Fork pull requests now run without secrets, so custom actions no
+      # longer need to be restricted on forks (custom test runs on forks; custom
+      # publish/finalize/always stay trusted-only). Remove this input; it will be dropped in a
+      # future release.
       # Type: boolean
       # Required: false
       restrict_custom_actions: true
@@ -359,7 +361,7 @@ Consequences and limits:
 - **Breaking change — callers must update to support forks.** The old caller snippet routed fork PRs to `pull_request_target` with an `if:` condition. Flowzone no longer runs on `pull_request_target`, so that routing now rejects fork PRs (and on the pre-migration Flowzone it fails to check out the fork). Adopt the new [usage](#usage) snippet: removing the `pull_request_target` trigger and its routing `if:` sends fork PRs to the no-secrets `pull_request` lane (enables fork **testing**), and adding the `push` trigger enables fork **publishing**. Until a caller updates, its fork PRs do not run through Flowzone.
 - **No secrets during a fork PR.** Fork PRs that rely on private submodules or `COMPOSE_VARS`-backed compose tests cannot fully run those steps during review; the trusted merge lane rebuilds them with credentials. This is inherent to a no-secrets model.
 - **Publish-path failures surface at merge, not during review**, since forks cannot draft-publish while the PR is open.
-- **Custom actions** stay disabled for forks by default; enable via `restrict_custom_actions` only after vetting that the action does not leak secrets to untrusted code.
+- **Custom actions.** `custom_test` runs on forks (as untrusted code with no secrets, so there is nothing for it to leak); `custom_publish`, `custom_finalize`, and `custom_always` run only on trusted lanes. Write custom test actions so they tolerate absent secrets. (The `restrict_custom_actions` input is deprecated and ignored — it existed only to keep fork custom code out of the trusted `pull_request_target` context, which no longer exists. Flowzone warns if it is set; it will be removed in a future release.)
 - **Auto-merge is internal-only** (it needs an app token). For fork auto-merge, install [bulldozer](https://github.com/palantir/bulldozer) and configure a per-repo `.bulldozer.yml`.
 - **Self-hosted runners and forks.** `runs_on`/`docker_runs_on` are caller inputs and Flowzone does not override them. A fork job may use self-hosted runners **only if they are ephemeral and isolated** — provisioned just-in-time, torn down per job, with no persistent tool-cache or disk and no reachable internal network or IAM. The risk is persistent runner state bridging an untrusted fork job into a later trusted one; Flowzone cannot enforce this, so it is org runner-group policy (see [#534](https://github.com/product-os/flowzone/issues/534)). Also enable "Require approval for all outside collaborators".
 

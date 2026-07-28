@@ -194,7 +194,7 @@ on:
         required: false
         default: false
       restrict_custom_actions:
-        description: Do not execute custom actions for external contributors. Only remove this restriction if custom actions have been vetted as secure.
+        description: Deprecated and ignored. Fork pull requests now run without secrets, so custom actions no longer need to be restricted on forks (custom test runs on forks; custom publish/finalize/always stay trusted-only). Remove this input; it will be dropped in a future release.
         type: boolean
         required: false
         default: true
@@ -312,6 +312,10 @@ jobs:
             if (merged.head.repo.full_name !== context.payload.repository.full_name) {
               core.setOutput("fork_merge", "true");
             }
+      - name: Warn on deprecated restrict_custom_actions
+        if: inputs.restrict_custom_actions == false
+        run: |
+          echo "::warning::The 'restrict_custom_actions' input is deprecated and no longer has any effect. Fork pull requests run without secrets, so custom test actions run on forks (custom publish/finalize/always remain trusted-only). Please remove this input from your caller workflow."
       - name: Log GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
@@ -5304,10 +5308,14 @@ jobs:
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - versioned_source
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_custom.outputs.custom_test == 'true'
     strategy:
       fail-fast: false
@@ -5315,15 +5323,6 @@ jobs:
       matrix: ${{ fromJSON(needs.is_custom.outputs.custom_test_matrix) }}
     environment: ${{ matrix.environment }}
     steps:
-      - name: Reject external custom actions
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name != github.repository &&
-          inputs.restrict_custom_actions == true
-        run: |
-          echo "::error::Custom actions are disabled for external contributors and will be skipped. \
-            Please contact a member of the organization for assistance."
-          exit 1
       - name: Deployment environment
         if: ${{ matrix.environment != '' }}
         run: |
@@ -5403,7 +5402,10 @@ jobs:
     if: |
       needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_custom.outputs.custom_publish == 'true'
       )
     strategy:
@@ -5412,15 +5414,6 @@ jobs:
       matrix: ${{ fromJSON(needs.is_custom.outputs.custom_publish_matrix) }}
     environment: ${{ matrix.environment }}
     steps:
-      - name: Reject external custom actions
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name != github.repository &&
-          inputs.restrict_custom_actions == true
-        run: |
-          echo "::error::Custom actions are disabled for external contributors and will be skipped. \
-            Please contact a member of the organization for assistance."
-          exit 1
       - name: Deployment environment
         if: ${{ matrix.environment != '' }}
         run: |
@@ -5492,8 +5485,10 @@ jobs:
       - event_types
       - is_custom
       - versioned_source
+      - custom_publish
     if: |
       needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
       (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_custom.outputs.custom_finalize == 'true'
       )
@@ -5503,15 +5498,6 @@ jobs:
       matrix: ${{ fromJSON(needs.is_custom.outputs.custom_finalize_matrix) }}
     environment: ${{ matrix.environment }}
     steps:
-      - name: Reject external custom actions
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name != github.repository &&
-          inputs.restrict_custom_actions == true
-        run: |
-          echo "::error::Custom actions are disabled for external contributors and will be skipped. \
-            Please contact a member of the organization for assistance."
-          exit 1
       - name: Deployment environment
         if: ${{ matrix.environment != '' }}
         run: |
@@ -5595,15 +5581,6 @@ jobs:
       needs.is_custom.outputs.custom_clean == 'true'
       )
     steps:
-      - name: Reject external custom actions
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name != github.repository &&
-          inputs.restrict_custom_actions == true
-        run: |
-          echo "::error::Custom actions are disabled for external contributors and will be skipped. \
-            Please contact a member of the organization for assistance."
-          exit 1
       - name: Decode private key
         if: inputs.app_id
         id: decode
@@ -5665,6 +5642,7 @@ jobs:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - custom_test
       - custom_publish
       - custom_finalize
@@ -5672,18 +5650,10 @@ jobs:
       - is_custom
       - versioned_source
     if: |
-      always() &&
+      !cancelled() &&
+      needs.event_types.outputs.trusted == 'true' &&
       needs.is_custom.outputs.custom_always == 'true'
     steps:
-      - name: Reject external custom actions
-        if: |
-          github.event.pull_request.state == 'open' &&
-          github.event.pull_request.head.repo.full_name != github.repository &&
-          inputs.restrict_custom_actions == true
-        run: |
-          echo "::error::Custom actions are disabled for external contributors and will be skipped. \
-            Please contact a member of the organization for assistance."
-          exit 1
       - name: Decode private key
         if: inputs.app_id
         id: decode

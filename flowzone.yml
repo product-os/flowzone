@@ -258,17 +258,6 @@
     GH_PROMPT_DISABLED: "true"
     GH_REPO: "${{ github.repository }}"
 
-  - &rejectExternalCustomActions
-    name: Reject external custom actions
-    if: |
-      github.event.pull_request.state == 'open' &&
-      github.event.pull_request.head.repo.full_name != github.repository &&
-      inputs.restrict_custom_actions == true
-    run: |
-      echo "::error::Custom actions are disabled for external contributors and will be skipped. \
-        Please contact a member of the organization for assistance."
-      exit 1
-
   - &logGitHubContext
     name: Log GitHub context
     env:
@@ -929,7 +918,7 @@ on:
         required: false
         default: false
       restrict_custom_actions:
-        description: "Do not execute custom actions for external contributors. Only remove this restriction if custom actions have been vetted as secure."
+        description: "Deprecated and ignored. Fork pull requests now run without secrets, so custom actions no longer need to be restricted on forks (custom test runs on forks; custom publish/finalize/always stay trusted-only). Remove this input; it will be dropped in a future release."
         type: boolean
         required: false
         default: true
@@ -1078,6 +1067,15 @@ jobs:
             if (merged.head.repo.full_name !== context.payload.repository.full_name) {
               core.setOutput("fork_merge", "true");
             }
+
+      # restrict_custom_actions is deprecated and ignored: fork custom code now runs without
+      # secrets, so the old fork restriction is unnecessary. Its old default was `true`, so any
+      # caller that set the field set it to `false` (to allow forks) — warn on `false` to reach
+      # them, since a caller that never set it reads the `true` default.
+      - name: Warn on deprecated restrict_custom_actions
+        if: inputs.restrict_custom_actions == false
+        run: |
+          echo "::warning::The 'restrict_custom_actions' input is deprecated and no longer has any effect. Fork pull requests run without secrets, so custom test actions run on forks (custom publish/finalize/always remain trusted-only). Please remove this input from your caller workflow."
 
       - *logGitHubContext
 
@@ -4681,10 +4679,15 @@ jobs:
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - is_custom
       - versioned_source
+    # Runs on open PRs (including forks, with no secrets) and rebuilds on the fork-merge push.
     if: |
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_custom.outputs.custom_test == 'true'
 
     # The permissions for custom actions are set by the calling workflow
@@ -4698,8 +4701,6 @@ jobs:
     environment: ${{ matrix.environment }}
 
     steps:
-      - *rejectExternalCustomActions
-
       - *deploymentEnvironment
       - *decodePrivateKey
       - *getCheckoutToken
@@ -4739,7 +4740,10 @@ jobs:
     if: |
       needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
-      github.event.pull_request.state == 'open' &&
+      (
+        github.event.pull_request.state == 'open' ||
+        (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+      ) &&
       needs.is_custom.outputs.custom_publish == 'true'
       )
 
@@ -4754,8 +4758,6 @@ jobs:
     environment: ${{ matrix.environment }}
 
     steps:
-      - *rejectExternalCustomActions
-
       - *deploymentEnvironment
       - *decodePrivateKey
       - *getCheckoutToken
@@ -4786,8 +4788,13 @@ jobs:
       - event_types
       - is_custom
       - versioned_source
+      - custom_publish
+    # On the fork-merge push custom_publish rebuilds in the same run, so wait for it (a custom
+    # publish->finalize handoff). custom_publish is skipped on internal merges and tag pushes, so
+    # tolerate skipped (but not failed) needs.
     if: |
       needs.event_types.outputs.trusted == 'true' && (
+      !failure() && !cancelled() &&
       (github.event.pull_request.merged == true || (github.event_name == 'push' && needs.event_types.outputs.push_finalize == 'true')) &&
       needs.is_custom.outputs.custom_finalize == 'true'
       )
@@ -4803,8 +4810,6 @@ jobs:
     environment: ${{ matrix.environment }}
 
     steps:
-      - *rejectExternalCustomActions
-
       - *deploymentEnvironment
       - *decodePrivateKey
       - *getCheckoutToken
@@ -4851,8 +4856,6 @@ jobs:
     # and should not be overridden by Flowzone.
 
     steps:
-      - *rejectExternalCustomActions
-
       - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit
@@ -4875,22 +4878,24 @@ jobs:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
+      - event_types
       - custom_test
       - custom_publish
       - custom_finalize
       - custom_clean
       - is_custom
       - versioned_source
+    # Runs the caller's always-action regardless of the other custom jobs' results, but not
+    # when the run is cancelled. Trusted-only: a fork has no secrets for it to act on.
     if: |
-      always() &&
+      !cancelled() &&
+      needs.event_types.outputs.trusted == 'true' &&
       needs.is_custom.outputs.custom_always == 'true'
 
     # The permissions for custom actions are set by the calling workflow
     # and should not be overridden by Flowzone.
 
     steps:
-      - *rejectExternalCustomActions
-
       - *decodePrivateKey
       - *getCheckoutToken
       - *checkoutVersionedCommit

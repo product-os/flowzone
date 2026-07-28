@@ -56,7 +56,9 @@ On this lane there is no reviewer for a "draft", so pure-draft steps are skipped
 release is created directly by `github_finalize` (not promoted from a draft), and the npm /
 PyPI draft publishes do not run (the finalize jobs publish the final release). Docker keeps
 publish + finalize, because `docker_finalize` retags the `build-<sha>` images that
-`docker_publish` pushes — Docker has registry tags, not a draft-vs-final artifact.
+`docker_publish` pushes — Docker has registry tags, not a draft-vs-final artifact. Custom jobs
+likewise run test → publish → finalize on this lane, since a caller's `custom_finalize` may
+consume its `custom_publish` output (the action bodies are caller-defined).
 
 ## Migration
 
@@ -75,6 +77,11 @@ publish + finalize, because `docker_finalize` retags the `build-<sha>` images th
   a restrictive `permissions:` block must include `pull-requests: read` — `event_types`
   declares it for the push-merge PR lookup, and a reusable-workflow call fails at startup if the
   caller granted less. Callers that do not pin the permission inherit enough by default.
+- **`restrict_custom_actions` is deprecated.** It only existed to keep fork custom code out of
+  the trusted `pull_request_target` context; forks now run without secrets, so it has no effect.
+  `custom_test` runs on forks; `custom_publish`/`custom_finalize`/`custom_always` are
+  trusted-only. Flowzone logs a `::warning::` when the input is set; remove it from callers (it
+  will be dropped in a future release).
 
 ## Accepted limitations
 
@@ -85,12 +92,6 @@ publish + finalize, because `docker_finalize` retags the `build-<sha>` images th
 - `push`-merge runs share the default-branch concurrency group with `cancel-in-progress: false`;
   GitHub keeps one pending run per group, so stacked merges can drop a pending publish. Re-run the
   workflow for the affected merge commit.
-- Custom jobs are not rebuilt on the fork-merge push. Unlike the npm/docker/cargo test lanes,
-  `custom_test` and `custom_publish` run only on the `pull_request` lane, while `custom_finalize`
-  runs on the push — so a custom publish→finalize handoff is unsupported for fork contributions
-  (a self-contained `custom_finalize` still runs). The custom lane is left this way because the
-  action bodies are caller-defined and custom actions are fork-disabled by default via
-  `restrict_custom_actions`.
 
 ## Runners
 
