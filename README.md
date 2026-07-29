@@ -53,9 +53,8 @@ on:
   pull_request:
     types: [opened, synchronize, closed]
     branches: [main, master]
-  # Fork contributions publish on the push to the default branch after merge, rebuilt from the
-  # merged commit (see "External Contributions" in the README). Drop this trigger to keep fork
-  # support test-only. Internal PRs do not need it.
+  # Fork contributions are rebuilt and published from the push to the default
+  # branch after merge.
   push:
     branches: [main, master]
 
