@@ -1,4 +1,72 @@
 - commits:
+    - subject: Gate secret-consuming jobs and versioned_source to the trusted lane
+      hash: e7c1fc15460e430807b26934a7af5df4dcd879e3
+      body: >
+        On a fork pull_request (no secrets) every secret-consuming job now skips
+        via
+
+        needs.event_types.outputs.trusted instead of running with empty secrets
+        and
+
+        failing: all *_publish/*_finalize/*_sbom jobs, balena_publish,
+        website_publish,
+
+        release_notes(_comment), github_clean, cloudformation_test/finalize, the
+
+        secret-bearing custom_* jobs, and auto-merge.
+
+
+        versioned_source still runs on the untrusted lane (checkout via
+        github.token,
+
+        git_describe supplies the output SHA) but its app-token, versionist,
+
+        tree/commit/tag creation, ref writes, legacy-branch-protection check and
+
+        private-submodule token are all gated to trusted.
+
+
+        octoscan still scans fork code but skips the SARIF upload on untrusted.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Reject all pull_request_target events at the event gate
+      hash: 0c845dde68e1615ac327d1424c22049cc4c795cb
+      body: >
+        Flowzone no longer runs on pull_request_target. Fork code must never
+        execute in
+
+        the base repo's trusted, secret-bearing context, so event_types now
+        refuses
+
+        every pull_request_target outright (previously only internal ones),
+        before any
+
+        job checks out a ref. event_types is admitted-then-failed on the event
+        so All
+
+        jobs fails and the PR is blocked rather than auto-passing.
+
+
+        External contributions move to a pull_request (no secrets) + push
+        (trusted
+
+        merge) flow in later commits.
+      footer:
+        Change-type: major
+        change-type: major
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.0.0
+  title: ""
+  date: 2026-07-29T15:51:51.557Z
+- commits:
     - subject: Update dependency node-22 to v22.23.2
       hash: e7ddbe122be396472adcc62ee75283a2df2feb12
       body: |
