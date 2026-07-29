@@ -278,8 +278,6 @@ jobs:
         include:
           - event_name: ${{ github.event_name }}
             event_action: ${{ github.event.action }}
-    permissions:
-      pull-requests: read
     steps:
       - name: Reject pull_request_target events
         if: github.event_name == 'pull_request_target'
@@ -296,16 +294,38 @@ jobs:
             false
           fi
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+      - name: Decode private key
+        if: inputs.app_id && github.event_name == 'push'
+        id: decode
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
+        with:
+          secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
+      - name: Generate GitHub App installation token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        if: inputs.app_id && github.event_name == 'push'
+        id: gh_app_token
+        with:
+          client-id: ${{ inputs.app_id }}
+          private-key: ${{ steps.decode.outputs.private-key }}
+          permission-metadata: read
+          permission-pull-requests: read
       - name: Classify push merge
         id: push_class
         if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           script: |
-            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              ...context.repo,
-              commit_sha: context.sha,
-            });
+            let prs;
+            try {
+              ({ data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                ...context.repo,
+                commit_sha: context.sha,
+              }));
+            } catch (e) {
+              core.warning(`Could not look up the PR for this push (needs 'pull-requests: read'): ${e.message}. Fork-merge publishing will be skipped.`);
+              return;
+            }
             const merged = prs.find((pr) => pr.merged_at != null);
             if (!merged) return;
             core.setOutput("merged_pr", merged.number);

@@ -29,10 +29,10 @@ permissions:
   # packages: read
   packages: write # Allow Flowzone to publish to ghcr.io
   pages: none
-  # Flowzone's event_types classifies the PR a push merged ("Classify push merge"); the
-  # reusable workflow declares pull-requests: read, so the caller must grant it or the call
-  # fails at startup.
-  pull-requests: read
+  # Deliberately none: on the push lane flowzone mints an ephemeral app token for the fork-merge
+  # PR lookup, so the caller's GITHUB_TOKEN does not need pull-requests. Keeping this at none
+  # exercises that path — proving callers need not grant pull-requests: read.
+  pull-requests: none
   repository-projects: none
   security-events: none
   statuses: none
