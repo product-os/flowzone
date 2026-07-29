@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-24 to v24.18.1
+      hash: 9b9ba49bcd3e618507ff09ea5663a46e156a576b
+      body: |
+        Update node-24 from 24.18.0 to 24.18.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.0.4
+  title: ""
+  date: 2026-07-29T18:05:39.077Z
+- commits:
     - subject: "Do not require pull-requests: read from callers"
       hash: 8b72c6a790f0d1c8dab957a6b3671d07751b24cf
       body: >
