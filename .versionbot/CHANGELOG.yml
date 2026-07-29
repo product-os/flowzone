@@ -1,4 +1,55 @@
 - commits:
+    - subject: "Do not require pull-requests: read from callers"
+      hash: 8b72c6a790f0d1c8dab957a6b3671d07751b24cf
+      body: >
+        event_types declared a job-level permissions block with pull-requests:
+        read,
+
+        which made the reusable workflow require that scope of every caller.
+        Callers
+
+        whose org default GITHUB_TOKEN omits pull-requests fail the permissions
+        subset
+
+        check at startup, breaking all of their Flowzone runs.
+
+
+        Drop the permissions block so event_types inherits the caller's token.
+        The
+
+        push-lane fork-merge PR lookup still needs pull-requests: read, so mint
+        an
+
+        ephemeral Flowzone app token scoped to it — a push is trusted, so app_id
+        and
+
+        the app key are available — and use it, falling back to FLOWZONE_TOKEN
+        then
+
+        github.token when the app is not configured. A denied lookup is
+        tolerated (warn
+
+        and skip fork-merge detection) so a missing scope never fails the run; a
+
+        token-generation failure with app_id set fails loudly as a real config
+        error.
+
+
+        Flowzone's own test caller sets pull-requests: none to exercise the
+        app-token
+
+        path.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.0.3
+  title: ""
+  date: 2026-07-29T17:28:12.407Z
+- commits:
     - subject: Update dependency node to v24.18.1
       hash: 742dc98dbe41b6aa89fdecf0a34f1fdcc9dad7a1
       body: |
