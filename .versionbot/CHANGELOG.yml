@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-22 to v22.23.2
+      hash: e7ddbe122be396472adcc62ee75283a2df2feb12
+      body: |
+        Update node-22 from 22.23.1 to 22.23.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 22.12.93
+  title: ""
+  date: 2026-07-29T15:20:22.234Z
+- commits:
     - subject: Update docker/login-action action to v4.6.0
       hash: f619fa92cba6012b4f6b0c1ff557cd19f4bc710e
       body: |
