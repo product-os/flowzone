@@ -1035,10 +1035,10 @@ jobs:
           - event_name: ${{ github.event_name }}
             event_action: ${{ github.event.action }}
 
-    permissions:
-      # Read-only PR lookup for `Classify push merge` below (uses github.token on the push lane).
-      pull-requests: read
-
+    # No job-level permissions block: declaring pull-requests: read here made the reusable
+    # workflow require it of every caller, and callers whose org default omits it fail the
+    # permissions subset check at startup. event_types instead inherits the caller's token; the
+    # push-lane PR lookup below tolerates the scope being absent.
     steps:
       - *rejectPullRequestTarget
       # Fork pull_request runs receive no secrets by design, so only require them on
@@ -1048,6 +1048,19 @@ jobs:
           github.event_name != 'pull_request' ||
           github.event.pull_request.head.repo.full_name == github.repository
 
+      # The push-lane PR lookup below needs pull-requests: read. Rather than require that of the
+      # caller's GITHUB_TOKEN (which broke callers whose org default omits it), mint an ephemeral
+      # app token here — a push is trusted, so app_id and the app key are available. When app_id
+      # is unset the lookup falls back to FLOWZONE_TOKEN then github.token; when app_id is set a
+      # token-generation failure fails the job loudly (it is a real app-config error).
+      - <<: *decodePrivateKey
+        if: inputs.app_id && github.event_name == 'push'
+      - <<: *getGitHubAppToken
+        if: inputs.app_id && github.event_name == 'push'
+        with:
+          <<: *getGitHubAppTokenWith
+          permission-pull-requests: read
+
       # On a push to the default branch, find the PR (if any) this commit merged so downstream
       # jobs can distinguish a fork merge (publish here) from an internal merge (already
       # finalized on its pull_request lane) or a direct push (no PR -> skip).
@@ -1056,11 +1069,21 @@ jobs:
         if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
+          # Prefer the ephemeral app token (carries pull-requests: read regardless of the caller
+          # default); a denied lookup is tolerated below so a missing scope skips fork-merge
+          # detection rather than failing the run.
+          github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           script: |
-            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              ...context.repo,
-              commit_sha: context.sha,
-            });
+            let prs;
+            try {
+              ({ data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                ...context.repo,
+                commit_sha: context.sha,
+              }));
+            } catch (e) {
+              core.warning(`Could not look up the PR for this push (needs 'pull-requests: read'): ${e.message}. Fork-merge publishing will be skipped.`);
+              return;
+            }
             const merged = prs.find((pr) => pr.merged_at != null);
             if (!merged) return;
             core.setOutput("merged_pr", merged.number);

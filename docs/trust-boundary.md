@@ -73,10 +73,14 @@ consume its `custom_publish` output (the action bodies are caller-defined).
   invocation is filtered out by the caller `if:` (and if it does run, Flowzone rejects it and
   its `all_jobs` is the non-required per-event context, so it never gates). Removing the dead
   trigger is otherwise a mechanical follow-up.
-- **Caller permissions.** Most callers need no permission change. A caller that explicitly pins
-  a restrictive `permissions:` block must include `pull-requests: read` — `event_types`
-  declares it for the push-merge PR lookup, and a reusable-workflow call fails at startup if the
-  caller granted less. Callers that do not pin the permission inherit enough by default.
+- **Caller permissions.** No permission change is required. Flowzone declares no `GITHUB_TOKEN`
+  permissions the caller must grant, so it never fails the reusable-workflow permissions subset
+  check at startup. The push-lane `Classify push merge` lookup needs `pull-requests: read`, but
+  it mints an ephemeral Flowzone **app token** for it (scoped `pull-requests: read`) when
+  `app_id` is configured — so fork publishing works without the caller granting anything. If the
+  app is not configured it falls back to `FLOWZONE_TOKEN`, then `github.token`; if that last
+  fallback lacks the scope, fork-merge detection is skipped (a warning is logged) and everything
+  else is unaffected.
 - **`restrict_custom_actions` is deprecated.** It only existed to keep fork custom code out of
   the trusted `pull_request_target` context; forks now run without secrets, so it has no effect.
   `custom_test` runs on forks; `custom_publish`/`custom_finalize`/`custom_always` are
