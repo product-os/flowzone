@@ -92,7 +92,8 @@ consume its `custom_publish` output (the action bodies are caller-defined).
 - Fork PRs cannot run steps that need secrets (private submodules, `COMPOSE_VARS`-backed compose
   tests) during review; the trusted merge lane rebuilds them with credentials.
 - Fork publish-path bugs surface at merge, not during review, because forks cannot draft-publish.
-- Repos that never add the `push` trigger get fork test-only.
+- A repo without the `push` trigger gets fork test-only, and will need it once internal
+  branches move onto the push lane.
 - `push`-merge runs share the default-branch concurrency group with `cancel-in-progress: false`;
   GitHub keeps one pending run per group, so stacked merges can drop a pending publish. Re-run the
   workflow for the affected merge commit.
