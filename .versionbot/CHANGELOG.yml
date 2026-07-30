@@ -1,4 +1,65 @@
 - commits:
+    - subject: Keep 'skip ci' out of the version commit subject
+      hash: 700c37d06ddf55f29ab183d8b43c2d985e717184
+      body: >
+        The skip directive was appended to the tag, so every release commit read
+
+        "v23.0.6 'skip ci'" in the log and in the commit list. Putting it after
+        a blank
+
+        line moves it into the body.
+
+
+        GitHub matches skip directives against the commit message rather than
+        the
+
+        subject, and documents the skip-checks trailer as belonging at the end
+        of the
+
+        message, so the recursion guard should still hold.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+    - subject: Stop describing the push trigger as optional
+      hash: aa1a3fd791eb36216d49d10c4f5d00a0d886b5a2
+      body: >
+        The usage snippet tells callers they can drop the push trigger to keep
+        fork
+
+        support test-only. Internal branches move onto push in a later phase, at
+        which
+
+        point it is required, so that sentence is about to be wrong -- and it
+        sits in
+
+        the one block every caller copies verbatim.
+
+
+        Says what the trigger is for and nothing about whether it is needed. The
+
+        matching "Accepted limitations" bullet in the trust boundary doc now
+        notes the
+
+        trigger will be needed rather than framing its absence as a settled
+        choice.
+
+
+        README.md is regenerated from build.js.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.0.7
+  title: ""
+  date: 2026-07-30T16:40:38.822Z
+- commits:
     - subject: Update actions/setup-node action to v7
       hash: 310bc9a05a499ad5696399b7ee9cf11fdd5a2f7c
       body: |
