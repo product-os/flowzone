@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-26 to v26.7.0
+      hash: 854b0e65de7db5c9f70147f4f8112abc1a323b13
+      body: |
+        Update node-26 from 26.6.0 to 26.7.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.0.14
+  title: ""
+  date: 2026-08-05T17:18:19.479Z
+- commits:
     - subject: Update dependency docker/buildx to v0.36.1
       hash: 9c129fbd7e9fa2d3f10d04b5a14a128db8aad1fd
       body: |
