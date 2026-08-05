@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.36.1
+      hash: 9c129fbd7e9fa2d3f10d04b5a14a128db8aad1fd
+      body: |
+        Update docker/buildx from 0.36.0 to 0.36.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.0.13
+  title: ""
+  date: 2026-08-05T07:29:15.330Z
+- commits:
     - subject: Update dtolnay/rust-toolchain digest
       hash: 763884baadb6e1ac437e8093c03cf9c7939aa663
       body: |
