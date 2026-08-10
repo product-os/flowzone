@@ -1,4 +1,58 @@
 - commits:
+    - subject: Stop suppressing every workflow on the version commit
+      hash: 433a19caec84b4a6fe3d19893ac606997e248067
+      body: >
+        The version commit that versioned_source pushes carried a GitHub skip-ci
+
+        directive. GitHub applies those repository-wide rather than
+        per-workflow, so it
+
+        also silenced downstream pipelines that key deployments off pushes to
+        the
+
+        default branch (balena-os).
+
+
+        Replace the directive with a Flowzone-version-commit trailer and veto
+        the
+
+        re-entrant run inside Flowzone instead, so only Flowzone skips. Every
+        job
+
+        lists event_types in its needs, directly or transitively, which makes
+        that
+
+        job's if: the single point able to veto a whole run. Two independent
+        signals,
+
+        because either can be absent: the app's sender login covers any push the
+        app
+
+        makes, and the trailer covers the legacy FLOWZONE_TOKEN path where the
+        pusher
+
+        is a human account.
+
+
+        The veto is required rather than a cost saving. balena_publish,
+
+        website_publish and custom_always gate only on `trusted`, which is true
+        for
+
+        any push, so a self-triggered run would push a second balena release and
+
+        redeploy the Cloudflare Pages site.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.0.15
+  title: ""
+  date: 2026-08-10T18:59:54.981Z
+- commits:
     - subject: Update dependency node-26 to v26.7.0
       hash: 854b0e65de7db5c9f70147f4f8112abc1a323b13
       body: |
