@@ -25,6 +25,7 @@ event, not by review.
 | `push` | default branch, **fork merge** | **Rebuild + publish + finalize** from the merged (trusted) commit. Where fork contributions publish. |
 | `push` | default branch, internal merge | Quiet skip — already finalized on the internal PR's `pull_request` lane. |
 | `push` | tags / direct | Trusted release path. **Unchanged.** |
+| `push` | **Flowzone itself** | **Vetoed** at the event gate — see [Not re-triggering itself](#not-re-triggering-itself). |
 | `pull_request_target` | any | **Rejected** at the event gate. |
 
 The lane is decided in the `event_types` job and exported as outputs the rest of the workflow
@@ -37,6 +38,36 @@ gates on:
   (`GET /repos/{}/commits/{sha}/pulls`).
 - `push_finalize` — `true` for tag pushes and fork merges; gates the finalize path on `push`.
   Internal merges and direct pushes are `false` (no double-publish).
+
+## Not re-triggering itself
+
+Adding the `push` trigger means Flowzone reacts to pushes it makes itself. `versioned_source`
+pushes the versioned commit with the GitHub App token, and unlike `github.token`, an App token
+**does** re-trigger workflows — so the versioned commit re-enters the pipeline.
+
+That run cannot loop: it merged no PR, so `fork_merge` and `push_finalize` are both `false`, the
+test jobs skip, and no git ref is written again. It is not harmless, though. The jobs whose `if:`
+carries no push-lane gate beyond `trusted == 'true'` — `balena_publish`, `website_publish`, and a
+caller's `custom_always` — would run a second time, so a release that already published would
+push another balena release and redeploy the Cloudflare Pages site. `versioned_source` would also
+re-run versionist and leave orphan commit and tag objects behind.
+
+The `event_types` job's `if:` vetoes it. Every other job has `event_types` in its `needs`
+(directly or transitively), so skipping there skips the whole workflow — one place to veto a run.
+Two independent signals, because either can be absent:
+
+- `github.event.sender.login != 'flowzone-app[bot]'` — any push made by the App, including
+  auto-merge. Does not cover the legacy `FLOWZONE_TOKEN` (PAT) path, where the pusher is a human
+  account whose login Flowzone cannot know.
+- `!contains(github.event.head_commit.message, 'Flowzone-version-commit:')` — the trailer
+  `versioned_source` writes into the versioned commit, so the veto holds whichever credential
+  pushed it.
+
+This is deliberately **not** a `[skip ci]` commit directive. GitHub honours skip directives for
+every workflow in the repository, not just Flowzone, so vetoing that way also suppressed
+downstream pipelines that key deployments off pushes to the default branch (balena-os). A private
+trailer that only Flowzone reads keeps the veto scoped to Flowzone and leaves other consumers of
+the push running.
 
 ## Why a fork merge rebuilds
 
