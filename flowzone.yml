@@ -2400,6 +2400,7 @@ jobs:
           BAKE_JSON: "${{ steps.docker_bake.outputs.result }}"
           RUNS_ON: "${{ inputs.runs_on }}"
           DOCKER_RUNS_ON: "${{ inputs.docker_runs_on }}"
+          INVERT_TAGS: "${{ inputs.docker_invert_tags }}"
         with:
           result-encoding: json
           script: |
@@ -2427,7 +2428,7 @@ jobs:
             };
 
             // Add tag prefix/suffix based on docker_invert_tags
-            const invertTags = ${{ inputs.docker_invert_tags }};
+            const invertTags = process.env.INVERT_TAGS === 'true';
             matrix.include = matrix.include.map(item => {
               if (item.target !== 'default') {
                 if (invertTags) {
@@ -4436,9 +4437,9 @@ jobs:
               --draft=false
 
             if [[ ${{ inputs.github_prerelease }} =~ false ]]; then
-                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ needs.versioned_source.outputs.tag }}" \
+                release_id="$(gh api "/repos/${GITHUB_REPOSITORY}/releases/tags/${{ needs.versioned_source.outputs.tag }}" \
                   -H 'Accept: application/vnd.github+json' | jq -r .id)"
-                gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
+                gh api --method PATCH "/repos/${GITHUB_REPOSITORY}/releases/${release_id}" \
                   -H 'Accept: application/vnd.github+json' \
                   -F make_latest=true
             fi
