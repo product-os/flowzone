@@ -1011,6 +1011,19 @@ jobs:
       merged_pr: ${{ steps.push_class.outputs.merged_pr }}
       fork_merge: ${{ steps.push_class.outputs.fork_merge == 'true' }}
       push_finalize: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || steps.push_class.outputs.fork_merge == 'true' }}
+    # Every other job has event_types in its needs (directly or transitively), so skipping here
+    # skips the whole workflow. That makes this the single place to veto a run.
+    #
+    # The push lane excludes Flowzone's own pushes. The versioned commit is pushed with the app
+    # token, which (unlike github.token) does re-trigger workflows, so it re-enters the pipeline.
+    # That run cannot loop (no merged PR -> fork_merge and push_finalize are false), but the jobs
+    # with no push-lane gate beyond `trusted` (balena_publish, website_publish, custom_always)
+    # would publish a second time. Two independent signals, because either can be absent:
+    #   - sender.login  — catches any push made by the app (versioned commit, auto-merge), but
+    #                     not the legacy FLOWZONE_TOKEN (PAT) path, where the pusher is a human.
+    #   - commit trailer — catches the versioned commit regardless of which credential pushed it.
+    # Vetoing here (rather than with a `[skip ci]` commit directive) keeps the veto scoped to
+    # Flowzone, so pipelines that deploy on pushes to the default branch still fire.
     if: |
       (
         (
@@ -1025,7 +1038,9 @@ jobs:
         github.event_name == 'push' && (
           startsWith(github.ref, 'refs/tags/') ||
           github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        )
+        ) &&
+        github.event.sender.login != 'flowzone-app[bot]' &&
+        !contains(github.event.head_commit.message, 'Flowzone-version-commit:')
       )
 
     strategy:
@@ -1386,14 +1401,19 @@ jobs:
         if: inputs.disable_versioning != true && needs.event_types.outputs.trusted == 'true'
         id: create_commit
         env:
-          # [skip ci] avoids recursion: this versioned commit becomes the default-branch HEAD
-          # when updateGitReference pushes it, and that push is made with the app token, which
-          # (unlike github.token) does re-trigger workflows. GitHub skips a push run whose HEAD
-          # commit message contains a skip directive, so the redundant run never starts. This
-          # does not affect the current run's publish/finalize (those run from the merge commit).
+          # This versioned commit becomes the default-branch HEAD when updateGitReference pushes
+          # it, and that push is made with the app token, which (unlike github.token) does
+          # re-trigger workflows. The `Flowzone-version-commit` trailer marks the commit so that
+          # Flowzone's own event gate can skip the redundant push run (see event_types).
+          #
+          # Deliberately NOT a GitHub `[skip ci]` directive: a skip directive suppresses *every*
+          # workflow for that push, not just Flowzone, which broke downstream pipelines that key
+          # deployments off pushes to the default branch (balena-os). A private trailer that only
+          # Flowzone reads leaves other consumers of the push untouched.
+          #
           # The blank line keeps it out of the commit subject: git folds the whole first
           # paragraph into %s, so a single newline would still show up in `git log --oneline`.
-          MESSAGE: "${{ steps.versionist.outputs.tag }}\n\n[skip ci]"
+          MESSAGE: "${{ steps.versionist.outputs.tag }}\n\nFlowzone-version-commit: true"
           TREE_SHA: ${{ steps.create_tree.outputs.sha }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9

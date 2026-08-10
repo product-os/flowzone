@@ -270,7 +270,9 @@ jobs:
         github.event_name == 'push' && (
           startsWith(github.ref, 'refs/tags/') ||
           github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        )
+        ) &&
+        github.event.sender.login != 'flowzone-app[bot]' &&
+        !contains(github.event.head_commit.message, 'Flowzone-version-commit:')
       )
     strategy:
       fail-fast: true
@@ -612,7 +614,7 @@ jobs:
           MESSAGE: |-
             ${{ steps.versionist.outputs.tag }}
 
-            [skip ci]
+            Flowzone-version-commit: true
           TREE_SHA: ${{ steps.create_tree.outputs.sha }}
           PARENT_COMMIT_SHA: ${{ steps.git_describe.outputs.sha }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
