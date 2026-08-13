@@ -21,7 +21,8 @@ event, not by review.
 | Event | Actor | Behaviour |
 | --- | --- | --- |
 | `pull_request` | internal branch | Full pipeline with secrets; draft on open, finalize on merge. **Unchanged.** |
-| `pull_request` | **fork** | Build and test with **no secrets** (GitHub withholds them and issues a read-only token). No versioning, no publishes. |
+| `pull_request` open / sync | **fork** | Build and test with **no secrets** (GitHub withholds them and issues a read-only token). No versioning, no publishes. |
+| `pull_request` closed | **fork** | **Vetoed** at the event gate — see [Fork closes do nothing](#fork-closes-do-nothing). |
 | `push` | default branch, **fork merge** | **Rebuild + publish + finalize** from the merged (trusted) commit. Where fork contributions publish. |
 | `push` | default branch, internal merge | Quiet skip — already finalized on the internal PR's `pull_request` lane. |
 | `push` | tags / direct | Trusted release path. **Unchanged.** |
@@ -68,6 +69,25 @@ every workflow in the repository, not just Flowzone, so vetoing that way also su
 downstream pipelines that key deployments off pushes to the default branch (balena-os). A private
 trailer that only Flowzone reads keeps the veto scoped to Flowzone and leaves other consumers of
 the push running.
+
+## Fork closes do nothing
+
+The same `if:` also vetoes a fork `pull_request` `closed` event, whether the PR merged or not.
+GitHub withholds secrets from **every** fork `pull_request` action, including the close, so
+`trusted` is `false` on that run and there is no outcome it can reach:
+
+- **Merged.** The work belongs to the fork-merge `push` lane, which starts in parallel and has
+  secrets. The close can only recompute what that run computes properly.
+- **Not merged.** There is nothing to clean up. A fork never had secrets, so it drafted no
+  release or artifact, and `github_clean` / `custom_clean` require `trusted` in any case.
+
+Before the veto, a fork close still spent a run on `versioned_source` (which executed versionist
+and then wrote nothing, every App-token step being gated on `trusted`), `octoscan`, `file_list`,
+and the `is_*` detectors. `actionlint` and `pre_commit_hooks` already gated themselves out with
+`github.event.action != 'closed'`.
+
+`pull_request_target` is excluded from this veto on purpose: its close must still reach the
+`Reject pull_request_target events` step and fail loudly, rather than disappear as a skipped run.
 
 ## Why a fork merge rebuilds
 

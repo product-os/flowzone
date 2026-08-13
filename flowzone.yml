@@ -1024,6 +1024,15 @@ jobs:
     #   - commit trailer — catches the versioned commit regardless of which credential pushed it.
     # Vetoing here (rather than with a `[skip ci]` commit directive) keeps the veto scoped to
     # Flowzone, so pipelines that deploy on pushes to the default branch still fire.
+    #
+    # A fork `pull_request` `closed` event is also vetoed, because it can do nothing either way.
+    # GitHub withholds secrets from every fork pull_request action, so `trusted` is false: on a
+    # merge, the work happens on the fork-merge push lane that runs in parallel with secrets, and
+    # on an unmerged close there is nothing to clean up (the fork drafted nothing, and
+    # github_clean / custom_clean require `trusted` anyway). Without this, the close still spent a
+    # run on versioned_source (versionist, writing nothing), octoscan, and the is_* detectors.
+    # pull_request_target is deliberately excluded from this veto so its close still reaches the
+    # `Reject pull_request_target events` step and fails loudly.
     if: |
       (
         (
@@ -1033,6 +1042,10 @@ jobs:
           github.event.action == 'opened' ||
           github.event.action == 'synchronize' ||
           github.event.action == 'closed'
+        ) && !(
+          github.event_name == 'pull_request' &&
+          github.event.action == 'closed' &&
+          github.event.pull_request.head.repo.full_name != github.repository
         )
       ) || (
         github.event_name == 'push' && (

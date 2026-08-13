@@ -265,6 +265,10 @@ jobs:
           github.event.action == 'opened' ||
           github.event.action == 'synchronize' ||
           github.event.action == 'closed'
+        ) && !(
+          github.event_name == 'pull_request' &&
+          github.event.action == 'closed' &&
+          github.event.pull_request.head.repo.full_name != github.repository
         )
       ) || (
         github.event_name == 'push' && (
