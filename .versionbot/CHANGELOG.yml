@@ -1,4 +1,54 @@
 - commits:
+    - subject: Bail out of fork pull request closes at the event gate
+      hash: 57411d41f565df323da580baef6fe4961f243331
+      body: >
+        GitHub withholds secrets from every fork pull_request action, including
+        the
+
+        close, so `trusted` is false on that run and there is no outcome it can
+        reach.
+
+        When the PR merged, the fork-merge push lane starts in parallel and does
+        the
+
+        work with secrets. When it did not merge, there is nothing to clean up:
+        a fork
+
+        drafted no release or artifact, and github_clean and custom_clean
+        require
+
+        `trusted` regardless.
+
+
+        The close still spent a run on versioned_source (executing versionist
+        and then
+
+        writing nothing, every app-token step being gated on `trusted`),
+        octoscan,
+
+        file_list, and the is_* detectors, duplicating jobs the push lane
+        re-runs
+
+        anyway. Veto it in event_types instead.
+
+
+        pull_request_target is excluded from the veto so its close still reaches
+        the
+
+        `Reject pull_request_target events` step and fails loudly, rather than
+
+        disappearing as a skipped run.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.0.16
+  title: ""
+  date: 2026-08-13T15:36:56.964Z
+- commits:
     - subject: Stop suppressing every workflow on the version commit
       hash: 433a19caec84b4a6fe3d19893ac606997e248067
       body: >
