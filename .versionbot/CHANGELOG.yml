@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency helm/helm to v4.2.4
+      hash: 148999d7b779cfbc11f6eb70279975b08c6f7606
+      body: |
+        Update helm/helm from 4.2.3 to 4.2.4
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.0.17
+  title: ""
+  date: 2026-08-13T15:55:25.700Z
+- commits:
     - subject: Bail out of fork pull request closes at the event gate
       hash: 57411d41f565df323da580baef6fe4961f243331
       body: >
