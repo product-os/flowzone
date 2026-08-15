@@ -48,7 +48,7 @@
     run: |
       package="$(poetry version --no-ansi | awk '{print $1}')"
       version="$(poetry version --no-ansi | awk '{print $2}')"
-      commit_sha="$(echo ${{ github.event.pull_request.head.sha || github.event.head_commit.id }} | tr "a-z" "A-Z")"
+      commit_sha="$(echo "${GITHUB_SHA}" | tr "a-z" "A-Z")"
       decimal_sha="$(echo "ibase=16; $commit_sha" | bc)"
       version_tag="${version}-dev${decimal_sha}"
 
@@ -2589,7 +2589,7 @@ jobs:
             fi
 
             has_package="$(awk -F "=" '/^packages/ {print $2}' pyproject.toml)"
-            if [ -n "${has_package}" ] && [ "${{ github.event.repository.visibility }}" = "public" ]
+            if [ -n "${has_package}" ] && [ "${REPO_VISIBILITY}" = "public" ]
             then
               echo "pypi_publish=true" >> "${GITHUB_OUTPUT}"
             else
@@ -3091,8 +3091,8 @@ jobs:
           package="$(jq -r '.name' package.json)"
           version="$(jq -r '.version' package.json)"
           branch_tag="$(echo "build-${GITHUB_HEAD_REF}" | sed 's/[^[:alnum:]]/-/g')"
-          sha_tag="${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
-          version_tag="${version}-${branch_tag}-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}"
+          sha_tag="${branch_tag}-${GITHUB_SHA}"
+          version_tag="${version}-${branch_tag}-${GITHUB_SHA}"
 
           echo "package=${package}" >> "${GITHUB_OUTPUT}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
@@ -3279,13 +3279,13 @@ jobs:
           pack="$(ls ${{ runner.temp }}/*.tgz | sort -t- -n -k3 | tail -n1)"
           tar xvf "${pack}"
           (cd package
-            npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${VERSION_TAG}-${{ github.run_attempt }} --allow-same-version
+            npm --loglevel=verbose --logs-max=0 --no-git-tag-version version ${VERSION_TAG}-${GITHUB_RUN_ATTEMPT} --allow-same-version
           )
           tar czvf "${pack}" package
 
           # shellcheck disable=SC2170
-          if [ ${{ github.run_attempt }} -gt 1 ]; then
-            npm --loglevel=verbose --logs-max=0 unpublish ${PACKAGE}@${VERSION_TAG}-$((${{ github.run_attempt }} - 1)) || true
+          if [ "${GITHUB_RUN_ATTEMPT}" -gt 1 ]; then
+            npm --loglevel=verbose --logs-max=0 unpublish ${PACKAGE}@${VERSION_TAG}-$((GITHUB_RUN_ATTEMPT - 1)) || true
           fi
           npm --loglevel=verbose --logs-max=0 publish --tag=${TAG} "${pack}" --access="${ACCESS}"
 
@@ -4437,21 +4437,23 @@ jobs:
         env:
           <<: *gitHubCliEnvironment
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
+          RELEASE_TAG: ${{ needs.versioned_source.outputs.tag }}
+          GITHUB_PRERELEASE: ${{ inputs.github_prerelease }}
         run: |
           set -ea
 
           if gh release view "${GITHUB_HEAD_REF}"; then
             gh release edit "${GITHUB_HEAD_REF}" \
-              --notes-file '${{ runner.temp }}/release-notes.txt' \
-              --title '${{ needs.versioned_source.outputs.tag }}' \
-              --tag '${{ needs.versioned_source.outputs.tag }}' \
-              --prerelease='${{ inputs.github_prerelease }}' \
+              --notes-file "${RUNNER_TEMP}/release-notes.txt" \
+              --title "${RELEASE_TAG}" \
+              --tag "${RELEASE_TAG}" \
+              --prerelease="${GITHUB_PRERELEASE}" \
               --draft=false
 
-            if [[ ${{ inputs.github_prerelease }} =~ false ]]; then
-                release_id="$(gh api "/repos/${{ github.repository }}/releases/tags/${{ needs.versioned_source.outputs.tag }}" \
+            if [[ "${GITHUB_PRERELEASE}" =~ false ]]; then
+                release_id="$(gh api "/repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
                   -H 'Accept: application/vnd.github+json' | jq -r .id)"
-                gh api --method PATCH "/repos/${{ github.repository }}/releases/${release_id}" \
+                gh api --method PATCH "/repos/${GITHUB_REPOSITORY}/releases/${release_id}" \
                   -H 'Accept: application/vnd.github+json' \
                   -F make_latest=true
             fi
