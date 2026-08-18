@@ -258,12 +258,6 @@
     GH_PROMPT_DISABLED: "true"
     GH_REPO: "${{ github.repository }}"
 
-  - &logGitHubContext
-    name: Log GitHub context
-    env:
-      GITHUB_CONTEXT: ${{ toJSON(github) }}
-    run: echo "${GITHUB_CONTEXT}" || true
-
   - &deleteDraftGitHubRelease
     name: Delete draft GitHub release
     run: gh release delete --yes "${GITHUB_HEAD_REF}" || true
@@ -1127,8 +1121,6 @@ jobs:
         if: inputs.restrict_custom_actions == false
         run: |
           echo "::warning::The 'restrict_custom_actions' input is deprecated and no longer has any effect. Fork pull requests run without secrets, so custom test actions run on forks (custom publish/finalize/always remain trusted-only). Please remove this input from your caller workflow."
-
-      - *logGitHubContext
 
   # Version the project with balena-versionist,
   # upload a versioned source artifact to the workflow for use by other jobs,

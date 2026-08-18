@@ -342,10 +342,6 @@ jobs:
         if: inputs.restrict_custom_actions == false
         run: |
           echo "::warning::The 'restrict_custom_actions' input is deprecated and no longer has any effect. Fork pull requests run without secrets, so custom test actions run on forks (custom publish/finalize/always remain trusted-only). Please remove this input from your caller workflow."
-      - name: Log GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "${GITHUB_CONTEXT}" || true
   versioned_source:
     name: Versioned source
     runs-on: ${{ fromJSON(inputs.runs_on) }}
