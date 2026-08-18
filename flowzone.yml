@@ -944,6 +944,15 @@ on:
         type: boolean
         required: false
         default: true
+      migrate_config:
+        description: >-
+          Let Flowzone open pull requests that migrate this repository's own caller workflow.
+
+          Defaults to on inside the balena enterprise, where the caller fleet is migrated in bulk,
+          and off everywhere else. Set it explicitly to opt in or out.
+        type: boolean
+        required: false
+        default: ${{ github.event.enterprise.slug == 'balena' }}
       release_notes:
         description: "Create git tags and a PR comment with detailed change log."
         type: boolean
@@ -1928,6 +1937,94 @@ jobs:
               ref: context.ref,
               sarif: zippedSarif,
             });
+
+  # Keep this repository's own Flowzone caller workflow in step with Flowzone. flowzonify
+  # applies the outstanding migrations as a comment-preserving, idempotent transform and opens
+  # a pull request with the result. Running it from here is how a Flowzone change reaches the
+  # caller fleet without every repository being edited by hand.
+  #
+  # Everything here is built to go quiet rather than red:
+  #   - `workflows` is not one of GITHUB_TOKEN's permissions, so only an app installation token
+  #     can write a file under `.github/workflows/`. The mint below is continue-on-error, and
+  #     flowzonify skips silently when handed an empty token or github.token. Revoking the app's
+  #     `workflows` grant therefore switches the whole fleet off without turning one caller red.
+  #     That is the campaign kill switch; this job stays in place between campaigns.
+  #   - flowzonify's `on-blocked` and `on-failure` inputs default to `warn`, so a workflow that
+  #     needs a human, or a push the token was refused, is reported and does not fail the job.
+  #
+  # Deliberately absent from `all_jobs` needs: this maintains the caller workflow, it does not
+  # test the change under review, so it must never gate a merge.
+  migrate_config:
+    name: Migrate config
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: 10
+    needs:
+      - event_types
+    # Trusted lanes only. A fork pull_request receives neither secrets nor variables, so there is
+    # no app token to mint there, and a token that can rewrite a workflow must never be reachable
+    # from fork code. flowzonify gates on the same events again itself, from the event payload.
+    #
+    # No credential precondition here. `secrets` is not available to a job `if:`, and event_types
+    # already rejects a trusted run with no credential at all, so the choice is between one cheap
+    # no-op job and a gate that would exclude the FLOWZONE_TOKEN callers. flowzonify's own first
+    # step decides whether the token it was handed could write a workflow, and skips if not.
+    if: |
+      inputs.migrate_config == true &&
+      needs.event_types.outputs.trusted == 'true' &&
+      (
+        (
+          github.event_name == 'push' &&
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        ) || (
+          github.event_name == 'pull_request' &&
+          github.event.action != 'closed'
+        )
+      )
+
+    # One migration attempt per repository at a time. The push lane and any open pull request
+    # compute the same result from the same base, so they would otherwise race to force-push the
+    # same branch; the later run is the one worth keeping.
+    concurrency:
+      group: migrate-config-${{ github.repository }}
+      cancel-in-progress: true
+
+    # No caller-token permissions are needed: every write below is authenticated with the app
+    # installation token. A reusable workflow requires its caller to already grant whatever its
+    # jobs declare, so declaring nothing keeps this job from becoming a new caller requirement.
+    permissions: {}
+
+    steps:
+      - *decodePrivateKey
+      - <<: *getGitHubAppToken
+        # Soft-fail. The `workflows` grant is meant to be withdrawn once the fleet is migrated,
+        # and create-github-app-token errors when asked for a permission the installation does
+        # not hold. Continuing leaves the token empty so the step below falls back, and with
+        # neither credential flowzonify reads that as "do nothing".
+        continue-on-error: true
+        with:
+          <<: *getGitHubAppTokenWith
+          # contents: write to push the branch, pull-requests: write to open the pull request,
+          # and workflows: write because the file being changed is under `.github/workflows/`.
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+      # No setup-node here: the action sets its own toolchain up, and only on the runs where it
+      # actually executes the CLI. Duplicating it would spend a download on every skipped run.
+      #
+      # https://github.com/product-os/flowzonify
+      # Checks the base branch out into this workspace itself, which is why it gets a job of its
+      # own rather than sharing one with steps that expect the versioned commit.
+      # TODO: repin to a release sha once product-os/flowzonify#41 merges and a release is cut.
+      # A branch ref while the action is still a draft, so a change to it can be tested from here.
+      - name: Migrate the caller workflow
+        uses: product-os/flowzonify@kyle/migrate-config-action
+        with:
+          # Same fallback as every other write in this workflow. A FLOWZONE_TOKEN carrying the
+          # `workflow` scope can write a workflow file too, so a caller on the legacy PAT path
+          # still gets migrated. Note that it is a second lever on the kill switch: revoking the
+          # app's `workflows` grant does not stop a caller whose PAT still holds that scope.
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
 
   # This job should be used as a universal and safe method of checking
   # which project files exist in order to skip other jobs entirely.

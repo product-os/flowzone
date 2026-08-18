@@ -222,6 +222,13 @@ on:
         type: boolean
         required: false
         default: true
+      migrate_config:
+        description: |-
+          Let Flowzone open pull requests that migrate this repository's own caller workflow.
+          Defaults to on inside the balena enterprise, where the caller fleet is migrated in bulk, and off everywhere else. Set it explicitly to opt in or out.
+        type: boolean
+        required: false
+        default: ${{ github.event.enterprise.slug == 'balena' }}
       release_notes:
         description: Create git tags and a PR comment with detailed change log.
         type: boolean
@@ -1188,6 +1195,51 @@ jobs:
               ref: context.ref,
               sarif: zippedSarif,
             });
+  migrate_config:
+    name: Migrate config
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: 10
+    needs:
+      - event_types
+    if: |
+      inputs.migrate_config == true &&
+      needs.event_types.outputs.trusted == 'true' &&
+      (
+        (
+          github.event_name == 'push' &&
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        ) || (
+          github.event_name == 'pull_request' &&
+          github.event.action != 'closed'
+        )
+      )
+    concurrency:
+      group: migrate-config-${{ github.repository }}
+      cancel-in-progress: true
+    permissions: {}
+    steps:
+      - name: Decode private key
+        if: inputs.app_id
+        id: decode
+        uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f
+        with:
+          secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
+      - name: Generate GitHub App installation token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        if: inputs.app_id
+        id: gh_app_token
+        with:
+          client-id: ${{ inputs.app_id }}
+          private-key: ${{ steps.decode.outputs.private-key }}
+          permission-metadata: read
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+        continue-on-error: true
+      - name: Migrate the caller workflow
+        uses: product-os/flowzonify@kyle/migrate-config-action
+        with:
+          token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
   file_list:
     name: File list
     runs-on: ${{ fromJSON(inputs.runs_on) }}

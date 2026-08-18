@@ -10,6 +10,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 - [Getting Started](#getting-started)
 - [Usage](#usage)
   - [Merging](#merging)
+  - [Config Migrations](#config-migrations)
   - [External Contributions](#external-contributions)
   - [Commit Message](#commit-message)
     - [Skipping Workflow Runs](#skipping-workflow-runs)
@@ -321,6 +322,13 @@ jobs:
       # Required: false
       toggle_auto_merge: true
 
+      # Let Flowzone open pull requests that migrate this repository's own caller workflow.
+      # Defaults to on inside the balena enterprise, where the caller fleet is migrated in bulk,
+      # and off everywhere else. Set it explicitly to opt in or out.
+      # Type: boolean
+      # Required: false
+      migrate_config: ${{ github.event.enterprise.slug == 'balena' }}
+
       # Create git tags and a PR comment with detailed change log.
       # Type: boolean
       # Required: false
@@ -348,6 +356,19 @@ Avoid using **Squash and merge** or **Rebase and merge** as these methods will r
 This would prevent Flowzone from finding and finalizing existing draft artifacts.
 
 You can read more about the available merge methods [here](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/about-merge-methods-on-github).
+
+### Config Migrations
+
+Flowzone's caller contract changes over time, and every change has to reach every caller. Flowzone can migrate your caller workflow for you: on each internal PR, and on each push to the default branch, the `Migrate config` job runs [flowzonify](https://github.com/product-os/flowzonify) against this repository's own `.github/workflows/flowzone.yml` and opens a pull request with any outstanding migrations.
+
+The migration is a comment-preserving, idempotent transform. It edits only the lines a migration actually touches, so the pull request is small enough to review at a glance, and running it again on a partly migrated workflow converges rather than double-applying. The pull request lives on the `flowzone/migrate-config` branch, and its commit carries the versionist footer your repository type expects — unless you set `disable_versioning: true`, in which case it carries none.
+
+Notes and limits:
+
+- **Nothing happens without a token that can write a workflow.** `workflows` is [not one of `GITHUB_TOKEN`'s permissions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#permissions-for-the-github_token), so the default token can never write a file under `.github/workflows/`. Flowzone passes an app installation token minted with `workflows: write`, falling back to `FLOWZONE_TOKEN`. The token mint soft-fails when the installation does not hold the permission, and with no usable token the job does nothing and stays green.
+- **It never gates a merge.** `Migrate config` is not part of the `All jobs` check. A workflow that needs migrating by hand, or a push the token was refused, is reported as a warning.
+- **On by default inside the balena enterprise only.** The `migrate_config` default reads `github.event.enterprise.slug`, so balena's caller fleet is migrated in bulk while everybody else is opted out. Set `migrate_config: true` to opt in, or `false` to opt out. Either way you can migrate on demand with `npx product-os/flowzonify`, which does the same transform and leaves git to you.
+- **Trusted lanes only.** Fork pull requests receive no secrets, so no token is minted and the job does nothing there.
 
 ### External Contributions
 
