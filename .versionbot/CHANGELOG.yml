@@ -1,4 +1,56 @@
 - commits:
+    - subject: Pass GitHub context into run steps via env instead of interpolating
+      hash: 278a8faed2a626f0d0e5bfc3e9cf89b9b2325234
+      body: >
+        Semgrep flags `${{ }}` inside `run:` because the expansion happens
+        before the
+
+        shell ever sees the script. Most of the values here are harmless (SHAs,
+        run
+
+        attempts, owner/repo), but `versioned_source.outputs.tag` is derived
+        from the
+
+        versionist config in the PR branch, so a contributor controls that
+        string.
+
+
+        Each site now reads a step-level env var:
+
+
+        - `HEAD_SHA` in the four metadata generators. Deliberately not
+        `GITHUB_SHA`,
+          which on `pull_request` is the ephemeral refs/pull/N/merge commit and not
+          the tip of the head branch. Draft tags have to keep matching the artifact
+          names, which key off the head sha.
+        - `REPO_VISIBILITY` in the Poetry check.
+
+        - `RELEASE_TAG` and `PRERELEASE` in the release finalize step, plus the
+          built-in `RUNNER_TEMP` and `GITHUB_REPOSITORY`. The single quotes there
+          become double quotes so the vars actually expand.
+        - `GITHUB_RUN_ATTEMPT` in the npm draft publish, which lets the
+          `shellcheck disable=SC2170` come out.
+
+        No behavior change, every substitution resolves to the same string as
+        before.
+
+
+        The CloudFormation deploy step still interpolates matrix JSON into its
+        script
+
+        body. That one needs restructuring rather than an env var, so it's a
+        follow-up.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.0.23
+  title: ""
+  date: 2026-08-18T20:34:17.989Z
+- commits:
     - subject: Update dawidd6/action-download-artifact action to v23
       hash: 15cfbab411b8eb04e337e08a433de6186a9e947f
       body: |
