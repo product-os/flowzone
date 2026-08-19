@@ -1664,7 +1664,7 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Setup buildx
         id: setup_buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
         env:
           BUILDX_VERSION: v0.36.1
         with:
@@ -3191,7 +3191,7 @@ jobs:
             core.setOutput('repo', repoSlug)
       - name: Setup buildx
         id: setup_buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
         env:
           BUILDX_VERSION: v0.36.1
         with:
@@ -3464,7 +3464,7 @@ jobs:
             suffix=${{ steps.strings.outputs.suffix }}
       - name: Setup buildx
         id: setup_buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
         env:
           BUILDX_VERSION: v0.36.1
         with:
