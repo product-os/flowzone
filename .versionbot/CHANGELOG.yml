@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v4.3.0
+      hash: 594580e2f774d1789b312bcdcc8ba695a3deb751
+      body: |
+        Update docker/setup-buildx-action from 4.2.0 to 4.3.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.0.24
+  title: ""
+  date: 2026-08-19T10:43:36.042Z
+- commits:
     - subject: Pass GitHub context into run steps via env instead of interpolating
       hash: 278a8faed2a626f0d0e5bfc3e9cf89b9b2325234
       body: >
