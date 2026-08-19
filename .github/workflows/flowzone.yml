@@ -1188,6 +1188,145 @@ jobs:
               ref: context.ref,
               sarif: zippedSarif,
             });
+  check_config:
+    name: Check config
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    timeout-minutes: 5
+    needs:
+      - event_types
+    if: |
+      needs.event_types.outputs.trusted == 'true' &&
+      github.event.action != 'closed' &&
+      !startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: read
+    env:
+      LISTING_NAME: flowzonify-list.txt
+      REPORT_NAME: flowzonify-report.json
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        env:
+          NODE_VERSION: 24.19.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Check the caller workflow
+        continue-on-error: true
+        shell: bash --noprofile --norc -eo pipefail -x {0}
+        env:
+          FLOWZONIFY_VERSION: 0.3.4
+        run: |
+          spec="flowzonify@${FLOWZONIFY_VERSION}"
+          npm exec --yes -- "${spec}" --list > "${RUNNER_TEMP}/${LISTING_NAME}"
+          npm exec --yes -- "${spec}" --json > "${RUNNER_TEMP}/${REPORT_NAME}"
+      - name: Report outstanding migrations
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          script: |
+            const fs = require("fs");
+            const path = require("path");
+
+            const read = (name) =>
+              fs.readFileSync(path.join(process.env.RUNNER_TEMP, name), "utf8");
+
+            // `--list` prints each migration as its id followed by an indented description.
+            // The report names only ids, so the two are joined to make each warning readable
+            // on its own. Never fatal: without a listing the warnings fall back to bare ids.
+            let described = new Map();
+            try {
+              described = new Map(
+                [...read(process.env.LISTING_NAME).matchAll(/^(\S+)\n\s+(.+)$/gm)].map(
+                  ([, id, description]) => [id, description],
+                ),
+              );
+            } catch {
+              // No listing.
+            }
+
+            let report;
+            try {
+              report = JSON.parse(read(process.env.REPORT_NAME));
+            } catch (error) {
+              // Staying quiet here would be indistinguishable from a caller needing nothing.
+              core.warning(
+                `Could not check this repository's Flowzone caller workflow: ${error.message}`,
+              );
+              return;
+            }
+
+            // `files` is not optional in flowzonify's output. Defaulting it to empty would
+            // report a malformed run as a clean caller, which is the one thing this job must
+            // never do.
+            if (!Array.isArray(report.files)) {
+              core.warning(
+                "Could not check this repository's Flowzone caller workflow: the report listed no files.",
+              );
+              return;
+            }
+
+            // Annotations render as a flat list interleaved with other jobs', so each warning
+            // repeats the fix rather than relying on a summary to carry it.
+            const FIX = "Run `npx flowzonify` to apply it.";
+
+            for (const file of report.files) {
+              // Not a Flowzone caller.
+              if (file.status === "skipped") {
+                continue;
+              }
+
+              // `file=` has to be relative to the repository, or GitHub attaches the
+              // annotation to nothing.
+              const where = { file: path.relative(process.env.GITHUB_WORKSPACE, file.path) };
+
+              // The one status where silence would lie: the migrations could not be evaluated,
+              // so "nothing outstanding" is unknown rather than false. Covers both an
+              // unreadable caller workflow and a gate that turned the migrated result down,
+              // which differ in who has to act, so the detail is passed through.
+              if (file.status === "error") {
+                core.warning(
+                  "Could not determine outstanding Flowzone config migrations: " +
+                    (file.error || "no detail was reported"),
+                  where,
+                );
+                continue;
+              }
+
+              // Same reasoning one level down: a file with outstanding migrations and no
+              // `report` would produce no warnings at all.
+              if (!Array.isArray(file.report)) {
+                core.warning(
+                  "Could not determine outstanding Flowzone config migrations: the report named no migrations.",
+                  where,
+                );
+                continue;
+              }
+
+              for (const unit of file.report) {
+                // The transform ran and a gate declined this unit: it needs a human.
+                if (unit.status === "blocked") {
+                  core.warning(
+                    `${unit.id} needs a manual migration: ${unit.note || "no detail was reported"}`,
+                    where,
+                  );
+                  continue;
+                }
+                if (unit.status === "skip" || !file.changed) {
+                  continue;
+                }
+                // `note` is set for an advisory, and is more specific than the description.
+                const why = unit.note || described.get(unit.id);
+                core.warning(
+                  why ? `${unit.id}: ${why} ${FIX}` : `${unit.id} is outstanding. ${FIX}`,
+                  where,
+                );
+              }
+            }
   file_list:
     name: File list
     runs-on: ${{ fromJSON(inputs.runs_on) }}
