@@ -1,4 +1,31 @@
 - commits:
+    - subject: Add a job that warns when the caller workflow needs migrating
+      hash: 848b90973ee8f09680f6881472469858dd3afbea
+      body: >
+        Flowzone's caller contract changes over time, and a drifted caller gets
+        no
+
+        signal today: nothing fails, features quietly stop applying.
+        check_config runs
+
+        flowzonify against the caller's own flowzone.yml and warns per
+        outstanding
+
+        migration. It holds no token, never gates a merge, and fixing it stays
+        the
+
+        maintainer's move.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.1.0
+  title: ""
+  date: 2026-08-20T18:47:13.335Z
+- commits:
     - subject: Update docker/setup-buildx-action action to v4.3.0
       hash: 594580e2f774d1789b312bcdcc8ba695a3deb751
       body: |
