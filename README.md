@@ -10,6 +10,7 @@ Reusable, opinionated, zero-conf workflows for GitHub actions
 - [Getting Started](#getting-started)
 - [Usage](#usage)
   - [Merging](#merging)
+  - [Config Migrations](#config-migrations)
   - [External Contributions](#external-contributions)
   - [Commit Message](#commit-message)
     - [Skipping Workflow Runs](#skipping-workflow-runs)
@@ -348,6 +349,20 @@ Avoid using **Squash and merge** or **Rebase and merge** as these methods will r
 This would prevent Flowzone from finding and finalizing existing draft artifacts.
 
 You can read more about the available merge methods [here](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/about-merge-methods-on-github).
+
+### Config Migrations
+
+Flowzone's caller contract changes over time. A caller workflow that has drifted from it gets no other signal — nothing fails, and features quietly stop applying — so the `Check config` job reports the drift as warnings on every run.
+
+The job reports what [flowzonify](https://github.com/product-os/flowzonify) would change in your `.github/workflows/flowzone.yml`. It holds no token, cannot write to your repository, and is not part of the `All jobs` check, so it never gates a merge.
+
+To act on a warning, migrate your caller workflow yourself and review the diff:
+
+```console
+npx flowzonify
+```
+
+Some workflows cannot be migrated automatically — a customised `if:` on the Flowzone job, for instance. Those are reported as needing a manual migration, with the reason.
 
 ### External Contributions
 
