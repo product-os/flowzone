@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency kubernetes/kubernetes to v1.36.4
+      hash: dd7e37ed938e77ac4eeb390e071f4b82071a7a30
+      body: |
+        Update kubernetes/kubernetes from 1.36.3 to 1.36.4
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.1.2
+  title: ""
+  date: 2026-08-21T08:47:04.399Z
+- commits:
     - subject: Update dawidd6/action-download-artifact action to v24
       hash: 0be1a31e5a7298d4a3946046904d5101deaa09ae
       body: |
