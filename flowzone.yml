@@ -1014,9 +1014,9 @@ jobs:
     #
     # The push lane excludes Flowzone's own pushes. The versioned commit is pushed with the app
     # token, which (unlike github.token) does re-trigger workflows, so it re-enters the pipeline.
-    # That run cannot loop (no merged PR -> fork_merge and push_finalize are false), but the jobs
-    # with no push-lane gate beyond `trusted` (balena_publish, website_publish, custom_always)
-    # would publish a second time. Two independent signals, because either can be absent:
+    # That run cannot loop (no merged PR -> fork_merge and push_finalize are false), but any job
+    # with no push-lane gate beyond `trusted` (custom_always) would publish a second time. Two
+    # independent signals, because either can be absent:
     #   - sender.login  — catches any push made by the app (versioned commit, auto-merge), but
     #                     not the legacy FLOWZONE_TOKEN (PAT) path, where the pusher is a human.
     #   - commit trailer — catches the versioned commit regardless of which credential pushed it.
@@ -3823,7 +3823,8 @@ jobs:
       needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.docker_test.result == 'success' &&
-      needs.is_docker.outputs.docker_publish_matrix != ''
+      needs.is_docker.outputs.docker_publish_matrix != '' &&
+      (github.event_name != 'push' || needs.event_types.outputs.fork_merge == 'true')
       )
 
     <<: *rootWorkingDirectory
@@ -4044,7 +4045,8 @@ jobs:
       needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
+      (github.event_name != 'push' || needs.event_types.outputs.fork_merge == 'true')
       )
 
     strategy:
@@ -4356,12 +4358,14 @@ jobs:
       - python_test
       - versioned_source
     # allow some dependencies to be skipped
-    # skip unmerged closed PRs, allow all other events
+    # skip unmerged closed PRs, and only publish from the default branch
+    # push when it is a fork merge being rebuilt with secrets
     if: |
       needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
       inputs.cloudflare_website != '' &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
+      (github.event_name != 'push' || needs.event_types.outputs.fork_merge == 'true')
       )
 
     permissions:
