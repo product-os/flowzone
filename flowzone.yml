@@ -7,7 +7,7 @@
     name: Decode private key
     if: inputs.app_id
     id: decode
-    uses: product-os/decode-private-key@e51369845773d30f258072c37a0086b3b46c0b4f # v0.0.2
+    uses: product-os/decode-private-key@5076e5783d69a02081748171b57ff4bc55500060 # v0.0.3
     with:
       secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
 
