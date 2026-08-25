@@ -1,4 +1,50 @@
 - commits:
+    - subject: Skip balena_publish and website_publish on internal-merge pushes
+      hash: ee1e9ae2e8623795185cdd29704bd3c3e63f9578
+      body: >
+        On an internal PR merge, GitHub fires both a pull_request closed event
+        and
+
+        a push to the default branch. balena_publish and website_publish had no
+
+        push-lane gate, so they published once on each lane. That is the
+        duplicate
+
+        release.
+
+
+        Gate both on merged_pr so only the internal-merge push skips. A tag push
+        and
+
+        a direct push both have an empty merged_pr, and a fork merge sets
+        fork_merge,
+
+        so all three still publish. balena_publish and website_publish have no
+
+        finalize job, so they must keep firing on those lanes
+        (docs/trust-boundary.md
+
+        line 28).
+
+
+        docker_publish already skips the internal-merge push through
+        docker_test, so
+
+        it needs no change. The version-commit self-retrigger stays handled by
+        the
+
+        event_types veto, this gate does not touch that.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.1.6
+  title: ""
+  date: 2026-08-25T14:50:57.004Z
+- commits:
     - subject: Update product-os/setup-awscli-action action to v0.0.37
       hash: fbe25e58af9afadf5f5a3a6b9abb127d30308b55
       body: |
