@@ -1220,7 +1220,7 @@ jobs:
         continue-on-error: true
         shell: bash --noprofile --norc -eo pipefail -x {0}
         env:
-          FLOWZONIFY_VERSION: 0.3.4
+          FLOWZONIFY_VERSION: 0.4.0
         run: |
           spec="flowzonify@${FLOWZONIFY_VERSION}"
           npm exec --yes -- "${spec}" --list > "${RUNNER_TEMP}/${LISTING_NAME}"
