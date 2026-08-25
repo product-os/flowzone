@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update product-os/decode-private-key action to v0.0.3
+      hash: 580fa6fcc97b7ebf3103f92bdb5cc676070c5892
+      body: |
+        Update product-os/decode-private-key from 0.0.2 to 0.0.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.1.7
+  title: ""
+  date: 2026-08-25T15:50:38.690Z
+- commits:
     - subject: Skip balena_publish and website_publish on internal-merge pushes
       hash: ee1e9ae2e8623795185cdd29704bd3c3e63f9578
       body: >
