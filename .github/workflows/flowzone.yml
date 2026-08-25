@@ -4020,7 +4020,8 @@ jobs:
       needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
+      (github.event_name != 'push' || needs.event_types.outputs.fork_merge == 'true' || needs.event_types.outputs.merged_pr == '')
       )
     strategy:
       fail-fast: false
@@ -4677,7 +4678,8 @@ jobs:
       needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
       inputs.cloudflare_website != '' &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
+      (github.event_name != 'push' || needs.event_types.outputs.fork_merge == 'true' || needs.event_types.outputs.merged_pr == '')
       )
     permissions:
       contents: read

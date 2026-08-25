@@ -4040,11 +4040,15 @@ jobs:
       - versioned_source
       - release_notes
     # allow some dependencies to be skipped
+    # skip the internal-merge push (the pull_request lane already published). A tag
+    # push, a direct push, and a fork merge still publish, because balena_publish has
+    # no finalize job to catch those lanes.
     if: |
       needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() &&
       needs.is_balena.result == 'success' &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
+      (github.event_name != 'push' || needs.event_types.outputs.fork_merge == 'true' || needs.event_types.outputs.merged_pr == '')
       )
 
     strategy:
@@ -4356,12 +4360,15 @@ jobs:
       - python_test
       - versioned_source
     # allow some dependencies to be skipped
-    # skip unmerged closed PRs, allow all other events
+    # skip unmerged closed PRs, and skip the internal-merge push (the pull_request
+    # lane already published). A tag push, a direct push, and a fork merge still
+    # publish, because website_publish has no finalize job to catch those lanes.
     if: |
       needs.event_types.outputs.trusted == 'true' && (
       !failure() && !cancelled() && needs.versioned_source.result == 'success' &&
       inputs.cloudflare_website != '' &&
-      (github.event.action != 'closed' || github.event.pull_request.merged == true)
+      (github.event.action != 'closed' || github.event.pull_request.merged == true) &&
+      (github.event_name != 'push' || needs.event_types.outputs.fork_merge == 'true' || needs.event_types.outputs.merged_pr == '')
       )
 
     permissions:
