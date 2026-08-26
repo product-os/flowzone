@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-26 to v26.8.1
+      hash: 02a9eb25df76844b71a63d423edb28fa3eeb3866
+      body: |
+        Update node-26 from 26.7.0 to 26.8.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.1.11
+  title: ""
+  date: 2026-08-26T22:34:05.348Z
+- commits:
     - subject: Update dependency kubernetes/kubernetes to v1.37.0
       hash: 274d8897fe55d9993f64f0e55c01d4adc7150da3
       body: |
