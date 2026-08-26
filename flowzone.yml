@@ -536,7 +536,7 @@
     uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
     env:
       # renovate: datasource=node-version depName=node packageName=node-24.x
-      NODE_VERSION: 24.19.0
+      NODE_VERSION: 24.20.0
     with:
       node-version: ${{ env.NODE_VERSION }}
 
