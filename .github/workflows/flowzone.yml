@@ -1647,7 +1647,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         env:
-          NODE_VERSION: 24.19.0
+          NODE_VERSION: 24.20.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Check engine
