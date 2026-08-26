@@ -2218,7 +2218,7 @@ jobs:
           version: ${{ env.KUBERNETES_VERSION }}
         env:
           # renovate: datasource=github-releases depName=kubernetes/kubernetes
-          KUBERNETES_VERSION: v1.36.4
+          KUBERNETES_VERSION: v1.37.0
 
       - <<: *setupHelm
         with:
