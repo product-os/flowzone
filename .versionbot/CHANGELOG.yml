@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency kubernetes/kubernetes to v1.37.0
+      hash: 274d8897fe55d9993f64f0e55c01d4adc7150da3
+      body: |
+        Update kubernetes/kubernetes from 1.36.4 to 1.37.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.1.10
+  title: ""
+  date: 2026-08-26T17:11:58.226Z
+- commits:
     - subject: Update dependency node-24 to v24.20.0
       hash: 1175d29ccc4056be82f1416a447efabc420ea320
       body: |
