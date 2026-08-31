@@ -5312,7 +5312,7 @@ jobs:
           python -m pip install "cfn-lint==${CFN_LINT_VERSION}"
         env:
           # renovate: datasource=github-releases depName=aws-cloudformation/cfn-lint
-          CFN_LINT_VERSION: 1.55.1
+          CFN_LINT_VERSION: 1.56.0
 
       - name: Lint template
         run: |
