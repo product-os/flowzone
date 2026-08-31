@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws-cloudformation/cfn-lint to v1.56.0
+      hash: 50bf4276e5eef9b3559bb0ab14b6a66207dea2f9
+      body: |
+        Update aws-cloudformation/cfn-lint from 1.55.1 to 1.56.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.1.13
+  title: ""
+  date: 2026-08-31T17:38:08.240Z
+- commits:
     - subject: Update softprops/action-gh-release action to v3.0.3
       hash: 5e05b5aeb4aad4a7d4be30ae62fa1fa29ba78812
       body: |
