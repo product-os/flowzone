@@ -25,7 +25,7 @@
   - &configureAWSCredentials # https://github.com/aws-actions/configure-aws-credentials
     name: Configure AWS credentials
     id: aws_credentials
-    uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+    uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
     # Only on trusted lanes (internal PR or fork-merge push) and when an aws region is set;
     # a fork's pull_request gets no credentials. Every consumer has event_types in its needs.
     if: |
