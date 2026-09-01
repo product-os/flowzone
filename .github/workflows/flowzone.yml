@@ -826,64 +826,124 @@ jobs:
           result-encoding: string
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           script: |
-            // Get all tags sorted by version in descending order
-            const { data: tags } = await github.rest.repos.listTags({
-              ...context.repo,
-              per_page: 10, // only fetch the last handful of tags
-              page: 1
-            });
+            // ESR release tags use calendar versioning "vYEAR.MONTH.REVISION" (e.g. v2024.7.5)
+            // where MONTH is currently one of 1, 4, 7, 10. Mainline release tags use plain
+            // semver "vMAJOR.MINOR.PATCH" (e.g. v8.0.0). Both shapes match the same regex,
+            // so they must be told apart explicitly - update ESR_MONTHS if the cadence changes.
+            const ESR_MONTHS = new Set([1, 4, 7, 10]);
+            const MAX_PAGES = 5; // scan up to 5 * 100 = 500 tags before giving up
+            const PER_PAGE = 100;
 
-            // Filter out the current tag
-            const filteredTags = tags.filter(tag => tag.name !== process.env.CURRENT_TAG);
-
-            console.log('tags:', JSON.stringify(filteredTags, null, 2));
-            core.setOutput('tags', filteredTags);
-
-            // Get the previous version tag
-            const previousTag = filteredTags.find(tag => tag.name.match(/^v\d+\.\d+\.\d+/));
-            const head = context.payload.pull_request?.head.sha || context.sha;
-            let base;
-
-            if (!previousTag) {
-              const baseRef = context.payload.pull_request?.base.ref;
-              core.warning(`No previous version tag found, using ${baseRef}`);
-              base = baseRef;
-            } else {
-              core.info(`Found previous versioned tag: ${previousTag.name}`);
-              base = previousTag.name;
+            // Strict match: MAJOR.MINOR.PATCH only, no pre-release/build suffixes.
+            function parseVersion(tagName) {
+              const m = tagName.match(/^v(\d+)\.(\d+)\.(\d+)$/);
+              if (!m) return null;
+              return { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]) };
             }
 
+            // The only signal that separates ESR calendar tags from mainline semver tags.
+            function isESR({ major, minor }) {
+              return major >= 2000 && major <= 2100 && ESR_MONTHS.has(minor);
+            }
+
+            function compareVersions(a, b) {
+              if (a.major !== b.major) return a.major - b.major;
+              if (a.minor !== b.minor) return a.minor - b.minor;
+              return a.patch - b.patch;
+            }
+
+            const currentTagName = process.env.CURRENT_TAG;
+            const currentVersion = parseVersion(currentTagName);
+            if (!currentVersion) {
+              throw new Error(`CURRENT_TAG "${currentTagName}" doesn't look like a "vMAJOR.MINOR.PATCH" tag`);
+            }
+            const currentIsESR = isESR(currentVersion);
+
+            // Page through tags instead of trusting the first 10 in whatever order the API
+            // returns them (listTags is NOT sorted by version or recency - see the v2019.10.0
+            // ahead of v8.0.0 case that broke this originally).
+            const candidates = [];
+            let firstPageTags = [];
+            for (let page = 1; page <= MAX_PAGES; page++) {
+              const { data: tags } = await github.rest.repos.listTags({
+                ...context.repo,
+                per_page: PER_PAGE,
+                page,
+              });
+              if (page === 1) firstPageTags = tags.filter(tag => tag.name !== currentTagName);
+              if (tags.length === 0) break;
+
+              for (const tag of tags) {
+                if (tag.name === currentTagName) continue;
+                const v = parseVersion(tag.name);
+                if (!v) continue;
+                if (isESR(v) !== currentIsESR) continue; // stay on the same release channel
+                if (compareVersions(v, currentVersion) >= 0) continue; // strictly older only
+                candidates.push({ tag, version: v });
+              }
+
+              if (tags.length < PER_PAGE) break; // last page
+            }
+
+            console.log('tags:', JSON.stringify(firstPageTags, null, 2));
+            core.setOutput('tags', firstPageTags);
+
+            if (candidates.length === 0) {
+              throw new Error(
+                `No previous ${currentIsESR ? 'ESR' : 'mainline'} release tag found in the first ` +
+                `${MAX_PAGES * PER_PAGE} tags scanned. Refusing to silently diff against a branch ref instead.`
+              );
+            }
+
+            candidates.sort((a, b) => compareVersions(b.version, a.version)); // descending
+            const previousTag = candidates[0].tag;
+            core.info(
+              `Found previous ${currentIsESR ? 'ESR' : 'mainline'} tag: ${previousTag.name} ` +
+              `(${candidates.length} same-channel candidate(s) older than ${currentTagName})`
+            );
+            core.setOutput('previous_tag', previousTag.name);
+
+            const head = context.payload.pull_request?.head.sha || context.sha;
+            const base = previousTag.name;
+
             // Get commit history between previous tag and current commit
-            const { data: { commits } } = await github.rest.repos.compareCommitsWithBasehead({
+            const { data: compare } = await github.rest.repos.compareCommitsWithBasehead({
               ...context.repo,
               basehead: `${base}...${head}`,
             });
+            let commits = compare.commits;
+
+            if (compare.total_commits > commits.length) {
+              core.warning(
+                `compareCommitsWithBasehead reported ${compare.total_commits} total commits but only ` +
+                `returned ${commits.length} (the un-paginated 250-commit cap) - paginating for the rest.`
+              );
+              commits = await github.paginate(github.rest.repos.compareCommitsWithBasehead, {
+                ...context.repo,
+                basehead: `${base}...${head}`,
+                per_page: 100,
+              }, (response) => response.data.commits ?? response.data);
+            }
 
             console.log('commits:', JSON.stringify(commits, null, 2));
             core.setOutput('commits', commits);
-
             // Format commits as git log --pretty=references
             // e.g. 8011111 (commit message, yyyy-mm-dd)
             const changelog = commits.map(commit => {
               const shortSha = commit.sha.substring(0, 8);
               return `${shortSha} (${commit.commit.message.split('\n')[0]}, ${commit.commit.author.date.split('T')[0]})`;
             }).join('\n');
-
             core.setOutput('changelog', changelog);
-
             // Generate release notes
             const userDefined = process.env.USER_DEFINED;
             const releaseNotes = userDefined
               ? `${userDefined}\n\n### List of commits\n\n${changelog}`
               : changelog;
-
             console.log(releaseNotes);
-
             // Write to file
             const fs = require('fs');
             fs.writeFileSync(process.env.RUNNER_TEMP + '/release-notes.txt', releaseNotes);
-
-            return releaseNotes;
+            return releaseNotes
       - name: Upload release notes file
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
