@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-qemu-action action to v4.3.0
+      hash: 54fc3327b4a4b1b9ee689b3ab628ad691e47fa0e
+      body: |
+        Update docker/setup-qemu-action from 4.2.0 to 4.3.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.1.14
+  title: ""
+  date: 2026-09-01T11:40:11.522Z
+- commits:
     - subject: Update dependency aws-cloudformation/cfn-lint to v1.56.0
       hash: 50bf4276e5eef9b3559bb0ab14b6a66207dea2f9
       body: |
