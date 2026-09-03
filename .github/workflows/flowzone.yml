@@ -1805,7 +1805,7 @@ jobs:
         id: setup_buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
         env:
-          BUILDX_VERSION: v0.36.1
+          BUILDX_VERSION: v0.37.0
         with:
           driver-opts: network=host
           version: ${{ env.BUILDX_VERSION }}
@@ -3332,7 +3332,7 @@ jobs:
         id: setup_buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
         env:
-          BUILDX_VERSION: v0.36.1
+          BUILDX_VERSION: v0.37.0
         with:
           driver-opts: network=host
           version: ${{ env.BUILDX_VERSION }}
@@ -3605,7 +3605,7 @@ jobs:
         id: setup_buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
         env:
-          BUILDX_VERSION: v0.36.1
+          BUILDX_VERSION: v0.37.0
         with:
           driver-opts: network=host
           version: ${{ env.BUILDX_VERSION }}
