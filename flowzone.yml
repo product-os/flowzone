@@ -511,7 +511,7 @@
     uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
     env:
       # renovate: datasource=github-releases depName=docker/buildx
-      BUILDX_VERSION: v0.36.1
+      BUILDX_VERSION: v0.37.0
     with:
       driver-opts: network=host
       version: ${{ env.BUILDX_VERSION }}
@@ -2443,7 +2443,7 @@ jobs:
           # is created without the "default" target.
           # See https://github.com/docker/buildx/issues/2859
           # renovate: datasource=github-releases depName=docker/buildx
-          BUILDX_VERSION: v0.36.1
+          BUILDX_VERSION: v0.37.0
 
       # generate a custom bake json string from the provided bake targets and any discovered bake files
       # https://docs.docker.com/build/customize/bake/file-definition/#json-definition
