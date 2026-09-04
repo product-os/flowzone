@@ -1,4 +1,21 @@
 - commits:
+    - subject: Verify submodule commits are on their declared .gitmodules branch
+      hash: f812d1b4f9bd4c77ac4bd197dca548fd07455409
+      body: |
+        Add an opt-in check_gitmodules_branches input that fails if a submodule
+        has no declared branch, or its pinned commit isn't on it. Lives inside
+        versioned_source, right after the submodule checkout it already does.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: guille-vega <guillermo.vega@balena.io>
+        signed-off-by: guille-vega <guillermo.vega@balena.io>
+      author: guille-vega
+      nested: []
+  version: 23.2.0
+  title: ""
+  date: 2026-09-04T14:03:41.212Z
+- commits:
     - subject: Update dependency docker/buildx to v0.37.0
       hash: af9cf8e11a89ea7254b635f94bf33444ae875143
       body: |
