@@ -337,6 +337,12 @@ jobs:
       # Required: false
       generate_sbom: true
 
+      # Require every .gitmodules submodule to declare a branch, and its pinned commit to be on
+      # it.
+      # Type: boolean
+      # Required: false
+      check_gitmodules_branches: ${{ github.repository_owner == 'balena-os' }}
+
 
 ```
 <!-- end usage -->

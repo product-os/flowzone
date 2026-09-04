@@ -237,6 +237,11 @@ on:
         type: boolean
         required: false
         default: true
+      check_gitmodules_branches:
+        description: Require every .gitmodules submodule to declare a branch, and its pinned commit to be on it.
+        type: boolean
+        required: false
+        default: ${{ github.repository_owner == 'balena-os' }}
     outputs:
       cloudflare_deployment_url:
         description: Cloudflare Deployment URL
@@ -488,6 +493,42 @@ jobs:
           ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Check submodule branches
+        if: inputs.check_gitmodules_branches == true && steps.has_submodules.outputs.result == 'true'
+        run: |
+          failures=0
+
+          # One "submodule.<name>.path <path>" line per submodule.
+          submodules="$(git config -f .gitmodules --get-regexp '\.path$' || true)"
+
+          echo "::group::Submodules declared in .gitmodules"
+          echo "${submodules}"
+          echo "::endgroup::"
+
+          while IFS=' ' read -r key path; do
+            [ -z "${key}" ] && continue
+            submodule="${key#submodule.}"
+            submodule="${submodule%.path}"
+            branch="$(git config -f .gitmodules --get "submodule.${submodule}.branch" || true)"
+
+            if [ -z "${branch}" ]; then
+              echo "::error file=.gitmodules::Submodule '${submodule}' (path: ${path}) does not declare a branch"
+              failures=$((failures + 1))
+            elif ! pinned_sha="$(git -C "${path}" rev-parse HEAD 2>/dev/null)"; then
+              echo "::error file=.gitmodules::Submodule '${submodule}' (path: ${path}) was not initialized, cannot verify branch '${branch}'"
+              failures=$((failures + 1))
+            elif ! git -C "${path}" merge-base --is-ancestor "${pinned_sha}" "refs/remotes/origin/${branch}" 2>/dev/null; then
+              echo "::error file=.gitmodules::Submodule '${submodule}' (path: ${path}) is pinned to ${pinned_sha}, which is not on branch '${branch}' (or that branch does not exist on its remote)"
+              failures=$((failures + 1))
+            fi
+          done <<< "${submodules}"
+
+          if [ "${failures}" -gt 0 ]; then
+            echo "::error::${failures} submodule(s) failed .gitmodules branch validation (see errors above)"
+            exit 1
+          fi
+
+          echo "All submodule commits are on their declared .gitmodules branch."
       - name: Describe git state
         id: git_describe
         run: |
