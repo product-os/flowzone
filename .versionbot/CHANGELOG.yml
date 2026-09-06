@@ -1,4 +1,24 @@
 - commits:
+    - subject: Make .gitmodules check opt-in for balena-os
+      hash: 7612de6d123abf983dd63a2de98de3b288e7d28c
+      body: |
+        There are still too many submodules tracking default branches
+        as intended that are not declared and have no requirement for
+        this declaration to start enforcing it org-wide.
+
+        In the meantime, we can start opening PRs to declare all submodule
+        branches without otherwise further blocking the pipelines.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.3.0
+  title: ""
+  date: 2026-09-06T11:59:38.156Z
+- commits:
     - subject: Verify submodule commits are on their declared .gitmodules branch
       hash: f812d1b4f9bd4c77ac4bd197dca548fd07455409
       body: |
