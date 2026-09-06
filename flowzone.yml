@@ -963,7 +963,7 @@ on:
         description: "Require every .gitmodules submodule to declare a branch, and its pinned commit to be on it."
         type: boolean
         required: false
-        default: "${{ github.repository_owner == 'balena-os' }}"
+        default: false
     outputs:
       cloudflare_deployment_url:
         description: "Cloudflare Deployment URL"

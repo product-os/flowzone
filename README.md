@@ -341,7 +341,7 @@ jobs:
       # it.
       # Type: boolean
       # Required: false
-      check_gitmodules_branches: ${{ github.repository_owner == 'balena-os' }}
+      check_gitmodules_branches: false
 
 
 ```
