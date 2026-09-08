@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws-cloudformation/cfn-lint to v1.56.1
+      hash: f128d4da850d716a95fe78d3258bae79ae323dcd
+      body: |
+        Update aws-cloudformation/cfn-lint from 1.56.0 to 1.56.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.1
+  title: ""
+  date: 2026-09-08T16:48:24.991Z
+- commits:
     - subject: Make .gitmodules check opt-in for balena-os
       hash: 7612de6d123abf983dd63a2de98de3b288e7d28c
       body: |
