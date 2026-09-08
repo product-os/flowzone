@@ -6211,7 +6211,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "cfn-lint==${CFN_LINT_VERSION}"
         env:
-          CFN_LINT_VERSION: 1.56.0
+          CFN_LINT_VERSION: 1.56.1
       - name: Lint template
         run: |
           ignore_from_meta="$(cat <"${TEMPLATE_FILE}" | yq e .Metadata.cfn-lint.config.ignore_checks[] -)"
