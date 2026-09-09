@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node to v24.21.0
+      hash: f111df6c021950f7d9373b65155627c053993ebe
+      body: |
+        Update node from 24.20.0 to 24.21.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.2
+  title: ""
+  date: 2026-09-09T01:59:41.039Z
+- commits:
     - subject: Update dependency aws-cloudformation/cfn-lint to v1.56.1
       hash: f128d4da850d716a95fe78d3258bae79ae323dcd
       body: |
