@@ -798,12 +798,6 @@ on:
         type: string
         required: false
         default: "${{ vars.AWS_IAM_ROLE || '' }}"
-      cloudformation_templates:
-        description: |
-          This input is deprecated. To deploy CloudFormation stacks, create a `aws-cf-templates.yaml` file in the root of the repository.
-        type: string
-        required: false
-        default: ""
       app_id:
         description: >-
           GitHub App ID to generate an installation token.
@@ -3053,7 +3047,6 @@ jobs:
       - versioned_source
       - file_list
     if: |
-      inputs.cloudformation_templates != '' ||
       contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yaml') ||
       contains(needs.file_list.outputs.workdir, 'aws-cf-templates.yml') ||
       contains(needs.file_list.outputs.workdir, 'aws-cf-templates.json')
@@ -3064,8 +3057,8 @@ jobs:
       contents: read # Checkout versioned source
 
     outputs:
-      cloudformation: ${{ steps.validate_files.outputs.enabled || steps.validate_input.outputs.enabled }}
-      templates_json: ${{ steps.validate_files.outputs.result || steps.validate_input.outputs.result }}
+      cloudformation: ${{ steps.validate_files.outputs.enabled }}
+      templates_json: ${{ steps.validate_files.outputs.result }}
       stacks: ${{ steps.cloudformation_stacks.outputs.matrix }}
       includes: ${{ steps.cloudformation_stacks.outputs.includes }}
 
@@ -3129,53 +3122,14 @@ jobs:
               core.setOutput('enabled', 'false');
             }
 
-      # DELETEME: This input has been deprecated and should be deleted once
-      # no longer used by any repositories.
-      - name: Validate CloudFormation input
-        id: validate_input
-        if: inputs.cloudformation_templates != '' && steps.validate_files.outputs.enabled != 'true'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        with:
-          result-encoding: json
-          script: |
-            const yaml = require('yaml');
-
-            try {
-              // Parse the input YAML/JSON and validate stacks field exists
-              const parsed = yaml.parse(context.payload.inputs.cloudformation_templates);
-              const hasStacks = parsed && parsed.stacks;
-
-              if (!hasStacks) {
-                core.warning('invalid YAML/JSON or no CloudFormation stacks?');
-                core.setOutput('enabled', 'false');
-                return;
-              }
-
-              // Check if this is an external PR
-              const isExternalPR = context.payload.pull_request.head.repo.full_name != context.payload.repository.full_name;
-
-              if (isExternalPR) {
-                core.warning('CloudFormation stacks are skipped for external contributions.');
-                core.setOutput('enabled', 'false');
-                return;
-              }
-
-              core.setOutput('enabled', 'true');
-              return parsed;
-
-            } catch (error) {
-              core.warning(`Failed to parse CloudFormation templates: ${error.message}`);
-              core.setOutput('enabled', 'false');
-            }
-
       - name: Generate stacks matrix
         id: cloudformation_stacks
-        if: steps.validate_files.outputs.enabled == 'true' || steps.validate_input.outputs.enabled == 'true'
+        if: steps.validate_files.outputs.enabled == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
-          TEMPLATES_JSON: ${{ steps.validate_files.outputs.result || steps.validate_input.outputs.result }}
+          TEMPLATES_JSON: ${{ steps.validate_files.outputs.result }}
           # Use the app token to account for private submodules
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
         with:
@@ -5132,7 +5086,7 @@ jobs:
     name: Clean custom
     runs-on: ${{ matrix.os || fromJSON(inputs.runs_on) }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         os: ${{ fromJSON(inputs.custom_runs_on || format('[{0}]', inputs.runs_on)) }}
@@ -5212,7 +5166,7 @@ jobs:
     name: Test CloudFormation
     runs-on: ${{ fromJSON(inputs.cloudformation_runs_on || inputs.runs_on) }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       max-parallel: ${{ fromJSON(inputs.max_parallel) }}
       matrix:
         stack: ${{ fromJSON(needs.is_cloudformation.outputs.stacks) }}
