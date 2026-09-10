@@ -165,12 +165,6 @@ jobs:
       # Required: false
       aws_iam_role: ${{ vars.AWS_IAM_ROLE || '' }}
 
-      # This input is deprecated. To deploy CloudFormation stacks, create a
-      # `aws-cf-templates.yaml` file in the root of the repository.
-      # Type: string
-      # Required: false
-      cloudformation_templates: 
-
       # GitHub App ID to generate an installation token.
       # See https://github.com/tibdex/github-app-token for more info.
       # Type: string
