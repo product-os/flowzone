@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency helm/helm to v4.3.0
+      hash: 944f0b3a208c7f2865a299a7b81f4f7e883bcaa5
+      body: |
+        Update helm/helm from 4.2.4 to 4.3.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.6
+  title: ""
+  date: 2026-09-10T01:16:50.988Z
+- commits:
     - subject: Update dependency aws-cloudformation/cfn-lint to v1.56.2
       hash: 09dfbed44ddbe9dec666b9e276887e35c930588b
       body: |
