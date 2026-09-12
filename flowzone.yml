@@ -4761,7 +4761,7 @@ jobs:
       - *updateVersionedTagRef
 
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
         with:
           toolchain: ${{ needs.is_cargo.outputs.rust_toolchain }}
           targets: ${{ matrix.target }}
@@ -4837,7 +4837,7 @@ jobs:
       - *updateVersionedTagRef
 
       - name: Set up toolchain
-        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
         with:
           toolchain: stable
 
@@ -4901,7 +4901,7 @@ jobs:
       - *updateVersionedTagRef
 
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
         with:
           toolchain: ${{ needs.is_cargo.outputs.rust_toolchain }}
           targets: ${{ matrix.target }}
