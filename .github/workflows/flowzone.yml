@@ -3666,7 +3666,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
       - name: Configure AWS credentials
         id: aws_credentials
-        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
           (
@@ -3911,7 +3911,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
       - name: Configure AWS credentials
         id: aws_credentials
-        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
           (
@@ -5979,7 +5979,7 @@ jobs:
           sleep "${random}s"
       - name: Configure AWS credentials
         id: aws_credentials
-        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
           (
@@ -6325,7 +6325,7 @@ jobs:
           sleep "${random}s"
       - name: Configure AWS credentials
         id: aws_credentials
-        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
           (
