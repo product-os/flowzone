@@ -521,7 +521,7 @@
   - &setupQemuBinfmt # https://github.com/docker/setup-qemu-action
     name: Setup QEMU
     id: qemu_binfmt
-    uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
+    uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
     env:
       LOG_LEVEL: debug
       # renovate: datasource=docker depName=tonistiigi/binfmt versioning=regex:^(?<compatibility>.*)-v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)-(?<build>\d+)$
