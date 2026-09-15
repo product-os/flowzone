@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v4.4.0
+      hash: 11463e9c316758d7cfc4799875ef0932bbac5b92
+      body: |
+        Update docker/setup-buildx-action from 4.3.0 to 4.4.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.14
+  title: ""
+  date: 2026-09-15T09:48:14.034Z
+- commits:
     - subject: Update docker/bake-action action to v7.4.0
       hash: 2b0105b274e9399938dfd10f9e7f3b9632078bfc
       body: |
