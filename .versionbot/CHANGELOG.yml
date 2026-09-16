@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/setup-buildx-action action to v4.4.1
+      hash: cb15902ec281aee6efdf2296c3ae254e9b9c5d25
+      body: |
+        Update docker/setup-buildx-action from 4.4.0 to 4.4.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.16
+  title: ""
+  date: 2026-09-16T08:51:56.791Z
+- commits:
     - subject: Update docker/setup-qemu-action action to v4.4.0
       hash: 91b9a78f45a3870a670e2ceb6f3de5289be88175
       body: |
