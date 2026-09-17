@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws-cloudformation/cfn-lint to v1.57.0
+      hash: 4fa53ec1bb737359fc989b00ee9f854fe918e200
+      body: |
+        Update aws-cloudformation/cfn-lint from 1.56.3 to 1.57.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.18
+  title: ""
+  date: 2026-09-17T18:51:03.347Z
+- commits:
     - subject: Update dependency node-26 to v26.9.0
       hash: 53a5f9b31c2c29a43a5fe9ccb4e18f352b2b6758
       body: |
