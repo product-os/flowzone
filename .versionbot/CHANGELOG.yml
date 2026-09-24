@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update registry Docker tag to v3.1.2
+      hash: f56ceeb9dcf37e4e9572937f473a99d26d088ae7
+      body: |
+        Update registry from 3.1.1 to 3.1.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.25
+  title: ""
+  date: 2026-09-24T20:52:44.560Z
+- commits:
     - subject: Update dependency kubernetes/kubernetes to v1.37.1
       hash: 230804d1a52f4567827d238eda079c9b3862bacf
       body: |
