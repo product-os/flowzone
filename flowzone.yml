@@ -5225,10 +5225,10 @@ jobs:
           # If at first you don't succeed, back off exponentially.
           source '${{ steps.functions.outputs.with_backoff }}'
 
-          bucket="$(with_backoff aws s3api list-buckets | jq -r '.Buckets[] | select(.Name | (startswith("cfn-") and endswith("-${{ matrix.region || inputs.aws_region }}"))).Name' | head -n 1)"
+          bucket="$(with_backoff aws s3api list-buckets | jq -r --arg region "${AWS_REGION}" '.Buckets[] | select(.Name | (startswith("cfn-") and endswith("-" + $region))).Name' | head -n 1)"
           if [[ -z "$bucket" ]]; then
-              result="$(with_backoff aws s3 mb "s3://cfn-$(uuidgen)-${{ matrix.region || inputs.aws_region }}" \
-                --region '${{ matrix.region || inputs.aws_region }}')"
+              result="$(with_backoff aws s3 mb "s3://cfn-$(uuidgen)-${AWS_REGION}" \
+                --region "${AWS_REGION}")"
 
               bucket="${result#*:}"
               bucket="${bucket//[[:space:]]/}"
