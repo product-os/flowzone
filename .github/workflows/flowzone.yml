@@ -2675,14 +2675,56 @@ jobs:
         with:
           script: |
             const { spawnSync } = require('child_process');
+            const fs = require('fs');
+            const path = require('path');
 
             const token = process.env.GIT_AUTH_TOKEN;
             const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
-            // Fetch the BASE and HEAD refs to ensure we can diff them
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.BASE_SHA], { stdio: 'inherit' });
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.HEAD_SHA], { stdio: 'inherit' });
+            const GITLINK_MODE = '160000';
+            // The default spawnSync maxBuffer (1MB) truncates the raw diff of a large PR.
+            const MAX_BUFFER = 64 * 1024 * 1024;
+
+            // Run git in repoDir and throw on failure, so a failed fetch fails the step
+            // instead of silently removing stacks from the matrix.
+            // Keep the auth header out of the error message.
+            const git = (repoDir, args, options = {}) => {
+              const result = spawnSync('git', ['-c', authConfig, ...args], { cwd: repoDir, maxBuffer: MAX_BUFFER, ...options });
+              if (result.error) throw result.error;
+              if (result.status !== 0) throw new Error(`git ${args[0]} failed in ${repoDir} with exit status ${result.status}`);
+              return result;
+            };
+
+            const hasCommit = (repoDir, sha) =>
+              spawnSync('git', ['cat-file', '-e', `${sha}^{commit}`], { cwd: repoDir }).status === 0;
+
+            // Fetch the two commits in repoDir, then in each submodule that changed between them.
+            // Skip commits that are already local, which is usual in a full submodule clone.
+            // Use --depth=1 because a fetch without --depth into a shallow clone downloads the
+            // full history, and a tree diff does not need history.
+            // Fetch submodules here because git skips on-demand submodule recursion when --depth is set.
+            const fetchCommits = (repoDir, baseSha, headSha) => {
+              const missingShas = [baseSha, headSha].filter(sha => !hasCommit(repoDir, sha));
+              if (missingShas.length > 0) {
+                git(repoDir, ['fetch', '--depth=1', '--no-tags', '--no-recurse-submodules', 'origin', ...missingShas], { stdio: 'inherit' });
+              }
+              // With -z, each entry is "<metadata>\0<path>\0", and git does not quote the path.
+              // With --no-renames, each entry has exactly one path.
+              const { stdout } = git(repoDir, ['diff', '--raw', '-z', '--no-abbrev', '--no-renames', '--diff-filter=M', baseSha, headSha], { encoding: 'utf8' });
+              const fields = stdout.split('\0');
+              for (let i = 0; i + 1 < fields.length; i += 2) {
+                // The metadata is ":<old mode> <new mode> <old sha> <new sha> <status>".
+                // --diff-filter=M excludes mode type changes, so the new mode alone identifies a gitlink.
+                const [, mode, oldSha, newSha] = fields[i].slice(1).split(' ');
+                if (mode !== GITLINK_MODE) continue;
+                const submoduleDir = path.join(repoDir, fields[i + 1]);
+                if (!fs.existsSync(path.join(submoduleDir, '.git'))) continue;
+                fetchCommits(submoduleDir, oldSha, newSha);
+              }
+            };
+
+            fetchCommits('.', process.env.BASE_SHA, process.env.HEAD_SHA);
 
             // Parse the JSON input
             const stacks = JSON.parse(process.env.TEMPLATES_JSON);
@@ -2702,12 +2744,12 @@ jobs:
 
             // Get modified files between BASE and HEAD
             const getModifiedFiles = () => {
-              const diff = spawnSync(
-                'sh',
-                ['-c', `git diff --submodule=diff ${process.env.BASE_SHA} ${process.env.HEAD_SHA} | sed -rn \'s|^--- a/(.*)$|\\1|p\'`],
-                { encoding: 'utf8' }
-              );
-              return diff.stdout.split('\n').filter(f => f != null && !!f.trim())
+              const { stdout } = git('.', ['diff', '--submodule=diff', process.env.BASE_SHA, process.env.HEAD_SHA], { encoding: 'utf8' });
+              const oldFilePrefix = '--- a/';
+              return stdout.split('\n')
+                .filter(line => line.startsWith(oldFilePrefix))
+                .map(line => line.slice(oldFilePrefix.length))
+                .filter(f => !!f.trim());
             };
 
             let modifiedFiles = getModifiedFiles();
