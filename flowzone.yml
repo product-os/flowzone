@@ -3141,8 +3141,8 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             // Fetch the BASE and HEAD refs to ensure we can diff them
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.BASE_SHA], { stdio: 'inherit' });
-            spawnSync('git', ['-c', authConfig, 'fetch', 'origin', process.env.HEAD_SHA], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'fetch', '--no-tags', 'origin', process.env.BASE_SHA], { stdio: 'inherit' });
+            spawnSync('git', ['-c', authConfig, 'fetch', '--no-tags', 'origin', process.env.HEAD_SHA], { stdio: 'inherit' });
 
             // Parse the JSON input
             const stacks = JSON.parse(process.env.TEMPLATES_JSON);
