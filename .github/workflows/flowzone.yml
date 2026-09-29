@@ -3113,7 +3113,7 @@ jobs:
           name: npm-${{ github.event.head_commit.id }}
       - name: Download npm artifact from last run
         if: github.event_name != 'push' || needs.event_types.outputs.fork_merge != 'true'
-        uses: dawidd6/action-download-artifact@27e4ae67c24b67d3b54bc6d6a45475be1e28031b
+        uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -3180,7 +3180,7 @@ jobs:
           name: docs-${{ github.event.head_commit.id }}
       - name: Download npm docs artifact from last run
         if: github.event_name != 'push' || needs.event_types.outputs.fork_merge != 'true'
-        uses: dawidd6/action-download-artifact@27e4ae67c24b67d3b54bc6d6a45475be1e28031b
+        uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477
         with:
           github_token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           commit: ${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
