@@ -1,4 +1,18 @@
 - commits:
+    - subject: "Generate stacks matrix: use `--no-tags` when git fetching"
+      hash: 53c5d70ed4248f81f155e8c26756ae1a230fb62d
+      body: |
+        Fetching tags is unnecessary and just adds time to the action, which
+        can be significant for repos with lots of tags
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 23.3.32
+  title: ""
+  date: 2026-09-30T15:05:13.893Z
+- commits:
     - subject: Update dawidd6/action-download-artifact action to v27
       hash: d91ffffa84d22f198117900a7e6c276592520e45
       body: |
