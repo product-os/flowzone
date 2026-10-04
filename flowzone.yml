@@ -2621,6 +2621,7 @@ jobs:
           BAKE_JSON: "${{ steps.docker_bake.outputs.result }}"
           RUNS_ON: "${{ inputs.runs_on }}"
           DOCKER_RUNS_ON: "${{ inputs.docker_runs_on }}"
+          DOCKER_INVERT_TAGS: "${{ inputs.docker_invert_tags }}"
         with:
           result-encoding: json
           script: |
@@ -2648,7 +2649,7 @@ jobs:
             };
 
             // Add tag prefix/suffix based on docker_invert_tags
-            const invertTags = ${{ inputs.docker_invert_tags }};
+            const invertTags = process.env.DOCKER_INVERT_TAGS === 'true';
             matrix.include = matrix.include.map(item => {
               if (item.target !== 'default') {
                 if (invertTags) {
