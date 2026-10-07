@@ -3426,7 +3426,7 @@ jobs:
     steps:
       # https://github.com/actions/download-artifact
       - name: Download npm artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -3500,7 +3500,7 @@ jobs:
       # artifact is never reused), so download it directly instead of the cross-run lookup.
       - name: Download npm artifact (same run)
         if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: ${{ runner.temp }}/npm
           name: npm-${{ github.event.head_commit.id }}
@@ -3573,7 +3573,7 @@ jobs:
       # directly instead of the cross-run lookup.
       - name: Download npm docs artifact (same run)
         if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: ${{ runner.temp }}/docs
           name: docs-${{ github.event.head_commit.id }}
@@ -3862,7 +3862,7 @@ jobs:
 
       # https://github.com/actions/download-artifact
       - name: Download required artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: ${{ runner.temp }}
           pattern: docker-${{ matrix.target_slug }}-*
@@ -4528,7 +4528,7 @@ jobs:
 
       # https://github.com/actions/download-artifact
       - name: Download release artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: ${{ runner.temp }}/artifacts
           pattern: gh-release-*
@@ -4536,7 +4536,7 @@ jobs:
 
       # https://github.com/actions/download-artifact
       - name: Download release notes
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: ${{ runner.temp }}
           name: release-notes
@@ -4600,7 +4600,7 @@ jobs:
       # created below.
       - name: Download release artifacts
         if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: ${{ runner.temp }}/artifacts
           pattern: gh-release-*
@@ -4610,7 +4610,7 @@ jobs:
       # https://github.com/actions/download-artifact
       - name: Download release notes
         continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: ${{ runner.temp }}
           name: release-notes
