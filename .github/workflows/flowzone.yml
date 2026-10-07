@@ -3038,7 +3038,7 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail -x {0}
     steps:
       - name: Download npm artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
@@ -3108,7 +3108,7 @@ jobs:
           permission-actions: read
       - name: Download npm artifact (same run)
         if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           path: ${{ runner.temp }}/npm
           name: npm-${{ github.event.head_commit.id }}
@@ -3175,7 +3175,7 @@ jobs:
           permission-contents: write
       - name: Download npm docs artifact (same run)
         if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           path: ${{ runner.temp }}/docs
           name: docs-${{ github.event.head_commit.id }}
@@ -3625,7 +3625,7 @@ jobs:
         if: needs.is_docker.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
       - name: Download required artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           path: ${{ runner.temp }}
           pattern: docker-${{ matrix.target_slug }}-*
@@ -4928,13 +4928,13 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
       - name: Download release artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           path: ${{ runner.temp }}/artifacts
           pattern: gh-release-*
           merge-multiple: true
       - name: Download release notes
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           path: ${{ runner.temp }}
           name: release-notes
@@ -5033,14 +5033,14 @@ jobs:
           permission-contents: write
       - name: Download release artifacts
         if: github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           path: ${{ runner.temp }}/artifacts
           pattern: gh-release-*
           merge-multiple: true
       - name: Download release notes
         continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           path: ${{ runner.temp }}
           name: release-notes
