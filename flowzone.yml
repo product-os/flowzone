@@ -656,7 +656,7 @@
 
   - &publishSBOMArtifacts
     name: Publish SBOM artifacts
-    uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
 
   - &publishSBOMToDependencyTrack
     name: Publish SBOM To Dependency Track
@@ -1712,7 +1712,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Upload release notes file
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-notes
           path: ${{ runner.temp }}/release-notes.txt
@@ -3325,7 +3325,7 @@ jobs:
       # https://github.com/actions/upload-artifact
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_private != 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: npm-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/npm-pack/*.tgz
@@ -3343,7 +3343,7 @@ jobs:
       # https://github.com/actions/upload-artifact
       - name: Upload artifact
         if: needs.is_npm.outputs.npm_docs == 'true' && needs.is_npm.outputs.max_node_version == matrix.node_version
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docs-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
           path: ${{ runner.temp }}/docs.tar.zst
@@ -3799,7 +3799,7 @@ jobs:
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
         if: needs.is_docker.outputs.docker_publish_matrix != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           # this docker-{sha}-{target}-{platform} naming scheme is used by docker_publish to find the correct artifact
           name: docker-${{ matrix.target_slug }}-${{ matrix.platform_slug }}
@@ -4878,7 +4878,7 @@ jobs:
           tar --auto-compress -cvf ${{ matrix.package }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ${{ matrix.package }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: gh-release-${{ matrix.target }}
           path: ${{ matrix.package }}-${{ matrix.target }}.tar.gz
