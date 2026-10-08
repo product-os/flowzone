@@ -534,7 +534,7 @@ jobs:
             echo "sha=$(git rev-parse HEAD)" ;
           } >> "${GITHUB_OUTPUT}"
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 24.21.0
         with:
@@ -1246,7 +1246,7 @@ jobs:
           submodules: false
           persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 24.21.0
         with:
@@ -1632,7 +1632,7 @@ jobs:
 
             return json;
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 20.20.2
         with:
@@ -1660,7 +1660,7 @@ jobs:
             exit 1
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 22.23.3
         with:
@@ -1680,7 +1680,7 @@ jobs:
             exit 1
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 24.21.0
         with:
@@ -1700,7 +1700,7 @@ jobs:
             exit 1
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 25.9.0
         with:
@@ -1720,7 +1720,7 @@ jobs:
             exit 1
           fi
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 26.11.1
         with:
@@ -2815,7 +2815,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 24.21.0
         with:
@@ -2824,7 +2824,7 @@ jobs:
           cache: npm
         if: needs.is_npm.outputs.has_npm_lockfile == 'true'
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 24.21.0
         with:
@@ -2966,7 +2966,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 24.21.0
         with:
@@ -3043,7 +3043,7 @@ jobs:
           path: ${{ runner.temp }}
           name: npm-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 24.21.0
         with:
@@ -3123,7 +3123,7 @@ jobs:
           name: npm-${{ github.event.pull_request.head.sha }}(-v[0-9]+\.[0-9]+\.[0-9]+|-[0-9][0-9]\.x)?
           name_is_regexp: true
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 24.21.0
         with:
@@ -4741,7 +4741,7 @@ jobs:
           permission-issues: read
           permission-pull-requests: write
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         env:
           NODE_VERSION: 24.21.0
         with:
