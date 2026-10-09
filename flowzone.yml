@@ -4742,7 +4742,7 @@ jobs:
         run: cross -v build --locked --release --target ${{ matrix.target }}
 
       - name: Set up rust stable toolchain
-        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
 
       - name: Dry-run crate publish
         run: cargo publish --dry-run --workspace
@@ -4911,7 +4911,7 @@ jobs:
       - *updateVersionedTagRef
 
       - name: Set up toolchain
-        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
 
       - name: Publish crate to cargo registry
         env:
