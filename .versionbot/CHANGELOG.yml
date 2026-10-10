@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency python to 3.15
+      hash: 690502560f09745efb5245c36e7546f6e394c416
+      body: |
+        Update python from 3.14.8 to 3.15.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.48
+  title: ""
+  date: 2026-10-10T19:45:32.285Z
+- commits:
     - subject: Update dtolnay/rust-toolchain digest to 686976e
       hash: 949ec66488a942ddbf9c74c43befdc5b42418308
       body: |
