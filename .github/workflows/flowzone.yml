@@ -4362,7 +4362,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
-          python-version: "3.14"
+          python-version: "3.15"
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
@@ -4509,7 +4509,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
-          python-version: "3.14"
+          python-version: "3.15"
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
@@ -4644,7 +4644,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
-          python-version: "3.14"
+          python-version: "3.15"
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
