@@ -4716,7 +4716,7 @@ jobs:
       - *updateVersionedTagRef
 
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: ${{ needs.is_cargo.outputs.rust_toolchain }}
           targets: ${{ matrix.target }}
@@ -4742,7 +4742,7 @@ jobs:
         run: cross -v build --locked --release --target ${{ matrix.target }}
 
       - name: Set up rust stable toolchain
-        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
 
       - name: Dry-run crate publish
         run: cargo publish --dry-run --workspace
@@ -4792,7 +4792,7 @@ jobs:
       - *updateVersionedTagRef
 
       - name: Set up toolchain
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: stable
 
@@ -4856,7 +4856,7 @@ jobs:
       - *updateVersionedTagRef
 
       - name: Set up toolchain ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: ${{ needs.is_cargo.outputs.rust_toolchain }}
           targets: ${{ matrix.target }}
@@ -4911,7 +4911,7 @@ jobs:
       - *updateVersionedTagRef
 
       - name: Set up toolchain
-        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
 
       - name: Publish crate to cargo registry
         env:
