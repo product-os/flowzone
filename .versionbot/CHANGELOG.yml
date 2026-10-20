@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.38.1
+      hash: cf28faded22fdc1372fc136628474dd527342899
+      body: |
+        Update docker/buildx from 0.38.0 to 0.38.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.59
+  title: ""
+  date: 2026-10-20T22:43:07.551Z
+- commits:
     - subject: Update pre-commit hook renovatebot/pre-commit-hooks to v44.161.1
       hash: 0e2b3b17953392929e090a1f50f189de7e467f70
       body: |
