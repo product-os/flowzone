@@ -3620,7 +3620,7 @@ jobs:
       - name: Setup skopeo
         uses: product-os/setup-skopeo-action@5a3989811388c16b01f29554996e0c7e802b410b
         env:
-          SKOPEO_VERSION: v1.15.0
+          SKOPEO_VERSION: v1.15.2
         with:
           version: ${{ env.SKOPEO_VERSION }}
       - name: Setup AWS CLI
