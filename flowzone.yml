@@ -571,7 +571,7 @@
     uses: product-os/setup-skopeo-action@5a3989811388c16b01f29554996e0c7e802b410b # v0.0.2
     env:
       # renovate: datasource=github-releases depName=lework/skopeo-binary
-      SKOPEO_VERSION: v1.15.0
+      SKOPEO_VERSION: v1.15.2
     with:
       version: ${{ env.SKOPEO_VERSION }}
 
