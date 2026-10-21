@@ -543,8 +543,11 @@
   - &setupCrane # https://github.com/imjasonh/setup-crane
     name: Setup crane
     uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b # v0.7
+    env:
+      # renovate: datasource=github-releases depName=google/go-containerregistry
+      CRANE_VERSION: v0.14.0
     with:
-      version: v0.14.0
+      version: ${{ env.CRANE_VERSION }}
 
   - &setupPython # https://github.com/actions/setup-python
     name: Setup python
@@ -557,21 +560,29 @@
     name: Setup poetry
     if: steps.setup-python.outputs.python-version != ''
     uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1 # v4.0.0
+    env:
+      # renovate: datasource=pypi depName=poetry
+      POETRY_VERSION: 1.5.1
     with:
-      poetry-version: "1.5.1"
+      poetry-version: ${{ env.POETRY_VERSION }}
 
   - &setupSkopeo # https://github.com/product-os/setup-skopeo-action
     name: Setup skopeo
     uses: product-os/setup-skopeo-action@5a3989811388c16b01f29554996e0c7e802b410b # v0.0.2
+    env:
+      # renovate: datasource=github-releases depName=lework/skopeo-binary
+      SKOPEO_VERSION: v1.15.0
     with:
-      # https://github.com/lework/skopeo-binary/releases
-      version: "v1.15.0"
+      version: ${{ env.SKOPEO_VERSION }}
 
   - &setupAwsCli
     name: Setup AWS CLI
     uses: product-os/setup-awscli-action@29dd8bb10179378081cf722ca635cdfe99020363 # v0.0.37
+    env:
+      # renovate: datasource=github-tags depName=aws/aws-cli
+      AWSCLI_VERSION: 2.15.43
     with:
-      version: "2.15.43"
+      version: ${{ env.AWSCLI_VERSION }}
 
   - &setupKubectl
     uses: azure/setup-kubectl@bda439f5f36b99b262ebdcd3613869bddb064c8e # v5.2.0
