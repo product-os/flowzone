@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws-cloudformation/cfn-lint to v1.58.0
+      hash: e4db04bd9badad9242e56758f9906b323bb8ac95
+      body: |
+        Update aws-cloudformation/cfn-lint from 1.57.2 to 1.58.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.61
+  title: ""
+  date: 2026-10-21T01:20:28.428Z
+- commits:
     - subject: Update dtolnay/rust-toolchain digest
       hash: 6cee619fea9773c8ad01c09445bceeb8435c27cb
       body: |
