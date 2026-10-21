@@ -1,4 +1,20 @@
 - commits:
+    - subject: Let renovate manage awscli, skopeo, crane and poetry versions
+      hash: ee07f4dfeb7742e2ea18e5009429f1c1b5d97f5f
+      body: |
+        These steps hardcoded versions in `with:`, which the custom regex
+        manager can't match. Move them to annotated *_VERSION env vars.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.3.66
+  title: ""
+  date: 2026-10-21T21:00:33.840Z
+- commits:
     - subject: Update dependency node-26 to v26.12.1
       hash: aae4321dfa123a1c67b17eeb2439d30cdc7281c1
       body: |
