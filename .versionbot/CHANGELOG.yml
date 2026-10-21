@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws/aws-cli to v2.15.62
+      hash: 7efeeb0c6c3af0a6bdf7cd92fbc8a5b11e0ecab4
+      body: |
+        Update aws/aws-cli from 2.15.43 to 2.15.62
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.67
+  title: ""
+  date: 2026-10-21T21:49:17.958Z
+- commits:
     - subject: Let renovate manage awscli, skopeo, crane and poetry versions
       hash: ee07f4dfeb7742e2ea18e5009429f1c1b5d97f5f
       body: |
