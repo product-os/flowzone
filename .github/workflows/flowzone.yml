@@ -2194,8 +2194,10 @@ jobs:
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
+        env:
+          POETRY_VERSION: 1.5.1
         with:
-          poetry-version: 1.5.1
+          poetry-version: ${{ env.POETRY_VERSION }}
       - name: Validate project Python requirements
         if: steps.python_poetry.outputs.enabled == 'true'
         run: |
@@ -3611,16 +3613,22 @@ jobs:
           cache-binary: ${{ github.repository != 'product-os/flowzone' }}
       - name: Setup crane
         uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b
+        env:
+          CRANE_VERSION: v0.14.0
         with:
-          version: v0.14.0
+          version: ${{ env.CRANE_VERSION }}
       - name: Setup skopeo
         uses: product-os/setup-skopeo-action@5a3989811388c16b01f29554996e0c7e802b410b
+        env:
+          SKOPEO_VERSION: v1.15.0
         with:
-          version: v1.15.0
+          version: ${{ env.SKOPEO_VERSION }}
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@29dd8bb10179378081cf722ca635cdfe99020363
+        env:
+          AWSCLI_VERSION: 2.15.43
         with:
-          version: 2.15.43
+          version: ${{ env.AWSCLI_VERSION }}
       - name: Warn if tests skipped
         if: needs.is_docker.outputs.docker_compose_tests != 'true'
         run: echo "::warning::Publishing Docker images without docker compose tests!"
@@ -3890,12 +3898,16 @@ jobs:
             suffix=${{ steps.strings.outputs.suffix }},onlatest=true
       - name: Setup crane
         uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b
+        env:
+          CRANE_VERSION: v0.14.0
         with:
-          version: v0.14.0
+          version: ${{ env.CRANE_VERSION }}
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@29dd8bb10179378081cf722ca635cdfe99020363
+        env:
+          AWSCLI_VERSION: 2.15.43
         with:
-          version: 2.15.43
+          version: ${{ env.AWSCLI_VERSION }}
       - name: Login to GitHub Container Registry
         continue-on-error: true
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -4215,8 +4227,10 @@ jobs:
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
+        env:
+          POETRY_VERSION: 1.5.1
         with:
-          poetry-version: 1.5.1
+          poetry-version: ${{ env.POETRY_VERSION }}
       - name: Run poetry install
         run: |
           poetry install
@@ -4366,8 +4380,10 @@ jobs:
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
+        env:
+          POETRY_VERSION: 1.5.1
         with:
-          poetry-version: 1.5.1
+          poetry-version: ${{ env.POETRY_VERSION }}
       - name: Run poetry install
         run: poetry install
       - name: Install CycloneDX for Python
@@ -4513,8 +4529,10 @@ jobs:
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
+        env:
+          POETRY_VERSION: 1.5.1
         with:
-          poetry-version: 1.5.1
+          poetry-version: ${{ env.POETRY_VERSION }}
       - name: Generate Python metadata
         id: python_meta
         env:
@@ -4648,8 +4666,10 @@ jobs:
       - name: Setup poetry
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
+        env:
+          POETRY_VERSION: 1.5.1
         with:
-          poetry-version: 1.5.1
+          poetry-version: ${{ env.POETRY_VERSION }}
       - name: Publish release
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
@@ -5970,8 +5990,10 @@ jobs:
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@29dd8bb10179378081cf722ca635cdfe99020363
+        env:
+          AWSCLI_VERSION: 2.15.43
         with:
-          version: 2.15.43
+          version: ${{ env.AWSCLI_VERSION }}
       - name: Random delay
         run: |
           DELAY="${DELAY-5}"
@@ -6316,8 +6338,10 @@ jobs:
           echo "::info::Context set to '${{ matrix.environment }}'"
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@29dd8bb10179378081cf722ca635cdfe99020363
+        env:
+          AWSCLI_VERSION: 2.15.43
         with:
-          version: 2.15.43
+          version: ${{ env.AWSCLI_VERSION }}
       - name: Random delay
         run: |
           DELAY="${DELAY-5}"
