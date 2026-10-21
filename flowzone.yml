@@ -577,7 +577,7 @@
 
   - &setupAwsCli
     name: Setup AWS CLI
-    uses: product-os/setup-awscli-action@29dd8bb10179378081cf722ca635cdfe99020363 # v0.0.37
+    uses: product-os/setup-awscli-action@e2e9a8c9988696a234a76e9a2900cd679460f7c2 # v0.0.38
     env:
       # renovate: datasource=github-tags depName=aws/aws-cli
       AWSCLI_VERSION: 2.15.62

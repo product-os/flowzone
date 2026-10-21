@@ -3624,7 +3624,7 @@ jobs:
         with:
           version: ${{ env.SKOPEO_VERSION }}
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@29dd8bb10179378081cf722ca635cdfe99020363
+        uses: product-os/setup-awscli-action@e2e9a8c9988696a234a76e9a2900cd679460f7c2
         env:
           AWSCLI_VERSION: 2.15.62
         with:
@@ -3903,7 +3903,7 @@ jobs:
         with:
           version: ${{ env.CRANE_VERSION }}
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@29dd8bb10179378081cf722ca635cdfe99020363
+        uses: product-os/setup-awscli-action@e2e9a8c9988696a234a76e9a2900cd679460f7c2
         env:
           AWSCLI_VERSION: 2.15.62
         with:
@@ -5989,7 +5989,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@29dd8bb10179378081cf722ca635cdfe99020363
+        uses: product-os/setup-awscli-action@e2e9a8c9988696a234a76e9a2900cd679460f7c2
         env:
           AWSCLI_VERSION: 2.15.62
         with:
@@ -6337,7 +6337,7 @@ jobs:
         run: |
           echo "::info::Context set to '${{ matrix.environment }}'"
       - name: Setup AWS CLI
-        uses: product-os/setup-awscli-action@29dd8bb10179378081cf722ca635cdfe99020363
+        uses: product-os/setup-awscli-action@e2e9a8c9988696a234a76e9a2900cd679460f7c2
         env:
           AWSCLI_VERSION: 2.15.62
         with:
