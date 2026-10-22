@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws/aws-cli to v2.38.5
+      hash: 46c8d9e5a5facc8b7555f6a8e99939f491096332
+      body: |
+        Update aws/aws-cli from 2.38.4 to 2.38.5
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.77
+  title: ""
+  date: 2026-10-22T19:41:43.250Z
+- commits:
     - subject: Update registry:3.1.2 Docker digest to 01cd312
       hash: e83de0e113d95498f964c64573ebd4ecc889fea7
       body: |
