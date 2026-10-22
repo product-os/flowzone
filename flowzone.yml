@@ -545,7 +545,7 @@
     uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b # v0.7
     env:
       # renovate: datasource=github-releases depName=google/go-containerregistry
-      CRANE_VERSION: v0.14.0
+      CRANE_VERSION: v0.22.1
     with:
       version: ${{ env.CRANE_VERSION }}
 
