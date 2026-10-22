@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency google/go-containerregistry to v0.22.1
+      hash: 7da92c0e7ed44aabd4bd9f0fc263c4a67fa7f7db
+      body: |
+        Update google/go-containerregistry from 0.14.0 to 0.22.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.71
+  title: ""
+  date: 2026-10-22T01:57:37.674Z
+- commits:
     - subject: Update dependency aws/aws-cli to v2.38.4
       hash: 59a356d115fe84d26e5d57fd2e536ec637814432
       body: |
