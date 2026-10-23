@@ -2195,7 +2195,7 @@ jobs:
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
         env:
-          POETRY_VERSION: 1.8.5
+          POETRY_VERSION: 2.5.1
         with:
           poetry-version: ${{ env.POETRY_VERSION }}
       - name: Validate project Python requirements
@@ -4228,7 +4228,7 @@ jobs:
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
         env:
-          POETRY_VERSION: 1.8.5
+          POETRY_VERSION: 2.5.1
         with:
           poetry-version: ${{ env.POETRY_VERSION }}
       - name: Run poetry install
@@ -4381,7 +4381,7 @@ jobs:
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
         env:
-          POETRY_VERSION: 1.8.5
+          POETRY_VERSION: 2.5.1
         with:
           poetry-version: ${{ env.POETRY_VERSION }}
       - name: Run poetry install
@@ -4530,7 +4530,7 @@ jobs:
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
         env:
-          POETRY_VERSION: 1.8.5
+          POETRY_VERSION: 2.5.1
         with:
           poetry-version: ${{ env.POETRY_VERSION }}
       - name: Generate Python metadata
@@ -4667,7 +4667,7 @@ jobs:
         if: steps.setup-python.outputs.python-version != ''
         uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1
         env:
-          POETRY_VERSION: 1.8.5
+          POETRY_VERSION: 2.5.1
         with:
           poetry-version: ${{ env.POETRY_VERSION }}
       - name: Publish release
