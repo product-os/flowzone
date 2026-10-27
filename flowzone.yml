@@ -580,7 +580,7 @@
     uses: product-os/setup-awscli-action@e2e9a8c9988696a234a76e9a2900cd679460f7c2 # v0.0.38
     env:
       # renovate: datasource=github-tags depName=aws/aws-cli
-      AWSCLI_VERSION: 2.38.6
+      AWSCLI_VERSION: 2.39.0
     with:
       version: ${{ env.AWSCLI_VERSION }}
 
