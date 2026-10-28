@@ -1248,10 +1248,15 @@ jobs:
         # https://github.com/actions/checkout
         name: Checkout pull request head sha
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
+        with: &checkoutFullHistory
           fetch-depth: 0
-          # Recursively fetch submodules for yocto-based versioning
-          submodules: "recursive"
+          # Versioning walks commits and tags but never reads old file contents, so skip
+          # historical blobs. This is most of the download for repos with many releases,
+          # as every release rewrites the changelogs.
+          # https://github.blog/open-source/git/get-up-to-speed-with-partial-clone-and-shallow-clone/
+          filter: blob:none
+          # Submodules are cloned in the next step, in parallel and blobless.
+          submodules: false
           # fallback to an invalid ref if the checkout ref is undefined
           ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
           <<: *checkoutAuth
@@ -1265,12 +1270,39 @@ jobs:
         name: Checkout ${{ github.sha }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-          # Recursively fetch submodules for yocto-based versioning
-          submodules: "recursive"
+          <<: *checkoutFullHistory
           # fallback to an invalid ref if the checkout ref is undefined
           ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
-          <<: *checkoutAuth
+
+      # Recursively fetch submodules for yocto-based versioning, which reads the meta-balena
+      # tag and nested changelogs from submodule history. Full history and all refs are kept,
+      # but clones are blobless and run in parallel, where actions/checkout clones each
+      # submodule in full, one at a time.
+      - name: Checkout submodules
+        if: steps.has_submodules.outputs.result == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        env:
+          # Here we must use the app token to account for private submodules.
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+        with:
+          # Use git -c for non-persistent credential configuration, see checkoutSubmodules.
+          # git passes -c values on to the clones it spawns for each submodule.
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+
+            const { spawnSync } = require('child_process');
+            const result = spawnSync('git', [
+              '-c', `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              'submodule', 'update', '--init', '--recursive', '--filter=blob:none', '--jobs=8',
+            ], { stdio: 'inherit' });
+
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
 
       # Require every submodule to declare a branch, and its pinned commit to be on it.
       # Tools like Renovate can only manage a submodule correctly when they know which
