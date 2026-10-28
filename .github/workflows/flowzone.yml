@@ -3586,7 +3586,7 @@ jobs:
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@e2e9a8c9988696a234a76e9a2900cd679460f7c2
         env:
-          AWSCLI_VERSION: 2.39.0
+          AWSCLI_VERSION: 2.39.1
         with:
           version: ${{ env.AWSCLI_VERSION }}
       - name: Warn if tests skipped
@@ -3865,7 +3865,7 @@ jobs:
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@e2e9a8c9988696a234a76e9a2900cd679460f7c2
         env:
-          AWSCLI_VERSION: 2.39.0
+          AWSCLI_VERSION: 2.39.1
         with:
           version: ${{ env.AWSCLI_VERSION }}
       - name: Login to GitHub Container Registry
@@ -5951,7 +5951,7 @@ jobs:
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@e2e9a8c9988696a234a76e9a2900cd679460f7c2
         env:
-          AWSCLI_VERSION: 2.39.0
+          AWSCLI_VERSION: 2.39.1
         with:
           version: ${{ env.AWSCLI_VERSION }}
       - name: Random delay
@@ -6299,7 +6299,7 @@ jobs:
       - name: Setup AWS CLI
         uses: product-os/setup-awscli-action@e2e9a8c9988696a234a76e9a2900cd679460f7c2
         env:
-          AWSCLI_VERSION: 2.39.0
+          AWSCLI_VERSION: 2.39.1
         with:
           version: ${{ env.AWSCLI_VERSION }}
       - name: Random delay
