@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency node-26 to v26.13.0
+      hash: 09a193acdb0944e55b1093b5064e74f8696d5bd1
+      body: |
+        Update node-26 from 26.12.1 to 26.13.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.84
+  title: ""
+  date: 2026-10-28T18:00:15.227Z
+- commits:
     - subject: Remove EOL nodejs 20.x and 25.x versions from the test matrix
       hash: d1a729d41cd346c3fa3a3b036a34003d534d0ba9
       body: ""
