@@ -1710,7 +1710,17 @@ jobs:
         with:
           result-encoding: json
           script: |
-            const { compareVersions } = require('util');
+            // Compare "vMAJOR.MINOR.PATCH" numerically; a string sort puts v100 before v20
+            const parse = (v) => v.replace(/^v/, '').split('.').map(Number);
+            const compareVersions = (a, b) => {
+              const [pa, pb] = [parse(a), parse(b)];
+              for (let i = 0; i < 3; i++) {
+                if (pa[i] !== pb[i]) {
+                  return pa[i] - pb[i];
+                }
+              }
+              return 0;
+            };
             const versions = JSON.parse(process.env.NODE_VERSIONS);
 
             if (versions.length < 1) {
