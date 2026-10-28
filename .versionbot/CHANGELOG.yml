@@ -1,4 +1,16 @@
 - commits:
+    - subject: Remove EOL nodejs 20.x and 25.x versions from the test matrix
+      hash: d1a729d41cd346c3fa3a3b036a34003d534d0ba9
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 23.3.83
+  title: ""
+  date: 2026-10-28T12:36:40.373Z
+- commits:
     - subject: Update dependency kubernetes/kubernetes to v1.37.2
       hash: 6c4a10a704e0c87a3e69aff7b653c1c1992329df
       body: |
