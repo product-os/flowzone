@@ -2356,8 +2356,8 @@ jobs:
 
       - <<: *setupNode
         env:
-          # renovate: datasource=node-version depName=node packageName=node-20.x
-          NODE_VERSION: 20.20.2
+          # renovate: datasource=node-version depName=node-22 packageName=node-22.x
+          NODE_VERSION: 22.23.4
 
       - name: Install check-engine
         run: |
@@ -2371,7 +2371,7 @@ jobs:
       # https://www.npmjs.com/package/check-engine
       - &checkEngine
         name: Check engine
-        id: check_engine_20
+        id: check_engine_22
         run: |
           node_version="$(node --version)"
           # If checking the engine passes, or if it fails outright (ie no engines specified) then we accept this version.
@@ -2387,27 +2387,11 @@ jobs:
 
       - <<: *setupNode
         env:
-          # renovate: datasource=node-version depName=node-22 packageName=node-22.x
-          NODE_VERSION: 22.23.4
-
-      - <<: *checkEngine
-        id: check_engine_22
-
-      - <<: *setupNode
-        env:
           # renovate: datasource=node-version depName=node-24 packageName=node-24.x
           NODE_VERSION: 24.22.1
 
       - <<: *checkEngine
         id: check_engine_24
-
-      - <<: *setupNode
-        env:
-          # renovate: datasource=node-version depName=node-25 packageName=node-25.x
-          NODE_VERSION: 25.9.0
-
-      - <<: *checkEngine
-        id: check_engine_25
 
       - <<: *setupNode
         env:
