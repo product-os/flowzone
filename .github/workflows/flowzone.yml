@@ -474,7 +474,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
-          submodules: recursive
+          filter: blob:none
+          submodules: false
           ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
@@ -483,10 +484,39 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
-          submodules: recursive
+          filter: blob:none
+          submodules: false
           ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
           token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           persist-credentials: false
+      - name: Checkout submodules
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        if: steps.has_submodules.outputs.result == 'true'
+        env:
+          GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: --filter=blob:none
+        with:
+          script: |
+            const token = process.env.GIT_AUTH_TOKEN;
+            const authHeader = Buffer.from(`x-access-token:${token}`).toString('base64');
+            const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
+
+            const { spawnSync } = require('child_process');
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Check submodule branches
         if: inputs.check_gitmodules_branches == true && steps.has_submodules.outputs.result == 'true'
         run: |
@@ -1461,6 +1491,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -1468,7 +1499,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1588,6 +1633,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -1595,7 +1641,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -1780,6 +1840,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -1787,7 +1848,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2066,6 +2141,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -2073,7 +2149,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2230,6 +2320,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -2237,7 +2328,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2321,6 +2426,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -2328,7 +2434,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2559,6 +2679,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -2566,7 +2687,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2760,6 +2895,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -2767,7 +2903,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -2911,6 +3061,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -2918,7 +3069,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3219,6 +3384,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -3226,7 +3392,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -3769,6 +3949,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -3776,7 +3957,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4037,6 +4232,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -4044,7 +4240,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4130,6 +4340,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -4137,7 +4348,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4283,6 +4508,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -4290,7 +4516,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4432,6 +4672,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -4439,7 +4680,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4569,6 +4824,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -4576,7 +4832,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4693,6 +4963,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -4700,7 +4971,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4874,6 +5159,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -4881,7 +5167,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -4986,6 +5286,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -4993,7 +5294,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5133,6 +5448,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -5140,7 +5456,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5237,6 +5567,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -5244,7 +5575,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5346,6 +5691,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -5353,7 +5699,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5434,6 +5794,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -5441,7 +5802,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5513,6 +5888,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -5520,7 +5896,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5604,6 +5994,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -5611,7 +6002,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5688,6 +6093,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -5695,7 +6101,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5767,6 +6187,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -5774,7 +6195,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5840,6 +6275,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -5847,7 +6283,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -5932,6 +6382,7 @@ jobs:
         if: needs.versioned_source.outputs.has_submodules == 'true'
         env:
           GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+          SUBMODULE_UPDATE_ARGS: ""
         with:
           script: |
             const token = process.env.GIT_AUTH_TOKEN;
@@ -5939,7 +6390,21 @@ jobs:
             const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
             const { spawnSync } = require('child_process');
-            spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive'], { stdio: 'inherit' });
+            const result = spawnSync('git', [
+              '-c', authConfig,
+              // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+              '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+              // Clone submodules in parallel rather than one at a time (git's default).
+              'submodule', 'update', '--init', '--recursive', '--jobs=8',
+              ...process.env.SUBMODULE_UPDATE_ARGS.split(/\s+/).filter(Boolean),
+            ], { stdio: 'inherit' });
+
+            // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+            // let the job carry on without its submodules.
+            if (result.error) throw result.error;
+            if (result.status !== 0) {
+              core.setFailed(`git submodule update failed with exit status ${result.status}`);
+            }
       - name: Update versioned tag reference
         if: needs.versioned_source.outputs.tag && needs.versioned_source.outputs.tag_sha
         shell: bash --noprofile --norc -eo pipefail -x {0}
