@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency kubernetes/kubernetes to v1.37.2
+      hash: 6c4a10a704e0c87a3e69aff7b653c1c1992329df
+      body: |
+        Update kubernetes/kubernetes from 1.37.1 to 1.37.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.3.82
+  title: ""
+  date: 2026-10-28T04:47:40.355Z
+- commits:
     - subject: Update dependency aws/aws-cli to v2.39.0
       hash: 68d1b6f31a8bdf1fce3ada9fa83554a34f9473ad
       body: |
