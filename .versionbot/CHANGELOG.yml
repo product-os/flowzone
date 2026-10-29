@@ -1,4 +1,27 @@
 - commits:
+    - subject: Check every PR commit for merge commits, not just the oldest 30
+      hash: 60b4895fd406428a8f6e7e52b80b6133c2a7010f
+      body: >
+        The "Reject HEAD branches containing merge commits" step read a single
+
+        page of pulls.listCommits. That page holds the 30 oldest commits, while
+        a
+
+        merge commit added with "Update with merge commit" is always the newest,
+
+        so on PRs with more than 30 commits the check usually missed it.
+
+
+        Paginate with per_page: 100. The endpoint itself stops at 250 commits.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 23.3.90
+  title: ""
+  date: 2026-10-29T13:21:06.970Z
+- commits:
     - subject: Clone submodules in parallel when checking out the versioned commit
       hash: 1ccb74e90d9640eac94804beb5090087032c6f6e
       body: |
