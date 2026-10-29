@@ -1,4 +1,22 @@
 - commits:
+    - subject: Clone submodules in parallel when checking out the versioned commit
+      hash: 1ccb74e90d9640eac94804beb5090087032c6f6e
+      body: |
+        `git submodule update` clones one submodule at a time unless told
+        otherwise, so a job's checkout took as long as the sum of every
+        submodule clone. Pass --jobs=8 so they clone concurrently. History and
+        refs are unchanged.
+
+        balena-raspberrypi (8 submodules, measured locally): 54.8 s -> 36.2 s.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 23.3.89
+  title: ""
+  date: 2026-10-29T13:11:17.936Z
+- commits:
     - subject: Update dependency aws-cloudformation/cfn-lint to v1.59.0
       hash: 85feac8f357096639933c317fb3f4d5e8bd1f492
       body: |
