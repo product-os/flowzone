@@ -395,9 +395,10 @@ jobs:
           github-token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
           result-encoding: json
           script: |
-            const { data: commits } = await github.rest.pulls.listCommits({
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
               ...context.repo,
-              pull_number: context.payload.pull_request.number
+              pull_number: context.payload.pull_request.number,
+              per_page: 100
             });
 
             if (commits.some(({ parents }) => parents.length > 1)) {
