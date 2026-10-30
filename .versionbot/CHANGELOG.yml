@@ -1,4 +1,23 @@
 - commits:
+    - subject: Sort supported Node.js versions numerically
+      hash: 58ffce0faa9694ae41b6a61d4754cbc201a4544a
+      body: |
+        "Set Node.js versions" sorted with `require('util').compareVersions`,
+        which Node does not provide, so sort() got undefined and fell back to
+        comparing strings. That only gives the right min and max while every
+        version has the same number of major digits; max_node_version picks the
+        Node version for npm pack, publish and website builds.
+
+        Compare the version components numerically.
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Pagan Gazzard
+      nested: []
+  version: 23.3.91
+  title: ""
+  date: 2026-10-30T13:35:18.445Z
+- commits:
     - subject: Check every PR commit for merge commits, not just the oldest 30
       hash: 60b4895fd406428a8f6e7e52b80b6133c2a7010f
       body: >
