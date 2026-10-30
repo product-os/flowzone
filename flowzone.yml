@@ -566,7 +566,7 @@
     uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1 # v4.0.0
     env:
       # renovate: datasource=pypi depName=poetry
-      POETRY_VERSION: 1.8.5
+      POETRY_VERSION: 2.5.1
     with:
       poetry-version: ${{ env.POETRY_VERSION }}
 
