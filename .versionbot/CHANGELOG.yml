@@ -1,4 +1,29 @@
 - commits:
+    - subject: Add balena_publish_concurrency_group input
+      hash: 6ebce728e0a0458ba864695a1a3ba09382d6b9bc
+      body: |
+        Callers that share one balena API key across many parallel PRs hit API
+        rate limits in `balena push`. A caller-level concurrency group can't fix
+        that: it collides with Flowzone's own workflow group and blocks the
+        per-PR cancel-in-progress.
+
+        Setting the input queues Publish balena jobs in one group across runs.
+        The empty default gives each run and matrix leg its own group, so
+        existing callers see no change.
+
+        actionlint 1.7.12 does not know concurrency.queue, so ignore that one
+        message for the generated workflow.
+      footer:
+        Change-type: minor
+        change-type: minor
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.4.0
+  title: ""
+  date: 2026-11-03T16:45:56.168Z
+- commits:
     - subject: Sort supported Node.js versions numerically
       hash: 58ffce0faa9694ae41b6a61d4754cbc201a4544a
       body: |
