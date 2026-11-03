@@ -963,6 +963,15 @@ on:
         type: number
         required: false
         default: 20
+      # balena_publish falls back to a group unique to its run and matrix leg, so an empty
+      # input never serializes anything. The fallback names the job literally because
+      # github.job is null outside steps. queue: max stays static because the schema types
+      # it as an enum, and it is harmless on a unique group.
+      balena_publish_concurrency_group:
+        description: "Concurrency group for the balena publish job, across workflow runs. Jobs in the group run one at a time and queue instead of canceling. Empty means no shared group."
+        type: string
+        required: false
+        default: ""
       generate_sbom:
         description: "Generate a Software Bill of Materials (SBOM) for the release."
         type: boolean
@@ -4038,6 +4047,9 @@ jobs:
   balena_publish:
     name: Publish balena
     runs-on: ${{ fromJSON(inputs.runs_on) }}
+    concurrency:
+      group: ${{ inputs.balena_publish_concurrency_group || format('{0}-{1}-balena_publish-{2}', github.run_id, github.run_attempt, strategy.job-index) }}
+      queue: max
     timeout-minutes: ${{ fromJSON(inputs.jobs_timeout_minutes) }}
     needs:
       - event_types
