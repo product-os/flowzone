@@ -326,6 +326,12 @@ jobs:
       # Required: false
       max_parallel: 20
 
+      # Concurrency group for the balena publish job, across workflow runs. Jobs in the group run
+      # one at a time and queue instead of canceling. Empty means no shared group.
+      # Type: string
+      # Required: false
+      balena_publish_concurrency_group: 
+
       # Generate a Software Bill of Materials (SBOM) for the release.
       # Type: boolean
       # Required: false
