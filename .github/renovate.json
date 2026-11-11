@@ -35,6 +35,14 @@
 			"allowedVersions": "22"
 		},
 		{
+			"matchPackageNames": ["node-24.x"],
+			"allowedVersions": "24"
+		},
+		{
+			"matchPackageNames": ["node-26.x"],
+			"allowedVersions": "26"
+		},
+		{
 			"matchPackageNames": ["docker/buildx"],
 			"allowedVersions": "!/v0.26.0/"
 		},
