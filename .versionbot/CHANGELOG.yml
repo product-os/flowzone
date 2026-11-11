@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update registry:3.1.2 Docker digest to 3890751
+      hash: 9765f5629418f9104f9d8608d6d4a0e1ff008bc7
+      body: |
+        Update registry
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.1
+  title: ""
+  date: 2026-11-11T22:37:16.478Z
+- commits:
     - subject: Add balena_publish_concurrency_group input
       hash: 6ebce728e0a0458ba864695a1a3ba09382d6b9bc
       body: |
