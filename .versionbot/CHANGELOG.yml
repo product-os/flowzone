@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws/aws-cli to v2.39.7
+      hash: daf71633d1bd334b857ccf15c305a1d09ea95d15
+      body: |
+        Update aws/aws-cli from 2.39.1 to 2.39.7
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.3
+  title: ""
+  date: 2026-11-11T23:38:04.820Z
+- commits:
     - subject: "renovate: Add matching for Node.js versions 24.x and 26.x"
       hash: 1d4d8e8d3563ec75ea64bb96d4a38b4a864d272e
       body: ""
