@@ -1,4 +1,25 @@
 - commits:
+    - subject: "build: Disable yaml alias count limit for trusted flowzone.yml"
+      hash: 9aa865dda6256de5c4462c78646adae26ba8142f
+      body: >
+        yaml 2.9.1 counts nested merge aliases toward maxAliasCount (default
+        100),
+
+        which flowzone.yml exceeds, so the build fails on the bump.
+
+
+        See: https://github.com/eemeli/yaml/releases/tag/v2.9.1
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.4.18
+  title: ""
+  date: 2026-11-12T19:22:28.377Z
+- commits:
     - subject: Update dependency aws-cloudformation/cfn-lint to v1.60.1
       hash: c28457a014728d6ec0b73be5d71ea835f50c1949
       body: |
