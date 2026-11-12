@@ -1,4 +1,20 @@
 - commits:
+    - subject: Skip AWS credentials step when no IAM role is set
+      hash: 5b1c27121c0aee6b474b8264ee5c266fb8e9bf71
+      body: |
+        Without a role, configure-aws-credentials falls back to the default
+        provider chain and retries for about a minute before failing.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.4.19
+  title: ""
+  date: 2026-11-12T19:43:26.143Z
+- commits:
     - subject: "build: Disable yaml alias count limit for trusted flowzone.yml"
       hash: 9aa865dda6256de5c4462c78646adae26ba8142f
       body: >
