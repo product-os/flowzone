@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws/aws-cli to v2.40.2
+      hash: 3ce3e11c7e4277fbd6e168b6d737ecfd8a18e1a5
+      body: |
+        Update aws/aws-cli from 2.40.1 to 2.40.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.20
+  title: ""
+  date: 2026-11-12T20:37:20.394Z
+- commits:
     - subject: Skip AWS credentials step when no IAM role is set
       hash: 5b1c27121c0aee6b474b8264ee5c266fb8e9bf71
       body: |
