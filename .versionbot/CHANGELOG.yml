@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws-cloudformation/cfn-lint to v1.60.1
+      hash: c28457a014728d6ec0b73be5d71ea835f50c1949
+      body: |
+        Update aws-cloudformation/cfn-lint from 1.60.0 to 1.60.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.17
+  title: ""
+  date: 2026-11-12T16:39:12.682Z
+- commits:
     - subject: Update registry:3.1.2 Docker digest to 82f6ff4
       hash: da539d12614a0b9fe3f3f35d298f2e7d8270048c
       body: |
