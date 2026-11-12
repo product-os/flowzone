@@ -4956,7 +4956,7 @@ jobs:
           path: ${{ runner.temp }}
           name: release-notes
       - name: Publish draft release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ github.event.pull_request.head.ref }}
@@ -5098,7 +5098,7 @@ jobs:
           github.event_name == 'push' &&
           needs.event_types.outputs.fork_merge == 'true' &&
           needs.versioned_source.outputs.tag != ''
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           token: ${{ steps.gh_app_token.outputs.token || secrets.FLOWZONE_TOKEN }}
           name: ${{ needs.versioned_source.outputs.tag }}
