@@ -7,6 +7,9 @@ const yaml = require('yaml');
 // worry about github actions not supporting them
 const flowzone = yaml.parse(fs.readFileSync('./flowzone.yml', 'utf8'), {
 	merge: true,
+	// flowzone.yml is trusted repo source, not untrusted input. yaml 2.9.1 counts
+	// nested merge aliases toward the default limit of 100, which our anchors exceed.
+	maxAliasCount: -1,
 });
 delete flowzone['.flowzone'];
 fs.writeFileSync(
