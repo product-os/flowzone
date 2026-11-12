@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update docker/login-action action to v4.8.0
+      hash: efb411f3823994f3a360da700398c2ac26b54d98
+      body: |
+        Update docker/login-action from 4.7.0 to 4.8.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.13
+  title: ""
+  date: 2026-11-12T09:39:46.609Z
+- commits:
     - subject: Update dependency aws/aws-cli to v2.40.1
       hash: ccc3ebc2e3f30bd5afc847a29a02dfd4dd2088df
       body: |
