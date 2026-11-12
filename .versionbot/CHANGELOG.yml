@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency docker/buildx to v0.39.0
+      hash: e094b61fa4f6836d751bd5e845ebfcab5fde379d
+      body: |
+        Update docker/buildx from 0.38.2 to 0.39.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.11
+  title: ""
+  date: 2026-11-12T07:38:49.406Z
+- commits:
     - subject: Update azure/setup-helm action to v5.1.0
       hash: 2eb344ac02175b822912b3927a9b99bebfc6a505
       body: |
