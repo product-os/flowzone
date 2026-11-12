@@ -3664,6 +3664,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
+          ( matrix.role != '' || inputs.aws_iam_role != '' ) &&
           (
             github.event.pull_request.head.repo.full_name == github.repository ||
             (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
@@ -3914,6 +3915,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
+          ( matrix.role != '' || inputs.aws_iam_role != '' ) &&
           (
             github.event.pull_request.head.repo.full_name == github.repository ||
             (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
@@ -6013,6 +6015,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
+          ( matrix.role != '' || inputs.aws_iam_role != '' ) &&
           (
             github.event.pull_request.head.repo.full_name == github.repository ||
             (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
@@ -6361,6 +6364,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
         if: |
           ( matrix.region != '' || inputs.aws_region != '' ) &&
+          ( matrix.role != '' || inputs.aws_iam_role != '' ) &&
           (
             github.event.pull_request.head.repo.full_name == github.repository ||
             (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
