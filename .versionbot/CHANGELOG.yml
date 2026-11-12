@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws-cloudformation/cfn-lint to v1.60.0
+      hash: ce116f4e1684f990d5cc5b3b0b24c2097632772a
+      body: |
+        Update aws-cloudformation/cfn-lint from 1.59.0 to 1.60.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.15
+  title: ""
+  date: 2026-11-12T11:40:14.775Z
+- commits:
     - subject: Update dawidd6/action-download-artifact action to v28
       hash: 66d0c385fffd330c2e963e22cc647ac2c3c73c8e
       body: |
