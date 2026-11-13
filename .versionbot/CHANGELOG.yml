@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency helm/helm to v4.3.2
+      hash: 1c54fbde5300e7168b03e64549a6decc37c0d070
+      body: |
+        Update helm/helm from 4.3.1 to 4.3.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.22
+  title: ""
+  date: 2026-11-13T05:36:25.512Z
+- commits:
     - subject: Update pre-commit hook renovatebot/pre-commit-hooks to v44.236.4
       hash: 9302df8dc5920a5305cff19e84016363ee485a38
       body: |
