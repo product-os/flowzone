@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws/aws-cli to v2.40.3
+      hash: fb45639815cf76b42db2fdc89f7c392387ff1f33
+      body: |
+        Update aws/aws-cli from 2.40.2 to 2.40.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.23
+  title: ""
+  date: 2026-11-13T20:44:35.734Z
+- commits:
     - subject: Update dependency helm/helm to v4.3.2
       hash: 1c54fbde5300e7168b03e64549a6decc37c0d070
       body: |
