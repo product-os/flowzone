@@ -1,4 +1,23 @@
 - commits:
+    - subject: Authenticate docker_test registry pulls on all trusted lanes
+      hash: 67fcef60c6eabf89d1e0d9cb4d0313af74570d5f
+      body: |
+        Docker Hub and GHCR logins in docker_test were limited to private
+        repositories, a guard from before fork PRs lost access to secrets. Gate
+        them on the trusted lane instead so internal PRs on public repos get
+        authenticated pulls (private base images, Docker Hub rate limits) on
+        runners without a registry cache.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.4.29
+  title: ""
+  date: 2026-11-16T21:10:02.577Z
+- commits:
     - subject: Update dependency aws/aws-cli to v2.40.4
       hash: ee6b78ca864b1d2bef97ed1e864540ed60996580
       body: |
