@@ -1,8 +1,5 @@
 .flowzone:
 
-  - &ifPrivateRepository
-    if: github.event.repository.private
-
   - &decodePrivateKey # https://github.com/product-os/decode-private-key
     name: Decode private key
     if: inputs.app_id
@@ -3679,14 +3676,12 @@ jobs:
       - <<: *setupQemuBinfmt
         if: contains(steps.native_platforms.outputs.result, matrix.platform) != true
 
-      # allow access to private base images for private repositories only
-      # to avoid leaking secrets
-      - <<:
-          - *loginWithGitHubContainerRegistry
-          - *ifPrivateRepository
-      - <<:
-          - *loginWithDockerHub
-          - *ifPrivateRepository
+      # Authenticated pulls (private base images, Docker Hub rate limits) on trusted lanes only.
+      # A fork PR still gets a GITHUB_TOKEN with packages: read, so GHCR login must stay gated.
+      - <<: *loginWithGitHubContainerRegistry
+        if: needs.event_types.outputs.trusted == 'true'
+      - <<: *loginWithDockerHub
+        if: needs.event_types.outputs.trusted == 'true'
 
       - name: Export common env vars
         run: |
@@ -3697,12 +3692,9 @@ jobs:
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> "${GITHUB_ENV}"
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> "${GITHUB_ENV}"
 
-      # These secrets run inside user code, so only expose them on trusted lanes: internal PRs
-      # and the fork-merge push (where the code is already merged), never a fork's own PR.
+      # These secrets run inside user code, so only expose them on trusted lanes, never a fork's own PR.
       - name: Add COMPOSE_VARS to compose env file
-        if: |
-          github.event.pull_request.head.repo.full_name == github.repository ||
-          (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+        if: needs.event_types.outputs.trusted == 'true'
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         # do not use shell tracing to avoid leaking secrets
