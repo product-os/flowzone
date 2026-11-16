@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws/aws-cli to v2.40.4
+      hash: ee6b78ca864b1d2bef97ed1e864540ed60996580
+      body: |
+        Update aws/aws-cli from 2.40.3 to 2.40.4
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.28
+  title: ""
+  date: 2026-11-16T20:46:00.192Z
+- commits:
     - subject: Lock file maintenance
       hash: 0785670e064eb69917dc03c2c2d8444a37d7bb05
       body: |
