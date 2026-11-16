@@ -3372,9 +3372,7 @@ jobs:
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> "${GITHUB_ENV}"
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> "${GITHUB_ENV}"
       - name: Add COMPOSE_VARS to compose env file
-        if: |
-          github.event.pull_request.head.repo.full_name == github.repository ||
-          (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+        if: needs.event_types.outputs.trusted == 'true'
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         shell: bash

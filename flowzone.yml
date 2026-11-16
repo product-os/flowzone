@@ -3692,12 +3692,9 @@ jobs:
           echo "COMPOSE_FILE=${{ runner.temp }}/docker-compose.yml" >> "${GITHUB_ENV}"
           echo "COMPOSE_ENV_FILE=${{ runner.temp }}/.env" >> "${GITHUB_ENV}"
 
-      # These secrets run inside user code, so only expose them on trusted lanes: internal PRs
-      # and the fork-merge push (where the code is already merged), never a fork's own PR.
+      # These secrets run inside user code, so only expose them on trusted lanes, never a fork's own PR.
       - name: Add COMPOSE_VARS to compose env file
-        if: |
-          github.event.pull_request.head.repo.full_name == github.repository ||
-          (github.event_name == 'push' && needs.event_types.outputs.fork_merge == 'true')
+        if: needs.event_types.outputs.trusted == 'true'
         env:
           COMPOSE_VARS: ${{ secrets.COMPOSE_VARS }}
         # do not use shell tracing to avoid leaking secrets
