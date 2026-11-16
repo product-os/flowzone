@@ -1,8 +1,5 @@
 .flowzone:
 
-  - &ifPrivateRepository
-    if: github.event.repository.private
-
   - &decodePrivateKey # https://github.com/product-os/decode-private-key
     name: Decode private key
     if: inputs.app_id
