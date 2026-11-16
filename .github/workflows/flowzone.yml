@@ -3354,7 +3354,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-        if: github.event.repository.private
+        if: needs.event_types.outputs.trusted == 'true'
       - name: Login to Docker Hub
         continue-on-error: true
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550
@@ -3362,7 +3362,7 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER || secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_REGISTRY_PASS }}
-        if: github.event.repository.private
+        if: needs.event_types.outputs.trusted == 'true'
       - name: Export common env vars
         run: |
           echo "DOCKER_BAKE_FILE=${{ runner.temp }}/docker-bake.json" >> "${GITHUB_ENV}"

@@ -3679,14 +3679,12 @@ jobs:
       - <<: *setupQemuBinfmt
         if: contains(steps.native_platforms.outputs.result, matrix.platform) != true
 
-      # allow access to private base images for private repositories only
-      # to avoid leaking secrets
-      - <<:
-          - *loginWithGitHubContainerRegistry
-          - *ifPrivateRepository
-      - <<:
-          - *loginWithDockerHub
-          - *ifPrivateRepository
+      # Authenticated pulls (private base images, Docker Hub rate limits) on trusted lanes only.
+      # A fork PR still gets a GITHUB_TOKEN with packages: read, so GHCR login must stay gated.
+      - <<: *loginWithGitHubContainerRegistry
+        if: needs.event_types.outputs.trusted == 'true'
+      - <<: *loginWithDockerHub
+        if: needs.event_types.outputs.trusted == 'true'
 
       - name: Export common env vars
         run: |
