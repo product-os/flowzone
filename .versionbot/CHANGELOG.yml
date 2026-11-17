@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws/aws-cli to v2.41.0
+      hash: 255115a1496f00181a09fc054ad64be01c70acf0
+      body: |
+        Update aws/aws-cli from 2.40.4 to 2.41.0
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.30
+  title: ""
+  date: 2026-11-17T20:38:48.582Z
+- commits:
     - subject: Authenticate docker_test registry pulls on all trusted lanes
       hash: 67fcef60c6eabf89d1e0d9cb4d0313af74570d5f
       body: |
