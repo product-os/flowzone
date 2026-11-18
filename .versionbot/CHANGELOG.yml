@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws/aws-cli to v2.41.1
+      hash: 8f8e086e58e456700828f2866cfbf4d2efd61530
+      body: |
+        Update aws/aws-cli from 2.41.0 to 2.41.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.33
+  title: ""
+  date: 2026-11-18T20:40:57.608Z
+- commits:
     - subject: Update product-os/decode-private-key action to v0.0.5
       hash: 8496d30d400ffaa4f1d768e105743edc8a544cd3
       body: |
