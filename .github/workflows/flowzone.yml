@@ -311,7 +311,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && github.event_name == 'push'
         id: gh_app_token
         with:
@@ -382,7 +382,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.event_types.outputs.trusted == 'true'
         id: gh_app_token
         with:
@@ -467,7 +467,7 @@ jobs:
               "Switching to Rulesets is required to allow GitHub Apps to bypass branch rules.\n\n" +
               "See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets");
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && steps.has_submodules.outputs.result == 'true' && needs.event_types.outputs.trusted == 'true'
         id: checkout_token
         with:
@@ -779,7 +779,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -965,7 +965,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -1108,7 +1108,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -1165,7 +1165,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -1192,7 +1192,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -1444,7 +1444,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -1572,7 +1572,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -1775,7 +1775,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2062,7 +2062,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2227,7 +2227,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2319,7 +2319,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2401,7 +2401,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2558,7 +2558,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2760,7 +2760,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -2912,7 +2912,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -3084,7 +3084,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -3151,7 +3151,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -3221,7 +3221,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -3771,7 +3771,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4044,7 +4044,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4138,7 +4138,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4292,7 +4292,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4442,7 +4442,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4580,7 +4580,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4705,7 +4705,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4746,7 +4746,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -4836,7 +4836,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -4887,7 +4887,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -4928,7 +4928,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -5000,7 +5000,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5041,7 +5041,7 @@ jobs:
         run: |
           git update-ref "refs/tags/${TAG}" "${SHA}"
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id
         id: gh_app_token
         with:
@@ -5148,7 +5148,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5253,7 +5253,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5363,7 +5363,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5452,7 +5452,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5532,7 +5532,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5624,7 +5624,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5709,7 +5709,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5789,7 +5789,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5863,7 +5863,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -5956,7 +5956,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token for checkout
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id && needs.versioned_source.outputs.has_submodules == 'true'
         id: checkout_token
         with:
@@ -6582,7 +6582,7 @@ jobs:
         with:
           secret: ${{ secrets.FLOWZONE_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
       - name: Generate GitHub App installation token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         if: inputs.app_id
         id: gh_app_token
         with:
