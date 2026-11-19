@@ -1,4 +1,16 @@
 - commits:
+    - subject: Free disk space before docker publish to avoid runner out-of-space
+      hash: 7376b492b4a50211e33552cd02d8ed456e132ca8
+      body: ""
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: Andrea Rosci
+      nested: []
+  version: 23.4.34
+  title: ""
+  date: 2026-11-19T15:15:15.284Z
+- commits:
     - subject: Update dependency aws/aws-cli to v2.41.1
       hash: 8f8e086e58e456700828f2866cfbf4d2efd61530
       body: |
