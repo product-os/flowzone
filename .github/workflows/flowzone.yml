@@ -4952,6 +4952,7 @@ jobs:
           pattern: gh-release-*
           merge-multiple: true
       - name: Download release notes
+        if: needs.release_notes.result == 'success'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           path: ${{ runner.temp }}
@@ -5058,6 +5059,7 @@ jobs:
           pattern: gh-release-*
           merge-multiple: true
       - name: Download release notes
+        if: needs.release_notes.result == 'success'
         continue-on-error: true
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:

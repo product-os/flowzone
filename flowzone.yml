@@ -4550,8 +4550,10 @@ jobs:
           pattern: gh-release-*
           merge-multiple: true
 
+      # release_notes is skipped when disable_versioning is true but the PR head is already tagged.
       # https://github.com/actions/download-artifact
       - name: Download release notes
+        if: needs.release_notes.result == 'success'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: ${{ runner.temp }}
@@ -4622,9 +4624,10 @@ jobs:
           pattern: gh-release-*
           merge-multiple: true
 
-      # release_notes does not run on the push lane, so tolerate a missing artifact there.
+      # release_notes does not run on the push lane, so skip the download there.
       # https://github.com/actions/download-artifact
       - name: Download release notes
+        if: needs.release_notes.result == 'success'
         continue-on-error: true
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
