@@ -1,4 +1,17 @@
 - commits:
+    - subject: Update dependency aws/aws-cli to v2.41.2
+      hash: 71f54ba6759f335ea27479328772be4578001c76
+      body: |
+        Update aws/aws-cli from 2.41.1 to 2.41.2
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.36
+  title: ""
+  date: 2026-11-19T21:37:02.021Z
+- commits:
     - subject: Skip release notes download when release_notes did not succeed
       hash: c60fe1f758ce70f9da2ed357883db391398a6c55
       body: |
