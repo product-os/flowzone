@@ -1,4 +1,24 @@
 - commits:
+    - subject: Skip release notes download when release_notes did not succeed
+      hash: c60fe1f758ce70f9da2ed357883db391398a6c55
+      body: |
+        Tag pushes always ran the download in github_finalize, which failed
+        with "Artifact not found for name: release-notes". continue-on-error
+        kept the job green but left an error annotation on every release.
+
+        github_publish has the same gap when disable_versioning is set and the
+        PR head is already tagged, and that step has no continue-on-error.
+      footer:
+        Change-type: patch
+        change-type: patch
+        Signed-off-by: Kyle Harding <kyle@balena.io>
+        signed-off-by: Kyle Harding <kyle@balena.io>
+      author: Kyle Harding
+      nested: []
+  version: 23.4.35
+  title: ""
+  date: 2026-11-19T18:07:08.382Z
+- commits:
     - subject: Free disk space before docker publish to avoid runner out-of-space
       hash: 7376b492b4a50211e33552cd02d8ed456e132ca8
       body: ""
