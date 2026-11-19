@@ -3892,7 +3892,7 @@ jobs:
           # shellcheck disable=SC2043
           for platform in ${{ matrix.platform_slugs }}
           do
-            zstd -vd "${{ runner.temp }}/docker-${{ matrix.target_slug }}-${platform}.tar.zst"
+            zstd -vd --rm "${{ runner.temp }}/docker-${{ matrix.target_slug }}-${platform}.tar.zst"
           done
 
       - name: Create local manifest
@@ -3904,6 +3904,7 @@ jobs:
             platform_tag="${LOCAL_TAG}-${platform}"
 
             skopeo copy --all "docker-archive:${tar}" "docker://${platform_tag}" --dest-tls-verify=false
+            rm "${tar}"
 
             docker buildx imagetools create -t ${LOCAL_TAG} --append "${platform_tag}" || \
               docker buildx imagetools create -t ${LOCAL_TAG} "${platform_tag}"
