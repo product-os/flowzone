@@ -1,4 +1,26 @@
 - commits:
+    - subject: Update aws-actions/configure-aws-credentials action to v6.3.1
+      hash: b2a25da6152b222a8a94eaa413f81e7fe8164424
+      body: |
+        Update aws-actions/configure-aws-credentials from 6.3.0 to 6.3.1
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+    - subject: Update dependency kubernetes/kubernetes to v1.37.3
+      hash: 87c746569035c60825e3372cd0e973901f466aa4
+      body: |
+        Update kubernetes/kubernetes from 1.37.2 to 1.37.3
+      footer:
+        Change-type: patch
+        change-type: patch
+      author: balena-renovate[bot]
+      nested: []
+  version: 23.4.43
+  title: ""
+  date: 2026-11-25T18:40:08.104Z
+- commits:
     - subject: Update dependency aws/aws-cli to v2.42.3
       hash: 2e71ed0b415dd864aca869071404422ad512a876
       body: |
