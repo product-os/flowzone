@@ -1526,7 +1526,7 @@ jobs:
         with:
           version: ${{ env.KUBERNETES_VERSION }}
         env:
-          KUBERNETES_VERSION: v1.37.2
+          KUBERNETES_VERSION: v1.37.3
       - uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e
         with:
           version: ${{ env.HELM_VERSION }}
