@@ -850,6 +850,19 @@ on:
         type: boolean
         required: false
         default: false
+      docker_compose_profiles:
+        description: '>-
+          JSON array of docker compose test jobs, each an object with the `service` to run
+          and an optional compose `profile` to activate, for example:
+
+          `[{"service": "sut"},{"profile": "e2e", "service": "sut-e2e"}]`
+
+          Each entry runs as a separate docker test matrix job. The base composition
+          (no profile) is always rendered first and the profile is overlaid on top. If
+          empty, the `sut` service is run without a profile.'
+        type: string
+        required: false
+        default: ""
       balena_environment:
         description: "balenaCloud environment"
         type: string
@@ -2639,6 +2652,8 @@ jobs:
           RUNS_ON: "${{ inputs.runs_on }}"
           DOCKER_RUNS_ON: "${{ inputs.docker_runs_on }}"
           DOCKER_INVERT_TAGS: "${{ inputs.docker_invert_tags }}"
+          DOCKER_COMPOSE_PROFILES: "${{ inputs.docker_compose_profiles }}"
+          DOCKER_COMPOSE_TESTS: "${{ contains(needs.file_list.outputs.workdir, 'docker-compose.test.yaml') || contains(needs.file_list.outputs.workdir, 'docker-compose.test.yml') }}"
         with:
           result-encoding: json
           script: |
@@ -2677,6 +2692,56 @@ jobs:
               }
               return item;
             });
+
+            // Optionally expand the matrix with one job per docker compose profile/service entry.
+            // Values are interpolated into shell commands, so restrict them to compose-safe names.
+            const composeProfilesInput = (process.env.DOCKER_COMPOSE_PROFILES || '').trim();
+            if (composeProfilesInput !== '') {
+              if (process.env.DOCKER_COMPOSE_TESTS !== 'true') {
+                core.warning('docker_compose_profiles is set but no docker-compose.test.{yml,yaml} was found; ignoring');
+              } else {
+                const safeName = /^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/;
+                let entries;
+                try {
+                  entries = JSON.parse(composeProfilesInput);
+                } catch (err) {
+                  throw new Error(`docker_compose_profiles is not valid JSON: ${err.message}`);
+                }
+                if (!Array.isArray(entries) || entries.length === 0) {
+                  throw new Error('docker_compose_profiles must be a non-empty JSON array');
+                }
+                const seen = new Set();
+                entries.forEach((entry, i) => {
+                  if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+                    throw new Error(`docker_compose_profiles[${i}] must be an object`);
+                  }
+                  if (typeof entry.service !== 'string' || !safeName.test(entry.service)) {
+                    throw new Error(`docker_compose_profiles[${i}].service is missing or invalid`);
+                  }
+                  if (entry.profile !== undefined && (typeof entry.profile !== 'string' || !safeName.test(entry.profile))) {
+                    throw new Error(`docker_compose_profiles[${i}].profile is invalid`);
+                  }
+                  const key = `${entry.profile || ''}/${entry.service}`;
+                  if (seen.has(key)) {
+                    throw new Error(`docker_compose_profiles[${i}] is a duplicate of an earlier entry`);
+                  }
+                  seen.add(key);
+                });
+
+                matrix.include = matrix.include.flatMap(item =>
+                  entries.map((entry, i) => ({
+                    ...item,
+                    compose_profile: entry.profile || '',
+                    compose_service: entry.service,
+                    // only the first entry per target/platform uploads the image artifact,
+                    // since artifact names must be unique and docker_publish expects one per target/platform.
+                    // This is a positive skip flag on purpose: when absent it is null, and in Actions
+                    // expressions null and false both coerce to 0, so `!= true` is the only safe check.
+                    compose_skip_artifact: i !== 0,
+                  }))
+                );
+              }
+            }
 
             console.log(JSON.stringify(matrix, null, 2));
 
@@ -3652,6 +3717,10 @@ jobs:
 
     env:
       DOCKER_BUILDKIT: "1"
+      # Set when docker_compose_profiles is provided, otherwise empty (base composition, sut service).
+      # Validated against a compose-safe name pattern when building the matrix.
+      DOCKER_COMPOSE_PROFILE: ${{ matrix.compose_profile }}
+      DOCKER_COMPOSE_SERVICE: ${{ matrix.compose_service || 'sut' }}
 
     permissions:
       contents: read # Checkout versioned source
@@ -3741,7 +3810,26 @@ jobs:
           done
 
           touch ${COMPOSE_ENV_FILE}
-          docker compose --env-file="${COMPOSE_ENV_FILE}" --project-directory="$(pwd)" ${args} config > "${COMPOSE_FILE}"
+
+          if [ -z "${DOCKER_COMPOSE_PROFILE}" ]
+          then
+            # default: leave COMPOSE_PROFILES untouched so any value from COMPOSE_VARS
+            # (written to the env file) still applies, as before
+            docker compose --env-file="${COMPOSE_ENV_FILE}" --project-directory="$(pwd)" ${args} config > "${COMPOSE_FILE}"
+          else
+            # profile job: always render the base composition (no profile) first,
+            # ignoring any COMPOSE_PROFILES from the env file...
+            COMPOSE_PROFILES='' docker compose --env-file="${COMPOSE_ENV_FILE}" --project-directory="$(pwd)" ${args} \
+              config > "${COMPOSE_FILE}"
+
+            # ...then overlay the requested profile on top of the base composition,
+            # which renders the base services plus the services in that profile
+            COMPOSE_PROFILES='' docker compose --env-file="${COMPOSE_ENV_FILE}" --project-directory="$(pwd)" ${args} \
+              --profile "${DOCKER_COMPOSE_PROFILE}" config > "${COMPOSE_FILE}.profile"
+            yq eval-all '. as $item ireduce ({}; . * $item)' "${COMPOSE_FILE}" "${COMPOSE_FILE}.profile" > "${COMPOSE_FILE}.merged"
+            mv "${COMPOSE_FILE}.merged" "${COMPOSE_FILE}"
+            rm -f "${COMPOSE_FILE}.profile"
+          fi
 
           yq '(.services.* | select(.build != null)).platform |= "${{ matrix.platform }}"' -i "${COMPOSE_FILE}"
           yq . "${COMPOSE_FILE}"
@@ -3782,7 +3870,7 @@ jobs:
 
       # save image to file before running compose tests to avoid tainting the published image
       - name: Save image to file
-        if: needs.is_docker.outputs.docker_publish_matrix != ''
+        if: needs.is_docker.outputs.docker_publish_matrix != '' && matrix.compose_skip_artifact != true
         run: |
           docker save ${{ join(fromJSON(steps.test_meta.outputs.json).tags,' ') }} -o ${DOCKER_TAR}
 
@@ -3797,20 +3885,73 @@ jobs:
       #       docker --image file:///tmp/image.tar --exclude-paths "test/.*,fixtures/.*" --results=verified --fail
 
       - name: Compress image tar
-        if: needs.is_docker.outputs.docker_publish_matrix != ''
+        if: needs.is_docker.outputs.docker_publish_matrix != '' && matrix.compose_skip_artifact != true
         run: |
           zstd -v ${DOCKER_TAR}
 
+      # Profile jobs: build the base composition (no profile) first, then overlay the profile build.
+      # Profiled services may reference images that only base services build (e.g. `image: sut:latest`
+      # with no `build:`), so those must exist locally before the profiled service runs.
+      # Like `docker compose run`, only images that are missing are built, so images already loaded
+      # by the bake step (e.g. sut:latest) are tested as-is rather than rebuilt.
+      - name: Build docker compose test images
+        if: needs.is_docker.outputs.docker_compose_tests == 'true' && matrix.compose_profile != ''
+        run: |
+          build_missing() {
+            local profiles="$1" missing="" service image
+            while read -r service image
+            do
+              [ -n "${service}" ] || continue
+              if docker image inspect "${image}" >/dev/null 2>&1
+              then
+                echo "${service}: ${image} already exists, not rebuilding"
+              else
+                missing="${missing} ${service}"
+              fi
+            done < <(COMPOSE_PROFILES="${profiles}" docker compose config --format json |
+              jq -r '.name as $p | .services | to_entries[] | select(.value.build != null) | "\(.key) \(.value.image // ($p + "-" + .key))"')
+
+            if [ -n "${missing}" ]
+            then
+              # shellcheck disable=SC2086
+              COMPOSE_PROFILES="${profiles}" docker compose build ${missing}
+            fi
+          }
+
+          build_missing ''
+          build_missing "${DOCKER_COMPOSE_PROFILE}"
+
       # run docker compose tests and print the logs from all services
+      # COMPOSE_PROFILES is only set when a profile was requested; otherwise it is left unset so any
+      # value from the COMPOSE_VARS env file still applies, preserving the default behaviour
       - name: Run docker compose tests
         if: needs.is_docker.outputs.docker_compose_tests == 'true'
         run: |
-          docker compose run sut || { docker compose logs ; exit 1 ; }
+          if [ -n "${DOCKER_COMPOSE_PROFILE}" ]
+          then
+            export COMPOSE_PROFILES="${DOCKER_COMPOSE_PROFILE}"
+
+            # Bring up the service under test and its depends_on chain as regular service containers,
+            # so each gets its network aliases (which `run` does not create for the run container), and use the
+            # service's exit code. Naming the service keeps unrelated services, such as the base sut, from
+            # running alongside it. The --build parameter is deliberately omitted: the previous step already built
+            # any missing images, and rebuilding would replace images loaded by the bake step (e.g. sut:latest) that
+            # must be tested as-is.
+            docker compose up \
+              --force-recreate \
+              --remove-orphans \
+              --abort-on-container-exit \
+              --exit-code-from "${DOCKER_COMPOSE_SERVICE}" \
+              "${DOCKER_COMPOSE_SERVICE}" || { docker compose logs ; exit 1 ; }
+          else
+            docker compose run "${DOCKER_COMPOSE_SERVICE}" || { docker compose logs ; exit 1 ; }
+          fi
+
           docker compose logs
 
       # https://github.com/actions/upload-artifact
       - name: Upload artifacts
-        if: needs.is_docker.outputs.docker_publish_matrix != ''
+        if: needs.is_docker.outputs.docker_publish_matrix != '' && matrix.compose_skip_artifact != true
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           # this docker-{sha}-{target}-{platform} naming scheme is used by docker_publish to find the correct artifact

@@ -58,6 +58,11 @@ jobs:
         multiarch
       jobs_timeout_minutes: 30
       docker_publish_platform_tags: true
+      docker_compose_profiles: >
+        [
+          {"service": "sut"},
+          {"profile": "extra", "service": "sut-extra"}
+        ]
       custom_test_matrix: >
         {
           "value": ["foo", "bar"],

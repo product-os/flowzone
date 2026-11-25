@@ -202,6 +202,16 @@ jobs:
       # Required: false
       docker_publish_platform_tags: false
 
+      # >- JSON array of docker compose test jobs, each an object with the `service` to run and an
+      # optional compose `profile` to activate, for example:
+      # `[{"service": "sut"},{"profile": "e2e", "service": "sut-e2e"}]`
+      # Each entry runs as a separate docker test matrix job. The base composition (no profile) is
+      # always rendered first and the profile is overlaid on top. If empty, the `sut` service is
+      # run without a profile.
+      # Type: string
+      # Required: false
+      docker_compose_profiles: 
+
       # balenaCloud environment
       # Type: string
       # Required: false
