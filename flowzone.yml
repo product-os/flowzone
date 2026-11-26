@@ -151,6 +151,18 @@
     token: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
     persist-credentials: false
 
+  # versioned_source checkout: all commits, branches and tags, but no historical blobs.
+  - &checkoutHistoryOnly
+    fetch-depth: 0
+    # Versioning walks commits and tags but rarely reads old file contents, so skip
+    # historical blobs. This is most of the download for repos with many releases,
+    # as every release rewrites the changelogs.
+    # https://github.blog/open-source/git/get-up-to-speed-with-partial-clone-and-shallow-clone/
+    filter: blob:none
+    # Submodules are cloned in a later step, in parallel and blobless.
+    submodules: false
+    <<: *checkoutAuth
+
   # Checkout the versioned commit we created in the previous steps.
   - &checkoutVersionedCommit
     name: Checkout versioned commit
@@ -186,9 +198,11 @@
     name: Checkout submodules
     uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
     if: needs.versioned_source.outputs.has_submodules == 'true'
-    env:
+    env: &checkoutSubmodulesEnv
       # Here we must use the app token to account for private submodules.
       GIT_AUTH_TOKEN: ${{ steps.checkout_token.outputs.token || secrets.FLOWZONE_TOKEN || github.token }}
+      # Extra space-separated `git submodule update` flags.
+      SUBMODULE_UPDATE_ARGS: ""
     with:
       # Use git-c for non-persistent credential configuration
       #
@@ -203,8 +217,30 @@
         const authConfig = `http.https://github.com/.extraheader=Authorization: basic ${authHeader}`;
 
         const { spawnSync } = require('child_process');
-        // Clone submodules in parallel rather than one at a time (git's default).
-        spawnSync('git', ['-c', authConfig, 'submodule', 'update', '--init', '--recursive', '--jobs=8'], { stdio: 'inherit' });
+        const update = (extraArgs) => spawnSync('git', [
+          '-c', authConfig,
+          // Match actions/checkout, which rewrites SSH submodule URLs to HTTPS.
+          '-c', 'url.https://github.com/.insteadOf=git@github.com:',
+          // Clone submodules in parallel rather than one at a time (git's default).
+          'submodule', 'update', '--init', '--recursive', '--jobs=8',
+          ...extraArgs,
+        ], { stdio: 'inherit' });
+
+        const extraArgs = (process.env.SUBMODULE_UPDATE_ARGS ?? '').split(/\s+/).filter(Boolean);
+        let result = update(extraArgs);
+        // The extra flags can be too new for the runner's git (--filter needs git 2.36),
+        // so retry once without them before failing.
+        if (!result.error && result.status !== 0 && extraArgs.length > 0) {
+          core.warning(`git submodule update failed with ${extraArgs.join(' ')}, retrying without`);
+          result = update([]);
+        }
+
+        // spawnSync does not throw on a non-zero exit, so a failed clone would otherwise
+        // let the job carry on without its submodules.
+        if (result.error) throw result.error;
+        if (result.status !== 0) {
+          core.setFailed(`git submodule update failed with exit status ${result.status}`);
+        }
 
   - &loginWithDockerHub
     name: Login to Docker Hub
@@ -1261,12 +1297,9 @@ jobs:
         name: Checkout pull request head sha
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-          # Recursively fetch submodules for yocto-based versioning
-          submodules: "recursive"
+          <<: *checkoutHistoryOnly
           # fallback to an invalid ref if the checkout ref is undefined
           ref: ${{ github.event.pull_request.head.sha || '¯\_(ツ)_/¯' }}
-          <<: *checkoutAuth
 
       # Checkout the event sha for closed/merged PRs.
       # This is the merge commit sha for PRs and the tagged commit sha for tags.
@@ -1277,12 +1310,21 @@ jobs:
         name: Checkout ${{ github.sha }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-          # Recursively fetch submodules for yocto-based versioning
-          submodules: "recursive"
+          <<: *checkoutHistoryOnly
           # fallback to an invalid ref if the checkout ref is undefined
           ref: ${{ github.sha || '¯\_(ツ)_/¯' }}
-          <<: *checkoutAuth
+
+      # Recursively fetch submodules for yocto-based versioning, which reads the meta-balena
+      # tag and nested changelogs from submodule history. Full history and all refs are kept,
+      # but clones are blobless and run in parallel, where actions/checkout clones each
+      # submodule in full, one at a time.
+      # Gated on the checked-out tree rather than has_submodules, whose API lookup reads an
+      # error as "no submodules".
+      - <<: *checkoutSubmodules
+        if: hashFiles('.gitmodules') != ''
+        env:
+          <<: *checkoutSubmodulesEnv
+          SUBMODULE_UPDATE_ARGS: --filter=blob:none
 
       # Require every submodule to declare a branch, and its pinned commit to be on it.
       # Tools like Renovate can only manage a submodule correctly when they know which
@@ -1386,6 +1428,18 @@ jobs:
           result-encoding: json
           script: |
             const { runBalenaVersionist } = require('balena-versionist');
+
+            // The checkout is blobless and keeps no credentials, so git commands that need an
+            // old file version (versionist's nested changelog fallback runs `git log -U0`) fetch
+            // it lazily and fail in private repos. Pass this step's token to git through the
+            // environment, for this process and its children only.
+            const auth = Buffer.from(`x-access-token:${process.env.GITHUB_TOKEN}`).toString('base64');
+            core.setSecret(auth);
+            const n = Number(process.env.GIT_CONFIG_COUNT ?? 0);
+            process.env[`GIT_CONFIG_KEY_${n}`] =
+              `http.${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY_OWNER}/.extraheader`;
+            process.env[`GIT_CONFIG_VALUE_${n}`] = `AUTHORIZATION: basic ${auth}`;
+            process.env.GIT_CONFIG_COUNT = `${n + 1}`;
 
             let version;
             try {
