@@ -2,7 +2,8 @@ version: '2.1'
 
 services:
   sut:
-    # image: sut
+    # named so profiled services can reuse it (see sut-extra)
+    image: sut:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -15,12 +16,62 @@ services:
     networks:
       - internal
 
+  # only included when the "extra" profile is active (see docker_compose_profiles in tests.yml);
+  # has no build of its own and reuses the image built by the base sut service.
+  # Queries redis via its `redis-cache` network alias, and checks that its own `sut-extra-alias`
+  # resolves: that alias only exists when started by `docker compose up`, not `docker compose run`.
+  sut-extra:
+    image: sut:latest
+    profiles:
+      - extra
+    networks:
+      - internal
+    depends_on:
+      - redis
+    environment:
+      - REPO_SECRET
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        if ! getent hosts redis-cache
+        then
+          echo "network alias redis-cache does not resolve"
+          exit 1
+        fi
+        echo "network alias redis-cache resolves"
+        redis_cmd() { printf '%s\r\n' "$$1" | nc -w 2 redis-cache 6379 | tr -d '\r' ; }
+        i=0
+        until redis_cmd PING | grep -qx '+PONG'
+        do
+          i=$$((i + 1))
+          if [ "$$i" -ge 30 ]
+          then
+            echo "redis is not reachable"
+            exit 1
+          fi
+          sleep 1
+        done
+        value="flowzone-$$(date +%s)"
+        redis_cmd "SET sut-extra $$value" | grep -qx '+OK'
+        result="$$(redis_cmd 'GET sut-extra' | tail -n 1)"
+        if [ "$$result" != "$$value" ]
+        then
+          echo "unexpected GET result from redis: '$$result' (expected '$$value')"
+          exit 1
+        fi
+        echo "redis is reachable and responding to queries"
+        exec ./entrypoint.sh
+
   redis:
     image: redis:7
     command: redis-server --appendonly yes
     restart: always
     networks:
-      - internal
+      internal:
+        aliases:
+          - redis-cache
     ports:
       - '6379:6379'
 
