@@ -860,7 +860,10 @@ on:
           Entries run one after another in each docker test job, and the image artifact is
           only uploaded once all of them have passed. The base composition (no profile) is
           always rendered and built first, with the profiles overlaid on top. If empty, the
-          `sut` service is run without a profile.
+          `sut` service is run without a profile. If a profile is specified, the stack is
+          brought up with `compose up ..` instead of `run` to ensure network aliases are
+          created. Use this for more comprehensive tests that require multiple components
+          to work together on the test network.
         type: string
         required: false
         default: ""
